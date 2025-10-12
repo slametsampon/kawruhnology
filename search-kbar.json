@@ -60,6 +60,395 @@
     ]
   },
   {
+    "id": "religy/zikir",
+    "name": "Dekat Tanpa Jarak -Memahami Dzikir dari Hati ke Aksi",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/religy/zikir",
+    "subtitle": "October 4, 2025",
+    "keywords": [
+      "religi",
+      "zikir",
+      "furqaan",
+      "ibadah",
+      "gaya-hidup",
+      "munafik"
+    ]
+  },
+  {
+    "id": "motivasi/al-ashr",
+    "name": "Tiga Ayat, empat Kunci, satu Jalan Selamat ~ Tafsir Praktis Surat Al-‘Ashr untuk Milenial & Gen Z",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/motivasi/al-ashr",
+    "subtitle": "March 28, 2025",
+    "keywords": [
+      "waktu",
+      "sabar",
+      "iman",
+      "shaleh",
+      "era-digital"
+    ]
+  },
+  {
+    "id": "religy/infaq",
+    "name": "Dari Rumah yang Satu, Menuju Surga yang Sama ~ Menata Harta, Menjaga Amanah",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/religy/infaq",
+    "subtitle": "March 28, 2025",
+    "keywords": [
+      "religi",
+      "infaq",
+      "motivasi",
+      "sedekah",
+      "zakat"
+    ]
+  },
+  {
+    "id": "motivasi/lupa",
+    "name": "Lupa Saat Belajar? Ini Bukan Cuma Masalah Fokus...",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/motivasi/lupa",
+    "subtitle": "March 27, 2025",
+    "keywords": [
+      "ilmu",
+      "lupa",
+      "belajar",
+      "syaitan"
+    ]
+  },
+  {
+    "id": "motivasi/akal",
+    "name": "Upgrade Akal, Biar Hidup Nggak Asal",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/motivasi/akal",
+    "subtitle": "March 26, 2025",
+    "keywords": [
+      "akal",
+      "fuad",
+      "ilmu",
+      "era-digital"
+    ]
+  },
+  {
+    "id": "motivasi/leaner",
+    "name": "Iqra! ~ Spirit Pembelajar Sejati ala Gen Z Muslim",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/motivasi/leaner",
+    "subtitle": "March 26, 2025",
+    "keywords": [
+      "leaner",
+      "pembelajar-sejati",
+      "minat-baca",
+      "era-digital"
+    ]
+  },
+  {
+    "id": "motivasi/profesionalisme",
+    "name": "Profesionalisme ~ Jalan Gen Z Menuju Karier yang Berkah dan Bermakna",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/motivasi/profesionalisme",
+    "subtitle": "March 26, 2025",
+    "keywords": [
+      "leaner",
+      "profesionalisme",
+      "ilmu",
+      "era-digital"
+    ]
+  },
+  {
+    "id": "motivasi/ilmu",
+    "name": "Scroll Ilmu, Bukan Hanya Hiburan ~ Jalan Gen Z Menuju Derajat Tinggi",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/motivasi/ilmu",
+    "subtitle": "March 25, 2025",
+    "keywords": [
+      "leaner",
+      "pembelajar-sejati",
+      "ilmu",
+      "era-digital"
+    ]
+  },
+  {
+    "id": "religy/rizki",
+    "name": "Mindset Rezeki - Antara Takdir, Doa, dan Jalan Ninja Orang Beriman",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/religy/rizki",
+    "subtitle": "March 25, 2025",
+    "keywords": [
+      "religi",
+      "ujian",
+      "rizki",
+      "sabar",
+      "berdoa",
+      "tawakal"
+    ]
+  },
+  {
+    "id": "religy/tawakal",
+    "name": "Berjuang Tanpa Baper - Ikhtiar Kuat, Tawakal Cerdas, Hasil Ikhlas",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/religy/tawakal",
+    "subtitle": "March 24, 2025",
+    "keywords": [
+      "religi",
+      "ujian",
+      "motivasi",
+      "sabar",
+      "berdoa",
+      "tawakal"
+    ]
+  },
+  {
+    "id": "teknologi/drone-pertanian",
+    "name": "Merancang Drone Pertanian Kapasitas 20 Kg",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/teknologi/drone-pertanian",
+    "subtitle": "March 24, 2025",
+    "keywords": [
+      "kontrol",
+      "iot",
+      "drone",
+      "sprayer",
+      "teknologi"
+    ]
+  },
+  {
+    "id": "religy/doa",
+    "name": "Berdoa Bukan Backup Plan, Tapi Kekuatan Utama",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/religy/doa",
+    "subtitle": "March 23, 2025",
+    "keywords": [
+      "religi",
+      "ujian",
+      "motivasi",
+      "sabar",
+      "berdoa",
+      "tawakal"
+    ]
+  },
+  {
+    "id": "religy/sabar",
+    "name": "Sabar yang Aktif - Antara Iman, Emosi, dan Jalan Pulang kepada Allah",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/religy/sabar",
+    "subtitle": "March 23, 2025",
+    "keywords": [
+      "religi",
+      "ujian",
+      "motivasi",
+      "sabar",
+      "syukur",
+      "tawakal"
+    ]
+  },
+  {
+    "id": "religy/syukur",
+    "name": "Lelah Jadi Manusia? Coba Jalan Sunyi Bernama Syukur",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/religy/syukur",
+    "subtitle": "March 23, 2025",
+    "keywords": [
+      "religi",
+      "ujian",
+      "motivasi",
+      "sabar",
+      "syukur",
+      "tawakal"
+    ]
+  },
+  {
+    "id": "religy/tiga-is",
+    "name": "Tiga Is yang Bikin Hati Kuat Saat Hidup Nggak Baik-Baik Aja",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/religy/tiga-is",
+    "subtitle": "March 23, 2025",
+    "keywords": [
+      "religi",
+      "ujian",
+      "Istiqamah",
+      "sabar",
+      "berdoa",
+      "Istighfar",
+      "Isti’anah"
+    ]
+  },
+  {
+    "id": "religy/ujian",
+    "name": "Mental Tangguh Menurut Islam - Saat Hidup Nggak Sesuai Rencana",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/religy/ujian",
+    "subtitle": "March 23, 2025",
+    "keywords": [
+      "religi",
+      "ujian",
+      "motivasi",
+      "sabar",
+      "berdoa",
+      "tawakal"
+    ]
+  },
+  {
+    "id": "IoT/dataModelHortiLink",
+    "name": "Data Model – Mengimplementasikan Time Series Database di MongoDB dengan Mongoose dan TypeScript untuk Data Sensor IoT",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/IoT/dataModelHortiLink",
+    "subtitle": "November 6, 2024",
+    "keywords": [
+      "kontrol",
+      "iot",
+      "mongoDB",
+      "mongose",
+      "hortilink",
+      "MVC",
+      "atomic-design"
+    ]
+  },
+  {
+    "id": "IoT/tahap3",
+    "name": "Tahap 3 – Integrasi ESP-Gateway dengan Server Kustom",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/IoT/tahap3",
+    "subtitle": "November 6, 2024",
+    "keywords": [
+      "kontrol",
+      "iot",
+      "mongoDB",
+      "mongose",
+      "hortilink",
+      "MVC",
+      "atomic-design"
+    ]
+  },
+  {
+    "id": "IoT/tahap1",
+    "name": "Tahap 1 – Pengembangan Sistem Monitoring dan Kontrol Individual (ESP-Node to Device)",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/IoT/tahap1",
+    "subtitle": "October 26, 2024",
+    "keywords": [
+      "kontrol",
+      "iot",
+      "esp-32",
+      "esp-node",
+      "hortilink",
+      "sensor",
+      "web"
+    ]
+  },
+  {
+    "id": "IoT/web-server-esp",
+    "name": "Membangun Web Server Berbasis ESP dengan LittleFS dan Tailwind CSS",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/IoT/web-server-esp",
+    "subtitle": "October 26, 2024",
+    "keywords": [
+      "esp-32",
+      "esp-8266",
+      "tailwind-css",
+      "vs-code",
+      "kontrol",
+      "iot"
+    ]
+  },
+  {
+    "id": "IoT/HortiLink",
+    "name": "HortiLink - Sistem IoT Pintar untuk Pertanian Terintegrasi",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/IoT/HortiLink",
+    "subtitle": "October 25, 2024",
+    "keywords": [
+      "kontrol",
+      "iot",
+      "esp-32",
+      "hortilink",
+      "sensor",
+      "web"
+    ]
+  },
+  {
+    "id": "agri/bio-filter",
+    "name": "Biofilter dalam Sistem Akuakultur dan Aquaponik - Prinsip, Rancangan, dan Manajemen Operasional untuk Praktisi",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/agri/bio-filter",
+    "subtitle": "October 23, 2024",
+    "keywords": [
+      "aquaponic",
+      "ras",
+      "filter",
+      "biofilter"
+    ]
+  },
+  {
+    "id": "agri/hidroponik",
+    "name": "Hidroponik",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/agri/hidroponik",
+    "subtitle": "October 20, 2024",
+    "keywords": [
+      "hidroponik",
+      "sayuran",
+      "bercocok-tanam-bersih",
+      "nft",
+      "bercocok-tanam-tanpa-tanah"
+    ]
+  },
+  {
+    "id": "agri/akuaponik-modul",
+    "name": "Panduan Praktis Membuat Modul Sistem Aquaponik Terpadu",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/agri/akuaponik-modul",
+    "subtitle": "September 28, 2024",
+    "keywords": [
+      "perikanan",
+      "ras",
+      "akuaponik",
+      "hidroponik",
+      "akuakultur",
+      "roi",
+      "bep",
+      "irr"
+    ]
+  },
+  {
+    "id": "agri/akuaponik-praktis",
+    "name": "Panduan Praktis Membangun dan Mengelola Sistem RAS & Aquaponik untuk Praktisi",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/agri/akuaponik-praktis",
+    "subtitle": "September 24, 2024",
+    "keywords": [
+      "perikanan",
+      "ras",
+      "akuaponik",
+      "hidroponik",
+      "akuakultur"
+    ]
+  },
+  {
+    "id": "agri/hidroponik-vertikal-indoor",
+    "name": "Rancangan Hidroponik Indoor",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/agri/hidroponik-vertikal-indoor",
+    "subtitle": "September 22, 2024",
+    "keywords": [
+      "hidroponik",
+      "nft",
+      "vertikal",
+      "led"
+    ]
+  },
+  {
+    "id": "agri/hidroponik-vertikal-outdoor",
+    "name": "Hidroponik Vertikal Outdoor",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/agri/hidroponik-vertikal-outdoor",
+    "subtitle": "September 21, 2024",
+    "keywords": [
+      "hidroponik",
+      "nft",
+      "vertikal"
+    ]
+  },
+  {
     "id": "AI/patform-ai",
     "name": "Pemanfaatan AI untuk Mendukung Pekerjaan di Industri Petrokimia",
     "section": "CONTENT",
@@ -95,6 +484,170 @@
       "prompt-engineering",
       "ai",
       "gpt"
+    ]
+  },
+  {
+    "id": "kompetensi/bertanya",
+    "name": "Bertanya",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/kompetensi/bertanya",
+    "subtitle": "January 5, 2024",
+    "keywords": [
+      "bertanya"
+    ]
+  },
+  {
+    "id": "kompetensi/micro-question-management",
+    "name": "Micro Question - Micro Management",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/kompetensi/micro-question-management",
+    "subtitle": "January 5, 2024",
+    "keywords": [
+      "Micro-Question",
+      "Micro-Management",
+      "leadership",
+      "managerial"
+    ]
+  },
+  {
+    "id": "kompetensi/prepare-for-success",
+    "name": "Menyiapkan diri menyongsong dunia kerja",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/kompetensi/prepare-for-success",
+    "subtitle": "January 5, 2024",
+    "keywords": [
+      "dunia-kerja",
+      "semester-akhir",
+      "kompetensi",
+      "rekruitmen",
+      "magang",
+      "Internship"
+    ]
+  },
+  {
+    "id": "kompetensi/saran-kritik",
+    "name": "Saran dan Kritik",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/kompetensi/saran-kritik",
+    "subtitle": "January 5, 2024",
+    "keywords": [
+      "bertanya"
+    ]
+  },
+  {
+    "id": "kompetensi/literasi",
+    "name": "Literasi",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/kompetensi/literasi",
+    "subtitle": "January 4, 2024",
+    "keywords": [
+      "literasi",
+      "motivasi",
+      "minat-baca",
+      "era-digital"
+    ]
+  },
+  {
+    "id": "motivasi/DevOps",
+    "name": "DevOps - Development Operations",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/motivasi/DevOps",
+    "subtitle": "January 4, 2024",
+    "keywords": [
+      "DevOps",
+      "development",
+      "operation",
+      "docker",
+      "git-github"
+    ]
+  },
+  {
+    "id": "motivasi/resolusi",
+    "name": "Resolusi - awal tahun",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/motivasi/resolusi",
+    "subtitle": "January 2, 2024",
+    "keywords": [
+      "resolusi",
+      "motivasi",
+      "tekad",
+      "target"
+    ]
+  },
+  {
+    "id": "Bisnis/freelancer",
+    "name": "Freelancer Pengembang Web Pemula",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/Bisnis/freelancer",
+    "subtitle": "November 12, 2023",
+    "keywords": [
+      "freelancer",
+      "web-developer",
+      "iot",
+      "kerja-bebas"
+    ]
+  },
+  {
+    "id": "agri/ipc",
+    "name": "Penjernih Plate Miring - ICP (Inclined Plate Clarifier)",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/agri/ipc",
+    "subtitle": "October 2, 2023",
+    "keywords": [
+      "perikanan",
+      "ras",
+      "filter",
+      "icp"
+    ]
+  },
+  {
+    "id": "general/laju-alir-air",
+    "name": "Laju Alir Air Dalam Pipa",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/general/laju-alir-air",
+    "subtitle": "October 1, 2023",
+    "keywords": [
+      "irigasi",
+      "Hagen-Poiseuille",
+      "Darcy-Weisbach",
+      "Reynolds-number"
+    ]
+  },
+  {
+    "id": "IoT/iot",
+    "name": "IoT - Internet of Things",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/IoT/iot",
+    "subtitle": "September 18, 2023",
+    "keywords": [
+      "kontrol",
+      "iot",
+      "esp-32"
+    ]
+  },
+  {
+    "id": "IoT/esp32",
+    "name": "ESP-32",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/IoT/esp32",
+    "subtitle": "September 15, 2023",
+    "keywords": [
+      "esp-32",
+      "kontrol",
+      "iot"
+    ]
+  },
+  {
+    "id": "agri/airlift-pump",
+    "name": "Air Lift Pump - Prinsip, Desain, dan Aplikasi dalam Akuakultur",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/agri/airlift-pump",
+    "subtitle": "September 15, 2023",
+    "keywords": [
+      "perikanan",
+      "ras",
+      "pompa",
+      "udara"
     ]
   },
   {
