@@ -49,16 +49,12 @@ export default function RootLayout({ children }: RootLayoutProps) {
           />
           <div className="flex min-h-screen flex-col justify-between font-sans">
             <CustomSearchProvider>
-              <Header /> {/* ✅ Header akan jadi full width */}
+              <Header />
               <main className="mb-auto">
-                <SectionContainer>
-                  {' '}
-                  {/* ✅ Hanya konten dibatasi */}
-                  {children}
-                </SectionContainer>
+                <SectionContainer> {children}</SectionContainer>
               </main>
             </CustomSearchProvider>
-            <Footer /> {/* ✅ Footer juga full width */}
+            <Footer />
           </div>
         </ThemeProvider>
       </body>

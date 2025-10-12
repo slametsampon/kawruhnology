@@ -28,7 +28,7 @@ export default function Home() {
             pengetahuan, refleksi, dan eksperimen digital.
           </p>
           <p className="text-md mt-4 text-gray-400 md:text-lg">
-            Catatan dari seorang praktisi tentang AI, IoT, Software, dan
+            Catatan dari seorang praktisi tentang Religi, AI, IoT, Software, dan
             kehidupan dalam jaringan.
           </p>
           <div className="mt-8">
@@ -48,7 +48,7 @@ export default function Home() {
           {[
             {
               title: 'Berbasis Pengetahuan',
-              desc: 'Ditulis dari pengalaman langsung dan eksplorasi pribadi di bidang teknologi.',
+              desc: 'Ditulis dari pengalaman langsung dan eksplorasi pribadi di bidang religi, umum dan teknologi.',
             },
             {
               title: 'Reflektif & Terbuka',
