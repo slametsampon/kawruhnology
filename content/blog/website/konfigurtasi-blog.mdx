@@ -1,5 +1,5 @@
 ---
-title: Konfigurasi Lengkap Next.js Blog (mx-core)
+title: Konfigurasi Lengkap Next.js Blog (kawruhnology)
 date: '2025-10-08'
 tags:
   [
@@ -46,11 +46,11 @@ summary: Artikel ini akan memandu Anda langkah demi langkah melakukan konfiguras
 
 ### ✅ **Pendahuluan**
 
-`mx-core` merupakan sebuah proyek sumber terbuka (open-source) berbasis **Next.js** yang dirancang sebagai **platform blog statis modern**. Proyek ini mengedepankan prinsip **modularitas**, **kinerja optimal**, dan **kemudahan pengelolaan konten**, terutama bagi pengguna yang memiliki latar belakang teknis, seperti pengembang web atau penulis dokumentasi.
+`kawruhnology` merupakan sebuah proyek sumber terbuka (open-source) berbasis **Next.js** yang dirancang sebagai **platform blog statis modern**. Proyek ini mengedepankan prinsip **modularitas**, **kinerja optimal**, dan **kemudahan pengelolaan konten**, terutama bagi pengguna yang memiliki latar belakang teknis, seperti pengembang web atau penulis dokumentasi.
 
 #### Teknologi yang Digunakan
 
-`mx-core` dibangun menggunakan tumpukan teknologi modern berikut:
+`kawruhnology` dibangun menggunakan tumpukan teknologi modern berikut:
 
 - **Next.js** (dengan App Router) sebagai fondasi framework React.
 - **Tailwind CSS** untuk styling berbasis utility classes.
@@ -70,7 +70,7 @@ Platform ini ditujukan bagi pengguna dengan kriteria berikut:
 
 #### Hasil Akhir yang Akan Dicapai
 
-Dengan mengikuti konfigurasi dan panduan yang disajikan dalam artikel ini, pengguna akan dapat menjalankan proyek `mx-core` secara lokal, mengelola konten dalam format Markdown, serta melakukan deploy ke GitHub Pages. Hasil akhir berupa sebuah situs blog statis modern, dengan dukungan tema gelap/terang, komentar berbasis GitHub (Giscus), estimasi waktu baca, pencarian lokal, dan struktur SEO-friendly.
+Dengan mengikuti konfigurasi dan panduan yang disajikan dalam artikel ini, pengguna akan dapat menjalankan proyek `kawruhnology` secara lokal, mengelola konten dalam format Markdown, serta melakukan deploy ke GitHub Pages. Hasil akhir berupa sebuah situs blog statis modern, dengan dukungan tema gelap/terang, komentar berbasis GitHub (Giscus), estimasi waktu baca, pencarian lokal, dan struktur SEO-friendly.
 
 ---
 
@@ -83,8 +83,8 @@ Langkah pertama sebelum memulai konfigurasi adalah melakukan **kloning repositor
 - a. Clone Repositori
 
 ```bash
-git clone https://github.com/slametsampon/mx-core.git
-cd mx-core
+git clone https://github.com/slametsampon/kawruhnology.git
+cd kawruhnology
 ```
 
 Perintah di atas akan menyalin seluruh isi proyek dari GitHub ke direktori lokal.
@@ -117,7 +117,7 @@ Aplikasi akan tersedia di `http://localhost:3000` dan siap diuji di browser.
 
 #### 1.2. Struktur Folder
 
-Struktur direktori dalam proyek `mx-core` mengikuti konvensi Next.js berbasis App Router, serta menambahkan beberapa direktori khusus untuk keperluan pengelolaan konten, UI, dan konfigurasi.
+Struktur direktori dalam proyek `kawruhnology` mengikuti konvensi Next.js berbasis App Router, serta menambahkan beberapa direktori khusus untuk keperluan pengelolaan konten, UI, dan konfigurasi.
 
 Berikut adalah penjelasan direktori penting:
 
@@ -144,7 +144,7 @@ Struktur ini dirancang agar proyek mudah dipelihara, fleksibel untuk dikembangka
 
 ### 2. ⚙️ **Konfigurasi Inti yang Harus Dicek**
 
-Untuk memastikan proyek `mx-core` berjalan sebagaimana mestinya, terdapat beberapa file konfigurasi inti yang perlu diperiksa dan disesuaikan. Bagian ini akan menguraikan konfigurasi tersebut berdasarkan fungsinya dalam sistem, serta bagaimana keterkaitannya satu sama lain.
+Untuk memastikan proyek `kawruhnology` berjalan sebagaimana mestinya, terdapat beberapa file konfigurasi inti yang perlu diperiksa dan disesuaikan. Bagian ini akan menguraikan konfigurasi tersebut berdasarkan fungsinya dalam sistem, serta bagaimana keterkaitannya satu sama lain.
 
 ---
 
@@ -269,14 +269,14 @@ Path ini digunakan oleh Contentlayer untuk menyimpan data hasil indexing agar bi
 
 #### 2.3. `next.config.js`
 
-File `next.config.js` berfungsi untuk mengatur perilaku global Next.js, dan dalam proyek `mx-core`, file ini telah disesuaikan untuk mendukung hosting statis di GitHub Pages.
+File `next.config.js` berfungsi untuk mengatur perilaku global Next.js, dan dalam proyek `kawruhnology`, file ini telah disesuaikan untuk mendukung hosting statis di GitHub Pages.
 
 - `basePath` untuk GitHub Pages
 
-Karena GitHub Pages hanya bisa menayangkan proyek di subfolder (misalnya `/mx-core`), properti `basePath` disesuaikan berdasarkan mode:
+Karena GitHub Pages hanya bisa menayangkan proyek di subfolder (misalnya `/kawruhnology`), properti `basePath` disesuaikan berdasarkan mode:
 
 ```js
-basePath: isProd ? '/mx-core' : '';
+basePath: isProd ? '/kawruhnology' : '';
 ```
 
 Konfigurasi ini memastikan bahwa semua routing di Next.js menggunakan prefix yang sesuai saat di-deploy.
@@ -303,7 +303,7 @@ Agar nilai `basePath` dapat digunakan di komponen frontend, variabel lingkungan 
 
 ```js
 env: {
-  BASE_PATH: isProd ? '/mx-core' : '';
+  BASE_PATH: isProd ? '/kawruhnology' : '';
 }
 ```
 
@@ -328,7 +328,7 @@ Dengan ini, file SVG dapat digunakan langsung seperti komponen JSX.
 Proyek ini menyertakan file `.env.production` dengan isi:
 
 ```env
-BASE_PATH=/mx-core
+BASE_PATH=/kawruhnology
 ```
 
 Variabel ini digunakan oleh `next.config.js` untuk menentukan `basePath`.
@@ -347,7 +347,7 @@ Agar kolaborator atau pengguna lain dapat mengetahui konfigurasi yang dibutuhkan
 
 ```env
 # Base path untuk GitHub Pages
-BASE_PATH=/mx-core
+BASE_PATH=/kawruhnology
 
 # Giscus konfigurasi komentar
 NEXT_PUBLIC_GISCUS_REPO=
@@ -369,13 +369,13 @@ File ini sebaiknya dikomit ke dalam repositori, namun file `.env` dan `.env.prod
 
 ### 3. 🎨 **Styling dan Tema**
 
-Styling pada proyek `mx-core` dikonfigurasi menggunakan **Tailwind CSS**, yang merupakan utility-first CSS framework yang dirancang untuk pengembangan antarmuka yang efisien dan konsisten. Selain itu, proyek ini juga menggunakan **PostCSS** sebagai CSS processor untuk kompatibilitas lintas browser.
+Styling pada proyek `kawruhnology` dikonfigurasi menggunakan **Tailwind CSS**, yang merupakan utility-first CSS framework yang dirancang untuk pengembangan antarmuka yang efisien dan konsisten. Selain itu, proyek ini juga menggunakan **PostCSS** sebagai CSS processor untuk kompatibilitas lintas browser.
 
 ---
 
 #### 3.1. `tailwind.config.ts`
 
-File `tailwind.config.ts` berisi konfigurasi utama Tailwind CSS dalam proyek `mx-core`. Konfigurasi ini memuat berbagai pengaturan untuk mendukung styling yang fleksibel dan konsisten, serta optimal untuk konten blog berbasis Markdown.
+File `tailwind.config.ts` berisi konfigurasi utama Tailwind CSS dalam proyek `kawruhnology`. Konfigurasi ini memuat berbagai pengaturan untuk mendukung styling yang fleksibel dan konsisten, serta optimal untuk konten blog berbasis Markdown.
 
 - 📁 Pengaturan `content`
 
@@ -496,7 +496,7 @@ module.exports = {
 };
 ```
 
-Konfigurasi PostCSS digunakan untuk memproses CSS akhir sebelum dikirim ke browser. Dalam proyek `mx-core`, hanya dua plugin yang digunakan:
+Konfigurasi PostCSS digunakan untuk memproses CSS akhir sebelum dikirim ke browser. Dalam proyek `kawruhnology`, hanya dua plugin yang digunakan:
 
 - `tailwindcss`: Mengubah class menjadi CSS nyata sesuai konfigurasi Tailwind.
 - `autoprefixer`: Menambahkan vendor prefix CSS untuk memastikan kompatibilitas lintas browser modern.
@@ -507,7 +507,7 @@ Konfigurasi ini bersifat standar dan sudah mencukupi untuk mayoritas kebutuhan p
 
 **Kesimpulan**
 
-Konfigurasi styling dalam proyek `mx-core` telah dirancang untuk:
+Konfigurasi styling dalam proyek `kawruhnology` telah dirancang untuk:
 
 - Mendukung tema terang dan gelap
 - Menyediakan styling yang rapi untuk konten Markdown
@@ -520,7 +520,7 @@ Dengan pendekatan berbasis Tailwind CSS yang terstruktur, proyek ini memberikan 
 
 ### 4. 🧠 **TypeScript Konfigurasi**
 
-Proyek `mx-core` ditulis menggunakan **TypeScript** untuk mendapatkan manfaat validasi tipe, pengembangan yang lebih aman, serta dokumentasi otomatis dari struktur data. File `tsconfig.json` merupakan pusat konfigurasi TypeScript, yang mengatur bagaimana kode dikompilasi, tipe ditangani, serta bagaimana modul dan path di-resolve.
+Proyek `kawruhnology` ditulis menggunakan **TypeScript** untuk mendapatkan manfaat validasi tipe, pengembangan yang lebih aman, serta dokumentasi otomatis dari struktur data. File `tsconfig.json` merupakan pusat konfigurasi TypeScript, yang mengatur bagaimana kode dikompilasi, tipe ditangani, serta bagaimana modul dan path di-resolve.
 
 ---
 
@@ -667,7 +667,7 @@ import { allBlogs } from 'contentlayer/generated';
 
 - Kesimpulan
 
-Konfigurasi `tsconfig.json` dalam proyek `mx-core` telah disusun dengan baik dan mencakup:
+Konfigurasi `tsconfig.json` dalam proyek `kawruhnology` telah disusun dengan baik dan mencakup:
 
 - Kompatibilitas penuh dengan **Next.js App Router**
 - Integrasi dengan **Contentlayer**
@@ -680,7 +680,7 @@ Satu-satunya penyesuaian yang disarankan adalah **mengubah target kompilasi** da
 
 ### 5. ✅ **Linting & Formatting**
 
-Untuk menjaga konsistensi, kualitas kode, dan menghindari kesalahan umum dalam pengembangan proyek, `mx-core` dilengkapi dengan sistem linting dan formatting berbasis **ESLint** dan **Prettier**, termasuk integrasi dengan **husky** dan **lint-staged** untuk validasi otomatis sebelum commit.
+Untuk menjaga konsistensi, kualitas kode, dan menghindari kesalahan umum dalam pengembangan proyek, `kawruhnology` dilengkapi dengan sistem linting dan formatting berbasis **ESLint** dan **Prettier**, termasuk integrasi dengan **husky** dan **lint-staged** untuk validasi otomatis sebelum commit.
 
 ---
 
@@ -818,7 +818,7 @@ Proyek ini juga menggunakan `husky` dan `lint-staged` untuk linting otomatis seb
 
 - Kesimpulan
 
-Sistem linting dan formatting pada proyek `mx-core` telah dikonfigurasi secara menyeluruh untuk:
+Sistem linting dan formatting pada proyek `kawruhnology` telah dikonfigurasi secara menyeluruh untuk:
 
 - Menjaga kualitas dan konsistensi kode
 - Memberikan fleksibilitas selama proses pengembangan
@@ -830,7 +830,7 @@ Konfigurasi ini meminimalkan kesalahan umum dan menjaga standar kode agar tetap 
 
 ### 6. 🚀 **Build & Deploy**
 
-Proyek `mx-core` dikonfigurasi untuk menghasilkan **situs statis** menggunakan fitur `export` dari Next.js. Proses ini memungkinkan deployment ke **GitHub Pages** tanpa memerlukan server khusus. Langkah-langkah pada bagian ini mencakup build untuk produksi, serta proses deploy ke GitHub Pages.
+Proyek `kawruhnology` dikonfigurasi untuk menghasilkan **situs statis** menggunakan fitur `export` dari Next.js. Proses ini memungkinkan deployment ke **GitHub Pages** tanpa memerlukan server khusus. Langkah-langkah pada bagian ini mencakup build untuk produksi, serta proses deploy ke GitHub Pages.
 
 ---
 
@@ -917,9 +917,9 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  basePath: isProd ? '/mx-core' : '',
+  basePath: isProd ? '/kawruhnology' : '',
   env: {
-    BASE_PATH: isProd ? '/mx-core' : '',
+    BASE_PATH: isProd ? '/kawruhnology' : '',
   },
   webpack(config) {
     config.module.rules.push({
@@ -938,7 +938,7 @@ module.exports = withContentlayer(nextConfig);
 
 * `output: 'export'`: Wajib untuk menghasilkan situs statis.
 * `trailingSlash: true`: Membuat URL konsisten di GitHub Pages (`/about/` bukan `/about`).
-* `basePath`: Menentukan prefix routing sesuai nama repositori (`/mx-core`).
+* `basePath`: Menentukan prefix routing sesuai nama repositori (`/kawruhnology`).
 * `images.unoptimized`: Mencegah error karena `next/image` tidak mendukung mode static export.
 
 > Pastikan nama repositori di GitHub sesuai dengan nilai `basePath`.
@@ -967,7 +967,7 @@ https://<username>.github.io/<nama-repositori>/
 Contoh untuk repositori ini:
 
 ```
-https://slametsampon.github.io/mx-core/
+https://slametsampon.github.io/kawruhnology/
 ```
 
 ---
@@ -1003,7 +1003,7 @@ touch out/.nojekyll
 
 - Kesimpulan
 
-Proyek `mx-core` telah dikonfigurasi secara optimal untuk proses **export** dan **deploy ke GitHub Pages**. Dengan sedikit penyesuaian pada script dan konfigurasi `next.config.js`, proses deploy dapat dilakukan secara otomatis dan konsisten.
+Proyek `kawruhnology` telah dikonfigurasi secara optimal untuk proses **export** dan **deploy ke GitHub Pages**. Dengan sedikit penyesuaian pada script dan konfigurasi `next.config.js`, proses deploy dapat dilakukan secara otomatis dan konsisten.
 
 ---
 

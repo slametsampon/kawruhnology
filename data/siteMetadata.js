@@ -2,20 +2,20 @@
 
 /** @type {import("pliny/config").PlinyConfig } */
 const siteMetadata = {
-  title: 'Mx Core',
+  title: 'kawruhnology',
   version: '0.2.1', // 🆕 Tambahkan versi di sini
   author: 'Slamet-Sam',
   headerTitle: 'MxCore',
   description: 'Maintenance Extended Core',
   language: 'en-us',
   theme: 'system', // system, dark or light
-  siteUrl: 'https://slametsampon.github.io/mx-core/',
-  siteRepo: 'https://github.com/slametsampon/mx-core',
+  siteUrl: 'https://slametsampon.github.io/kawruhnology/',
+  siteRepo: 'https://github.com/slametsampon/kawruhnology',
   siteLogo: '/static/images/logo.png',
   socialBanner: '/static/images/twitter-card.png',
   mastodon: 'https://mastodon.social/@mastodonuser',
   email: 'address@yoursite.com',
-  github: 'https://github.com/slametsampon/mx-core',
+  github: 'https://github.com/slametsampon/kawruhnology',
   twitter: 'https://twitter.com/Twitter',
   facebook: 'https://facebook.com',
   youtube: 'https://youtube.com',

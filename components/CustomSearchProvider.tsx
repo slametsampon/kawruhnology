@@ -81,7 +81,7 @@ export function CustomSearchProvider({ children }: { children: ReactNode }) {
               typeof window !== 'undefined' &&
               window.location.hostname === 'localhost';
             const finalHref = isLocal
-              ? item.href.replace(/^\/mx-core/, '') // strip jika lokal
+              ? item.href.replace(/^\/kawruhnology/, '') // strip jika lokal
               : item.href; // biarkan untuk production
 
             console.log(`🚀 Navigating to: ${finalHref}`);

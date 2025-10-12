@@ -21,11 +21,11 @@ const nextConfig = {
   },
 
   // ✅ Penting untuk GitHub Pages: menyesuaikan basePath
-  basePath: isProd ? '/mx-core' : '',
+  basePath: isProd ? '/kawruhnology' : '',
 
   // ✅ Expose basePath agar bisa digunakan di komponen (client)
   env: {
-    BASE_PATH: isProd ? '/mx-core' : '',
+    BASE_PATH: isProd ? '/kawruhnology' : '',
   },
 
   webpack(config) {

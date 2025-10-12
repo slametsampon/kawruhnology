@@ -1,0 +1,33 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="120" height="120" rx="12" fill="#111827"/>
+
+  <!-- Cahaya (Glow) -->
+  <circle cx="60" cy="60" r="28" fill="url(#glowGradient)" opacity="0.35"/>
+  <circle cx="60" cy="60" r="18" fill="url(#glowGradient)" opacity="0.5"/>
+
+  <!-- Api - diperpanjang agar menyentuh dasar lampu -->
+  <path d="M60 38C55 47 56 57 60 66C64 57 65 47 60 38Z" fill="#F97316"/>
+  <path d="M60 44C58.5 48 59 53 60 58C61 53 61.5 48 60 44Z" fill="#FDBA74"/>
+
+  <!-- Kaca lampu -->
+  <ellipse cx="60" cy="60" rx="16" ry="22" fill="#FCD34D" fill-opacity="0.12" stroke="#F59E0B" stroke-width="1.5"/>
+
+  <!-- Kepala lampu -->
+  <rect x="50" y="77" width="20" height="6" rx="2" fill="#78350F"/>
+  <circle cx="52" cy="80" r="2" fill="#FBBF24"/>
+  <circle cx="68" cy="80" r="2" fill="#FBBF24"/>
+
+  <!-- Badan lampu -->
+  <path d="M50 83H70C68 93 52 93 50 83Z" fill="#92400E"/>
+  <rect x="53" y="93" width="14" height="4" rx="1" fill="#78350F"/>
+
+  <!-- Gradient cahaya -->
+  <defs>
+    <radialGradient id="glowGradient" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse"
+      gradientTransform="translate(60 60) scale(30)">
+      <stop stop-color="#FCD34D" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#FCD34D" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+</svg>

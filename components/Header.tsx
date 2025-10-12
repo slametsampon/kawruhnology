@@ -3,7 +3,7 @@
 'use client';
 import siteMetadata from '@/data/siteMetadata';
 import headerNavLinks from '@/data/headerNavLinks';
-import Logo from '@/data/logo75x35.svg';
+import Logo from '@/data/lampu75x45.svg';
 import Link from './Link';
 import MobileNav from './MobileNav';
 import ThemeSwitch from './ThemeSwitch';
@@ -15,7 +15,7 @@ const Header = () => {
       <div>
         <Link href="/" aria-label={siteMetadata.headerTitle}>
           <div className="flex items-center justify-between">
-            <div className="mr-3 rounded-lg border border-gray-300 shadow-sm dark:border-gray-600">
+            <div className="mr-3 overflow-hidden rounded-xl border border-gray-300 bg-white shadow-sm dark:border-gray-600 dark:bg-[#111827]">
               <Logo />
             </div>
           </div>

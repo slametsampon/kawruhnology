@@ -31,7 +31,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <head>
         <link
           rel="icon"
-          href="/mx-core/favicon.ico"
+          href="/kawruhnology/favicon.ico"
           type="image/x-icon"
           sizes="any"
         />
