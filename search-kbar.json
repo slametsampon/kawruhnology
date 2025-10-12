@@ -664,15 +664,11 @@
     "section": "CONTENT",
     "href": "/kawruhnology/blog/website/dynamic-routing-static-regeneration",
     "subtitle": "March 4, 2023",
-    "keywords": []
-  },
-  {
-    "id": "website/server-client-components",
-    "name": "Server and Client Components",
-    "section": "CONTENT",
-    "href": "/kawruhnology/blog/website/server-client-components",
-    "subtitle": "January 8, 2023",
-    "keywords": []
+    "keywords": [
+      "Dynamic-Routing",
+      "Static-Regeneration",
+      "deploy"
+    ]
   },
   {
     "id": "website/deploying-next-apps",
@@ -685,5 +681,13 @@
       "tailwind",
       "deploy"
     ]
+  },
+  {
+    "id": "website/server-client-components",
+    "name": "Server and Client Components",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/website/server-client-components",
+    "subtitle": "January 2, 2023",
+    "keywords": []
   }
 ]
