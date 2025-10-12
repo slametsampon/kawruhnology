@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="30.96 36.72 58.08 62.400000000000006" style="max-height: 500px" width="58.08" height="62.400000000000006">
+  
+  <rect fill="#111827" rx="12" height="120" width="120"/>
+
+  
+  <circle opacity="0.35" fill="url(#glowGradient)" r="28" cy="60" cx="60"/>
+  <circle opacity="0.5" fill="url(#glowGradient)" r="18" cy="60" cx="60"/>
+
+  
+  <path fill="#F97316" d="M60 38C55 47 56 57 60 66C64 57 65 47 60 38Z"/>
+  <path fill="#FDBA74" d="M60 44C58.5 48 59 53 60 58C61 53 61.5 48 60 44Z"/>
+
+  
+  <ellipse stroke-width="1.5" stroke="#F59E0B" fill-opacity="0.12" fill="#FCD34D" ry="22" rx="16" cy="60" cx="60"/>
+
+  
+  <rect fill="#78350F" rx="2" height="6" width="20" y="77" x="50"/>
+  <circle fill="#FBBF24" r="2" cy="80" cx="52"/>
+  <circle fill="#FBBF24" r="2" cy="80" cx="68"/>
+
+  
+  <path fill="#92400E" d="M50 83H70C68 93 52 93 50 83Z"/>
+  <rect fill="#78350F" rx="1" height="4" width="14" y="93" x="53"/>
+
+  
+  <defs>
+    <radialGradient gradientTransform="translate(60 60) scale(30)" gradientUnits="userSpaceOnUse" r="1" cy="0" cx="0" id="glowGradient">
+      <stop stop-opacity="0.9" stop-color="#FCD34D"/>
+      <stop stop-opacity="0" stop-color="#FCD34D" offset="1"/>
+    </radialGradient>
+  </defs>
+</svg>

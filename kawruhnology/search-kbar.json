@@ -1,0 +1,136 @@
+[
+  {
+    "id": "website/github-custom-domain",
+    "name": "Deploy Next.js ke GitHub Pages dengan Custom Domain Gratis",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/website/github-custom-domain",
+    "subtitle": "October 10, 2025",
+    "keywords": [
+      "GitHub-Actions",
+      "deploy",
+      "custom-domain",
+      "artikel"
+    ]
+  },
+  {
+    "id": "website/konfigurtasi-blog",
+    "name": "Konfigurasi Lengkap Next.js Blog (kawruhnology)",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/website/konfigurtasi-blog",
+    "subtitle": "October 8, 2025",
+    "keywords": [
+      "static-web",
+      "blog",
+      "deploy",
+      "github",
+      "contentlayer",
+      "tailwind",
+      "eslint"
+    ]
+  },
+  {
+    "id": "markdown/github-markdown-guide",
+    "name": "Panduan Markdown",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/markdown/github-markdown-guide",
+    "subtitle": "October 7, 2025",
+    "keywords": [
+      "github",
+      "panduan",
+      "markdown",
+      "md",
+      "mdx"
+    ]
+  },
+  {
+    "id": "markdown/math-formula-guide",
+    "name": "Panduan Penulisan Formula Matematika dalam Block Markdown",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/markdown/math-formula-guide",
+    "subtitle": "October 7, 2025",
+    "keywords": [
+      "markdown",
+      "formula",
+      "math"
+    ]
+  },
+  {
+    "id": "AI/patform-ai",
+    "name": "Pemanfaatan AI untuk Mendukung Pekerjaan di Industri Petrokimia",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/AI/patform-ai",
+    "subtitle": "September 20, 2024",
+    "keywords": [
+      "platform-ai",
+      "ai",
+      "gpt",
+      "petrokimia"
+    ]
+  },
+  {
+    "id": "AI/artikel-ai",
+    "name": "Menulis Artikel yang Efektif dengan Prompt Engineering",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/AI/artikel-ai",
+    "subtitle": "September 8, 2024",
+    "keywords": [
+      "prompt-engineering",
+      "ai",
+      "gpt",
+      "artikel"
+    ]
+  },
+  {
+    "id": "AI/prompt-engineering",
+    "name": "Prompt Engineering",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/AI/prompt-engineering",
+    "subtitle": "September 8, 2024",
+    "keywords": [
+      "prompt-engineering",
+      "ai",
+      "gpt"
+    ]
+  },
+  {
+    "id": "website/preview-mode-headless-cms",
+    "name": "Preview Mode for Headless CMS",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/website/preview-mode-headless-cms",
+    "subtitle": "April 9, 2023",
+    "keywords": []
+  },
+  {
+    "id": "website/dynamic-routing-static-regeneration",
+    "name": "Dynamic Routing and Static Regeneration",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/website/dynamic-routing-static-regeneration",
+    "subtitle": "March 4, 2023",
+    "keywords": []
+  },
+  {
+    "id": "website/server-client-components",
+    "name": "Server and Client Components",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/website/server-client-components",
+    "subtitle": "January 8, 2023",
+    "keywords": []
+  },
+  {
+    "id": "website/deploying-next-apps",
+    "name": "Deploying Next.js Apps",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/website/deploying-next-apps",
+    "subtitle": "January 2, 2023",
+    "keywords": [
+      "vercel",
+      "tailwind",
+      "deploy"
+    ]
+  },
+  {
+    "section": "CONTENT",
+    "href": "/kawruhnology/undefined",
+    "subtitle": "Invalid Date"
+  }
+]

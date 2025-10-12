@@ -1,0 +1,23 @@
+<svg role="img" xmlns="http://www.w3.org/2000/svg" viewBox="56.38708946772367 1.7996671698113207 89.9202718006795 55.01864150943396" style="max-height: 500px" width="89.9202718006795" height="55.01864150943396">
+  
+  <defs>
+    <radialGradient r="50%" cy="50%" cx="50%" id="glowGradient">
+      <stop stop-opacity="0.8" stop-color="#38bdf8" offset="0%"/>
+      <stop stop-opacity="0.1" stop-color="#0f172a" offset="100%"/>
+    </radialGradient>
+  </defs>
+
+  
+  <rect rx="12" fill="url(#glowGradient)" height="60" width="200"/>
+
+  
+  <circle stroke-width="2" stroke="#38bdf8" fill="none" r="24" cy="30" cx="100"/>
+
+  
+  <circle opacity="0.8" fill="#38bdf8" r="3" cy="30" cx="100"/>
+
+  
+  <text font-weight="bold" fill="#ffffff" font-size="22" font-family="Consolas, monospace" text-anchor="middle" y="36" x="100">
+    Mx
+  </text>
+</svg>
