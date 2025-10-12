@@ -1,0 +1,800 @@
+---
+title: Tahap 1 – Pengembangan Sistem Monitoring dan Kontrol Individual (ESP-Node to Device)
+date: '2024-10-26'
+tags: ['kontrol', 'iot', 'esp-32', 'esp-node', 'hortilink', 'sensor', 'web']
+draft: false
+images: []
+summary: Pada Tahap 1, kita akan membahas secara mendetail bagaimana perangkat ESP dapat digunakan dalam Mode Access Point (AP), membuat jaringan Wi-Fi lokal yang memungkinkan perangkat seperti smartphone atau laptop untuk mengakses dan mengontrol sistem hidroponik secara langsung.
+---
+
+**Proyek Serial HortiLink: Tahap 1 – Pengembangan Sistem Monitoring dan Kontrol Individual (ESP-Node to Device)**
+
+---
+
+**Rangkuman Proyek:**
+
+Selamat datang di **Proyek Serial [HortiLink](https://slamet-sam.netlify.app/blog/IoT/HortiLink): Tahap 1 – Pengembangan Sistem Monitoring dan Kontrol Individual (ESP-Node to Device)**!
+
+Proyek ini merupakan langkah awal dalam merancang sistem pertanian pintar berbasis IoT, di mana kita akan memanfaatkan perangkat **ESP8266** atau **ESP32** untuk memonitor kondisi lingkungan serta mengontrol perangkat seperti pompa dan katup irigasi dalam sistem hidroponik. Tahap pertama ini difokuskan pada pengembangan sistem monitoring dan kontrol individu yang sederhana dan mudah digunakan.
+
+Pada **Tahap 1**, kita akan membahas secara mendetail bagaimana perangkat ESP dapat digunakan dalam **Mode Access Point (AP)**, membuat jaringan Wi-Fi lokal yang memungkinkan perangkat seperti smartphone atau laptop untuk mengakses dan mengontrol sistem hidroponik secara langsung. Dari instalasi sensor suhu, kelembaban, pH, dan EC, hingga integrasi antarmuka web untuk monitoring langsung, seri ini dirancang untuk membantu Anda membangun fondasi yang kuat bagi sistem pertanian otomatis yang efisien.
+
+Seri ini dikemas dalam langkah-langkah yang praktis, sehingga Anda dapat mengikuti dengan mudah, baik untuk proyek skala kecil maupun sebagai dasar untuk sistem yang lebih besar dan kompleks. Ikuti terus setiap bagian proyek HortiLink untuk mengoptimalkan pertanian Anda dengan teknologi canggih dan solusi yang terjangkau.
+
+![hortilink-tahap1](/static/images/IoT/hortilink-tahap1.webp)
+
+**Konsep HortiLink Tahap1 - sumber ChatGpt**
+
+[Seluruh update file tahap1 ini bisa dilihat pada github](https://github.com/slametsampon/HortiLink/tree/main/tahap1)
+
+---
+
+- [**Pendalaman Materi: HortiLink Tahap 1 – Pengembangan Sistem Monitoring dan Kontrol Individual (ESP-Node to Device)**](#pendalaman-materi-hortilink-tahap-1--pengembangan-sistem-monitoring-dan-kontrol-individual-esp-node-to-device)
+  - [**1.1. Perancangan dan Pengujian Perangkat Keras**](#11-perancangan-dan-pengujian-perangkat-keras)
+    - [1. **Pemilihan Sensor**:](#1-pemilihan-sensor)
+    - [2. **Aktuator**:](#2-aktuator)
+    - [3. **ESP-Family (ESP8266 atau ESP32)**:](#3-esp-family-esp8266-atau-esp32)
+    - [4. **Wiring Diagram - Fritzing**](#4-wiring-diagram---fritzing)
+  - [**1.2. Implementasi Koneksi Wi-Fi dan Komunikasi dengan Smartphone/Laptop: ESP8266 dalam Mode Access Point (AP)**](#12-implementasi-koneksi-wi-fi-dan-komunikasi-dengan-smartphonelaptop-esp8266-dalam-mode-access-point-ap)
+    - [**1. Penjelasan Mode Access Point (AP) pada ESP8266**](#1-penjelasan-mode-access-point-ap-pada-esp8266)
+    - [**2. Web Interface atau Aplikasi Mobile**:](#2-web-interface-atau-aplikasi-mobile)
+    - [**3. Web Interface Menggunakan LittleFS**:](#3-web-interface-menggunakan-littlefs)
+  - [**1.3. Pengujian dan Optimasi Prototipe**](#13-pengujian-dan-optimasi-prototipe)
+  - [**1.4 Pengembangan Lanjutan**:](#14-pengembangan-lanjutan)
+- [**Kesimpulan**](#kesimpulan)
+- [Hak cipta^1. Artikel ini berdasar ChatGpt \& penulis tidak menjamin seluruh akurasi isinya](#hak-cipta1-artikel-ini-berdasar-chatgpt--penulis-tidak-menjamin-seluruh-akurasi-isinya)
+
+---
+
+### **Pendalaman Materi: HortiLink Tahap 1 – Pengembangan Sistem Monitoring dan Kontrol Individual (ESP-Node to Device)**
+
+#### **1.1. Perancangan dan Pengujian Perangkat Keras**
+
+Pada tahap ini, fokus utama adalah merancang perangkat keras yang dapat memonitor kondisi lingkungan dan mengontrol aktuator secara otomatis. Dalam sistem hidroponik, faktor-faktor seperti suhu, kelembaban, pH air, dan konduktivitas listrik (EC) sangat krusial untuk pertumbuhan tanaman optimal. Berikut adalah rincian lebih mendalam tentang elemen-elemen perangkat keras yang dipilih:
+
+##### 1. **Pemilihan Sensor**:
+
+- **Sensor Suhu dan Kelembaban**: Sensor seperti DHT22 atau SHT31 sering digunakan karena mampu mengukur suhu dan kelembaban secara simultan. Sensor ini memiliki akurasi tinggi, rentang operasi luas (-40°C hingga 125°C), serta kemampuan respons cepat terhadap perubahan kondisi lingkungan.
+
+- Berikut adalah tabel komparasi antara **DHT22** dan **SHT31**, dua sensor suhu dan kelembaban yang sering digunakan dalam aplikasi pertanian, termasuk sistem hidroponik. Komparasi ini meliputi aspek penting seperti akurasi, rentang pengukuran, kecepatan respons, konsumsi daya, serta harga.
+
+| **Karakteristik**                 | **DHT22 (AM2302)**                                                | **SHT31**                                                            |
+| --------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------- |
+| **Tipe Sensor**                   | Suhu dan Kelembaban                                               | Suhu dan Kelembaban                                                  |
+| **Akurasi Suhu**                  | ±0.5°C (pada rentang 0°C hingga 50°C)                             | ±0.3°C (pada rentang -40°C hingga 125°C)                             |
+| **Akurasi Kelembaban**            | ±2% RH (Rentang 20-80% RH)                                        | ±2% RH (Rentang 0-100% RH)                                           |
+| **Rentang Pengukuran Suhu**       | -40°C hingga 80°C                                                 | -40°C hingga 125°C                                                   |
+| **Rentang Pengukuran Kelembaban** | 0 hingga 100% RH                                                  | 0 hingga 100% RH                                                     |
+| **Kecepatan Respons**             | 2 detik (suhu), 5 detik (kelembaban)                              | kurang dari 1 detik                                                  |
+| **Resolusi Suhu**                 | 0.1°C                                                             | 0.015°C                                                              |
+| **Resolusi Kelembaban**           | 0.1% RH                                                           | 0.01% RH                                                             |
+| **Tegangan Operasi**              | 3.3V hingga 6V                                                    | 2.4V hingga 5.5V                                                     |
+| **Konsumsi Daya**                 | 1.5mA saat pengukuran, 0.1mA dalam standby                        | 0.15mA saat idle, 0.5mA saat pengukuran                              |
+| **Antarmuka Komunikasi**          | Satu kabel data (single-wire)                                     | I²C (Inter-Integrated Circuit) atau PWM                              |
+| **Kalibrasi**                     | Sudah dikalibrasi dari pabrik                                     | Sudah dikalibrasi dari pabrik                                        |
+| **Ketahanan Lingkungan**          | Relatif rentan terhadap kelembaban tinggi dalam jangka waktu lama | Dirancang untuk ketahanan yang lebih baik terhadap kelembaban tinggi |
+| **Harga**                         | Lebih murah (sekitar $5 - $8 per unit)                            | Lebih mahal (sekitar $15 - $25 per unit)                             |
+| **Aplikasi Ideal**                | Sistem sederhana, aplikasi dengan biaya rendah                    | Sistem yang membutuhkan akurasi tinggi dan respons cepat             |
+
+- **Analisis**
+
+  - **Akurasi dan Rentang Pengukuran**: SHT31 memiliki akurasi suhu yang lebih tinggi dan rentang pengukuran yang lebih luas dibandingkan DHT22, terutama jika digunakan di lingkungan yang lebih ekstrem (di atas 80°C). Ini juga berlaku untuk pengukuran kelembaban, di mana SHT31 menawarkan akurasi lebih baik dan pengukuran dalam rentang kelembaban penuh.
+  - **Kecepatan Respons**: SHT31 lebih unggul dalam hal kecepatan respons, terutama pada kelembaban, yang membuatnya lebih ideal untuk sistem real-time yang membutuhkan data lingkungan segera.
+
+  - **Konsumsi Daya**: Meskipun SHT31 lebih efisien dalam konsumsi daya saat tidak digunakan (idle), DHT22 memiliki keunggulan dalam hal konsumsi daya lebih rendah saat pengukuran, terutama berguna untuk aplikasi yang menggunakan baterai.
+
+  - **Harga dan Aplikasi**: Dari sisi harga, DHT22 adalah pilihan yang lebih ekonomis, membuatnya cocok untuk aplikasi skala kecil atau prototipe. Di sisi lain, SHT31 lebih cocok untuk aplikasi yang memerlukan presisi tinggi, seperti sistem pengendalian iklim yang presisi dalam rumah kaca atau hidroponik skala besar.
+
+  Kesimpulannya, jika prioritas adalah **akurasi tinggi dan respons cepat**, **SHT31** lebih unggul. Namun, jika **biaya rendah dan kesederhanaan** lebih diutamakan, **DHT22** sudah cukup memadai untuk sebagian besar aplikasi.
+
+- **Sensor pH**: Dalam hidroponik, pH air sangat penting untuk memastikan nutrisi terserap dengan baik oleh tanaman. Sensor pH berbasis elektroda kaca, seperti sensor pH-4502C, umumnya digunakan karena keandalannya dalam pengukuran jangka panjang.
+
+- Jika Anda ingin menghubungkan sensor EC ke **ESP8266 atau ESP32**, Anda bisa menggunakan **sensor EC berbasis analog atau digital** yang lebih kompatibel dengan mikrokontroler seperti ESP. Berikut adalah beberapa opsi yang mendukung integrasi ini:
+
+  - 1. **Gravity Analog EC Sensor dari DFRobot**:
+
+    - Sensor EC ini dirancang khusus untuk digunakan dengan mikrokontroler seperti ESP32/ESP8266. Ia memiliki output analog yang mudah dihubungkan ke pin ADC pada ESP, sehingga data EC dapat dibaca secara langsung. Selain itu, sensor ini juga tahan air dan dilengkapi dengan probe EC【17†source】【18†source】.
+
+  - 2. **DIY EC Sensor dengan ADC**:
+
+    - Sensor EC sederhana juga bisa dibangun menggunakan probe konduktivitas dan modul **ADC (Analog-to-Digital Converter)** jika sensor tersebut memiliki output analog. Dengan menambahkan ADC eksternal seperti **ADS1115**, ESP32 dapat membaca nilai EC dengan lebih akurat, karena ESP sendiri memiliki keterbatasan pada resolusi ADC-nya.
+
+  - 3. **Sainsmart Digital EC Meter**:
+    - Beberapa sensor EC digital menawarkan komunikasi menggunakan **I²C atau UART**, yang mempermudah integrasi dengan ESP32. Modul seperti ini biasanya lebih mahal tetapi memberikan data yang lebih akurat dan siap digunakan dalam proyek IoT.
+
+  Dengan sensor EC yang memiliki **output analog atau digital**, **ESP8266/ESP32** dapat membaca data konduktivitas listrik dari larutan nutrisi hidroponik. Data tersebut kemudian bisa diolah untuk pengaturan otomatis pompa atau pemberian nutrisi berdasarkan nilai EC yang terukur, yang dapat diakses melalui antarmuka web atau aplikasi smartphone.
+
+- **Sensor EC (Electrical Conductivity)**: EC mengukur konsentrasi larutan nutrisi. Sensor EC berbasis probe konduktivitas (misalnya TDS Meter) adalah pilihan yang umum, dengan kemampuan untuk mengukur konduktivitas air dalam rentang ideal untuk tanaman hidroponik (0,8 hingga 2,0 mS/cm).
+
+##### 2. **Aktuator**:
+
+- **Pompa Air**: Pompa digunakan untuk sirkulasi air dan larutan nutrisi. Pompa submersible atau inline sering digunakan dalam sistem hidroponik untuk memastikan distribusi nutrisi yang merata ke seluruh bagian tanaman.
+- **Solenoid Valve**: Katup solenoid berguna untuk mengatur aliran air berdasarkan kondisi yang terpantau oleh sensor. Katup ini bisa diatur untuk membuka atau menutup berdasarkan perintah dari ESP melalui relay.
+- **Pemberi Nutrisi**: Sistem ini dapat dilengkapi dengan dispenser otomatis untuk menambahkan larutan nutrisi berdasarkan bacaan dari sensor EC. Hal ini memastikan nutrisi dalam larutan tetap berada dalam kisaran optimal tanpa intervensi manual yang berlebihan.
+
+##### 3. **ESP-Family (ESP8266 atau ESP32)**:
+
+- **ESP8266**: Modul ini menawarkan kemampuan Wi-Fi dengan konsumsi daya rendah dan cocok untuk aplikasi sederhana. Ia mendukung protokol komunikasi seperti HTTP atau MQTT, yang memungkinkan pengiriman data sensor secara real-time ke perangkat pengguna.
+- **ESP32**: Lebih canggih daripada ESP8266, ESP32 memiliki prosesor dual-core dan lebih banyak GPIO, serta mendukung Bluetooth dan Wi-Fi. Ini lebih cocok untuk aplikasi yang membutuhkan pemrosesan data yang lebih cepat dan integrasi multi-sensor lebih kompleks.
+
+Berikut adalah tabel komparasi antara **ESP32** dan **ESP8266**, dua mikrokontroler populer yang sering digunakan dalam proyek IoT.
+
+| **Karakteristik**       | **ESP8266**                                                                 | **ESP32**                                                                                                      |
+| ----------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **Prosesor**            | Single-core, Tensilica L106 80 MHz                                          | Dual-core, Tensilica Xtensa LX6 hingga 240 MHz                                                                 |
+| **Memori (RAM)**        | ~50 KB RAM untuk aplikasi                                                   | 520 KB RAM                                                                                                     |
+| **Flash Memory**        | 512 KB hingga 4 MB                                                          | 4 MB (rata-rata), mendukung hingga 16 MB                                                                       |
+| **Wi-Fi**               | 2.4 GHz, 802.11 b/g/n                                                       | 2.4 GHz, 802.11 b/g/n, mendukung Wi-Fi Direct                                                                  |
+| **Bluetooth**           | Tidak ada                                                                   | Bluetooth v4.2 (BLE + Klasik)                                                                                  |
+| **Jumlah GPIO**         | 17 pin GPIO                                                                 | 36 pin GPIO, lebih fleksibel                                                                                   |
+| **Antarmuka Periferal** | I²C, SPI, UART, PWM                                                         | I²C, SPI, UART, PWM, CAN, I²S, DAC, ADC yang lebih akurat                                                      |
+| **Kecepatan ADC**       | 10-bit, hingga 100 kS/s                                                     | 12-bit, mendukung hingga 18-channel                                                                            |
+| **Konsumsi Daya**       | Lebih rendah di mode aktif dibanding ESP32                                  | Memiliki mode ultra-low-power yang lebih efisien di mode sleep                                                 |
+| **Fitur Keamanan**      | WPA/WPA2, autentikasi dasar                                                 | WPA/WPA2, RSA, AES, SHA-2, Secure Boot                                                                         |
+| **Harga (perkiraan)**   | Lebih murah (~$2 - $4)                                                      | Sedikit lebih mahal (~$5 - $8)                                                                                 |
+| **Aplikasi Ideal**      | Proyek IoT sederhana, yang tidak membutuhkan Bluetooth atau prosesor tinggi | Aplikasi yang lebih kompleks, termasuk yang membutuhkan Bluetooth, pemrosesan cepat, dan fitur keamanan tinggi |
+
+- **Kesimpulan**
+
+  - **ESP8266** cocok untuk aplikasi IoT dasar atau yang berbiaya rendah, seperti sensor lingkungan sederhana atau aplikasi kontrol jarak jauh yang hanya membutuhkan koneksi Wi-Fi.
+  - **ESP32**, dengan dual-core, Bluetooth, lebih banyak GPIO, dan kemampuan keamanan tinggi, ideal untuk aplikasi yang membutuhkan pemrosesan lebih cepat, koneksi lebih banyak perangkat, atau pengelolaan data secara aman.
+
+  Pilihan antara keduanya tergantung pada kebutuhan spesifik proyek, terutama terkait dengan kompleksitas, keamanan, dan anggaran.
+
+Dalam aplikasi ini, digunakan **NodeMCU V3 CH340 Wireless module NodeMcu Lua WIFI Internet Esp8266**
+
+Adapun pinout seperti dalam gambar berikut ini:
+
+![NodeMCU pinout](/static/images/IoT/nodemcu-v3-pinout-complete-final.png)
+
+Sumber : https://cyberblogspot.com/nodemcu-v3-esp8266-pinout-and-configuration/
+
+##### 4. **Wiring Diagram - Fritzing**
+
+![hortiLink-tahap1_fritzing](/static/images/IoT/hortiLink-tahap1_fritzing.png)
+
+---
+
+#### **1.2. Implementasi Koneksi Wi-Fi dan Komunikasi dengan Smartphone/Laptop: ESP8266 dalam Mode Access Point (AP)**
+
+Pada tahap ini, ESP8266 diatur untuk bekerja dalam **Mode Access Point (AP)**, di mana perangkat ini menciptakan jaringan Wi-Fi sendiri yang memungkinkan perangkat lain (seperti smartphone atau laptop) terhubung langsung tanpa perlu router eksternal. Mode ini sangat berguna untuk lingkungan yang tidak memiliki infrastruktur jaringan yang stabil atau ketika diperlukan komunikasi langsung antara perangkat dan ESP8266.
+
+##### **1. Penjelasan Mode Access Point (AP) pada ESP8266**
+
+- **Mode AP** memungkinkan ESP8266 berfungsi sebagai pemancar Wi-Fi, menciptakan jaringan yang bisa diakses oleh perangkat seperti smartphone atau laptop.
+- Setelah terhubung ke jaringan ini, pengguna dapat berinteraksi dengan ESP8266 melalui antarmuka web atau aplikasi, baik untuk memonitor data sensor atau mengontrol perangkat seperti pompa atau katup solenoid.
+
+- **Keuntungan Mode AP**:
+
+  - 1. **Koneksi Tanpa Router**: Pengguna tidak memerlukan router tambahan. ESP8266 menciptakan jaringannya sendiri yang bisa dihubungkan secara langsung oleh perangkat.
+  - 2. **Akses Lokal**: Semua komunikasi terjadi secara lokal, yang berarti data tidak perlu dikirim ke server eksternal, menjaga privasi dan kecepatan akses.
+  - 3. **Mobilitas Tinggi**: Mode AP sangat berguna untuk aplikasi portabel, seperti sensor lingkungan atau sistem monitoring yang dapat dipindah-pindah.
+
+- **Langkah-Langkah Setup ESP8266 dalam Mode Access Point**
+
+  - 1. **Memasang Library dan Tools**:
+
+    - Sebelum memulai, pastikan Anda memiliki **Arduino IDE** dengan **ESP8266 board** yang sudah diinstal. Jika belum, tambahkan melalui **Boards Manager** di Arduino IDE.
+
+  - 2. **Kode Setup Mode AP pada ESP8266**:
+       Berikut adalah contoh kode untuk mengonfigurasi ESP8266 sebagai Access Point. Dalam contoh ini, ESP8266 akan membuat jaringan Wi-Fi dengan SSID (nama jaringan) "HortiLink_AP" dan kata sandi "12345678".
+
+    ```cpp
+    #include <ESP8266WiFi.h>
+
+    // Tentukan SSID dan password Access Point
+    const char *ssid = "HortiLink_AP";
+    const char *password = "12345678";
+
+    void setup() {
+      Serial.begin(115200);
+
+      // Set ESP8266 sebagai Access Point
+      WiFi.softAP(ssid, password);
+
+      Serial.println("Access Point Mode");
+      Serial.print("SSID: ");
+      Serial.println(ssid);
+
+      // Tampilkan alamat IP dari ESP8266 dalam mode AP
+      IPAddress IP = WiFi.softAPIP();
+      Serial.print("IP Address: ");
+      Serial.println(IP);
+    }
+
+    void loop() {
+      // Kode utama untuk memproses permintaan web bisa diletakkan di sini
+    }
+    ```
+
+    **Penjelasan Kode**:
+
+    - `WiFi.softAP(ssid, password)` mengaktifkan mode AP dengan nama jaringan dan kata sandi yang ditentukan.
+    - `WiFi.softAPIP()` akan menampilkan alamat IP default yang digunakan oleh ESP8266 (biasanya 192.168.4.1). Pengguna dapat memasukkan IP ini di browser untuk mengakses antarmuka web yang dirancang untuk sistem.
+
+  - 3. **Menguji Koneksi**:
+
+    - Kompilasi dan unggah kode ke ESP8266 melalui Arduino IDE.
+    - Setelah diunggah, ESP8266 akan mulai memancarkan jaringan Wi-Fi yang bisa ditemukan di daftar jaringan Wi-Fi pada perangkat smartphone atau laptop.
+    - Hubungkan perangkat ke jaringan "HortiLink_AP" dengan menggunakan kata sandi yang sudah ditentukan.
+
+  - 4. **Menambah Antarmuka Web**:
+       Untuk mengontrol dan memantau data dari sensor yang terhubung ke ESP8266, Anda dapat membuat antarmuka berbasis web sederhana. Berikut contoh tambahan kode untuk menampilkan halaman web dasar:
+
+    ```cpp
+    #include <ESP8266WiFi.h>
+    #include <ESP8266WebServer.h>
+
+    ESP8266WebServer server(80);
+
+    // Halaman HTML sederhana
+    String htmlPage = "<html><body><h1>Welcome to HortiLink AP</h1><p>Monitor and control your farm here!</p></body></html>";
+
+    void handleRoot() {
+      server.send(200, "text/html", htmlPage);
+    }
+
+    void setup() {
+      Serial.begin(115200);
+      WiFi.softAP(ssid, password);
+      server.on("/", handleRoot);
+      server.begin();
+      Serial.println("Web server started.");
+    }
+
+    void loop() {
+      server.handleClient();
+    }
+    ```
+
+    **Penjelasan Kode**:
+
+    - `ESP8266WebServer server(80);` membuat server web pada port 80.
+    - `server.on("/", handleRoot);` mengatur rute ketika pengguna mengakses alamat IP ESP, yang akan memicu fungsi `handleRoot` untuk menampilkan halaman web sederhana.
+    - Anda bisa mengakses halaman ini melalui browser di perangkat yang terhubung dengan jaringan Wi-Fi ESP8266 dengan memasukkan alamat IP ESP (misalnya, 192.168.4.1).
+
+1. **Mengembangkan Antarmuka Lebih Lanjut**:
+   Anda bisa memperluas antarmuka dengan menambahkan kontrol perangkat (misalnya, tombol untuk menghidupkan/mematikan pompa atau katup) dan memantau data sensor dalam waktu nyata dengan menggunakan AJAX atau WebSocket agar halaman web tidak perlu di-refresh untuk memperbarui data.
+
+- **Optimalisasi dan Pengujian**
+
+  - **Keamanan Jaringan**: Untuk melindungi jaringan Wi-Fi dari akses tidak sah, gunakan kata sandi yang kuat dan jika diperlukan, tambahkan otentikasi tambahan pada antarmuka web.
+  - **Responsivitas Web**: Pastikan bahwa antarmuka web dapat diakses secara cepat dan data yang dikirim dari sensor diperbarui secara efisien. Gunakan teknik caching atau pengoptimalan server-side jika diperlukan.
+
+- **Kesimpulan**
+  Mode **Access Point (AP)** pada ESP8266 adalah solusi praktis dan fleksibel untuk menciptakan jaringan Wi-Fi mandiri, memungkinkan sistem pertanian pintar seperti **HortiLink** untuk diakses secara lokal tanpa perlu infrastruktur jaringan tambahan. Proses setup ini melibatkan pengaturan nama jaringan, kata sandi, dan pembuatan antarmuka web untuk memonitor dan mengontrol perangkat yang terhubung.
+
+- **Lebih Lanjut ESP8266WebServer**
+
+**`ESP8266WebServer`** adalah library yang memungkinkan **ESP8266** berfungsi sebagai server web sederhana. Library ini sangat berguna dalam proyek IoT karena memungkinkan ESP8266 untuk menyediakan antarmuka web di mana pengguna dapat mengakses dan mengontrol perangkat melalui browser. Berikut adalah penjelasan lebih lanjut tentang fungsi dan penggunaannya.
+
+- **Fungsi Utama `ESP8266WebServer`**
+
+1. **Membuat Halaman Web**: Dengan `ESP8266WebServer`, kita bisa membuat halaman web yang dapat diakses melalui jaringan Wi-Fi lokal. Halaman ini memungkinkan pengguna untuk menampilkan data, seperti hasil sensor, dan juga mengontrol perangkat, seperti menyalakan atau mematikan lampu atau pompa.
+
+2. **Penanganan Rute (Routing)**: Library ini memiliki fungsi **`server.on()`** yang memungkinkan pengguna untuk mengatur “rute” atau alamat URL tertentu yang akan merespons tindakan tertentu. Misalnya:
+
+   - **Rute utama (root)** `/`: Halaman awal untuk antarmuka pengguna.
+   - **Rute data** `/getData`: Mengambil data sensor dalam format JSON.
+   - **Rute kontrol** `/control`: Mengontrol perangkat berdasarkan perintah yang dikirim pengguna (misalnya, `pump_on`, `valve_open`).
+
+3. **Mendukung Format Respons**: `ESP8266WebServer` dapat mengirim respons dalam berbagai format, termasuk **HTML**, **JSON**, dan **plain text**. Format JSON sering digunakan dalam aplikasi IoT karena memungkinkan data terstruktur yang mudah diakses oleh JavaScript di halaman web.
+
+4. **Koneksi HTTP**: Library ini mendukung **HTTP GET dan POST**, sehingga pengguna dapat mengirim data ke ESP8266 (POST) atau meminta data darinya (GET).
+
+- **Implementasi Dasar**
+
+Berikut adalah implementasi dasar untuk memulai dengan `ESP8266WebServer`:
+
+```cpp
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+
+ESP8266WebServer server(80);  // Menginisialisasi server di port 80
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.softAP("MyESP_AP", "12345678");  // Set mode Access Point
+
+  server.on("/", []() {
+    server.send(200, "text/html", "<h1>Welcome to My ESP Web Server</h1>");
+  });
+
+  server.on("/getData", []() {
+    String jsonData = "{\"temperature\":25,\"humidity\":60}";
+    server.send(200, "application/json", jsonData);
+  });
+
+  server.on("/control", []() {
+    String device = server.arg("device");
+    if (device == "on") {
+      // Perintah menyalakan perangkat
+    } else if (device == "off") {
+      // Perintah mematikan perangkat
+    }
+    server.send(200, "text/plain", "Command received");
+  });
+
+  server.begin();
+  Serial.println("Server started");
+}
+
+void loop() {
+  server.handleClient();
+}
+```
+
+- **Penjelasan Fungsi Utama**
+
+  - **`server.on(path, handler)`**: Mendaftarkan rute yang akan dipanggil saat pengguna mengakses `path`. Misalnya, **`/getData`** akan memanggil fungsi untuk mengirim data sensor.
+  - **`server.send(code, type, content)`**: Mengirim respons ke klien dengan kode status HTTP (misalnya 200 untuk sukses), tipe konten (`text/html`, `application/json`), dan isi konten.
+
+- **Kelebihan `ESP8266WebServer`**
+
+  - **Mudah Digunakan**: Library ini sangat sederhana, dengan API yang mudah dipahami untuk pengembangan aplikasi web kecil di ESP8266.
+  - **Cepat dan Ringan**: Library ini dioptimalkan untuk perangkat dengan sumber daya terbatas, seperti ESP8266, yang memiliki memori dan prosesor yang terbatas.
+  - **Fleksibel**: Dapat digunakan dalam berbagai aplikasi IoT untuk monitoring dan kontrol perangkat, baik melalui jaringan lokal maupun dengan Access Point langsung dari ESP8266.
+
+- **Keterbatasan**
+
+  - **Tidak Mendukung HTTPS**: Library ini hanya mendukung HTTP, bukan HTTPS, sehingga koneksinya tidak dienkripsi.
+  - **Keterbatasan untuk Aplikasi Kompleks**: Library ini lebih cocok untuk aplikasi web sederhana. Untuk aplikasi yang lebih kompleks atau real-time, lebih baik menggunakan **WebSocket** atau protokol lain seperti MQTT.
+
+  Dengan memahami **`ESP8266WebServer`**, Anda dapat membangun antarmuka web sederhana untuk berbagai aplikasi IoT, seperti memonitor sensor atau mengontrol perangkat secara langsung.
+
+##### **2. Web Interface atau Aplikasi Mobile**:
+
+Berikut adalah tahapan untuk membuat **antarmuka web** sederhana guna memantau data sensor dan mengontrol perangkat seperti pompa dan katup solenoid menggunakan **ESP8266**:
+
+[lebih detail pembuatan web server pada esp](https://slamet-sam.netlify.app/blog/IoT/web-server-esp)
+
+- **1. Persiapan Koneksi dan Library**
+
+Sebelum memulai, pastikan semua perangkat keras sudah tersambung dan ESP8266 telah diatur sebagai **Access Point (AP)** atau terhubung ke Wi-Fi lokal jika menggunakan mode **Station (STA)**.
+
+Anda akan menggunakan:
+
+- **Arduino IDE** untuk pemrograman ESP8266.
+- **HTML** dan **JavaScript** untuk antarmuka web.
+- **ESP8266WebServer** library untuk memproses permintaan HTTP dan menampilkan halaman web.
+
+- **2. Membuat Struktur Halaman Web Sederhana**
+
+Langkah pertama adalah membuat struktur halaman HTML sederhana yang dapat menampilkan data sensor dan tombol untuk mengontrol perangkat. Berikut contoh sederhana:
+
+- **Kode HTML Dasar untuk Antarmuka Web**
+
+```html
+<!doctype html>
+<html>
+  <head>
+    <title>HortiLink Web Interface</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+      }
+      h1 {
+        color: green;
+      }
+      .sensor-data {
+        font-size: 20px;
+        margin-bottom: 20px;
+      }
+      .control-btn {
+        padding: 10px 20px;
+        margin: 10px;
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      .control-btn:active {
+        background-color: #45a049;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>HortiLink Dashboard</h1>
+    <div class="sensor-data">
+      <p>Temperature: <span id="temperature">Loading...</span> °C</p>
+      <p>Humidity: <span id="humidity">Loading...</span> %</p>
+      <p>pH Level: <span id="ph">Loading...</span></p>
+      <p>EC Level: <span id="ec">Loading...</span> mS/cm</p>
+    </div>
+
+    <h2>Device Controls</h2>
+    <button class="control-btn" onclick="sendCommand('pump_on')">Turn Pump ON</button>
+    <button class="control-btn" onclick="sendCommand('pump_off')">Turn Pump OFF</button>
+    <br />
+    <button class="control-btn" onclick="sendCommand('valve_open')">Open Valve</button>
+    <button class="control-btn" onclick="sendCommand('valve_close')">Close Valve</button>
+
+    <script>
+      // Mengambil data sensor secara berkala dari ESP
+      setInterval(() => {
+        fetch('/getData')
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById('temperature').innerText = data.temperature
+            document.getElementById('humidity').innerText = data.humidity
+            document.getElementById('ph').innerText = data.ph
+            document.getElementById('ec').innerText = data.ec
+          })
+      }, 5000) // Update setiap 5 detik
+
+      // Mengirim perintah untuk mengontrol pompa/valve
+      function sendCommand(command) {
+        fetch('/control?device=' + command).then((response) => {
+          if (response.ok) {
+            alert('Command sent: ' + command)
+          } else {
+            alert('Failed to send command')
+          }
+        })
+      }
+    </script>
+  </body>
+</html>
+```
+
+- **Penjelasan Kode**:
+
+  - **HTML & CSS**: Menyediakan antarmuka web yang menampilkan data suhu, kelembaban, pH, dan EC, serta tombol untuk mengontrol perangkat seperti pompa dan katup.
+  - **JavaScript**:
+    - **`fetch("/getData")`**: Digunakan untuk mengambil data sensor dari ESP8266 setiap 5 detik.
+    - **`fetch("/control?device=" + command)`**: Mengirim perintah kontrol (seperti menghidupkan/mematikan pompa) ke ESP8266.
+
+- **3. Implementasi di ESP8266**
+
+Berikut adalah kode di ESP8266 untuk menangani permintaan dari antarmuka web:
+
+```cpp
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+
+ESP8266WebServer server(80);  // Web server pada port 80
+
+// Simulasi data sensor
+float temperature = 25.0;
+float humidity = 60.0;
+float ph = 6.5;
+float ec = 1.2;
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.softAP("HortiLink_AP", "12345678");  // Setup Access Point
+
+  // Rute untuk halaman web
+  server.on("/", []() {
+    server.send(200, "text/html", webpage);  // Mengirim halaman HTML
+  });
+
+  // Rute untuk mengambil data sensor
+  server.on("/getData", []() {
+    String data = "{\"temperature\":" + String(temperature) +
+                  ", \"humidity\":" + String(humidity) +
+                  ", \"ph\":" + String(ph) +
+                  ", \"ec\":" + String(ec) + "}";
+    server.send(200, "application/json", data);
+  });
+
+  // Rute untuk mengontrol perangkat
+  server.on("/control", []() {
+    String device = server.arg("device");
+    if (device == "pump_on") {
+      Serial.println("Turning pump ON");
+      // Aktifkan relay untuk pompa
+    } else if (device == "pump_off") {
+      Serial.println("Turning pump OFF");
+      // Matikan relay untuk pompa
+    } else if (device == "valve_open") {
+      Serial.println("Opening valve");
+      // Buka katup solenoid
+    } else if (device == "valve_close") {
+      Serial.println("Closing valve");
+      // Tutup katup solenoid
+    }
+    server.send(200, "text/plain", "OK");
+  });
+
+  server.begin();
+  Serial.println("Server started");
+}
+
+void loop() {
+  server.handleClient();
+}
+
+const char webpage[] PROGMEM = R"=====(
+<!DOCTYPE html>
+<html>
+<head>... (KODE HTML SAMA SEPERTI DI ATAS) ...</head>
+<body>...</body>
+</html>
+)=====";
+```
+
+- **Penjelasan Kode**:
+
+  - **`server.on("/")`**: Menangani permintaan untuk menampilkan halaman web utama.
+  - **`server.on("/getData")`**: Menyediakan data sensor dalam format JSON.
+  - **`server.on("/control")`**: Mengontrol perangkat berdasarkan perintah dari halaman web (misalnya menyalakan/mematikan pompa atau membuka/menutup katup).
+
+- **4. Testing dan Pengembangan Lebih Lanjut**
+
+  - **Pengujian**: Setelah kode diunggah ke ESP8266, akses antarmuka web melalui alamat IP ESP (misalnya, `http://192.168.4.1` jika menggunakan mode AP).
+
+Jika ESP merespon dengan baik, maka akan tampak display berikut pada device
+
+![dashboard-tahap1](/static/images/IoT/HortiLink-tahap1.PNG)
+
+**Dashboard Tahap1**
+
+##### **3. Web Interface Menggunakan LittleFS**:
+
+[Lebih detail setup LittleFS](https://slamet-sam.netlify.app/blog/IoT/web-server-esp#4-struktur-folder-untuk-file-web)
+
+- Buat folder `tahap1` serta folder `data` di dalamnya
+- Folder data untuk menyimpan seluruh file terkait web (html, css, javascript)
+- Contoh file yang perlu disimpan di dalam folder `data` meliputi:
+  - `index.html` — untuk halaman HTML utama.
+  - `style.css` — untuk gaya tampilan halaman web.
+  - `script.js` — untuk fungsi JavaScript.
+  - File-file ini nantinya akan diunggah ke ESP, di mana LittleFS akan menyimpannya di dalam memori ESP sehingga dapat diakses oleh web server.
+
+Sebagai contoh, struktur direktori proyek seharusnya tampak seperti berikut:
+
+```
+tahap1/
+├── data/
+│   ├── index.html
+│   ├── style.css
+│   └── script.js
+└── tahap1.ino
+```
+
+1. **index.html**
+
+```html
+<!doctype html>
+<html>
+  <head>
+    <title>HortiLink Web Interface</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <h1>HortiLink Dashboard</h1>
+    <div class="sensor-data">
+      <p>Temperature: <span id="temperature">Loading...</span> °C</p>
+      <p>Humidity: <span id="humidity">Loading...</span> %</p>
+      <p>pH Level: <span id="ph">Loading...</span></p>
+      <p>EC Level: <span id="ec">Loading...</span> mS/cm</p>
+    </div>
+
+    <h2>Device Controls</h2>
+    <button class="control-btn" onclick="sendCommand('pump_on')">Turn Pump ON</button>
+    <button class="control-btn" onclick="sendCommand('pump_off')">Turn Pump OFF</button>
+    <br />
+    <button class="control-btn" onclick="sendCommand('valve_open')">Open Valve</button>
+    <button class="control-btn" onclick="sendCommand('valve_close')">Close Valve</button>
+
+    <script src="script.js"></script>
+  </body>
+</html>
+```
+
+2. **style.css**
+
+   ```css
+   body {
+     font-family: Arial, sans-serif;
+     text-align: center;
+   }
+   h1 {
+     color: green;
+   }
+   .sensor-data {
+     font-size: 20px;
+     margin-bottom: 20px;
+   }
+   .control-btn {
+     padding: 10px 20px;
+     margin: 10px;
+     background-color: #4caf50;
+     color: white;
+     border: none;
+     cursor: pointer;
+   }
+   .control-btn:active {
+     background-color: #45a049;
+   }
+   ```
+
+3. **script.js**
+
+   ```javascript
+   // Mengambil data sensor secara berkala dari ESP
+   setInterval(() => {
+     fetch('/getData')
+       .then((response) => response.json())
+       .then((data) => {
+         document.getElementById('temperature').innerText = data.temperature
+         document.getElementById('humidity').innerText = data.humidity
+         document.getElementById('ph').innerText = data.ph
+         document.getElementById('ec').innerText = data.ec
+       })
+   }, 5000) // Update setiap 5 detik
+
+   // Mengirim perintah untuk mengontrol pompa/valve
+   function sendCommand(command) {
+     fetch('/control?device=' + command).then((response) => {
+       if (response.ok) {
+         alert('Command sent: ' + command)
+       } else {
+         alert('Failed to send command')
+       }
+     })
+   }
+   ```
+
+4. **tahap1.ino**
+
+```cpp
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+
+ESP8266WebServer server(80);  // Web server pada port 80
+
+// Simulasi data sensor
+float temperature = 25.0;
+float humidity = 60.0;
+float ph = 6.5;
+float ec = 1.2;
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.softAP("HortiLink_AP", "12345678");  // Setup Access Point
+
+  // Rute untuk halaman web
+  server.on("/", []() {
+    server.send(200, "text/html", webpage);  // Mengirim halaman HTML
+  });
+
+  // Rute untuk mengambil data sensor
+  server.on("/getData", []() {
+    String data = "{\"temperature\":" + String(temperature) +
+                  ", \"humidity\":" + String(humidity) +
+                  ", \"ph\":" + String(ph) +
+                  ", \"ec\":" + String(ec) + "}";
+    server.send(200, "application/json", data);
+  });
+
+  // Rute untuk mengontrol perangkat
+  server.on("/control", []() {
+    String device = server.arg("device");
+    if (device == "pump_on") {
+      Serial.println("Turning pump ON");
+      // Aktifkan relay untuk pompa
+    } else if (device == "pump_off") {
+      Serial.println("Turning pump OFF");
+      // Matikan relay untuk pompa
+    } else if (device == "valve_open") {
+      Serial.println("Opening valve");
+      // Buka katup solenoid
+    } else if (device == "valve_close") {
+      Serial.println("Closing valve");
+      // Tutup katup solenoid
+    }
+    server.send(200, "text/plain", "OK");
+  });
+
+  server.begin();
+  Serial.println("Server started");
+}
+
+void loop() {
+  server.handleClient();
+}
+
+```
+
+5. **Lakukan upload file web dalam folder data dengan tool LittleFS**
+6. **Compile/verify file tahap1.ino dan upload ke esp**
+7. **Test seperti diterangan di atas**
+
+---
+
+- **Real-Time Monitoring**: Respons sistem diuji dengan memastikan data sensor diperbarui secara berkala (misalnya setiap 5 detik) dan ditampilkan dalam antarmuka pengguna tanpa penundaan signifikan.
+- **Kontrol Aktuator**: Sistem diuji dengan mengaktifkan pompa atau solenoid berdasarkan kondisi sensor (misalnya, ketika kelembaban turun di bawah titik tertentu, pompa irigasi otomatis dinyalakan).
+
+- **Kesimpulan**
+
+Tahapan ini mencakup pembuatan antarmuka web sederhana yang memungkinkan pengguna memantau data sensor dan mengontrol perangkat yang terhubung ke ESP8266. Kode ini dapat disesuaikan lebih lanjut untuk mendukung fitur lanjutan sesuai kebutuhan sistem hidroponik Anda.
+
+#### **1.3. Pengujian dan Optimasi Prototipe**
+
+Pengujian prototipe dilakukan secara menyeluruh untuk memastikan stabilitas, ketepatan, dan keandalan sistem dalam berbagai kondisi. Beberapa skenario pengujian termasuk simulasi kondisi lingkungan yang berubah dan penambahan perangkat keras tambahan.
+
+1. **Stres Test Sistem**:
+
+   - **Simulasi Kelembaban dan Nutrisi**: Dalam skenario ini, simulasi perubahan kelembaban dilakukan dengan cara menurunkan kelembaban secara tiba-tiba, memeriksa apakah sistem mampu mengaktifkan pompa irigasi dengan cepat dan mengembalikan kelembaban ke tingkat optimal.
+   - **Simulasi Kegagalan Koneksi Wi-Fi**: Sistem diuji dengan memutus koneksi Wi-Fi untuk melihat bagaimana perangkat merespon, apakah dapat reconnect secara otomatis, atau apakah data dapat disimpan secara lokal hingga koneksi dipulihkan.
+
+2. **Perbaikan Bugs dan Troubleshooting**:
+   - **Kalibrasi Sensor**: Sensor-sensor seperti pH dan EC perlu dikalibrasi secara berkala untuk memastikan akurasi. Ketidakakuratan dalam pengukuran dapat diidentifikasi selama pengujian dan memerlukan penyesuaian atau penggantian sensor.
+   - **Optimasi Respons Aktuator**: Jika terjadi keterlambatan dalam aktivasi pompa atau katup solenoid, optimasi firmware ESP dilakukan dengan cara mengurangi latensi pada siklus pengukuran dan pengiriman data.
+
+#### **1.4 Pengembangan Lanjutan**:
+
+[Seluruh file pengembangan lebih lanjut pada tahap-1 ini dapat dilihat pada link berikut ini](https://github.com/slametsampon/HortiLink/tree/main/tahap1)
+
+Adapun features pada pengembangan ini adalah :
+
+1.  Dashboard - sebagai home base
+    ![dashboard](/static/images/IoT/HortiLink-dashboard.PNG)
+
+2.  Login/Logout - Authentication & Authorization user
+    ![login](/static/images/IoT/HortiLink-login.PNG)
+
+3.  Reporting
+    ![reporting](/static/images/IoT/HortiLink-report.PNG)
+
+4.  Configuration
+    ![config](/static/images/IoT/HortiLink-config.PNG)
+
+5.  About
+    ![about](/static/images/IoT/HortiLink-about.PNG)
+
+6.  tahap1.ino
+    Pada sisi esp juga menyesuaikan untuk mendukung seluruh fungsi pada UI/UX - di sisi web.
+    Berikut beberapa API - route pada ESP:
+
+    1.  Load static files :
+
+        | **No.** | **API - Route**    | **HTTP - Method** | **Description**                                                        |
+        | ------- | ------------------ | ----------------- | ---------------------------------------------------------------------- |
+        | 1       | /index.js          | HTTP_GET          | File javascript digunakan oleh index.html                              |
+        | 2       | /authentication.js | HTTP_GET          | File javascript digunakan oleh semua html files                        |
+        | 3       | /widgetsClass.js   | HTTP_GET          | File javascript digunakan oleh index.html untuk graphic                |
+        | 4       | /login.js          | HTTP_GET          | File javascript digunakan oleh login.html                              |
+        | 5       | /modal-dialog.js   | HTTP_GET          | File javascript digunakan oleh semua file html untuk menampilkan About |
+        | 6       | /login.js          | HTTP_GET          | File javascript digunakan oleh login.html                              |
+        | 7       | /report.js         | HTTP_GET          | File javascript digunakan oleh report.html                             |
+        | 8       | /config.js         | HTTP_GET          | File javascript digunakan oleh config.html                             |
+        | 9       | /logoHortiLink     | HTTP_GET          | File image untuk menampilkan logo GMF pada index.html dan report.html  |
+        | 10      | /report.js         | HTTP_GET          | File javascript digunakan oleh report.html                             |
+        | 11      | /style.css         | HTTP_GET          | File CSS digunakan untuk semua file html                               |
+
+    2.  Memberikan response atas permintaan web-browser
+
+        | **No.** | **API - Route**  | **HTTP - Method** | **Description**                                                                                          |
+        | ------- | ---------------- | ----------------- | -------------------------------------------------------------------------------------------------------- |
+        | 1       | /                | HTTP_GET          | Menampilkan home page - Dashboard (index.html)                                                           |
+        | 2       | /report          | HTTP_GET          | Menampilkan report page (report.html)                                                                    |
+        | 3       | /login           | HTTP_GET          | Menampilkan login page (login.html)                                                                      |
+        | 4       | /login           | HTTP_POST         | Kirim data username & password untuk user (login.html)                                                   |
+        | 5       | /loginStatus     | HTTP_GET          | AJAX data untuk mengirimkan status login user (login.html)                                               |
+        | 6       | /logout          | HTTP_GET          | Menampilkan dialog logout selanjutnya home page                                                          |
+        | 7       | /config          | HTTP_GET          | Menampilkan config page (config.html)                                                                    |
+        | 8       | /config          | HTTP_POST         | Update data konfigurasi sensor (config.html)                                                             |
+        | 9       | /getTrendingData | HTTP_GET          | AJAX data trending pada graphic home page (index.html)                                                   |
+        | 10      | /getSensorConfig | HTTP_GET          | AJAX data konfigurasi sensor pada graphic home page dan config page (index.html, config.html)            |
+        | 11      | /getActiveUser   | HTTP_GET          | AJAX data aktive user digunakan pada semjua home page untuk authentication dan authorization(index.html) |
+        | 12      | /haourlyAvgDay   | HTTP_GET          | AJAX data untuk report page (report.html)                                                                |
+        | 13      | /getSensor       | HTTP_GET          | AJAX data untuk menampilkan data pengukuran sensor pada home page (index.html)                           |
+        | 14      | /getSamplingTime | HTTP_GET          | AJAX data untuk sampling time (config.html)                                                              |
+
+### **Kesimpulan**
+
+Tahap 1 dari proyek HortiLink bertujuan untuk menciptakan sistem yang dapat memantau kondisi lingkungan dalam sistem pertanian secara otomatis dan real-time. Dengan menggunakan ESP8266/ESP32, sensor, dan aktuator yang tepat, sistem ini dirancang untuk memastikan kondisi pertumbuhan tanaman optimal dengan sedikit intervensi manual. Pengujian berulang dan optimasi adalah bagian integral dari tahap ini untuk memastikan sistem bekerja secara efisien dan dapat diandalkan dalam berbagai skenario.
+
+---
+
+### Hak cipta[^1]. Artikel ini berdasar ChatGpt & penulis tidak menjamin seluruh akurasi isinya
+
+[^1]: [ChatGpt](https://chat.openai.com)

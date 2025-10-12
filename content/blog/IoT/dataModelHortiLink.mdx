@@ -1,0 +1,371 @@
+---
+title: Data Model – Mengimplementasikan Time Series Database di MongoDB dengan Mongoose dan TypeScript untuk Data Sensor IoT
+date: '2024-11-06'
+tags: ['kontrol', 'iot', 'mongoDB', 'mongose', 'hortilink', 'MVC', 'atomic-design']
+draft: false
+images: []
+summary: Time Series Database di MongoDB mempermudah pengelolaan data sensor yang terus-menerus diperbarui. Dengan menggunakan Mongoose dan TypeScript, kita dapat membangun model data yang aman dan terstruktur, memastikan performa yang optimal untuk penyimpanan data IoT dalam jangka panjang.
+---
+
+**Mengimplementasikan Time Series Database di MongoDB dengan Mongoose dan TypeScript untuk Data Sensor IoT**
+
+---
+
+Selamat datang di **Proyek Serial [HortiLink](https://slamet-sam.netlify.app/blog/IoT/HortiLink): Data Model – Mengimplementasikan Time Series Database di MongoDB dengan Mongoose dan TypeScript untuk Data Sensor IoT**
+
+---
+
+**Pengantar**
+
+Pada proyek berbasis IoT seperti **HortiLink**, data dari sensor sering kali diperbarui secara berkala. Data ini mencakup informasi penting seperti suhu, kelembapan, dan tingkat EC/TDS yang diperlukan untuk monitoring kebun secara real-time. Untuk menyimpan dan mengelola data ini secara efisien, MongoDB menawarkan solusi **Time Series Database (TSDB)**, yang dioptimalkan untuk data bertimestamp dan data historis.
+
+Artikel ini akan membahas cara mengimplementasikan **Time Series Database** menggunakan MongoDB dan **Mongoose** dalam lingkungan **TypeScript**. Dengan mengikuti langkah-langkah praktis di artikel ini, Anda akan dapat membuat database yang efisien untuk menyimpan data sensor, lengkap dengan fitur **time series**, query berbasis waktu, dan struktur data yang terdefinisi dengan baik.
+
+---
+
+Time Series Database di MongoDB mempermudah pengelolaan data sensor yang terus-menerus diperbarui. Dengan menggunakan Mongoose dan TypeScript, kita dapat membangun model data yang aman dan terstruktur, memastikan performa yang optimal untuk penyimpanan data IoT dalam jangka panjang.
+
+---
+
+- [Model Data](#model-data)
+  - [1. Embedded Documents](#1-embedded-documents)
+  - [2. References](#2-references)
+  - [Pilihan untuk Proyek HortiLink](#pilihan-untuk-proyek-hortilink)
+  - [Rekomendasi](#rekomendasi)
+  - [Implementasi pada HortiLink](#implementasi-pada-hortilink)
+- [Contoh Relasi Antar Dokumen](#contoh-relasi-antar-dokumen)
+- [Manfaat Struktur Ini](#manfaat-struktur-ini)
+- [Implementasi Time Series Data Collection](#implementasi-time-series-data-collection)
+- [Hak cipta^1. Artikel ini berdasar ChatGpt \& penulis tidak menjamin seluruh akurasi isinya](#hak-cipta1-artikel-ini-berdasar-chatgpt--penulis-tidak-menjamin-seluruh-akurasi-isinya)
+
+---
+
+### Model Data
+
+Pada MongoDB, kita memang memiliki dua pendekatan utama untuk model data: **Embedded** dan **References**. Masing-masing memiliki kelebihan dan kekurangan yang perlu disesuaikan dengan jenis aplikasi, performa yang diinginkan, serta kebutuhan pengelolaan data. Dalam konteks proyek **HortiLink**, pemilihan antara keduanya bisa sangat dipengaruhi oleh kompleksitas data, frekuensi akses, dan hubungan antar data yang ingin kita simpan. Berikut ini analisis masing-masing pendekatan:
+
+#### 1. Embedded Documents
+
+Pada strategi **Embedded**, data yang memiliki hubungan diletakkan dalam satu dokumen utama, jadi tidak perlu tabel atau dokumen terpisah. Misalnya, jika kita memiliki data tanaman dan sensor yang selalu berhubungan, data dari sensor dapat disimpan langsung dalam dokumen tanaman tersebut.
+
+**Keuntungan Embedded:**
+
+- **Akses Data Lebih Cepat**: Semua data terkait ada dalam satu dokumen, jadi saat mengakses data utama (misalnya tanaman), data terkait (misalnya data sensor) juga langsung tersedia.
+- **Efisiensi**: Ideal untuk data dengan hubungan **1-to-1** atau **1-to-few** yang jarang berubah dan tidak memiliki ukuran besar.
+- **Konsistensi**: Karena data disimpan di dalam satu dokumen, integritas data terjaga dengan lebih baik tanpa risiko keterpisahan data terkait.
+- **Pengelolaan Lebih Mudah**: Tidak perlu melakukan pengelolaan foreign key atau join seperti di database relasional.
+
+**Kekurangan Embedded:**
+
+- **Batas Ukuran Dokumen MongoDB**: MongoDB memiliki batas ukuran dokumen sebesar 16MB. Jika data yang disimpan terlalu besar, pendekatan ini bisa jadi kurang optimal.
+- **Pengulangan Data**: Jika banyak data terkait yang sama, model embedded dapat menyebabkan redundansi data yang tidak efisien.
+- **Sulit untuk Relasi Kompleks**: Jika ada hubungan yang kompleks seperti **many-to-many**, model embedded bisa menjadi sulit untuk dikelola.
+
+#### 2. References
+
+Pada strategi **References**, data terkait disimpan sebagai referensi atau ID dari dokumen lain. Jadi setiap dokumen terpisah, dan hanya ID dokumen yang disimpan untuk menandai keterkaitan.
+
+**Keuntungan References:**
+
+- **Dukungan untuk Relasi Kompleks**: Ideal untuk hubungan **many-to-many** atau **1-to-many**, karena setiap entitas dapat memiliki banyak data terkait tanpa mempengaruhi ukuran dokumen utama.
+- **Skalabilitas**: Data dapat diakses secara modular dan disimpan secara terpisah, memungkinkan fleksibilitas dan skalabilitas yang lebih baik terutama untuk data yang sering bertambah dan besar.
+- **Reusability**: Dokumen yang di-referensikan bisa dipakai oleh beberapa dokumen lain tanpa perlu pengulangan data.
+
+**Kekurangan References:**
+
+- **Performa Query**: Membutuhkan **join manual** di aplikasi (dengan cara melakukan beberapa query untuk mengambil dokumen yang terkait). Hal ini bisa mempengaruhi performa jika sering dilakukan.
+- **Kompleksitas Kode**: Aplikasi perlu mengelola hubungan antar dokumen, dan ini bisa menambah kompleksitas kode, terutama jika hubungan data kompleks dan saling terkait erat.
+- **Consistency Issue**: Jika tidak ada pengelolaan yang baik, dokumen referensi yang dihapus dapat menyebabkan referensi yang rusak di dokumen lainnya.
+
+#### Pilihan untuk Proyek HortiLink
+
+Untuk menentukan mana yang lebih menguntungkan dalam proyek **HortiLink Tahap 3**, kita perlu memahami beberapa aspek penting dari data yang akan disimpan:
+
+1. **Tipe Hubungan Antar Data**: Jika data di HortiLink banyak melibatkan hubungan **1-to-1** atau **1-to-few** (misalnya, satu perangkat sensor per tanaman), maka **Embedded** bisa lebih efisien. Namun, jika ada hubungan **many-to-many** (misalnya, satu sensor bisa mengirim data ke beberapa tanaman, atau beberapa tanaman terhubung ke satu gateway), maka **References** lebih cocok.
+2. **Ukuran dan Frekuensi Akses Data**: Jika data sensor cukup besar dan frekuensi aksesnya tinggi, **References** akan membantu menjaga efisiensi dan menghindari batas ukuran dokumen.
+3. **Frekuensi Pembaruan Data**: Jika data sensor atau tanaman sering diperbarui, **References** memberikan fleksibilitas lebih tinggi dan tidak membebani satu dokumen utama dengan update terus-menerus.
+
+#### Rekomendasi
+
+Untuk proyek **HortiLink**, berikut ini pendekatan yang bisa dipertimbangkan:
+
+- **Gunakan Embedded untuk Data Statis**: Misalnya, data yang jarang berubah seperti spesifikasi dasar tanaman (jenis tanaman, kebutuhan suhu, dsb.) dapat di-embed di dalam dokumen tanaman.
+- **Gunakan References untuk Data Sensor**: Data sensor yang terus berkembang atau mengirim pembaruan bisa disimpan dalam koleksi terpisah dan direferensikan dari dokumen utama tanaman atau gateway, karena ini akan menjaga ukuran dokumen utama tetap ringan.
+
+Dengan kombinasi kedua pendekatan ini, kita dapat mempertahankan performa dan efisiensi MongoDB sambil menjaga struktur data HortiLink agar mudah diakses dan dikelola.
+
+#### Implementasi pada HortiLink
+
+Berdasarkan jenis data di atas, kita dapat merancang skema MongoDB untuk **HortiLink** dengan mempertimbangkan frekuensi pembaruan data. Data yang sering berubah akan lebih efisien disimpan menggunakan **References**, sementara data yang jarang berubah bisa disimpan dalam **Embedded Documents** untuk memudahkan akses.
+
+- 1. Skema **BlokKebun** (blok-kebun)
+     Dokumen ini mewakili blok kebun dan menyimpan data statis yang jarang berubah, seperti nama blok, luas, lokasi, dan jenis tanaman yang ditanam di blok tersebut.
+
+```javascript
+{
+  _id: ObjectId,
+  nama: String,
+  luas: Number,
+  lokasi: {
+    lat: Number,
+    long: Number
+  },
+  jenisTanaman: {
+    nama: String,
+    kebutuhanEC: Number,
+    kebutuhanTDS: Number,
+    umurPanen: Number
+  }
+}
+```
+
+**Penjelasan:**
+
+- **jenisTanaman** di-embed dalam **BlokKebun** karena data ini jarang berubah dan tidak perlu disimpan secara terpisah. Ini akan memudahkan akses sekaligus mengurangi jumlah query saat mengambil informasi kebun dan jenis tanaman.
+- **lokasi** juga bisa di-embed langsung karena termasuk data statis yang tidak akan sering diperbarui.
+
+- 2. Skema **SensorData**
+     Karena data seperti **Suhu**, **Humidity**, dan **EC/TDS** sering diperbarui, sebaiknya kita menggunakan koleksi terpisah untuk data ini. Setiap data pengukuran dapat memiliki referensi ke **blok-kebun** tertentu.
+
+```javascript
+{
+  _id: ObjectId,
+  blokKebunId: ObjectId, // Reference ke BlokKebun
+  timestamp: Date,
+  suhu: Number,
+  humidity: Number,
+  ec: Number,
+  tds: Number
+}
+```
+
+**Penjelasan:**
+
+- **blokKebunId** adalah referensi ke dokumen **BlokKebun** sehingga kita bisa mengaitkan data pengukuran dengan blok tertentu.
+- **timestamp** digunakan untuk mencatat kapan data diambil, yang penting untuk data IoT yang memiliki pembaruan berkala.
+- Data ini dipecah ke dalam koleksi **SensorData** agar bisa disimpan dalam jumlah besar dan bisa di-query secara efisien untuk keperluan analisis data waktu nyata atau historis.
+
+### Contoh Relasi Antar Dokumen
+
+Dalam MongoDB, hubungan antara dokumen **BlokKebun** dan **SensorData** tidak otomatis seperti join dalam SQL, tetapi kita bisa mengambil data **SensorData** yang terkait dengan **blok-kebun** tertentu menggunakan query yang efisien. Misalnya, untuk mendapatkan semua pengukuran suhu dari blok kebun tertentu:
+
+```javascript
+db.SensorData.find({ blokKebunId: blokKebunId })
+```
+
+### Manfaat Struktur Ini
+
+1. **Efisiensi Penyimpanan**: Dengan menyimpan data **SensorData** secara terpisah, kita menghindari batas ukuran dokumen MongoDB untuk **BlokKebun**, yang bisa menjadi sangat besar jika data sensor terus ditambahkan.
+2. **Kemudahan Akses Data Historis**: Data pengukuran yang terpisah memudahkan analisis historis atau pencarian data berbasis waktu tanpa perlu memuat seluruh dokumen kebun.
+3. **Pengurangan Beban Pembaruan**: Karena data yang sering berubah disimpan di koleksi **SensorData**, kita hanya perlu memperbarui dokumen ini tanpa harus memperbarui data di dokumen **BlokKebun**.
+
+Dengan model ini, MongoDB dapat berjalan lebih efisien dan memberikan performa tinggi untuk skenario IoT yang membutuhkan penyimpanan data yang cepat dan terstruktur.
+
+---
+
+### Implementasi Time Series Data Collection
+
+Menggunakan TypeScript dengan Mongoose untuk mendefinisikan skema dan berinteraksi dengan Time Series Collection akan memberikan keuntungan berupa **type safety** yang lebih baik, sehingga kode lebih mudah dipahami dan lebih aman dari kesalahan tipe data.
+
+Berikut adalah implementasi lengkap menggunakan **TypeScript** untuk membuat skema dan model **Time Series** di MongoDB.
+
+- 1. Membuat Koleksi Time Series Menggunakan TypeScript
+
+Pertama, buat file untuk membuat koleksi **Time Series** di MongoDB, misalnya `createTimeSeriesCollection.ts`. File ini akan di-run satu kali untuk membuat koleksi **SensorData**.
+
+```typescript
+import mongoose from 'mongoose'
+
+async function createTimeSeriesCollection() {
+  try {
+    await mongoose.connect('mongodb://localhost:27017/hortilink', {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    })
+
+    const db = mongoose.connection
+
+    // Membuat koleksi Time Series
+    await db.createCollection('SensorData', {
+      timeseries: {
+        timeField: 'timestamp', // Menentukan field timestamp
+        metaField: 'metadata', // Menyimpan metadata terkait sensor atau lokasi
+        granularity: 'seconds', // Granularity sesuai frekuensi data
+      },
+    })
+
+    console.log("Time Series Collection 'SensorData' berhasil dibuat.")
+    await db.close()
+  } catch (error) {
+    console.error('Gagal membuat Time Series Collection:', error)
+  }
+}
+
+createTimeSeriesCollection()
+```
+
+- 2. Membuat Tipe dan Skema Mongoose dengan TypeScript
+
+Selanjutnya, buat tipe dan skema untuk model `SensorData` menggunakan TypeScript agar lebih terstruktur.
+
+Buat file `models/SensorData.ts`.
+
+```typescript
+import mongoose, { Document, Schema } from 'mongoose'
+
+// Interface untuk Metadata
+interface IMetadata {
+  blokKebunId: mongoose.Types.ObjectId
+  sensorId: string
+}
+
+// Interface untuk SensorData
+export interface ISensorData extends Document {
+  timestamp: Date
+  metadata: IMetadata
+  suhu: number
+  humidity: number
+  ec: number
+  tds: number
+}
+
+// Definisikan Schema untuk Time Series Collection
+const sensorDataSchema: Schema = new Schema(
+  {
+    timestamp: {
+      type: Date,
+      required: true,
+    },
+    metadata: {
+      blokKebunId: {
+        type: Schema.Types.ObjectId,
+        ref: 'BlokKebun', // Referensi ke koleksi BlokKebun
+        required: true,
+      },
+      sensorId: {
+        type: String,
+        required: true,
+      },
+    },
+    suhu: {
+      type: Number,
+      required: true,
+    },
+    humidity: {
+      type: Number,
+      required: true,
+    },
+    ec: {
+      type: Number,
+      required: true,
+    },
+    tds: {
+      type: Number,
+      required: true,
+    },
+  },
+  {
+    collection: 'SensorData', // Menggunakan nama koleksi yang sudah dibuat
+  }
+)
+
+// Buat model menggunakan schema di atas
+const SensorData = mongoose.model<ISensorData>('SensorData', sensorDataSchema)
+
+export default SensorData
+```
+
+- 3. Menyimpan Data Menggunakan TypeScript
+
+Dengan model dan tipe `ISensorData` di atas, kita bisa membuat fungsi untuk menyimpan data sensor ke koleksi **Time Series**.
+
+Buat file `saveSensorData.ts` untuk menyimpan data sensor menggunakan model ini.
+
+```typescript
+import mongoose from 'mongoose'
+import SensorData, { ISensorData } from './models/SensorData'
+
+async function saveSensorData() {
+  try {
+    await mongoose.connect('mongodb://localhost:27017/hortilink', {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    })
+
+    const data: ISensorData = new SensorData({
+      timestamp: new Date(),
+      metadata: {
+        blokKebunId: new mongoose.Types.ObjectId('64f9c9f7f4b0a6a8e8a8a8a8'), // Contoh ObjectId blok kebun
+        sensorId: 'sensor1',
+      },
+      suhu: 25.5,
+      humidity: 60,
+      ec: 1.2,
+      tds: 600,
+    })
+
+    await data.save()
+    console.log('Data sensor berhasil disimpan.')
+    await mongoose.connection.close()
+  } catch (error) {
+    console.error('Gagal menyimpan data sensor:', error)
+  }
+}
+
+saveSensorData()
+```
+
+- 4. Query Data Berdasarkan Rentang Waktu Menggunakan TypeScript
+
+Terakhir, buat fungsi untuk mengambil data sensor berdasarkan rentang waktu tertentu.
+
+Buat file `getDataByDate.ts`.
+
+```typescript
+import mongoose from 'mongoose'
+import SensorData, { ISensorData } from './models/SensorData'
+
+async function getDataByDate() {
+  try {
+    await mongoose.connect('mongodb://localhost:27017/hortilink', {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    })
+
+    const results: ISensorData[] = await SensorData.find({
+      'metadata.blokKebunId': new mongoose.Types.ObjectId('64f9c9f7f4b0a6a8e8a8a8a8'), // Ganti dengan blokKebunId yang sesuai
+      timestamp: {
+        $gte: new Date('2023-11-01T00:00:00Z'),
+        $lt: new Date('2023-11-02T00:00:00Z'),
+      },
+    })
+
+    console.log('Data sensor:', results)
+    await mongoose.connection.close()
+  } catch (error) {
+    console.error('Gagal mengambil data sensor:', error)
+  }
+}
+
+getDataByDate()
+```
+
+- Penjelasan Kode
+
+  - **Interface `IMetadata` dan `ISensorData`**: Menggunakan TypeScript untuk mendefinisikan tipe data, yang membantu memberikan **type safety** pada data sensor.
+  - **SensorData Model**: Kita membuat schema dan model Mongoose dengan menambahkan type-checking dari TypeScript. Ini memastikan bahwa kita hanya bisa menyimpan dan mengambil data yang sesuai dengan struktur dan tipe yang sudah ditentukan.
+  - **Fungsi Save dan Query**: Setiap fungsi menggunakan tipe `ISensorData` untuk memastikan data yang diakses memiliki format dan tipe data yang benar.
+
+- Menjalankan Proyek
+
+  1. **Membuat Time Series Collection**: Jalankan `createTimeSeriesCollection.ts` untuk membuat koleksi time series.
+  2. **Menyimpan Data Sensor**: Jalankan `saveSensorData.ts` untuk menyimpan contoh data sensor ke MongoDB.
+  3. **Query Data Sensor Berdasarkan Waktu**: Jalankan `getDataByDate.ts` untuk mengambil data sensor dalam rentang waktu tertentu.
+
+  Dengan TypeScript, kode menjadi lebih terstruktur dan memiliki **type safety** yang membuatnya lebih kuat untuk pengembangan proyek jangka panjang seperti **HortiLink**.
+
+---
+
+### Hak cipta[^1]. Artikel ini berdasar ChatGpt & penulis tidak menjamin seluruh akurasi isinya
+
+[^1]: [ChatGpt](https://chat.openai.com)
