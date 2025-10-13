@@ -1,7 +1,8 @@
 ---
 title: Data Model – Mengimplementasikan Time Series Database di MongoDB dengan Mongoose dan TypeScript untuk Data Sensor IoT
 date: '2024-11-06'
-tags: ['kontrol', 'iot', 'mongoDB', 'mongose', 'hortilink', 'MVC', 'atomic-design']
+tags:
+  ['kontrol', 'iot', 'mongoDB', 'mongose', 'hortilink', 'MVC', 'atomic-design']
 draft: false
 images: []
 summary: Time Series Database di MongoDB mempermudah pengelolaan data sensor yang terus-menerus diperbarui. Dengan menggunakan Mongoose dan TypeScript, kita dapat membangun model data yang aman dan terstruktur, memastikan performa yang optimal untuk penyimpanan data IoT dalam jangka panjang.
@@ -150,7 +151,7 @@ Berdasarkan jenis data di atas, kita dapat merancang skema MongoDB untuk **Horti
 Dalam MongoDB, hubungan antara dokumen **BlokKebun** dan **SensorData** tidak otomatis seperti join dalam SQL, tetapi kita bisa mengambil data **SensorData** yang terkait dengan **blok-kebun** tertentu menggunakan query yang efisien. Misalnya, untuk mendapatkan semua pengukuran suhu dari blok kebun tertentu:
 
 ```javascript
-db.SensorData.find({ blokKebunId: blokKebunId })
+db.SensorData.find({ blokKebunId: blokKebunId });
 ```
 
 ### Manfaat Struktur Ini
@@ -174,16 +175,16 @@ Berikut adalah implementasi lengkap menggunakan **TypeScript** untuk membuat ske
 Pertama, buat file untuk membuat koleksi **Time Series** di MongoDB, misalnya `createTimeSeriesCollection.ts`. File ini akan di-run satu kali untuk membuat koleksi **SensorData**.
 
 ```typescript
-import mongoose from 'mongoose'
+import mongoose from 'mongoose';
 
 async function createTimeSeriesCollection() {
   try {
     await mongoose.connect('mongodb://localhost:27017/hortilink', {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-    })
+    });
 
-    const db = mongoose.connection
+    const db = mongoose.connection;
 
     // Membuat koleksi Time Series
     await db.createCollection('SensorData', {
@@ -192,16 +193,16 @@ async function createTimeSeriesCollection() {
         metaField: 'metadata', // Menyimpan metadata terkait sensor atau lokasi
         granularity: 'seconds', // Granularity sesuai frekuensi data
       },
-    })
+    });
 
-    console.log("Time Series Collection 'SensorData' berhasil dibuat.")
-    await db.close()
+    console.log("Time Series Collection 'SensorData' berhasil dibuat.");
+    await db.close();
   } catch (error) {
-    console.error('Gagal membuat Time Series Collection:', error)
+    console.error('Gagal membuat Time Series Collection:', error);
   }
 }
 
-createTimeSeriesCollection()
+createTimeSeriesCollection();
 ```
 
 - 2. Membuat Tipe dan Skema Mongoose dengan TypeScript
@@ -211,22 +212,22 @@ Selanjutnya, buat tipe dan skema untuk model `SensorData` menggunakan TypeScript
 Buat file `models/SensorData.ts`.
 
 ```typescript
-import mongoose, { Document, Schema } from 'mongoose'
+import mongoose, { Document, Schema } from 'mongoose';
 
 // Interface untuk Metadata
 interface IMetadata {
-  blokKebunId: mongoose.Types.ObjectId
-  sensorId: string
+  blokKebunId: mongoose.Types.ObjectId;
+  sensorId: string;
 }
 
 // Interface untuk SensorData
 export interface ISensorData extends Document {
-  timestamp: Date
-  metadata: IMetadata
-  suhu: number
-  humidity: number
-  ec: number
-  tds: number
+  timestamp: Date;
+  metadata: IMetadata;
+  suhu: number;
+  humidity: number;
+  ec: number;
+  tds: number;
 }
 
 // Definisikan Schema untuk Time Series Collection
@@ -267,12 +268,12 @@ const sensorDataSchema: Schema = new Schema(
   {
     collection: 'SensorData', // Menggunakan nama koleksi yang sudah dibuat
   }
-)
+);
 
 // Buat model menggunakan schema di atas
-const SensorData = mongoose.model<ISensorData>('SensorData', sensorDataSchema)
+const SensorData = mongoose.model<ISensorData>('SensorData', sensorDataSchema);
 
-export default SensorData
+export default SensorData;
 ```
 
 - 3. Menyimpan Data Menggunakan TypeScript
@@ -282,15 +283,15 @@ Dengan model dan tipe `ISensorData` di atas, kita bisa membuat fungsi untuk meny
 Buat file `saveSensorData.ts` untuk menyimpan data sensor menggunakan model ini.
 
 ```typescript
-import mongoose from 'mongoose'
-import SensorData, { ISensorData } from './models/SensorData'
+import mongoose from 'mongoose';
+import SensorData, { ISensorData } from './models/SensorData';
 
 async function saveSensorData() {
   try {
     await mongoose.connect('mongodb://localhost:27017/hortilink', {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-    })
+    });
 
     const data: ISensorData = new SensorData({
       timestamp: new Date(),
@@ -302,17 +303,17 @@ async function saveSensorData() {
       humidity: 60,
       ec: 1.2,
       tds: 600,
-    })
+    });
 
-    await data.save()
-    console.log('Data sensor berhasil disimpan.')
-    await mongoose.connection.close()
+    await data.save();
+    console.log('Data sensor berhasil disimpan.');
+    await mongoose.connection.close();
   } catch (error) {
-    console.error('Gagal menyimpan data sensor:', error)
+    console.error('Gagal menyimpan data sensor:', error);
   }
 }
 
-saveSensorData()
+saveSensorData();
 ```
 
 - 4. Query Data Berdasarkan Rentang Waktu Menggunakan TypeScript
@@ -322,32 +323,34 @@ Terakhir, buat fungsi untuk mengambil data sensor berdasarkan rentang waktu tert
 Buat file `getDataByDate.ts`.
 
 ```typescript
-import mongoose from 'mongoose'
-import SensorData, { ISensorData } from './models/SensorData'
+import mongoose from 'mongoose';
+import SensorData, { ISensorData } from './models/SensorData';
 
 async function getDataByDate() {
   try {
     await mongoose.connect('mongodb://localhost:27017/hortilink', {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-    })
+    });
 
     const results: ISensorData[] = await SensorData.find({
-      'metadata.blokKebunId': new mongoose.Types.ObjectId('64f9c9f7f4b0a6a8e8a8a8a8'), // Ganti dengan blokKebunId yang sesuai
+      'metadata.blokKebunId': new mongoose.Types.ObjectId(
+        '64f9c9f7f4b0a6a8e8a8a8a8'
+      ), // Ganti dengan blokKebunId yang sesuai
       timestamp: {
         $gte: new Date('2023-11-01T00:00:00Z'),
         $lt: new Date('2023-11-02T00:00:00Z'),
       },
-    })
+    });
 
-    console.log('Data sensor:', results)
-    await mongoose.connection.close()
+    console.log('Data sensor:', results);
+    await mongoose.connection.close();
   } catch (error) {
-    console.error('Gagal mengambil data sensor:', error)
+    console.error('Gagal mengambil data sensor:', error);
   }
 }
 
-getDataByDate()
+getDataByDate();
 ```
 
 - Penjelasan Kode

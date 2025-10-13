@@ -85,9 +85,9 @@ Contoh struktur portfolio untuk seorang freelancer pengembang web menggunakan Ne
 
 ```jsx
 // pages/index.js
-import Head from 'next/head'
-import ProjectCard from '../components/ProjectCard'
-import ContactForm from '../components/ContactForm'
+import Head from 'next/head';
+import ProjectCard from '../components/ProjectCard';
+import ContactForm from '../components/ContactForm';
 
 export default function Home() {
   const projects = [
@@ -112,13 +112,16 @@ export default function Home() {
       techStack: ['Next.js', 'Socket.io', 'MongoDB'],
       link: 'https://example-chat.com',
     },
-  ]
+  ];
 
   return (
     <div>
       <Head>
         <title>Web Developer Portfolio</title>
-        <meta name="description" content="Portfolio of a freelance web developer using Next.js" />
+        <meta
+          name="description"
+          content="Portfolio of a freelance web developer using Next.js"
+        />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
@@ -144,13 +147,13 @@ export default function Home() {
         <p>&copy; 2023 John Doe - Freelance Web Developer</p>
       </footer>
     </div>
-  )
+  );
 }
 ```
 
 ```jsx
 // components/ProjectCard.js
-import React from 'react'
+import React from 'react';
 
 const ProjectCard = ({ project }) => (
   <div>
@@ -163,14 +166,14 @@ const ProjectCard = ({ project }) => (
       View Project
     </a>
   </div>
-)
+);
 
-export default ProjectCard
+export default ProjectCard;
 ```
 
 ```jsx
 // components/ContactForm.js
-import React from 'react'
+import React from 'react';
 
 const ContactForm = () => (
   <form>
@@ -185,9 +188,9 @@ const ContactForm = () => (
 
     <button type="submit">Send Message</button>
   </form>
-)
+);
 
-export default ContactForm
+export default ContactForm;
 ```
 
 Portfolio ini mencakup halaman utama dengan daftar proyek dan formulir kontak sederhana. Setiap proyek memiliki kartu khusus yang mencantumkan judul, deskripsi, teknologi yang digunakan, dan tautan proyek. Formulir kontak memungkinkan pengguna untuk mengirim pesan kepada pengembang. Anda dapat menyesuaikan dan menambahkan lebih banyak informasi sesuai kebutuhan.
@@ -326,14 +329,17 @@ Tentu, berikut adalah contoh profil detail untuk seorang freelancer pengembang w
 
 ```jsx
 // pages/about.js
-import Head from 'next/head'
+import Head from 'next/head';
 
 export default function About() {
   return (
     <div>
       <Head>
         <title>John Doe - Web Developer</title>
-        <meta name="description" content="Detail profile of John Doe, a freelance web developer." />
+        <meta
+          name="description"
+          content="Detail profile of John Doe, a freelance web developer."
+        />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
@@ -343,17 +349,21 @@ export default function About() {
         <section>
           <h2>About Me</h2>
           <p>
-            Hi, I'm John Doe, a passionate and experienced freelance web developer based in Jakarta,
-            Indonesia. With over 10 years of experience in the petrochemical industry, I
-            transitioned to web development in 2020. My background in electrical engineering and a
-            keen interest in coding make me a detail-oriented and structured communicator.
+            Hi, I'm John Doe, a passionate and experienced freelance web
+            developer based in Jakarta, Indonesia. With over 10 years of
+            experience in the petrochemical industry, I transitioned to web
+            development in 2020. My background in electrical engineering and a
+            keen interest in coding make me a detail-oriented and structured
+            communicator.
           </p>
         </section>
 
         <section>
           <h2>Skills</h2>
           <ul>
-            <li>Front-end Development: HTML, CSS, JavaScript, React, Next.js</li>
+            <li>
+              Front-end Development: HTML, CSS, JavaScript, React, Next.js
+            </li>
             <li>Back-end Development: Node.js, Express</li>
             <li>Database: MongoDB, MySQL</li>
             <li>IoT: ESP32, C++, Arduino</li>
@@ -364,16 +374,20 @@ export default function About() {
         <section>
           <h2>Projects</h2>
           <p>
-            Over the years, I have successfully completed various web development projects, ranging
-            from e-commerce platforms to real-time chat applications. My goal is to create
-            efficient, user-friendly, and scalable solutions tailored to my clients' needs.
+            Over the years, I have successfully completed various web
+            development projects, ranging from e-commerce platforms to real-time
+            chat applications. My goal is to create efficient, user-friendly,
+            and scalable solutions tailored to my clients' needs.
           </p>
           {/* Add links to projects or showcase them in more detail */}
         </section>
 
         <section>
           <h2>Education</h2>
-          <p>- Bachelor of Electrical Engineering, [University Name], [Year of Graduation]</p>
+          <p>
+            - Bachelor of Electrical Engineering, [University Name], [Year of
+            Graduation]
+          </p>
         </section>
       </main>
 
@@ -381,7 +395,7 @@ export default function About() {
         <p>&copy; 2023 John Doe - Freelance Web Developer</p>
       </footer>
     </div>
-  )
+  );
 }
 ```
 

@@ -238,7 +238,7 @@ Untuk memulai, berikut ini adalah contoh sederhana dari masing-masing file yang 
 1. **index.html**
 
    ```html
-   <!doctype html>
+   <!DOCTYPE html>
    <html lang="en">
      <head>
        <meta charset="UTF-8" />
@@ -299,11 +299,11 @@ Untuk memulai, berikut ini adalah contoh sederhana dari masing-masing file yang 
      fetch('/sendMessage')
        .then((response) => response.text())
        .then((data) => {
-         document.getElementById('message').innerText = data
+         document.getElementById('message').innerText = data;
        })
        .catch((error) => {
-         console.error('Error:', error)
-       })
+         console.error('Error:', error);
+       });
    }
    ```
    File `script.js` ini mendefinisikan fungsi `sendMessage` yang akan mengirimkan permintaan HTTP GET ke endpoint `/sendMessage` pada web server ESP. Jika berhasil, respons dari server akan ditampilkan di elemen `message`.
@@ -612,7 +612,7 @@ Untuk mengatasi masalah ini, beberapa pendekatan bisa diambil untuk mengurangi u
        module.exports = {
          purge: ['./data/*.html'],
          // Pengaturan lainnya...
-       }
+       };
        ```
      - Setelah konfigurasi selesai, buat file CSS terkompresi dengan perintah build berikut:
        ```bash

@@ -365,7 +365,7 @@ Langkah pertama adalah membuat struktur halaman HTML sederhana yang dapat menamp
 - **Kode HTML Dasar untuk Antarmuka Web**
 
 ```html
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
     <title>HortiLink Web Interface</title>
@@ -406,11 +406,19 @@ Langkah pertama adalah membuat struktur halaman HTML sederhana yang dapat menamp
     </div>
 
     <h2>Device Controls</h2>
-    <button class="control-btn" onclick="sendCommand('pump_on')">Turn Pump ON</button>
-    <button class="control-btn" onclick="sendCommand('pump_off')">Turn Pump OFF</button>
+    <button class="control-btn" onclick="sendCommand('pump_on')">
+      Turn Pump ON
+    </button>
+    <button class="control-btn" onclick="sendCommand('pump_off')">
+      Turn Pump OFF
+    </button>
     <br />
-    <button class="control-btn" onclick="sendCommand('valve_open')">Open Valve</button>
-    <button class="control-btn" onclick="sendCommand('valve_close')">Close Valve</button>
+    <button class="control-btn" onclick="sendCommand('valve_open')">
+      Open Valve
+    </button>
+    <button class="control-btn" onclick="sendCommand('valve_close')">
+      Close Valve
+    </button>
 
     <script>
       // Mengambil data sensor secara berkala dari ESP
@@ -418,22 +426,22 @@ Langkah pertama adalah membuat struktur halaman HTML sederhana yang dapat menamp
         fetch('/getData')
           .then((response) => response.json())
           .then((data) => {
-            document.getElementById('temperature').innerText = data.temperature
-            document.getElementById('humidity').innerText = data.humidity
-            document.getElementById('ph').innerText = data.ph
-            document.getElementById('ec').innerText = data.ec
-          })
-      }, 5000) // Update setiap 5 detik
+            document.getElementById('temperature').innerText = data.temperature;
+            document.getElementById('humidity').innerText = data.humidity;
+            document.getElementById('ph').innerText = data.ph;
+            document.getElementById('ec').innerText = data.ec;
+          });
+      }, 5000); // Update setiap 5 detik
 
       // Mengirim perintah untuk mengontrol pompa/valve
       function sendCommand(command) {
         fetch('/control?device=' + command).then((response) => {
           if (response.ok) {
-            alert('Command sent: ' + command)
+            alert('Command sent: ' + command);
           } else {
-            alert('Failed to send command')
+            alert('Failed to send command');
           }
-        })
+        });
       }
     </script>
   </body>
@@ -559,7 +567,7 @@ tahap1/
 1. **index.html**
 
 ```html
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
     <title>HortiLink Web Interface</title>
@@ -577,11 +585,19 @@ tahap1/
     </div>
 
     <h2>Device Controls</h2>
-    <button class="control-btn" onclick="sendCommand('pump_on')">Turn Pump ON</button>
-    <button class="control-btn" onclick="sendCommand('pump_off')">Turn Pump OFF</button>
+    <button class="control-btn" onclick="sendCommand('pump_on')">
+      Turn Pump ON
+    </button>
+    <button class="control-btn" onclick="sendCommand('pump_off')">
+      Turn Pump OFF
+    </button>
     <br />
-    <button class="control-btn" onclick="sendCommand('valve_open')">Open Valve</button>
-    <button class="control-btn" onclick="sendCommand('valve_close')">Close Valve</button>
+    <button class="control-btn" onclick="sendCommand('valve_open')">
+      Open Valve
+    </button>
+    <button class="control-btn" onclick="sendCommand('valve_close')">
+      Close Valve
+    </button>
 
     <script src="script.js"></script>
   </body>
@@ -623,22 +639,22 @@ tahap1/
      fetch('/getData')
        .then((response) => response.json())
        .then((data) => {
-         document.getElementById('temperature').innerText = data.temperature
-         document.getElementById('humidity').innerText = data.humidity
-         document.getElementById('ph').innerText = data.ph
-         document.getElementById('ec').innerText = data.ec
-       })
-   }, 5000) // Update setiap 5 detik
+         document.getElementById('temperature').innerText = data.temperature;
+         document.getElementById('humidity').innerText = data.humidity;
+         document.getElementById('ph').innerText = data.ph;
+         document.getElementById('ec').innerText = data.ec;
+       });
+   }, 5000); // Update setiap 5 detik
 
    // Mengirim perintah untuk mengontrol pompa/valve
    function sendCommand(command) {
      fetch('/control?device=' + command).then((response) => {
        if (response.ok) {
-         alert('Command sent: ' + command)
+         alert('Command sent: ' + command);
        } else {
-         alert('Failed to send command')
+         alert('Failed to send command');
        }
-     })
+     });
    }
    ```
 

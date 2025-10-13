@@ -1,5 +1,19 @@
 [
   {
+    "id": "religy/doa-dalam-teduh",
+    "name": "Doa dalam Teduh - Pelajaran Hidup dari Musa di Tengah Kesulitan",
+    "section": "CONTENT",
+    "href": "/kawruhnology/blog/religy/doa-dalam-teduh",
+    "subtitle": "October 13, 2025",
+    "keywords": [
+      "ujian",
+      "motivasi",
+      "sabar",
+      "berdoa",
+      "tawakal"
+    ]
+  },
+  {
     "id": "website/github-custom-domain",
     "name": "Deploy Next.js ke GitHub Pages dengan Custom Domain Gratis",
     "section": "CONTENT",
@@ -646,26 +660,6 @@
     ]
   },
   {
-    "id": "website/preview-mode-headless-cms",
-    "name": "Preview Mode for Headless CMS",
-    "section": "CONTENT",
-    "href": "/kawruhnology/blog/website/preview-mode-headless-cms",
-    "subtitle": "April 9, 2023",
-    "keywords": []
-  },
-  {
-    "id": "website/dynamic-routing-static-regeneration",
-    "name": "Dynamic Routing and Static Regeneration",
-    "section": "CONTENT",
-    "href": "/kawruhnology/blog/website/dynamic-routing-static-regeneration",
-    "subtitle": "March 4, 2023",
-    "keywords": [
-      "Dynamic-Routing",
-      "Static-Regeneration",
-      "deploy"
-    ]
-  },
-  {
     "id": "website/deploying-next-apps",
     "name": "Deploying Next.js Apps",
     "section": "CONTENT",
@@ -676,14 +670,6 @@
       "tailwind",
       "deploy"
     ]
-  },
-  {
-    "id": "website/server-client-components",
-    "name": "Server and Client Components",
-    "section": "CONTENT",
-    "href": "/kawruhnology/blog/website/server-client-components",
-    "subtitle": "January 2, 2023",
-    "keywords": []
   },
   {
     "section": "CONTENT",

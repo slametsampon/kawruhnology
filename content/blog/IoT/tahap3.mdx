@@ -1,7 +1,8 @@
 ---
 title: Tahap 3 – Integrasi ESP-Gateway dengan Server Kustom
 date: '2024-11-06'
-tags: ['kontrol', 'iot', 'mongoDB', 'mongose', 'hortilink', 'MVC', 'atomic-design']
+tags:
+  ['kontrol', 'iot', 'mongoDB', 'mongose', 'hortilink', 'MVC', 'atomic-design']
 draft: false
 images: []
 summary: Pada Tahap 3, HortiLink berubah dari sekadar perangkat pemantau jadi sistem lengkap yang bisa diakses kapan saja, dari mana saja. Dengan sistem komunikasi antar perangkat IoT yang stabil, server khusus untuk menyimpan data historis, dan dasbor yang keren, kita bisa langsung tahu apa yang terjadi di lahan—termasuk notifikasi real-time yang mengingatkan saat ada yang butuh perhatian ekstra.
@@ -209,7 +210,7 @@ Berikut ini adalah langkah-langkah setup awal proyek HortiLink dengan kriteria y
        extend: {},
      },
      plugins: [require('flowbite/plugin')],
-   }
+   };
    ```
 
 3. **Buat File CSS Utama**
@@ -231,7 +232,7 @@ Berikut ini adalah langkah-langkah setup awal proyek HortiLink dengan kriteria y
 5. **Integrasi Flowbite di Next.js**
    Import `globals.css` di file `app/layout.tsx` agar Tailwind CSS dan Flowbite bisa digunakan di seluruh halaman:
    ```typescript
-   import '../styles/globals.css'
+   import '../styles/globals.css';
    ```
 
 - **Langkah 3: Mengatur Koneksi ke MongoDB Atlas**
@@ -256,39 +257,41 @@ Berikut ini adalah langkah-langkah setup awal proyek HortiLink dengan kriteria y
    Buat file `lib/mongodb.ts` untuk mengatur koneksi ke MongoDB:
 
    ```typescript
-   import mongoose from 'mongoose'
+   import mongoose from 'mongoose';
 
-   const MONGODB_URI = process.env.MONGODB_URI as string
+   const MONGODB_URI = process.env.MONGODB_URI as string;
 
    if (!MONGODB_URI) {
-     throw new Error('Please define the MONGODB_URI environment variable inside .env.local')
+     throw new Error(
+       'Please define the MONGODB_URI environment variable inside .env.local'
+     );
    }
 
-   let cached = global.mongoose
+   let cached = global.mongoose;
 
    if (!cached) {
-     cached = global.mongoose = { conn: null, promise: null }
+     cached = global.mongoose = { conn: null, promise: null };
    }
 
    async function dbConnect() {
      if (cached.conn) {
-       return cached.conn
+       return cached.conn;
      }
 
      if (!cached.promise) {
        const opts = {
          bufferCommands: false,
-       }
+       };
 
        cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-         return mongoose
-       })
+         return mongoose;
+       });
      }
-     cached.conn = await cached.promise
-     return cached.conn
+     cached.conn = await cached.promise;
+     return cached.conn;
    }
 
-   export default dbConnect
+   export default dbConnect;
    ```
 
 4. **Menambahkan Variabel Lingkungan**
@@ -304,14 +307,14 @@ Berikut ini adalah langkah-langkah setup awal proyek HortiLink dengan kriteria y
    Contoh di API route `app/api/sensordata/route.ts`:
 
    ```typescript
-   import { NextResponse } from 'next/server'
-   import dbConnect from '../../../lib/mongodb'
-   import SensorData from '../../../models/sensorData' // Buat model seperti pada langkah sebelumnya
+   import { NextResponse } from 'next/server';
+   import dbConnect from '../../../lib/mongodb';
+   import SensorData from '../../../models/sensorData'; // Buat model seperti pada langkah sebelumnya
 
    export async function GET() {
-     await dbConnect()
-     const data = await SensorData.find({})
-     return NextResponse.json(data)
+     await dbConnect();
+     const data = await SensorData.find({});
+     return NextResponse.json(data);
    }
    ```
 
@@ -615,35 +618,40 @@ hortilink/
 
   ```typescript
   // models/FarmModel.ts
-  import mongoose, { Schema, model, models } from 'mongoose'
+  import mongoose, { Schema, model, models } from 'mongoose';
 
   const farmSchema = new Schema({
     name: { type: String, required: true },
     luas: { type: Number, required: true },
     lokasi: { type: String, required: true },
     jenisSayuran: { type: String, required: true },
-  })
+  });
 
-  const FarmModel = models.Farm || model('Farm', farmSchema)
+  const FarmModel = models.Farm || model('Farm', farmSchema);
 
-  export default FarmModel
+  export default FarmModel;
   ```
 
   ```typescript
   // models/SensorDataModel.ts
-  import mongoose, { Schema, model, models } from 'mongoose'
+  import mongoose, { Schema, model, models } from 'mongoose';
 
   const sensorDataSchema = new Schema({
-    farmId: { type: mongoose.Schema.Types.ObjectId, ref: 'Farm', required: true },
+    farmId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Farm',
+      required: true,
+    },
     suhu: { type: Number, required: true },
     humidity: { type: Number, required: true },
     ec_tds: { type: Number, required: true },
     timestamp: { type: Date, default: Date.now },
-  })
+  });
 
-  const SensorDataModel = models.SensorData || model('SensorData', sensorDataSchema)
+  const SensorDataModel =
+    models.SensorData || model('SensorData', sensorDataSchema);
 
-  export default SensorDataModel
+  export default SensorDataModel;
   ```
 
   [Lebih detail terkait data model dengan mongoDB-Mongose](https://slamet-sam.netlify.app/blog/IoT/dataModelHortiLink)
@@ -654,18 +662,18 @@ hortilink/
 
   ```typescript
   // controllers/FarmController.ts
-  import FarmModel from '../models/FarmModel'
-  import dbConnect from '../services/db'
+  import FarmModel from '../models/FarmModel';
+  import dbConnect from '../services/db';
 
   export default class FarmController {
     static async getAllFarms() {
-      await dbConnect()
-      return FarmModel.find({})
+      await dbConnect();
+      return FarmModel.find({});
     }
 
     static async createFarm(data: any) {
-      await dbConnect()
-      return FarmModel.create(data)
+      await dbConnect();
+      return FarmModel.create(data);
     }
   }
   ```
@@ -676,31 +684,33 @@ hortilink/
 
   ```typescript
   // services/db.ts
-  import mongoose from 'mongoose'
+  import mongoose from 'mongoose';
 
-  const MONGODB_URI = process.env.MONGODB_URI || ''
+  const MONGODB_URI = process.env.MONGODB_URI || '';
 
   if (!MONGODB_URI) {
-    throw new Error('Please define the MONGODB_URI environment variable')
+    throw new Error('Please define the MONGODB_URI environment variable');
   }
 
-  let cached = global.mongoose
+  let cached = global.mongoose;
 
   if (!cached) {
-    cached = global.mongoose = { conn: null, promise: null }
+    cached = global.mongoose = { conn: null, promise: null };
   }
 
   async function dbConnect() {
-    if (cached.conn) return cached.conn
+    if (cached.conn) return cached.conn;
 
     if (!cached.promise) {
-      cached.promise = mongoose.connect(MONGODB_URI).then((mongoose) => mongoose)
+      cached.promise = mongoose
+        .connect(MONGODB_URI)
+        .then((mongoose) => mongoose);
     }
-    cached.conn = await cached.promise
-    return cached.conn
+    cached.conn = await cached.promise;
+    return cached.conn;
   }
 
-  export default dbConnect
+  export default dbConnect;
   ```
 
 - **4. Implementasi Atomic Design untuk Komponen UI**
@@ -730,7 +740,10 @@ hortilink/
     };
 
     const Button: React.FC<ButtonProps> = ({ text, onClick, className }) => (
-      <button onClick={onClick} className={`px-4 py-2 bg-blue-500 text-white rounded ${className}`}>
+      <button
+        onClick={onClick}
+        className={`rounded bg-blue-500 px-4 py-2 text-white ${className}`}
+      >
         {text}
       </button>
     );
@@ -752,14 +765,20 @@ hortilink/
       onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     };
 
-    const InputField: React.FC<InputFieldProps> = ({ label, value, onChange }) => (
+    const InputField: React.FC<InputFieldProps> = ({
+      label,
+      value,
+      onChange,
+    }) => (
       <div>
-        <label className="block text-gray-700 text-sm font-bold mb-2">{label}</label>
+        <label className="mb-2 block text-sm font-bold text-gray-700">
+          {label}
+        </label>
         <input
           type="text"
           value={value}
           onChange={onChange}
-          className="border rounded py-2 px-3 w-full"
+          className="w-full rounded border px-3 py-2"
         />
       </div>
     );
@@ -784,7 +803,7 @@ hortilink/
     };
 
     const SensorTable: React.FC<{ data: SensorData[] }> = ({ data }) => (
-      <table className="table-auto w-full">
+      <table className="w-full table-auto">
         <thead>
           <tr>
             <th>Suhu</th>
@@ -893,11 +912,11 @@ Setelah instalasi selesai, NextAuth siap untuk dikonfigurasi sebagai sistem oten
   ```typescript
   // app/api/auth/[...nextauth]/route.ts
 
-  import NextAuth from 'next-auth'
-  import GoogleProvider from 'next-auth/providers/google'
-  import FacebookProvider from 'next-auth/providers/facebook'
-  import GitHubProvider from 'next-auth/providers/github'
-  import CredentialsProvider from 'next-auth/providers/credentials'
+  import NextAuth from 'next-auth';
+  import GoogleProvider from 'next-auth/providers/google';
+  import FacebookProvider from 'next-auth/providers/facebook';
+  import GitHubProvider from 'next-auth/providers/github';
+  import CredentialsProvider from 'next-auth/providers/credentials';
 
   export const authOptions = {
     providers: [
@@ -915,11 +934,11 @@ Setelah instalasi selesai, NextAuth siap untuk dikonfigurasi sebagai sistem oten
       }),
     ],
     // Konfigurasi tambahan untuk pengelolaan sesi akan ditambahkan pada langkah berikut
-  }
+  };
 
-  const handler = NextAuth(authOptions)
+  const handler = NextAuth(authOptions);
 
-  export { handler as GET, handler as POST }
+  export { handler as GET, handler as POST };
   ```
 
   3. Pastikan Anda telah menambahkan variabel `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET`, `GITHUB_CLIENT_ID`, dan `GITHUB_CLIENT_SECRET` pada file `.env.local` di root proyek Next.js.
@@ -940,16 +959,16 @@ CredentialsProvider({
   },
   async authorize(credentials) {
     // Logika otentikasi username/password
-    const user = { id: 1, name: 'user', email: 'user@example.com' } // Contoh pengguna statis
+    const user = { id: 1, name: 'user', email: 'user@example.com' }; // Contoh pengguna statis
 
     // Verifikasi user dari database atau layanan lain di sini
     if (user) {
-      return Promise.resolve(user)
+      return Promise.resolve(user);
     } else {
-      return Promise.resolve(null)
+      return Promise.resolve(null);
     }
   },
-})
+});
 ```
 
 Dengan menambahkan `CredentialsProvider`, pengguna dapat melakukan login menggunakan kombinasi username dan password. **Catatan**: pada aplikasi produksi, logika `authorize` harus diubah agar memvalidasi username/password dari basis data atau sumber lain yang sesuai.
@@ -1010,36 +1029,38 @@ Berikut adalah contoh implementasi file `mongodb.ts`:
 ```typescript
 // lib/mongodb.ts
 
-import mongoose from 'mongoose'
+import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI as string
+const MONGODB_URI = process.env.MONGODB_URI as string;
 
 if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable inside .env.local')
+  throw new Error(
+    'Please define the MONGODB_URI environment variable inside .env.local'
+  );
 }
 
 // Caching koneksi agar tidak membuat koneksi baru saat Fast Refresh
-let cached = global.mongoose
+let cached = global.mongoose;
 
 if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null }
+  cached = global.mongoose = { conn: null, promise: null };
 }
 
 async function connectToDatabase() {
   if (cached.conn) {
-    return cached.conn
+    return cached.conn;
   }
 
   if (!cached.promise) {
     cached.promise = mongoose.connect(MONGODB_URI).then((mongoose) => {
-      return mongoose
-    })
+      return mongoose;
+    });
   }
-  cached.conn = await cached.promise
-  return cached.conn
+  cached.conn = await cached.promise;
+  return cached.conn;
 }
 
-export default connectToDatabase
+export default connectToDatabase;
 ```
 
 **Penjelasan:**
@@ -1069,23 +1090,28 @@ Buat file `User.ts` di dalam folder `models` untuk mendefinisikan skema Mongoose
 ```typescript
 // models/User.ts
 
-import mongoose, { Schema, Document, Model } from 'mongoose'
+import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IUser extends Document {
-  name: string
-  email: string
-  role: 'admin' | 'engineer' | 'operator' | 'guest'
+  name: string;
+  email: string;
+  role: 'admin' | 'engineer' | 'operator' | 'guest';
 }
 
 const userSchema: Schema<IUser> = new Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  role: { type: String, enum: ['admin', 'engineer', 'operator', 'guest'], default: 'guest' },
-})
+  role: {
+    type: String,
+    enum: ['admin', 'engineer', 'operator', 'guest'],
+    default: 'guest',
+  },
+});
 
-const User: Model<IUser> = mongoose.models.User || mongoose.model<IUser>('User', userSchema)
+const User: Model<IUser> =
+  mongoose.models.User || mongoose.model<IUser>('User', userSchema);
 
-export default User
+export default User;
 ```
 
 **Penjelasan:**
@@ -1107,11 +1133,11 @@ Agar data role dari MongoDB tersimpan di token dan sesi pengguna, tambahkan konf
 ```typescript
 // app/api/auth/[...nextauth]/route.ts
 
-import NextAuth from 'next-auth'
-import GoogleProvider from 'next-auth/providers/google'
-import CredentialsProvider from 'next-auth/providers/credentials'
-import connectToDatabase from '@/lib/mongodb'
-import User from '@/models/User'
+import NextAuth from 'next-auth';
+import GoogleProvider from 'next-auth/providers/google';
+import CredentialsProvider from 'next-auth/providers/credentials';
+import connectToDatabase from '@/lib/mongodb';
+import User from '@/models/User';
 
 export const authOptions = {
   providers: [
@@ -1127,42 +1153,42 @@ export const authOptions = {
       },
       async authorize(credentials) {
         // Otentikasi username/password
-        await connectToDatabase()
-        const user = await User.findOne({ email: credentials?.email })
+        await connectToDatabase();
+        const user = await User.findOne({ email: credentials?.email });
 
         if (user) {
-          return user
+          return user;
         } else {
-          return null
+          return null;
         }
       },
     }),
   ],
   callbacks: {
     async jwt({ token, user }) {
-      await connectToDatabase()
+      await connectToDatabase();
 
       // Ambil data user dari database saat user login
       if (user) {
-        const dbUser = await User.findOne({ email: user.email })
-        token.role = dbUser?.role || 'guest'
+        const dbUser = await User.findOne({ email: user.email });
+        token.role = dbUser?.role || 'guest';
       }
-      return token
+      return token;
     },
     async session({ session, token }) {
       // Menyimpan role dari token ke session
-      session.user.role = token.role
-      return session
+      session.user.role = token.role;
+      return session;
     },
   },
   session: {
     strategy: 'jwt', // Menggunakan JWT untuk manajemen sesi
   },
-}
+};
 
-const handler = NextAuth(authOptions)
+const handler = NextAuth(authOptions);
 
-export { handler as GET, handler as POST }
+export { handler as GET, handler as POST };
 ```
 
 **Penjelasan Konfigurasi**:
@@ -1209,7 +1235,7 @@ const ROLE_PRIORITY = {
   engineer: 2, // Akses teknis
   operator: 3, // Akses operasional
   guest: 4, // Akses umum
-}
+};
 
 // Tentukan rute yang dilindungi dan minimum prioritas aksesnya
 const PROTECTED_ROUTES = {
@@ -1217,7 +1243,7 @@ const PROTECTED_ROUTES = {
   '/engineer': ROLE_PRIORITY.engineer, // Admin dan engineer
   '/operator': ROLE_PRIORITY.operator, // Admin, engineer, dan operator
   '/public': ROLE_PRIORITY.guest, // Semua pengguna, termasuk guest
-}
+};
 ```
 
 **Penjelasan**:
@@ -1234,8 +1260,8 @@ Berikut adalah implementasi lengkap middleware di file `middleware.ts`:
 ```typescript
 // middleware.ts
 
-import { withAuth } from 'next-auth/middleware'
-import { NextResponse } from 'next/server'
+import { withAuth } from 'next-auth/middleware';
+import { NextResponse } from 'next/server';
 
 // Definisikan role dan rute yang dilindungi
 const ROLE_PRIORITY = {
@@ -1243,57 +1269,63 @@ const ROLE_PRIORITY = {
   engineer: 2,
   operator: 3,
   guest: 4,
-}
+};
 
 const PROTECTED_ROUTES = {
   '/admin': ROLE_PRIORITY.admin,
   '/engineer': ROLE_PRIORITY.engineer,
   '/operator': ROLE_PRIORITY.operator,
   '/public': ROLE_PRIORITY.guest,
-}
+};
 
 export default withAuth(
   function middleware(req) {
     // Dapatkan token dari NextAuth middleware
-    const { token } = req.nextauth
+    const { token } = req.nextauth;
 
     // Redirect ke halaman login jika pengguna belum login
     if (!token) {
-      return NextResponse.redirect(new URL('/login', req.url))
+      return NextResponse.redirect(new URL('/login', req.url));
     }
 
     // Ambil role pengguna dari token dan tentukan prioritasnya
     const userRolePriority =
-      ROLE_PRIORITY[token.role as keyof typeof ROLE_PRIORITY] || ROLE_PRIORITY.guest
+      ROLE_PRIORITY[token.role as keyof typeof ROLE_PRIORITY] ||
+      ROLE_PRIORITY.guest;
 
     // Ambil path dari URL yang diminta
-    const requestedPath = req.nextUrl.pathname
+    const requestedPath = req.nextUrl.pathname;
 
     // Periksa akses berdasarkan rute yang dilindungi
     for (const [path, minPriority] of Object.entries(PROTECTED_ROUTES)) {
       if (requestedPath.startsWith(path)) {
         // Jika prioritas user lebih tinggi dari yang dibutuhkan, redirect ke halaman unauthorized
         if (userRolePriority > minPriority) {
-          return NextResponse.redirect(new URL('/unauthorized', req.url))
+          return NextResponse.redirect(new URL('/unauthorized', req.url));
         }
-        break
+        break;
       }
     }
 
     // Jika pengguna memiliki akses, lanjutkan ke halaman yang diminta
-    return NextResponse.next()
+    return NextResponse.next();
   },
   {
     callbacks: {
       authorized: ({ token }) => !!token, // Pastikan pengguna telah login
     },
   }
-)
+);
 
 // Tentukan rute yang menggunakan middleware
 export const config = {
-  matcher: ['/admin/:path*', '/engineer/:path*', '/operator/:path*', '/public/:path*'],
-}
+  matcher: [
+    '/admin/:path*',
+    '/engineer/:path*',
+    '/operator/:path*',
+    '/public/:path*',
+  ],
+};
 ```
 
 **Penjelasan Implementasi**:
@@ -1369,7 +1401,12 @@ export default function DashboardPage() {
   if (status === 'loading') return <p>Loading...</p>;
 
   // Cek apakah user memiliki role yang diperbolehkan mengakses halaman dashboard
-  if (!session || (session.user.role !== 'admin' && session.user.role !== 'engineer' && session.user.role !== 'operator')) {
+  if (
+    !session ||
+    (session.user.role !== 'admin' &&
+      session.user.role !== 'engineer' &&
+      session.user.role !== 'operator')
+  ) {
     return <p>Access Denied. You do not have permission to view this page.</p>;
   }
 
@@ -1427,7 +1464,12 @@ export default function DashboardPage() {
 
   if (status === 'loading') return <p>Loading...</p>;
 
-  if (!session || (session.user.role !== 'admin' && session.user.role !== 'engineer' && session.user.role !== 'operator')) {
+  if (
+    !session ||
+    (session.user.role !== 'admin' &&
+      session.user.role !== 'engineer' &&
+      session.user.role !== 'operator')
+  ) {
     return <p>Access Denied. You do not have permission to view this page.</p>;
   }
 
@@ -1485,7 +1527,10 @@ interface RoleBasedFeatureProps {
   children: React.ReactNode;
 }
 
-export default function RoleBasedFeature({ allowedRoles, children }: RoleBasedFeatureProps) {
+export default function RoleBasedFeature({
+  allowedRoles,
+  children,
+}: RoleBasedFeatureProps) {
   const { data: session } = useSession();
 
   if (!session || !allowedRoles.includes(session.user.role)) {
@@ -1572,7 +1617,9 @@ export default function LoginPage() {
     <div>
       <h1>Login to HortiLink</h1>
       <button onClick={() => handleLogin('google')}>Login with Google</button>
-      <button onClick={() => handleLogin('facebook')}>Login with Facebook</button>
+      <button onClick={() => handleLogin('facebook')}>
+        Login with Facebook
+      </button>
       <button onClick={() => handleLogin('github')}>Login with GitHub</button>
     </div>
   );
@@ -1593,8 +1640,8 @@ Tambahkan callback `redirect` ke dalam konfigurasi `authOptions` di `app/api/aut
 ```typescript
 // app/api/auth/[...nextauth]/route.ts
 
-import NextAuth from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import NextAuth from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 export const authOptions = {
   ...otherAuthOptions, // Konfigurasi NextAuth lainnya
@@ -1602,23 +1649,23 @@ export const authOptions = {
     async redirect({ url, baseUrl }) {
       // Arahkan berdasarkan role pengguna
       if (url === '/dashboard') {
-        const session = await getSession()
+        const session = await getSession();
 
         // Redirect admin ke halaman manajemen khusus
-        if (session?.user?.role === 'admin') return `${baseUrl}/admin`
+        if (session?.user?.role === 'admin') return `${baseUrl}/admin`;
 
         // Redirect engineer ke halaman teknis
-        if (session?.user?.role === 'engineer') return `${baseUrl}/engineer`
+        if (session?.user?.role === 'engineer') return `${baseUrl}/engineer`;
 
         // Default ke dashboard umum
-        return `${baseUrl}/dashboard`
+        return `${baseUrl}/dashboard`;
       }
-      return baseUrl
+      return baseUrl;
     },
   },
-}
+};
 
-export default NextAuth(authOptions)
+export default NextAuth(authOptions);
 ```
 
 **Penjelasan**:
