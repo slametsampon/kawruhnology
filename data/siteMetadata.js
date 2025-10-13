@@ -6,7 +6,7 @@ const siteMetadata = {
   version: '0.2.1', // 🆕 Tambahkan versi di sini
   author: 'Slamet-Sam',
   headerTitle: 'MxCore',
-  description: 'Maintenance Extended Core',
+  description: 'Kawruh - Technology',
   language: 'en-us',
   theme: 'system', // system, dark or light
   siteUrl: 'https://slametsampon.github.io/kawruhnology/',
