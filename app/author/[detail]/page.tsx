@@ -15,6 +15,8 @@ export async function generateMetadata({
   params: { detail: string };
 }) {
   const detail = decodeURI(params.detail);
+  console.log('🧠 [generateMetadata] Slug detail:', detail);
+
   return genPageMetadata({
     title: detail,
     description: `${siteMetadata.title} ${detail} tagged content`,
@@ -30,26 +32,56 @@ export async function generateMetadata({
 export const generateStaticParams = async () => {
   const authorCounts = authorData as Record<string, number>;
   const authorKeys = Object.keys(authorCounts);
-  const paths = authorKeys.map((author) => ({
-    author: author,
-  }));
+  console.log('📦 [generateStaticParams] Author keys:', authorKeys);
+
+  const paths = authorKeys.map((author) => {
+    console.log(
+      '🔗 [generateStaticParams] Generating path for author slug:',
+      author
+    );
+    return {
+      detail: author, // ✅ Pastikan cocok dengan [detail] di folder
+    };
+  });
+
+  console.log('🔗 [generateStaticParams] Generating paths:', paths);
   return paths;
 };
 
 export default function AuthorPage({ params }: { params: { detail: string } }) {
   const detail = decodeURI(params.detail);
+  console.log('📄 [AuthorPage] Rendering page for slug:', detail);
+  // Lacak siapa yang memanggil
+  console.log('🧭 [AuthorPage] Call stack:\n', new Error().stack);
+
   // Capitalize first letter and convert space to dash
   const title = detail[0].toUpperCase() + detail.split(' ').join('-').slice(1);
+  console.log('📝 [AuthorPage] Title generated:', title);
+
   const filteredPosts = allCoreContent(
     sortPosts(
-      allBlogs.filter(
-        (post) =>
-          post.authors && post.authors.map((t) => slug(t)).includes(detail)
-      )
+      allBlogs.filter((post) => {
+        const postAuthors = post.authors?.map((t) => slug(t)) || [];
+        const matched = postAuthors.includes(detail);
+        if (matched) {
+          console.log(
+            `✅ [AuthorPage] Post matched for "${detail}":`,
+            post.title
+          );
+        }
+        return matched;
+      })
     )
   );
+
   //get author
   const authorResult = allAuthors.find((p) => p.slug === detail);
+  if (!authorResult) {
+    console.warn(`⚠️ [AuthorPage] Author not found for slug: ${detail}`);
+  } else {
+    console.log(`👤 [AuthorPage] Author found:`, authorResult.name);
+  }
+
   return (
     <>
       <CardAuthor author={authorResult} />

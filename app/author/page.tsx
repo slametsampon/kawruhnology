@@ -14,9 +14,13 @@ export const metadata = genPageMetadata({
 export default async function Page() {
   const authorCounts = authorData as Record<string, number>;
   const tagKeys = Object.keys(authorCounts);
+
+  console.log('🧾 [Author Page] All authors:', tagKeys);
+
   const sortedAuthors = tagKeys.sort(
     (a, b) => authorCounts[b] - authorCounts[a]
   );
+
   return (
     <>
       <div className="flex flex-col items-start justify-start divide-y divide-gray-200 dark:divide-gray-700 md:mt-24 md:flex-row md:items-center md:justify-center md:space-x-6 md:divide-y-0">
@@ -28,11 +32,15 @@ export default async function Page() {
         <div className="flex max-w-lg flex-wrap">
           {tagKeys.length === 0 && 'No authors found.'}
           {sortedAuthors.map((t) => {
+            const s = slug(t);
+            console.log(
+              `🔗 [Author Page] Rendering link to author: ${t} → ${s}`
+            );
             return (
               <div key={t} className="mb-2 mr-5 mt-2">
                 <Author text={t} />
                 <Link
-                  href={`/author/${slug(t)}`}
+                  href={`/author/${s}`}
                   className="-ml-2 text-sm font-semibold uppercase text-gray-600 dark:text-gray-300"
                   aria-label={`View posts tagged ${t}`}
                 >
