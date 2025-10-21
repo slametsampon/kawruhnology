@@ -1,9 +1,9 @@
 // app/author/[detail]/page.tsx
 
-import { slug } from 'github-slugger';
-import { allCoreContent, sortPosts } from 'pliny/utils/contentlayer';
+// import { slug } from 'github-slugger';
+// import { allCoreContent, sortPosts } from 'pliny/utils/contentlayer';
 import siteMetadata from '@/data/siteMetadata';
-import ListLayout from '@/layouts/ListLayoutWithTags';
+// import ListLayout from '@/layouts/ListLayoutWithTags';
 import { allAuthors, allBlogs } from 'contentlayer/generated';
 import authorData from 'app/author-data.json';
 import { genPageMetadata } from 'app/seo';
@@ -51,28 +51,26 @@ export const generateStaticParams = async () => {
 export default function AuthorPage({ params }: { params: { detail: string } }) {
   const detail = decodeURI(params.detail);
   console.log('📄 [AuthorPage] Rendering page for slug:', detail);
-  // Lacak siapa yang memanggil
-  console.log('🧭 [AuthorPage] Call stack:\n', new Error().stack);
 
   // Capitalize first letter and convert space to dash
   const title = detail[0].toUpperCase() + detail.split(' ').join('-').slice(1);
   console.log('📝 [AuthorPage] Title generated:', title);
 
-  const filteredPosts = allCoreContent(
-    sortPosts(
-      allBlogs.filter((post) => {
-        const postAuthors = post.authors?.map((t) => slug(t)) || [];
-        const matched = postAuthors.includes(detail);
-        if (matched) {
-          console.log(
-            `✅ [AuthorPage] Post matched for "${detail}":`,
-            post.title
-          );
-        }
-        return matched;
-      })
-    )
-  );
+  // const filteredPosts = allCoreContent(
+  //   sortPosts(
+  //     allBlogs.filter((post) => {
+  //       const postAuthors = post.authors?.map((t) => slug(t)) || [];
+  //       const matched = postAuthors.includes(detail);
+  //       if (matched) {
+  //         console.log(
+  //           `✅ [AuthorPage] Post matched for "${detail}":`,
+  //           post.title
+  //         );
+  //       }
+  //       return matched;
+  //     })
+  //   )
+  // );
 
   //get author
   const authorResult = allAuthors.find((p) => p.slug === detail);
