@@ -1,6 +1,7 @@
 // components/CardAuthor.js
 
 import Image from './Image';
+import { MDXLayoutRenderer } from 'pliny/mdx-components'; // pastikan ini sudah tersedia
 
 const CardAuthor = ({ author }) => {
   const basePath = process.env.BASE_PATH || '';
@@ -40,9 +41,10 @@ const CardAuthor = ({ author }) => {
           <h4 className="mb-3 text-xl font-bold leading-8 tracking-tight">
             {author.email}
           </h4>
-          <p className="prose mb-3 max-w-none font-bold text-gray-500 dark:text-gray-400">
-            {author.bio}
-          </p>
+          {/* 🔽 Ganti bio dengan full body markdown */}
+          <div className="prose max-w-none dark:prose-invert">
+            <MDXLayoutRenderer code={author.body.code} />
+          </div>
         </div>
       </div>
     </div>

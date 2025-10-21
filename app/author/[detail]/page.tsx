@@ -85,7 +85,7 @@ export default function AuthorPage({ params }: { params: { detail: string } }) {
   return (
     <>
       <CardAuthor author={authorResult} />
-      <ListLayout posts={filteredPosts} title={title} />
+      {/* <ListLayout posts={filteredPosts} title={title} /> */}
     </>
   );
 }
