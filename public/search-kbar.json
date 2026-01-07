@@ -1,9 +1,24 @@
 [
   {
+    "id": "religy/lari-ke-Allah",
+    "name": "Produktif Tapi Tetap Zuhud — Cara Muslim Bangun Peradaban",
+    "section": "CONTENT",
+    "href": "/blog/religy/lari-ke-Allah",
+    "subtitle": "November 9, 2025",
+    "keywords": [
+      "Produktif",
+      "ujian",
+      "Zuhud",
+      "sabar",
+      "berdoa",
+      "tawakal"
+    ]
+  },
+  {
     "id": "religy/istidraj",
     "name": "Jangan Tertipu Dunia - Tafsir QS. Al-An’am 44 dan Bahaya Istidraj",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/religy/istidraj",
+    "href": "/blog/religy/istidraj",
     "subtitle": "November 8, 2025",
     "keywords": [
       "religi",
@@ -15,7 +30,7 @@
     "id": "motivasi/anti-galau",
     "name": "Anti Galau - Obat Pasti dari Al-Qur’an untuk Ketenangan Hati",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/motivasi/anti-galau",
+    "href": "/blog/motivasi/anti-galau",
     "subtitle": "October 21, 2025",
     "keywords": [
       "galau",
@@ -30,7 +45,7 @@
     "id": "religy/doa-dalam-teduh",
     "name": "Doa dalam Teduh - Pelajaran Hidup dari Musa AS di Tengah Kesulitan",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/religy/doa-dalam-teduh",
+    "href": "/blog/religy/doa-dalam-teduh",
     "subtitle": "October 13, 2025",
     "keywords": [
       "ujian",
@@ -44,7 +59,7 @@
     "id": "website/github-custom-domain",
     "name": "Deploy Next.js ke GitHub Pages dengan Custom Domain Gratis",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/website/github-custom-domain",
+    "href": "/blog/website/github-custom-domain",
     "subtitle": "October 10, 2025",
     "keywords": [
       "GitHub-Actions",
@@ -57,7 +72,7 @@
     "id": "website/konfigurtasi-blog",
     "name": "Konfigurasi Lengkap Next.js Blog (kawruhnology)",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/website/konfigurtasi-blog",
+    "href": "/blog/website/konfigurtasi-blog",
     "subtitle": "October 8, 2025",
     "keywords": [
       "static-web",
@@ -73,7 +88,7 @@
     "id": "markdown/github-markdown-guide",
     "name": "Panduan Markdown",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/markdown/github-markdown-guide",
+    "href": "/blog/markdown/github-markdown-guide",
     "subtitle": "October 7, 2025",
     "keywords": [
       "github",
@@ -87,7 +102,7 @@
     "id": "markdown/math-formula-guide",
     "name": "Panduan Penulisan Formula Matematika dalam Block Markdown",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/markdown/math-formula-guide",
+    "href": "/blog/markdown/math-formula-guide",
     "subtitle": "October 7, 2025",
     "keywords": [
       "markdown",
@@ -99,7 +114,7 @@
     "id": "religy/zikir",
     "name": "Dekat Tanpa Jarak -Memahami Dzikir dari Hati ke Aksi",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/religy/zikir",
+    "href": "/blog/religy/zikir",
     "subtitle": "October 4, 2025",
     "keywords": [
       "religi",
@@ -114,7 +129,7 @@
     "id": "motivasi/al-ashr",
     "name": "Tiga Ayat, empat Kunci, satu Jalan Selamat ~ Tafsir Praktis Surat Al-‘Ashr untuk Milenial & Gen Z",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/motivasi/al-ashr",
+    "href": "/blog/motivasi/al-ashr",
     "subtitle": "March 28, 2025",
     "keywords": [
       "waktu",
@@ -128,7 +143,7 @@
     "id": "religy/infaq",
     "name": "Dari Rumah yang Satu, Menuju Surga yang Sama ~ Menata Harta, Menjaga Amanah",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/religy/infaq",
+    "href": "/blog/religy/infaq",
     "subtitle": "March 28, 2025",
     "keywords": [
       "religi",
@@ -142,7 +157,7 @@
     "id": "motivasi/lupa",
     "name": "Lupa Saat Belajar? Ini Bukan Cuma Masalah Fokus...",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/motivasi/lupa",
+    "href": "/blog/motivasi/lupa",
     "subtitle": "March 27, 2025",
     "keywords": [
       "ilmu",
@@ -155,7 +170,7 @@
     "id": "motivasi/akal",
     "name": "Upgrade Akal, Biar Hidup Nggak Asal",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/motivasi/akal",
+    "href": "/blog/motivasi/akal",
     "subtitle": "March 26, 2025",
     "keywords": [
       "akal",
@@ -168,7 +183,7 @@
     "id": "motivasi/leaner",
     "name": "Iqra! ~ Spirit Pembelajar Sejati ala Gen Z Muslim",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/motivasi/leaner",
+    "href": "/blog/motivasi/leaner",
     "subtitle": "March 26, 2025",
     "keywords": [
       "leaner",
@@ -181,7 +196,7 @@
     "id": "motivasi/profesionalisme",
     "name": "Profesionalisme ~ Jalan Gen Z Menuju Karier yang Berkah dan Bermakna",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/motivasi/profesionalisme",
+    "href": "/blog/motivasi/profesionalisme",
     "subtitle": "March 26, 2025",
     "keywords": [
       "leaner",
@@ -194,7 +209,7 @@
     "id": "motivasi/ilmu",
     "name": "Scroll Ilmu, Bukan Hanya Hiburan ~ Jalan Gen Z Menuju Derajat Tinggi",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/motivasi/ilmu",
+    "href": "/blog/motivasi/ilmu",
     "subtitle": "March 25, 2025",
     "keywords": [
       "leaner",
@@ -207,7 +222,7 @@
     "id": "religy/rizki",
     "name": "Mindset Rezeki - Antara Takdir, Doa, dan Jalan Ninja Orang Beriman",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/religy/rizki",
+    "href": "/blog/religy/rizki",
     "subtitle": "March 25, 2025",
     "keywords": [
       "religi",
@@ -222,7 +237,7 @@
     "id": "religy/tawakal",
     "name": "Berjuang Tanpa Baper - Ikhtiar Kuat, Tawakal Cerdas, Hasil Ikhlas",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/religy/tawakal",
+    "href": "/blog/religy/tawakal",
     "subtitle": "March 24, 2025",
     "keywords": [
       "religi",
@@ -237,7 +252,7 @@
     "id": "teknologi/drone-pertanian",
     "name": "Merancang Drone Pertanian Kapasitas 20 Kg",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/teknologi/drone-pertanian",
+    "href": "/blog/teknologi/drone-pertanian",
     "subtitle": "March 24, 2025",
     "keywords": [
       "kontrol",
@@ -251,7 +266,7 @@
     "id": "religy/doa",
     "name": "Berdoa Bukan Backup Plan, Tapi Kekuatan Utama",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/religy/doa",
+    "href": "/blog/religy/doa",
     "subtitle": "March 23, 2025",
     "keywords": [
       "religi",
@@ -266,7 +281,7 @@
     "id": "religy/sabar",
     "name": "Sabar yang Aktif - Antara Iman, Emosi, dan Jalan Pulang kepada Allah",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/religy/sabar",
+    "href": "/blog/religy/sabar",
     "subtitle": "March 23, 2025",
     "keywords": [
       "religi",
@@ -281,7 +296,7 @@
     "id": "religy/syukur",
     "name": "Lelah Jadi Manusia? Coba Jalan Sunyi Bernama Syukur",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/religy/syukur",
+    "href": "/blog/religy/syukur",
     "subtitle": "March 23, 2025",
     "keywords": [
       "religi",
@@ -296,7 +311,7 @@
     "id": "religy/tiga-is",
     "name": "Tiga Is yang Bikin Hati Kuat Saat Hidup Nggak Baik-Baik Aja",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/religy/tiga-is",
+    "href": "/blog/religy/tiga-is",
     "subtitle": "March 23, 2025",
     "keywords": [
       "religi",
@@ -312,7 +327,7 @@
     "id": "religy/ujian",
     "name": "Mental Tangguh Menurut Islam - Saat Hidup Nggak Sesuai Rencana",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/religy/ujian",
+    "href": "/blog/religy/ujian",
     "subtitle": "March 23, 2025",
     "keywords": [
       "religi",
@@ -327,7 +342,7 @@
     "id": "IoT/dataModelHortiLink",
     "name": "Data Model – Mengimplementasikan Time Series Database di MongoDB dengan Mongoose dan TypeScript untuk Data Sensor IoT",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/IoT/dataModelHortiLink",
+    "href": "/blog/IoT/dataModelHortiLink",
     "subtitle": "November 6, 2024",
     "keywords": [
       "kontrol",
@@ -343,7 +358,7 @@
     "id": "IoT/tahap3",
     "name": "Tahap 3 – Integrasi ESP-Gateway dengan Server Kustom",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/IoT/tahap3",
+    "href": "/blog/IoT/tahap3",
     "subtitle": "November 6, 2024",
     "keywords": [
       "kontrol",
@@ -359,7 +374,7 @@
     "id": "IoT/tahap1",
     "name": "Tahap 1 – Pengembangan Sistem Monitoring dan Kontrol Individual (ESP-Node to Device)",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/IoT/tahap1",
+    "href": "/blog/IoT/tahap1",
     "subtitle": "October 26, 2024",
     "keywords": [
       "kontrol",
@@ -375,7 +390,7 @@
     "id": "IoT/web-server-esp",
     "name": "Membangun Web Server Berbasis ESP dengan LittleFS dan Tailwind CSS",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/IoT/web-server-esp",
+    "href": "/blog/IoT/web-server-esp",
     "subtitle": "October 26, 2024",
     "keywords": [
       "esp-32",
@@ -390,7 +405,7 @@
     "id": "IoT/HortiLink",
     "name": "HortiLink - Sistem IoT Pintar untuk Pertanian Terintegrasi",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/IoT/HortiLink",
+    "href": "/blog/IoT/HortiLink",
     "subtitle": "October 25, 2024",
     "keywords": [
       "kontrol",
@@ -405,7 +420,7 @@
     "id": "agri/bio-filter",
     "name": "Biofilter dalam Sistem Akuakultur dan Aquaponik - Prinsip, Rancangan, dan Manajemen Operasional untuk Praktisi",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/agri/bio-filter",
+    "href": "/blog/agri/bio-filter",
     "subtitle": "October 23, 2024",
     "keywords": [
       "aquaponic",
@@ -418,7 +433,7 @@
     "id": "agri/hidroponik",
     "name": "Hidroponik",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/agri/hidroponik",
+    "href": "/blog/agri/hidroponik",
     "subtitle": "October 20, 2024",
     "keywords": [
       "hidroponik",
@@ -432,7 +447,7 @@
     "id": "agri/akuaponik-modul",
     "name": "Panduan Praktis Membuat Modul Sistem Aquaponik Terpadu",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/agri/akuaponik-modul",
+    "href": "/blog/agri/akuaponik-modul",
     "subtitle": "September 28, 2024",
     "keywords": [
       "perikanan",
@@ -449,7 +464,7 @@
     "id": "agri/akuaponik-praktis",
     "name": "Panduan Praktis Membangun dan Mengelola Sistem RAS & Aquaponik untuk Praktisi",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/agri/akuaponik-praktis",
+    "href": "/blog/agri/akuaponik-praktis",
     "subtitle": "September 24, 2024",
     "keywords": [
       "perikanan",
@@ -463,7 +478,7 @@
     "id": "agri/hidroponik-vertikal-indoor",
     "name": "Rancangan Hidroponik Indoor",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/agri/hidroponik-vertikal-indoor",
+    "href": "/blog/agri/hidroponik-vertikal-indoor",
     "subtitle": "September 22, 2024",
     "keywords": [
       "hidroponik",
@@ -476,7 +491,7 @@
     "id": "agri/hidroponik-vertikal-outdoor",
     "name": "Hidroponik Vertikal Outdoor",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/agri/hidroponik-vertikal-outdoor",
+    "href": "/blog/agri/hidroponik-vertikal-outdoor",
     "subtitle": "September 21, 2024",
     "keywords": [
       "hidroponik",
@@ -488,7 +503,7 @@
     "id": "AI/patform-ai",
     "name": "Pemanfaatan AI untuk Mendukung Pekerjaan di Industri Petrokimia",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/AI/patform-ai",
+    "href": "/blog/AI/patform-ai",
     "subtitle": "September 20, 2024",
     "keywords": [
       "platform-ai",
@@ -501,7 +516,7 @@
     "id": "AI/artikel-ai",
     "name": "Menulis Artikel yang Efektif dengan Prompt Engineering",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/AI/artikel-ai",
+    "href": "/blog/AI/artikel-ai",
     "subtitle": "September 8, 2024",
     "keywords": [
       "prompt-engineering",
@@ -514,7 +529,7 @@
     "id": "AI/prompt-engineering",
     "name": "Prompt Engineering",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/AI/prompt-engineering",
+    "href": "/blog/AI/prompt-engineering",
     "subtitle": "September 8, 2024",
     "keywords": [
       "prompt-engineering",
@@ -526,7 +541,7 @@
     "id": "kompetensi/bertanya",
     "name": "Bertanya",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/kompetensi/bertanya",
+    "href": "/blog/kompetensi/bertanya",
     "subtitle": "January 5, 2024",
     "keywords": [
       "bertanya"
@@ -536,7 +551,7 @@
     "id": "kompetensi/micro-question-management",
     "name": "Micro Question - Micro Management",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/kompetensi/micro-question-management",
+    "href": "/blog/kompetensi/micro-question-management",
     "subtitle": "January 5, 2024",
     "keywords": [
       "Micro-Question",
@@ -549,7 +564,7 @@
     "id": "kompetensi/prepare-for-success",
     "name": "Menyiapkan diri menyongsong dunia kerja",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/kompetensi/prepare-for-success",
+    "href": "/blog/kompetensi/prepare-for-success",
     "subtitle": "January 5, 2024",
     "keywords": [
       "dunia-kerja",
@@ -564,7 +579,7 @@
     "id": "kompetensi/saran-kritik",
     "name": "Saran dan Kritik",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/kompetensi/saran-kritik",
+    "href": "/blog/kompetensi/saran-kritik",
     "subtitle": "January 5, 2024",
     "keywords": [
       "bertanya"
@@ -574,7 +589,7 @@
     "id": "kompetensi/literasi",
     "name": "Literasi",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/kompetensi/literasi",
+    "href": "/blog/kompetensi/literasi",
     "subtitle": "January 4, 2024",
     "keywords": [
       "literasi",
@@ -587,7 +602,7 @@
     "id": "motivasi/DevOps",
     "name": "DevOps - Development Operations",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/motivasi/DevOps",
+    "href": "/blog/motivasi/DevOps",
     "subtitle": "January 4, 2024",
     "keywords": [
       "DevOps",
@@ -601,7 +616,7 @@
     "id": "motivasi/resolusi",
     "name": "Resolusi - awal tahun",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/motivasi/resolusi",
+    "href": "/blog/motivasi/resolusi",
     "subtitle": "January 2, 2024",
     "keywords": [
       "resolusi",
@@ -614,7 +629,7 @@
     "id": "Bisnis/freelancer",
     "name": "Freelancer Pengembang Web Pemula",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/Bisnis/freelancer",
+    "href": "/blog/Bisnis/freelancer",
     "subtitle": "November 12, 2023",
     "keywords": [
       "freelancer",
@@ -627,7 +642,7 @@
     "id": "agri/ipc",
     "name": "Penjernih Plate Miring - ICP (Inclined Plate Clarifier)",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/agri/ipc",
+    "href": "/blog/agri/ipc",
     "subtitle": "October 2, 2023",
     "keywords": [
       "perikanan",
@@ -640,7 +655,7 @@
     "id": "general/laju-alir-air",
     "name": "Laju Alir Air Dalam Pipa",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/general/laju-alir-air",
+    "href": "/blog/general/laju-alir-air",
     "subtitle": "October 1, 2023",
     "keywords": [
       "irigasi",
@@ -653,7 +668,7 @@
     "id": "IoT/iot",
     "name": "IoT - Internet of Things",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/IoT/iot",
+    "href": "/blog/IoT/iot",
     "subtitle": "September 18, 2023",
     "keywords": [
       "kontrol",
@@ -665,7 +680,7 @@
     "id": "agri/airlift-pump",
     "name": "Air Lift Pump - Prinsip, Desain, dan Aplikasi dalam Akuakultur",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/agri/airlift-pump",
+    "href": "/blog/agri/airlift-pump",
     "subtitle": "September 15, 2023",
     "keywords": [
       "perikanan",
@@ -678,7 +693,7 @@
     "id": "IoT/esp32",
     "name": "ESP-32",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/IoT/esp32",
+    "href": "/blog/IoT/esp32",
     "subtitle": "September 15, 2023",
     "keywords": [
       "esp-32",
@@ -690,7 +705,7 @@
     "id": "website/preview-mode-headless-cms",
     "name": "Preview Mode for Headless CMS",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/website/preview-mode-headless-cms",
+    "href": "/blog/website/preview-mode-headless-cms",
     "subtitle": "April 9, 2023",
     "keywords": []
   },
@@ -698,7 +713,7 @@
     "id": "website/dynamic-routing-static-regeneration",
     "name": "Dynamic Routing and Static Regeneration",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/website/dynamic-routing-static-regeneration",
+    "href": "/blog/website/dynamic-routing-static-regeneration",
     "subtitle": "March 4, 2023",
     "keywords": [
       "Dynamic-Routing",
@@ -710,7 +725,7 @@
     "id": "website/deploying-next-apps",
     "name": "Deploying Next.js Apps",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/website/deploying-next-apps",
+    "href": "/blog/website/deploying-next-apps",
     "subtitle": "January 2, 2023",
     "keywords": [
       "vercel",
@@ -722,13 +737,13 @@
     "id": "website/server-client-components",
     "name": "Server and Client Components",
     "section": "CONTENT",
-    "href": "/kawruhnology/blog/website/server-client-components",
+    "href": "/blog/website/server-client-components",
     "subtitle": "January 2, 2023",
     "keywords": []
   },
   {
     "section": "CONTENT",
-    "href": "/kawruhnology/undefined",
+    "href": "/undefined",
     "subtitle": "Invalid Date"
   }
 ]
