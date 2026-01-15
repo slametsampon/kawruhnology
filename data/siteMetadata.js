@@ -11,8 +11,8 @@ const siteMetadata = {
   theme: 'system', // system, dark or light
   siteUrl: 'https://slametsampon.github.io/kawruhnology/',
   siteRepo: 'https://github.com/slametsampon/kawruhnology',
-  siteLogo: '/static/images/logo.png',
-  socialBanner: '/static/images/twitter-card.png',
+  siteLogo: '/kawruhnology/staticimages/logo.png',
+  socialBanner: '/kawruhnology/staticimages/twitter-card.png',
   mastodon: 'https://mastodon.social/@mastodonuser',
   email: 'address@yoursite.com',
   github: 'https://github.com/slametsampon/kawruhnology',
