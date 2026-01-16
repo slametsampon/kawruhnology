@@ -73,7 +73,7 @@ export default function Home() {
       </section>
 
       {/* ----- Tag Cloud Section ----- */}
-      <section className="border-t border-gray-700 bg-[#111827] px-6 py-16 md:px-20">
+      {/* <section className="border-t border-gray-700 bg-[#111827] px-6 py-16 md:px-20">
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="mb-6 text-2xl font-semibold text-orange-400">
             Eksplorasi Berdasarkan Tag
@@ -84,10 +84,10 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* ----- Recent Blog Posts ----- */}
-      <section className="bg-[#1f2937] px-6 py-20 md:px-20">
+      <section className="bg-[#1f2937] px-6 py-10 md:px-20">
         <div className="mx-auto max-w-4xl">
           <h2 className="mb-8 text-2xl font-semibold text-orange-400">
             Tulisan Terbaru
