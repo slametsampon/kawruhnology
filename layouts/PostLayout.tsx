@@ -50,7 +50,7 @@ export default function PostLayout({
                     <time dateTime={date}>
                       {new Date(date).toLocaleDateString(
                         siteMetadata.locale,
-                        postDateTemplate
+                        postDateTemplate,
                       )}
                     </time>
                   </dd>
@@ -68,8 +68,7 @@ export default function PostLayout({
                 <ul className="flex flex-wrap justify-center gap-4 sm:space-x-12 xl:block xl:space-x-0 xl:space-y-8">
                   {authorDetails.map((author) => {
                     const envBasePath = process.env.BASE_PATH || '';
-                    const fallbackAvatar =
-                      '/kawruhnology/static/images/default-avatar.png';
+                    const fallbackAvatar = '/static/images/default-avatar.png';
                     const avatarSrc = `${envBasePath}${
                       author.avatar || fallbackAvatar
                     }`;

@@ -33,8 +33,10 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
+    "**/*.js", // ✅ Tambahkan ini agar file JS ikut diproses
     ".next/types/**/*.ts",
     ".contentlayer/generated",
+    "next.config.js", // ✅ Tambahkan eksplisit juga untuk jaga-jaga
     "app/layout.tsx",
     "app/layout.tsx-min",
     "app/layout-new.tsx"

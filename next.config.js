@@ -3,33 +3,20 @@
 const { withContentlayer } = require('next-contentlayer');
 
 /** @type {import('next').NextConfig} */
-const isProd = process.env.NODE_ENV === 'production';
-
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
 
-  // ✅ Penting untuk static export
-  output: 'export',
-
-  // ✅ Wajib untuk mendukung routing /about/ dll
+  // ✅ Tetap trailing slash agar URL tetap konsisten (misal: /about/)
   trailingSlash: true,
 
-  // ✅ Wajib agar image Next.js tidak error saat export
+  // ✅ Aktifkan image optimization bawaan Vercel
   images: {
-    unoptimized: true,
+    unoptimized: false,
   },
 
-  // ✅ Penting untuk GitHub Pages: menyesuaikan basePath
-  basePath: isProd ? '/kawruhnology' : '',
-
-  // ✅ Expose basePath agar bisa digunakan di komponen (client)
-  env: {
-    BASE_PATH: isProd ? '/kawruhnology' : '',
-  },
-
+  // ✅ SVGR support tetap dipertahankan (bagus!)
   webpack(config) {
-    // 🔥 Tambahkan rule untuk SVGR
     config.module.rules.push({
       test: /\.svg$/i,
       issuer: /\.[jt]sx?$/,

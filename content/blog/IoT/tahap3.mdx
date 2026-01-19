@@ -24,7 +24,7 @@ Di tahap ini, HortiLink berubah dari sekadar perangkat pemantau jadi sistem leng
 
 Yuk, simak langkah-langkah seru di Tahap 3 ini!
 
-![hortilink-tahap3](/kawruhnology/static/images/IoT/hortilink-tahap3.webp)
+![hortilink-tahap3](/static/images/IoT/hortilink-tahap3.webp)
 
 **Konsep HortiLink Tahap3 - sumber ChatGpt**
 
@@ -263,7 +263,7 @@ Berikut ini adalah langkah-langkah setup awal proyek HortiLink dengan kriteria y
 
    if (!MONGODB_URI) {
      throw new Error(
-       'Please define the MONGODB_URI environment variable inside .env.local'
+       'Please define the MONGODB_URI environment variable inside .env.local',
      );
    }
 
@@ -1035,7 +1035,7 @@ const MONGODB_URI = process.env.MONGODB_URI as string;
 
 if (!MONGODB_URI) {
   throw new Error(
-    'Please define the MONGODB_URI environment variable inside .env.local'
+    'Please define the MONGODB_URI environment variable inside .env.local',
   );
 }
 
@@ -1314,7 +1314,7 @@ export default withAuth(
     callbacks: {
       authorized: ({ token }) => !!token, // Pastikan pengguna telah login
     },
-  }
+  },
 );
 
 // Tentukan rute yang menggunakan middleware

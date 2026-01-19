@@ -8,8 +8,8 @@ import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Analytics, AnalyticsConfig } from 'pliny/analytics';
 import SectionContainer from '@/components/SectionContainer';
-// import { SearchConfig, SearchProvider } from 'pliny/search';
-import { CustomSearchProvider } from '@/components/CustomSearchProvider';
+import { SearchConfig, SearchProvider } from 'pliny/search';
+// import { CustomSearchProvider } from '@/components/CustomSearchProvider';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import siteMetadata from '../data/siteMetadata';
@@ -29,12 +29,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en">
       <head>
-        <link
-          rel="icon"
-          href="/kawruhnology/favicon.ico"
-          type="image/x-icon"
-          sizes="any"
-        />
+        <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="any" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta charSet="utf-8" />
         <title>{siteMetadata.title}</title>
@@ -48,12 +43,12 @@ export default function RootLayout({ children }: RootLayoutProps) {
             analyticsConfig={siteMetadata.analytics as AnalyticsConfig}
           />
           <div className="flex min-h-screen flex-col justify-between font-sans">
-            <CustomSearchProvider>
+            <SearchProvider searchConfig={siteMetadata.search as SearchConfig}>
               <Header />
               <main className="mb-auto">
                 <SectionContainer> {children}</SectionContainer>
               </main>
-            </CustomSearchProvider>
+            </SearchProvider>
             <Footer />
           </div>
         </ThemeProvider>
