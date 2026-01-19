@@ -180,7 +180,7 @@ function createTagCount(allBlogs: BlogType[]) {
   console.log('🔖 [createTagCount] Result:', tagCount);
   writeFileSync('./app/tag-data.json', JSON.stringify(tagCount));
   console.log(
-    '✅ [createTagCount] tag-data.json created at ./app/tag-data.json'
+    '✅ [createTagCount] tag-data.json created at ./app/tag-data.json',
   );
 }
 
@@ -202,7 +202,7 @@ function createAuthorCount(allBlogs: BlogType[]) {
   console.log('👤 [createAuthorCount] Result:', authorCount);
   writeFileSync('./app/author-data.json', JSON.stringify(authorCount));
   console.log(
-    '✅ [createAuthorCount] author-data.json created at ./app/author-data.json'
+    '✅ [createAuthorCount] author-data.json created at ./app/author-data.json',
   );
 }
 
@@ -215,21 +215,21 @@ function createSearchIndex(allBlogs: BlogType[]) {
     console.log('🔎 [createSearchIndex] Generating local search index...');
     writeFileSync(
       `public/${siteMetadata.search.kbarConfig.searchDocumentsPath}`,
-      JSON.stringify(allCoreContent(sortPosts(allBlogs)))
+      JSON.stringify(allCoreContent(sortPosts(allBlogs))),
     );
     console.log(
-      `✅ [createSearchIndex] Local search index generated at public/${siteMetadata.search.kbarConfig.searchDocumentsPath}`
+      `✅ [createSearchIndex] Local search index generated at public/${siteMetadata.search.kbarConfig.searchDocumentsPath}`,
     );
   } else {
     console.log(
-      'ℹ️ [createSearchIndex] No search index generated (provider not set to kbar).'
+      'ℹ️ [createSearchIndex] No search index generated (provider not set to kbar).',
     );
   }
 }
 
 function createKbarSearchIndex(allBlogs: BlogType[]) {
   console.log(
-    '🔎 [createKbarSearchIndex] Generating KBar-compatible search index...'
+    '🔎 [createKbarSearchIndex] Generating KBar-compatible search index...',
   );
 
   const basePath = process.env.BASE_PATH || '';
@@ -303,11 +303,11 @@ export default makeSource({
       if (Array.isArray(imported?.allBlogs)) {
         allBlogs = imported.allBlogs;
         console.log(
-          `📚 [onSuccess] Found ${allBlogs.length} blogs from importData()`
+          `📚 [onSuccess] Found ${allBlogs.length} blogs from importData()`,
         );
       } else {
         console.warn(
-          '⚠️ [onSuccess] allBlogs not found from importData(), fallback to file.'
+          '⚠️ [onSuccess] allBlogs not found from importData(), fallback to file.',
         );
         allBlogs = readAllBlogsFromFile();
         console.log(`📁 [onSuccess] Loaded ${allBlogs.length} blogs from file`);
@@ -315,7 +315,7 @@ export default makeSource({
     } catch (err) {
       console.warn(
         '❌ [onSuccess] importData() failed, fallback to file:',
-        err
+        err,
       );
       allBlogs = readAllBlogsFromFile();
       console.log(`📁 [onSuccess] Loaded ${allBlogs.length} blogs from file`);
@@ -323,7 +323,7 @@ export default makeSource({
 
     if (!allBlogs.length) {
       console.warn(
-        '⚠️ [onSuccess] No blog data available, skipping post-build tasks.'
+        '⚠️ [onSuccess] No blog data available, skipping post-build tasks.',
       );
       return;
     }
@@ -331,7 +331,7 @@ export default makeSource({
     createAuthorCount(allBlogs);
     createTagCount(allBlogs);
     createSearchIndex(allBlogs);
-    createKbarSearchIndex(allBlogs); // ✅ Tambahan
+    // createKbarSearchIndex(allBlogs); // ✅ Tambahan
 
     console.log('✅ [onSuccess] Post-build tasks completed.');
   },
