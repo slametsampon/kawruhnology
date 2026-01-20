@@ -267,7 +267,7 @@ const sensorDataSchema: Schema = new Schema(
   },
   {
     collection: 'SensorData', // Menggunakan nama koleksi yang sudah dibuat
-  }
+  },
 );
 
 // Buat model menggunakan schema di atas
@@ -335,7 +335,7 @@ async function getDataByDate() {
 
     const results: ISensorData[] = await SensorData.find({
       'metadata.blokKebunId': new mongoose.Types.ObjectId(
-        '64f9c9f7f4b0a6a8e8a8a8a8'
+        '64f9c9f7f4b0a6a8e8a8a8a8',
       ), // Ganti dengan blokKebunId yang sesuai
       timestamp: {
         $gte: new Date('2023-11-01T00:00:00Z'),
@@ -369,6 +369,6 @@ getDataByDate();
 
 ---
 
-### Hak cipta[^1]. Artikel ini berdasar ChatGpt & penulis tidak menjamin seluruh akurasi isinya
+### Catatan Penyusunan
 
-[^1]: [ChatGpt](https://chat.openai.com)
+Artikel ini disusun sebagai materi edukasi dan referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
