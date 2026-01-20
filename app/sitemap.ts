@@ -14,6 +14,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: blog.lastmod ?? blog.date,
     }));
 
+  const toolRoutes = [
+    '/tools',
+    '/tools/vercel',
+    '/tools/openai',
+    '/tools/notion',
+  ].map((path) => ({
+    url: `${baseUrl}${path}`,
+    lastModified: new Date(),
+  }));
+
   return [
     {
       url: baseUrl,
@@ -23,6 +33,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${baseUrl}/blog`,
       lastModified: new Date(),
     },
+    ...toolRoutes,
     ...blogRoutes,
   ];
 }

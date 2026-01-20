@@ -1,0 +1,1413 @@
+---
+title: Membangun Sistem Konten dengan MDX Router (Next.js, TypeScript, Tailwind)
+date: '2026-01-20'
+tags:
+  [
+    'mdx-router',
+    'nextjs-app-router',
+    'typescript',
+    'tailwindcss',
+    'content-architecture',
+    'frontend-engineering',
+    'static-site-generation',
+    'seo-nextjs',
+  ]
+draft: false
+summary: Artikel ini membahas MDX Router di Next.js App Router secara menyeluruh, tidak hanya dari sisi setup, tetapi dari sudut pandang arsitektur dan pemisahan tanggung jawab. Pembahasan dimulai dari konsep dasar MDX sebagai content layer, perbedaan frontmatter dan content, hingga peran layout App Router dan layout MDX. Artikel ini juga mengulas batasan dynamic route pada MDX, hubungan frontmatter dengan SEO, serta alasan mengapa metadata Next.js tetap diperlukan. Dengan contoh nyata menggunakan Next.js, TypeScript, dan Tailwind CSS, artikel ini membantu pembaca membangun sistem konten yang rapi, scalable, dan bebas anti-pattern.
+---
+
+**Membangun Sistem Konten dengan MDX Router (Next.js, TypeScript, Tailwind)**
+
+---
+
+- [**BAB 1 — MDX Router Itu Apa (Fundamental)**](#bab-1--mdx-router-itu-apa-fundamental)
+- [**BAB 2 — Setup Minimal yang Benar**](#bab-2--setup-minimal-yang-benar)
+  - [2.1 Inisialisasi Project (npm + TypeScript + Tailwind)](#21-inisialisasi-project-npm--typescript--tailwind)
+  - [2.2 Menambahkan Integrasi MDX](#22-menambahkan-integrasi-mdx)
+  - [2.3 Konfigurasi `next.config.js`](#23-konfigurasi-nextconfigjs)
+  - [2.4 Struktur Folder yang Valid untuk MDX Router](#24-struktur-folder-yang-valid-untuk-mdx-router)
+  - [2.5 Verifikasi Awal](#25-verifikasi-awal)
+  - [2.6 Kenapa Setup Minimal Ini Penting](#26-kenapa-setup-minimal-ini-penting)
+- [**BAB 3 — Frontmatter vs Content (Core Knowledge)**](#bab-3--frontmatter-vs-content-core-knowledge)
+  - [3.1 Struktur Dasar MDX](#31-struktur-dasar-mdx)
+  - [3.2 Frontmatter: Metadata, Bukan Tampilan](#32-frontmatter-metadata-bukan-tampilan)
+  - [3.3 Content: Narasi \& Presentasi](#33-content-narasi--presentasi)
+  - [3.4 Mekanisme Internal: Kenapa Dipisah?](#34-mekanisme-internal-kenapa-dipisah)
+  - [3.5 Kenapa Frontmatter Tidak Otomatis SEO?](#35-kenapa-frontmatter-tidak-otomatis-seo)
+  - [3.6 Posisi Frontmatter dalam Arsitektur SEO](#36-posisi-frontmatter-dalam-arsitektur-seo)
+  - [3.7 Dampak Jika Frontmatter \& Content Dicampur](#37-dampak-jika-frontmatter--content-dicampur)
+  - [3.8 Menyiapkan Pembaca ke Tahap Lanjut](#38-menyiapkan-pembaca-ke-tahap-lanjut)
+- [**BAB 4 — Layout yang Sering Disalahpahami**](#bab-4--layout-yang-sering-disalahpahami)
+  - [4.1 Tiga Hal yang Sering Dicampur (Dan Seharusnya Dipisah)](#41-tiga-hal-yang-sering-dicampur-dan-seharusnya-dipisah)
+  - [4.2 Layout App Router: Struktur Halaman](#42-layout-app-router-struktur-halaman)
+  - [4.3 MDX Content: Tidak Tahu Layout](#43-mdx-content-tidak-tahu-layout)
+  - [4.4 `prose`: Keputusan Halaman, Bukan Konten](#44-prose-keputusan-halaman-bukan-konten)
+  - [4.5 MDX Components: Level yang Berbeda](#45-mdx-components-level-yang-berbeda)
+  - [4.6 Hirarki yang Benar (Ini Kunci Bab Ini)](#46-hirarki-yang-benar-ini-kunci-bab-ini)
+  - [4.7 Kenapa Ini Masalah Arsitektur, Bukan Styling](#47-kenapa-ini-masalah-arsitektur-bukan-styling)
+  - [4.8 Nilai Utama dari Contoh `/tools/layout.tsx`](#48-nilai-utama-dari-contoh-toolslayouttsx)
+- [**BAB 5 — Dynamic Route: Apa yang Bisa \& Tidak**](#bab-5--dynamic-route-apa-yang-bisa--tidak)
+  - [5.1 Ekspektasi yang Salah: `[slug].mdx`](#51-ekspektasi-yang-salah-slugmdx)
+  - [5.2 Prinsip Dasar: MDX Itu Static-First](#52-prinsip-dasar-mdx-itu-static-first)
+  - [5.3 Apa yang Sebenarnya Bisa Dilakukan?](#53-apa-yang-sebenarnya-bisa-dilakukan)
+  - [5.4 Pola Build-Time Dynamic yang Benar](#54-pola-build-time-dynamic-yang-benar)
+  - [5.5 Kenapa Ini Lebih Dewasa Secara Desain?](#55-kenapa-ini-lebih-dewasa-secara-desain)
+  - [5.6 Kapan MDX Router Saja Sudah Cukup?](#56-kapan-mdx-router-saja-sudah-cukup)
+  - [5.7 Kapan Harus Naik Level?](#57-kapan-harus-naik-level)
+  - [5.8 Inti Bab Ini](#58-inti-bab-ini)
+- [**BAB 6 — SEO: Frontmatter Bukan Jawaban Akhir**](#bab-6--seo-frontmatter-bukan-jawaban-akhir)
+  - [6.1 Kesalahan Umum: Frontmatter = SEO](#61-kesalahan-umum-frontmatter--seo)
+  - [6.2 Bagaimana Next.js Menghasilkan Metadata SEO](#62-bagaimana-nextjs-menghasilkan-metadata-seo)
+  - [6.3 Posisi Frontmatter yang Sebenarnya](#63-posisi-frontmatter-yang-sebenarnya)
+  - [6.4 Arsitektur SEO yang Benar (Mental Model)](#64-arsitektur-seo-yang-benar-mental-model)
+  - [6.5 Pendekatan Minimal (Tanpa Contentlayer)](#65-pendekatan-minimal-tanpa-contentlayer)
+  - [6.6 Keterbatasan Pendekatan Manual](#66-keterbatasan-pendekatan-manual)
+  - [6.7 Contentlayer sebagai Solusi Evolusioner](#67-contentlayer-sebagai-solusi-evolusioner)
+  - [6.8 Inti Bab Ini](#68-inti-bab-ini)
+- [**BAB 7 — Kapan MDX Router Cukup, Kapan Tidak**](#bab-7--kapan-mdx-router-cukup-kapan-tidak)
+  - [7.1 Prinsip Dasar: Gunakan Sesuai Masalah](#71-prinsip-dasar-gunakan-sesuai-masalah)
+  - [7.2 Kapan MDX Router Sudah Cukup](#72-kapan-mdx-router-sudah-cukup)
+  - [7.3 Tanda-Tanda MDX Router Mulai Tidak Cukup](#73-tanda-tanda-mdx-router-mulai-tidak-cukup)
+  - [7.4 Jangan Memaksakan MDX Menjadi CMS](#74-jangan-memaksakan-mdx-menjadi-cms)
+  - [7.5 Jalan Tengah yang Sehat](#75-jalan-tengah-yang-sehat)
+  - [7.6 Contentlayer sebagai Indikator Kedewasaan Sistem](#76-contentlayer-sebagai-indikator-kedewasaan-sistem)
+  - [7.7 Decision Framework Sederhana](#77-decision-framework-sederhana)
+  - [7.8 Inti Bab Ini](#78-inti-bab-ini)
+- [🌐 Dokumentasi \& Referensi Resmi](#-dokumentasi--referensi-resmi)
+  - [📘 Artikel Tutorial \& Panduan Praktis](#-artikel-tutorial--panduan-praktis)
+  - [🧠 Diskusi \& Komunitas](#-diskusi--komunitas)
+  - [🎯 Bagaimana Menggunakan Referensi Ini](#-bagaimana-menggunakan-referensi-ini)
+    - [🔧 Untuk Setup \& Implementasi](#-untuk-setup--implementasi)
+    - [🧩 Untuk Studi Kasus Dinamis](#-untuk-studi-kasus-dinamis)
+    - [🛠️ Untuk Problem-Solving](#️-untuk-problem-solving)
+  - [📌 Catatan Khusus](#-catatan-khusus)
+- [Catatan Penyusunan](#catatan-penyusunan)
+
+---
+
+### **BAB 1 — MDX Router Itu Apa (Fundamental)**
+
+Sebelum membahas konfigurasi, layout, atau SEO, satu hal **harus dibereskan terlebih dahulu**:
+**cara berpikir tentang MDX Router itu sendiri**.
+
+Banyak kebingungan dan desain keliru muncul bukan karena kurangnya fitur, tetapi karena **ekspektasi yang salah sejak awal**.
+
+---
+
+> 1.1 Apa yang Dimaksud dengan MDX Router?
+
+Dalam konteks **Next.js App Router**, MDX Router adalah **mekanisme routing berbasis file `.mdx`**, di mana:
+
+- File `.mdx` diperlakukan sebagai **halaman (page)**
+- Routing ditentukan oleh **struktur folder**
+- MDX dikompilasi menjadi **React Component**
+
+Dengan kata lain:
+
+> **MDX Router = cara menjadikan MDX sebagai halaman web, bukan sekadar file markdown.**
+
+Contoh sederhana:
+
+```text
+app/tools/page.mdx  →  /tools
+app/tools/ai/page.mdx → /tools/ai
+```
+
+Tidak ada konfigurasi routing manual.
+Tidak ada deklarasi route eksplisit.
+**Struktur folder adalah routing-nya.**
+
+---
+
+> 1.2 MDX Router Bukan CMS
+
+Di sinilah kesalahpahaman paling sering terjadi.
+
+Banyak developer secara tidak sadar memperlakukan MDX Router seolah-olah:
+
+- CMS ringan
+- Pengganti database
+- Sistem dynamic content runtime
+
+Padahal, **MDX Router bukan CMS**.
+
+MDX Router **tidak menyediakan**:
+
+- Query runtime (`getPostBySlug`)
+- Filtering dinamis
+- Pagination otomatis
+- Relasi data
+- Admin panel
+- Runtime mutation
+
+MDX Router **tidak dirancang untuk itu**.
+
+---
+
+> 1.3 MDX Router Itu Static-First
+
+MDX Router bekerja dengan asumsi dasar berikut:
+
+- Konten diketahui **saat build**
+- Jumlah halaman relatif **terkendali**
+- Struktur URL **stabil**
+- Konten jarang berubah secara real-time
+
+Artinya:
+
+> **MDX Router adalah static content system yang terintegrasi dengan React.**
+
+Dynamic route yang ada tetap bersifat:
+
+- build-time
+- pre-generated
+- bukan runtime-driven
+
+Jika Anda berharap:
+
+- `[slug].mdx` membaca URL param
+- MDX melakukan fetch data
+- MDX bertindak sebagai controller
+
+Maka ekspektasi tersebut **tidak akan terpenuhi**.
+
+---
+
+> 1.4 Posisi MDX dalam Arsitektur Next.js
+
+Agar tidak rancu, posisikan MDX dengan jelas:
+
+| Komponen     | Peran                 |
+| ------------ | --------------------- |
+| MDX          | Konten (narasi + JSX) |
+| App Router   | Routing & lifecycle   |
+| `page.tsx`   | Controller (jika ada) |
+| `layout.tsx` | Struktur halaman      |
+| Metadata API | SEO                   |
+
+Dengan kata lain:
+
+> **MDX adalah content layer, bukan application layer.**
+
+MDX **tidak menggantikan**:
+
+- routing logic
+- data fetching
+- metadata orchestration
+
+Ia **melengkapi**, bukan mengambil alih.
+
+---
+
+> 1.5 Kenapa MDX Tetap Sangat Powerful?
+
+Walaupun bukan CMS, MDX Router **sangat kuat** untuk use case yang tepat:
+
+- Dokumentasi teknis
+- Blog arsitektural
+- Knowledge base
+- Referensi tools
+- Artikel konseptual
+
+Karena MDX:
+
+- Deklaratif
+- Versionable (Git)
+- Bisa memanggil React Component
+- Konsisten dengan App Router
+
+MDX unggul **bukan karena dinamis**, tetapi karena **terstruktur dan eksplisit**.
+
+---
+
+> 1.6 Dampak Jika Mental Model Ini Benar Sejak Awal
+
+Dengan memahami MDX Router secara benar sejak awal:
+
+- Anda **tidak memaksa MDX menjadi CMS**
+- Anda **tidak mencampur konten dan controller**
+- Anda **tidak kecewa dengan keterbatasan palsu**
+- Arsitektur menjadi:
+
+  - lebih bersih
+  - lebih scalable
+  - lebih mudah dirawat
+
+Dan yang terpenting:
+
+> **Setiap layer melakukan satu hal dengan baik.**
+
+---
+
+### **BAB 2 — Setup Minimal yang Benar**
+
+Setup MDX Router yang benar **tidak rumit**, tetapi **harus presisi**.
+Sebagian besar error MDX—file tidak terbaca, route tidak muncul, styling kacau—**bukan berasal dari MDX itu sendiri**, melainkan dari **setup awal yang keliru atau setengah-setengah**.
+
+Bab ini membahas **setup minimal yang aman dan idiomatik**, tanpa over-engineering.
+
+---
+
+#### 2.1 Inisialisasi Project (npm + TypeScript + Tailwind)
+
+Gunakan CLI resmi Next.js agar struktur App Router terbentuk dengan benar.
+
+```bash
+npx create-next-app@latest mdx-router-app
+cd mdx-router-app
+```
+
+Pilih opsi berikut saat prompt:
+
+- **TypeScript** → Yes
+- **Tailwind CSS** → Yes
+- **ESLint** → Yes
+- **App Router** → Yes
+- **Import alias (@/\*)** → Yes
+
+Hasil yang diharapkan:
+
+- Folder `app/` tersedia
+- `layout.tsx` dan `page.tsx` sudah ada
+- Tailwind aktif dan terkonfigurasi
+
+---
+
+#### 2.2 Menambahkan Integrasi MDX
+
+MDX **tidak aktif secara default**.
+Integrasi dilakukan melalui paket resmi Next.js.
+
+```bash
+npm install @next/mdx
+```
+
+Tidak perlu:
+
+- `next-mdx-remote`
+- `@mdx-js/react` manual
+- Plugin tambahan
+
+Untuk MDX Router dasar, `@next/mdx` sudah cukup.
+
+> Catatan Praktik  
+> Dalam implementasi nyata, dokumentasi resmi MDX Next.js menjadi rujukan utama untuk memahami batasan dan perilaku aktual compiler MDX di App Router, terutama terkait page extensions dan lifecycle build-time. Merujuk langsung ke dokumentasi resmi membantu menghindari asumsi keliru yang sering muncul dari contoh tidak mutakhir.
+
+---
+
+#### 2.3 Konfigurasi `next.config.js`
+
+Ini adalah **titik paling krusial** dalam setup MDX Router.
+
+```js
+// next.config.js
+import withMDX from '@next/mdx';
+
+const nextConfig = {
+  pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
+};
+
+export default withMDX()(nextConfig);
+```
+
+Makna konfigurasi ini:
+
+- `withMDX()` → mengaktifkan compiler MDX
+- `pageExtensions` → memberi tahu Next.js bahwa `.mdx` adalah halaman sah
+
+Tanpa `pageExtensions`:
+
+- File `.mdx` **tidak akan dikenali sebagai route**
+- Error yang muncul sering tidak eksplisit
+
+---
+
+#### 2.4 Struktur Folder yang Valid untuk MDX Router
+
+MDX Router **mengikuti aturan App Router sepenuhnya**.
+
+Struktur yang valid:
+
+```text
+app/
+ └─ tools/
+     └─ page.mdx
+```
+
+Akan menghasilkan route:
+
+```text
+/tools
+```
+
+Aturan penting:
+
+- Nama folder **case-sensitive**
+- File harus bernama `page.mdx`
+- Tidak perlu `page.tsx` tambahan
+
+Kesalahan umum:
+
+- `Page.mdx`
+- `index.mdx`
+- Folder `Tools` vs `tools`
+
+---
+
+#### 2.5 Verifikasi Awal
+
+Buat file sederhana:
+
+```mdx
+# Hello MDX
+
+Jika ini muncul, setup Anda sudah benar.
+```
+
+Jalankan:
+
+```bash
+npm run dev
+```
+
+Jika halaman:
+
+- bisa diakses
+- tidak error
+- route muncul sesuai folder
+
+Maka **MDX Router telah aktif dengan benar**.
+
+---
+
+#### 2.6 Kenapa Setup Minimal Ini Penting
+
+Dengan setup di atas:
+
+- MDX dikenali sebagai page
+- App Router tetap menjadi pengendali routing
+- TypeScript tetap bekerja
+- Tailwind aktif tanpa konflik
+- Tidak ada ketergantungan berlebih
+
+Setup ini:
+
+- cukup untuk blog
+- cukup untuk dokumentasi
+- cukup sebagai fondasi scaling
+
+Sebaliknya, jika setup ini salah:
+
+- error akan muncul di tahap lanjut
+- debugging menjadi tidak jelas
+- MDX disalahkan padahal sumber masalahnya bukan MDX
+
+---
+
+### **BAB 3 — Frontmatter vs Content (Core Knowledge)**
+
+MDX selalu terdiri dari **dua lapisan yang berbeda secara fundamental**:
+**frontmatter** dan **content**.
+Memahami perbedaan ini **bukan opsional**—ini adalah **inti (core knowledge)** dari penggunaan MDX yang benar.
+
+Sebagian besar kesalahan desain MDX muncul karena **dua lapisan ini dicampur**.
+
+---
+
+#### 3.1 Struktur Dasar MDX
+
+Satu file MDX umumnya berbentuk:
+
+```mdx
+---
+title: Tools
+description: Referensi tools & platform teknis
+tags: ['ai', 'tools']
+---
+
+# Tools
+
+Halaman ini berisi referensi tools & platform teknis.
+```
+
+Blok YAML di atas disebut **frontmatter**.
+Bagian setelahnya disebut **content**.
+
+Keduanya **diproses dengan jalur yang berbeda**.
+
+---
+
+#### 3.2 Frontmatter: Metadata, Bukan Tampilan
+
+Frontmatter adalah **lapisan data**.
+
+Secara teknis:
+
+- Dibaca saat **build time**
+- Diparse menjadi **object JavaScript**
+- **Tidak dirender** ke HTML
+- **Tidak menjadi bagian UI**
+
+Contoh isi frontmatter yang tepat:
+
+```yaml
+title: Tools
+description: Referensi tools & platform teknis
+draft: false
+```
+
+Yang **tidak boleh dilakukan** di frontmatter:
+
+- JSX
+- HTML
+- Styling
+- Logika UI
+
+Frontmatter **tidak tahu**:
+
+- layout
+- komponen
+- tampilan halaman
+
+Ia hanya tahu **data**.
+
+---
+
+#### 3.3 Content: Narasi & Presentasi
+
+Content adalah **apa yang dibaca pengguna**.
+
+Secara teknis:
+
+- Markdown + JSX
+- Dikompilasi menjadi **React Component**
+- Dirender ke HTML
+- Bisa memanggil komponen React
+
+Contoh content:
+
+```mdx
+# Tools
+
+<Alert>Gunakan tools sesuai konteks dan kebutuhan teknis.</Alert>
+```
+
+Content **boleh**:
+
+- memakai komponen
+- mengatur struktur narasi
+- menyertakan visual
+
+Content **tidak seharusnya**:
+
+- menduplikasi metadata
+- menentukan SEO
+- mengatur struktur halaman
+
+---
+
+#### 3.4 Mekanisme Internal: Kenapa Dipisah?
+
+Secara internal, MDX diproses seperti ini:
+
+```
+MDX File
+ ├─ Frontmatter → parsed → data object
+ └─ Content → compiled → React Component
+```
+
+Frontmatter **berhenti sebagai data**.
+Content **berlanjut ke render UI**.
+
+Inilah alasan mengapa:
+
+- Frontmatter **tidak muncul di layar**
+- Content **tidak otomatis menjadi metadata**
+
+---
+
+#### 3.5 Kenapa Frontmatter Tidak Otomatis SEO?
+
+Ini pertanyaan kunci yang sering muncul.
+
+Jawabannya sederhana secara teknis:
+
+> **Next.js tidak membaca frontmatter untuk metadata.**
+
+Next.js hanya mengenali metadata jika ditentukan melalui:
+
+- `export const metadata`
+- atau `generateMetadata()`
+
+Frontmatter:
+
+- bukan bagian dari API metadata
+- tidak otomatis di-inject ke `<head>`
+- tidak dibaca oleh browser maupun crawler
+
+Artinya:
+
+- Frontmatter **bukan SEO**
+- Frontmatter adalah **bahan baku SEO**
+
+---
+
+#### 3.6 Posisi Frontmatter dalam Arsitektur SEO
+
+Arsitektur yang benar:
+
+```
+Frontmatter (MDX)
+        ↓
+Adapter (page.tsx / Contentlayer)
+        ↓
+Next.js Metadata API
+        ↓
+<head>
+        ↓
+Search Engine
+```
+
+Jika salah satu lapisan ini hilang, SEO **tidak pernah terjadi**.
+
+---
+
+#### 3.7 Dampak Jika Frontmatter & Content Dicampur
+
+Jika metadata ditulis di content:
+
+- Judul diulang
+- Konsistensi hilang
+- SEO sulit dikontrol
+
+Jika tampilan ditaruh di frontmatter:
+
+- Build error
+- Desain rapuh
+- Tidak scalable
+
+Pemisahan ini bukan soal gaya, tetapi **soal arsitektur**.
+
+---
+
+#### 3.8 Menyiapkan Pembaca ke Tahap Lanjut
+
+Dengan memahami:
+
+- frontmatter sebagai **data**
+- content sebagai **presentasi**
+
+Pembaca siap untuk:
+
+- memahami layout dengan benar
+- menerima konsep metadata adapter
+- mengadopsi Contentlayer tanpa kebingungan
+- membangun sistem konten yang scalable
+
+Tanpa pemahaman ini, pembahasan lanjutan akan selalu terasa “aneh” atau “terlalu ribet”.
+
+Bab ini menjadi **fondasi konseptual** sebelum masuk ke pembahasan **layout, routing dinamis, dan SEO** pada bab berikutnya.
+
+---
+
+### **BAB 4 — Layout yang Sering Disalahpahami**
+
+Salah satu sumber kekacauan terbesar dalam implementasi MDX di Next.js **bukan MDX-nya**, melainkan **layout**.
+Lebih tepatnya: **mencampur peran layout halaman dengan layout konten**.
+
+Bab ini penting karena membahas **arsitektur**, bukan styling.
+Jika bagian ini keliru, efeknya akan terasa **di seluruh sistem konten**.
+
+---
+
+#### 4.1 Tiga Hal yang Sering Dicampur (Dan Seharusnya Dipisah)
+
+Dalam praktik, banyak developer mencampur:
+
+- `layout.tsx` (App Router)
+- `mdx-components.tsx`
+- utility styling seperti `prose`
+
+Padahal, ketiganya **berada di level tanggung jawab yang berbeda**.
+
+Kesalahan umum:
+
+- `prose` ditaruh di `mdx-components`
+- Navbar dimasukkan ke MDX
+- Heading MDX diatur di `layout.tsx`
+- Semua styling ditumpuk tanpa batas yang jelas
+
+Ini bukan sekadar masalah rapi atau tidak rapi—
+ini **masalah arsitektur**.
+
+---
+
+#### 4.2 Layout App Router: Struktur Halaman
+
+`layout.tsx` di App Router bertugas sebagai **pembungkus struktural halaman**.
+
+Ia mengatur:
+
+- lebar halaman
+- grid
+- padding global
+- konteks visual per route
+- persistensi antar navigasi
+
+Contoh riil dari use case Anda:
+
+```tsx
+// app/tools/layout.tsx
+export default function ToolsLayout({ children }) {
+  return (
+    <section className="mx-auto max-w-3xl px-4 py-10">
+      <div className="prose prose-neutral max-w-none">{children}</div>
+    </section>
+  );
+}
+```
+
+Maknanya secara arsitektural:
+
+- `/tools` punya **layout sendiri**
+- Semua konten di bawah `/tools/*` berada dalam container ini
+- Layout **tidak tahu isi konten**
+- Layout **tidak peduli heading apa yang dipakai**
+
+Ini **pemisahan yang sehat**.
+
+---
+
+#### 4.3 MDX Content: Tidak Tahu Layout
+
+`page.mdx` di `/tools`:
+
+```mdx
+# Tools
+
+Halaman ini berisi referensi tools & platform teknis.
+```
+
+Hal penting yang perlu disadari:
+
+- MDX **tidak tahu** bahwa ia dibungkus `<section>`
+- MDX **tidak tahu** ada `prose`
+- MDX **tidak tahu** soal lebar halaman
+
+Dan memang **tidak boleh tahu**.
+
+MDX hanya bertanggung jawab atas:
+
+- struktur narasi
+- heading
+- list
+- link
+- komponen konten
+
+Bukan struktur halaman.
+
+---
+
+#### 4.4 `prose`: Keputusan Halaman, Bukan Konten
+
+Ini kesalahan yang sangat sering terjadi.
+
+Banyak orang menaruh `prose`:
+
+- di MDX
+- di `mdx-components`
+- atau bahkan di setiap komponen
+
+Padahal, `prose` adalah:
+
+> **keputusan tampilan halaman**, bukan keputusan konten.
+
+Menaruh `prose` di `layout.tsx` berarti:
+
+- semua konten di domain itu konsisten
+- MDX tetap portable
+- styling bisa diubah tanpa menyentuh konten
+
+Jika suatu hari:
+
+- `/blog` ingin layout lebar
+- `/tools` ingin ringkas
+- `/docs` ingin sidebar
+
+Semua bisa dicapai **tanpa menyentuh MDX**.
+
+---
+
+#### 4.5 MDX Components: Level yang Berbeda
+
+Jika digunakan, `mdx-components.tsx` bertugas untuk:
+
+- mapping elemen MDX (`h1`, `p`, `ul`)
+- konsistensi tipografi internal
+- komponen callout, alert, note
+
+Ia **bukan layout halaman**.
+
+Kesalahan fatal:
+
+- Menaruh container utama di `mdx-components`
+- Mengatur grid di sana
+- Menyisipkan header/footer
+
+Jika itu terjadi, maka:
+
+- MDX tidak lagi portable
+- Struktur halaman menjadi tersembunyi
+- Scaling menjadi sulit
+
+---
+
+#### 4.6 Hirarki yang Benar (Ini Kunci Bab Ini)
+
+Hirarki render yang benar:
+
+```
+Layout App Router
+  └─ Page (MDX)
+      └─ MDX Content
+          └─ MDX Components
+```
+
+Bukan:
+
+```
+MDX Components
+  └─ Layout
+      └─ Content
+```
+
+Jika hirarki ini terbalik, desain akan rapuh.
+
+---
+
+#### 4.7 Kenapa Ini Masalah Arsitektur, Bukan Styling
+
+Karena dampaknya bukan visual semata, tetapi:
+
+- kemampuan scaling
+- kemudahan refactor
+- konsistensi antar domain konten
+- kolaborasi antara penulis & developer
+
+Layout yang benar memungkinkan:
+
+- penulis fokus ke isi
+- developer fokus ke struktur
+- sistem konten tumbuh tanpa chaos
+
+---
+
+#### 4.8 Nilai Utama dari Contoh `/tools/layout.tsx`
+
+Contoh ini kuat karena:
+
+- nyata
+- sederhana
+- idiomatik
+- tidak over-engineered
+
+Ia menunjukkan bahwa:
+
+- layout App Router cukup untuk mengatur halaman
+- MDX tidak perlu “dipintari”
+- batas peran jelas
+
+Ini **best practice**, bukan workaround.
+
+---
+
+### **BAB 5 — Dynamic Route: Apa yang Bisa & Tidak**
+
+Salah satu ekspektasi paling sering (dan paling keliru) saat menggunakan MDX Router adalah keinginan untuk membuat **dynamic route langsung dari MDX**, misalnya dengan pola `[slug].mdx`.
+Bab ini penting untuk **menghentikan ekspektasi yang salah** dan menggantinya dengan **solusi yang realistis dan idiomatik**.
+
+Ini bukan soal keterbatasan MDX, melainkan soal **kedewasaan desain arsitektur**.
+
+---
+
+#### 5.1 Ekspektasi yang Salah: `[slug].mdx`
+
+Banyak developer berharap bisa menulis:
+
+```text
+app/tools/[slug].mdx
+```
+
+Lalu mengharapkan MDX tersebut:
+
+- membaca parameter URL
+- berubah sesuai slug
+- bertindak sebagai halaman dinamis
+
+Ekspektasi ini **tidak akan terpenuhi**.
+
+Alasannya sederhana dan teknis:
+
+- MDX **bukan controller**
+- MDX **tidak bisa mengeksekusi logika routing**
+- MDX **tidak punya akses ke params**
+- MDX **tidak bisa menjalankan `generateStaticParams`**
+
+MDX adalah **konten**, bukan mekanisme routing dinamis.
+
+---
+
+#### 5.2 Prinsip Dasar: MDX Itu Static-First
+
+MDX Router bekerja dengan asumsi:
+
+- Semua halaman diketahui **saat build**
+- Setiap file MDX menghasilkan **satu halaman**
+- Struktur URL bersifat **deterministik**
+
+Artinya:
+
+- “Dynamic” dalam MDX **bukan runtime**
+- Dynamic selalu berarti **build-time generation**
+
+Jika konten Anda:
+
+- berubah berdasarkan user input
+- tergantung data eksternal runtime
+- membutuhkan query dinamis
+
+Maka MDX Router **bukan alat yang tepat** untuk lapisan itu.
+
+---
+
+#### 5.3 Apa yang Sebenarnya Bisa Dilakukan?
+
+Dynamic route **tetap bisa**, tetapi **bukan di level MDX**.
+
+Pola yang benar adalah:
+
+- App Router menangani dynamic segment
+- MDX diperlakukan sebagai **data source**
+- Halaman di-generate **saat build**
+
+Dengan kata lain:
+
+> **Dynamic routing terjadi di `page.tsx`, bukan di MDX.**
+
+---
+
+#### 5.4 Pola Build-Time Dynamic yang Benar
+
+Struktur umum yang sehat:
+
+```text
+content/tools/
+ ├─ ai.mdx
+ ├─ iot.mdx
+ └─ website.mdx
+
+app/tools/[slug]/
+ └─ page.tsx
+```
+
+Dalam pola ini:
+
+- MDX menyimpan konten
+- `page.tsx` bertindak sebagai orchestrator
+- Slug ditentukan saat build
+- Halaman tetap static dan SEO-friendly
+
+MDX **tidak tahu** bahwa ia sedang dipanggil secara dinamis—dan itu justru desain yang benar.
+
+---
+
+#### 5.5 Kenapa Ini Lebih Dewasa Secara Desain?
+
+Karena pola ini:
+
+- Memisahkan **konten** dan **routing**
+- Menghindari logika tersembunyi di MDX
+- Membuat alur build eksplisit
+- Mudah diskalakan
+- Mudah di-debug
+
+Bandingkan dengan pendekatan memaksa:
+
+- `[slug].mdx`
+- logika di konten
+- perilaku implisit
+
+Pendekatan build-time dynamic **lebih jujur** tentang apa yang terjadi di sistem.
+
+---
+
+#### 5.6 Kapan MDX Router Saja Sudah Cukup?
+
+MDX Router tanpa dynamic route sudah cukup jika:
+
+- jumlah halaman terbatas
+- struktur URL stabil
+- konten bersifat referensial
+- tidak perlu listing dinamis
+
+Contoh:
+
+- `/tools/ai`
+- `/tools/website`
+- `/docs/getting-started`
+
+Dalam kondisi ini, folder-based routing MDX **lebih sederhana dan lebih jelas**.
+
+---
+
+#### 5.7 Kapan Harus Naik Level?
+
+Jika mulai muncul kebutuhan:
+
+- ratusan konten
+- slug tidak ingin ditulis sebagai folder
+- listing otomatis
+- metadata terstruktur
+- SEO konsisten lintas halaman
+
+Maka pendekatan build-time dynamic dengan tooling seperti **Contentlayer** menjadi **langkah logis**, bukan over-engineering.
+
+---
+
+#### 5.8 Inti Bab Ini
+
+- MDX **tidak dan tidak seharusnya** menangani dynamic route
+- `[slug].mdx` adalah ekspektasi yang salah
+- Dynamic route di MDX selalu **build-time**
+- `page.tsx` adalah tempat yang tepat untuk orchestration
+- Konten tetap sederhana, eksplisit, dan portable
+
+Bab ini menegaskan satu prinsip penting:
+
+> **MDX yang sehat adalah MDX yang tidak berpura-pura menjadi controller.**
+
+---
+
+### **BAB 6 — SEO: Frontmatter Bukan Jawaban Akhir**
+
+Salah satu asumsi paling berbahaya dalam penggunaan MDX adalah anggapan bahwa **menulis frontmatter berarti SEO sudah beres**.
+Bab ini ada untuk **menghentikan asumsi tersebut** sebelum berdampak pada performa pencarian.
+
+Ini adalah bab **penyelamat SEO**.
+
+---
+
+#### 6.1 Kesalahan Umum: Frontmatter = SEO
+
+Banyak developer menulis frontmatter seperti ini:
+
+```yaml
+---
+title: Tools
+description: Referensi tools & platform teknis
+---
+```
+
+Lalu berasumsi:
+
+- `<title>` sudah terisi
+- `<meta description>` sudah aman
+- Google akan membaca metadata tersebut
+
+Asumsi ini **salah secara teknis**.
+
+Frontmatter:
+
+- tidak dibaca browser
+- tidak dibaca crawler
+- tidak otomatis masuk ke `<head>`
+
+Tanpa langkah tambahan, SEO **tidak pernah terjadi**.
+
+---
+
+#### 6.2 Bagaimana Next.js Menghasilkan Metadata SEO
+
+Dalam **App Router**, Next.js **hanya** mengenali metadata yang didefinisikan melalui:
+
+- `export const metadata`
+- atau `generateMetadata()`
+
+Contoh metadata yang sah:
+
+```ts
+export const metadata = {
+  title: 'Tools',
+  description: 'Referensi tools & platform teknis',
+};
+```
+
+Inilah satu-satunya jalur resmi agar:
+
+- `<title>` muncul
+- `<meta description>` terpasang
+- Open Graph bisa dikontrol
+- SEO dapat diandalkan
+
+Frontmatter **tidak termasuk jalur ini**.
+
+---
+
+#### 6.3 Posisi Frontmatter yang Sebenarnya
+
+Frontmatter bukan output SEO, melainkan:
+
+> **Sumber data untuk SEO**
+
+Artinya:
+
+- frontmatter → data
+- metadata API → output
+
+Jika tidak ada lapisan yang menjembatani keduanya, frontmatter hanya akan menjadi **catatan internal**.
+
+---
+
+#### 6.4 Arsitektur SEO yang Benar (Mental Model)
+
+Arsitektur SEO yang sehat dalam konteks MDX:
+
+```
+Frontmatter (MDX)
+        ↓
+Adapter (page.tsx / Contentlayer)
+        ↓
+Next.js Metadata API
+        ↓
+<head>
+        ↓
+Search Engine
+```
+
+SEO **selalu** membutuhkan:
+
+- adapter
+- proses eksplisit
+- keputusan sadar
+
+Tidak ada SEO “otomatis”.
+
+---
+
+#### 6.5 Pendekatan Minimal (Tanpa Contentlayer)
+
+Pendekatan ini cocok untuk:
+
+- halaman statis
+- jumlah konten kecil
+- metadata sederhana
+
+Pola umum:
+
+```text
+app/tools/
+ ├─ page.tsx
+ └─ page.mdx
+```
+
+`page.tsx` bertugas:
+
+- menentukan metadata
+- merender konten MDX
+
+Dengan cara ini:
+
+- SEO tetap benar
+- frontmatter tidak disalahgunakan
+- arsitektur tetap sederhana
+
+Namun, metadata **masih manual**.
+
+---
+
+#### 6.6 Keterbatasan Pendekatan Manual
+
+Pendekatan manual mulai bermasalah saat:
+
+- jumlah MDX bertambah
+- metadata harus konsisten
+- perlu sitemap otomatis
+- perlu Open Graph per halaman
+
+Di titik ini, SEO menjadi:
+
+- repetitif
+- rawan inkonsistensi
+- sulit dirawat
+
+Masalahnya bukan MDX, tetapi **tidak adanya sistem metadata**.
+
+---
+
+#### 6.7 Contentlayer sebagai Solusi Evolusioner
+
+Contentlayer hadir bukan sebagai keharusan, tetapi sebagai **langkah evolusi alami**.
+
+Perannya:
+
+- membaca frontmatter
+- memvalidasi struktur
+- menyediakan data ter-typing
+- memudahkan integrasi metadata
+- menyederhanakan SEO lintas halaman
+
+Dengan Contentlayer:
+
+- frontmatter tetap menjadi sumber kebenaran
+- metadata dihasilkan secara konsisten
+- SEO tidak lagi bergantung pada disiplin manual
+
+Yang penting:
+
+- Contentlayer **tidak mengubah filosofi MDX**
+- Ia hanya melengkapi lapisan metadata
+
+> Catatan Arsitektural  
+> Pada sistem konten yang mulai berkembang, penggunaan layer khusus untuk membaca dan memvalidasi frontmatter menjadi krusial. Tooling seperti Contentlayer membantu menjembatani konten MDX dengan kebutuhan metadata, SEO, dan listing secara konsisten tanpa mengubah filosofi dasar MDX sebagai static-first content.
+
+---
+
+#### 6.8 Inti Bab Ini
+
+- Frontmatter **bukan SEO**
+- Frontmatter adalah **bahan baku SEO**
+- SEO di Next.js hanya sah melalui Metadata API
+- Adapter adalah keharusan
+- Contentlayer adalah solusi yang matang, bukan paksaan
+
+Bab ini memastikan satu hal:
+
+> **Menulis MDX tanpa arsitektur SEO yang benar sama dengan menulis konten tanpa niat ditemukan.**
+
+---
+
+### **BAB 7 — Kapan MDX Router Cukup, Kapan Tidak**
+
+Setelah memahami fondasi, mekanisme, layout, dynamic route, dan SEO, pertanyaan terakhir yang **paling dewasa secara teknis** adalah:
+**kapan MDX Router sudah cukup, dan kapan ia sebaiknya tidak dipaksakan?**
+
+Bab ini tidak menawarkan jawaban hitam–putih.
+Ia memberi **kerangka pengambilan keputusan**.
+
+---
+
+#### 7.1 Prinsip Dasar: Gunakan Sesuai Masalah
+
+MDX Router **bukan solusi universal**.
+Ia sangat baik untuk kelas masalah tertentu, dan **kurang tepat** untuk kelas masalah lainnya.
+
+Pendekatan yang sehat:
+
+- tidak dogmatis
+- tidak memaksakan tool
+- tidak over-engineering
+
+---
+
+#### 7.2 Kapan MDX Router Sudah Cukup
+
+MDX Router **cukup dan ideal** jika:
+
+- Konten bersifat **statis atau jarang berubah**
+- Struktur URL **jelas dan stabil**
+- Jumlah halaman **terkendali**
+- Fokus pada **narasi, dokumentasi, atau referensi**
+- Tidak membutuhkan query runtime
+- Tidak membutuhkan personalisasi
+
+Contoh use case yang tepat:
+
+- Blog teknis
+- Dokumentasi internal
+- Knowledge base
+- Halaman referensi tools
+- Artikel arsitektural
+
+Dalam konteks ini:
+
+- MDX sederhana
+- Build-time generation aman
+- SEO mudah dikontrol
+- Arsitektur tetap ringan
+
+---
+
+#### 7.3 Tanda-Tanda MDX Router Mulai Tidak Cukup
+
+MDX Router mulai terasa dipaksakan jika:
+
+- Jumlah konten meningkat tajam
+- Slug tidak ingin direpresentasikan sebagai folder
+- Metadata harus konsisten lintas ratusan halaman
+- Perlu listing otomatis dan filter
+- Perlu sitemap dan Open Graph dinamis
+- Konten mulai berperan sebagai data
+
+Pada titik ini, masalahnya bukan pada MDX, tetapi pada **skala dan kebutuhan sistem**.
+
+---
+
+#### 7.4 Jangan Memaksakan MDX Menjadi CMS
+
+Kesalahan yang sering terjadi:
+
+- MDX diperlakukan seperti database
+- Frontmatter dipaksa menanggung semua logika
+- Routing menjadi implisit dan sulit dilacak
+- Konten kehilangan portabilitas
+
+Jika mulai muncul:
+
+- logika tersembunyi di konten
+- coupling antara konten dan routing
+- metadata tidak terkontrol
+
+Itu tanda bahwa **MDX Router sedang dipaksa melewati batas desainnya**.
+
+---
+
+#### 7.5 Jalan Tengah yang Sehat
+
+Antara:
+
+- MDX Router polos
+- dan sistem CMS penuh
+
+Ada jalan tengah yang sehat:
+
+- MDX tetap sebagai konten
+- Tooling tambahan menangani skala
+- Routing tetap eksplisit
+- SEO tetap terkontrol
+
+Pendekatan ini tidak menghilangkan MDX, tetapi **mematangkannya**.
+
+---
+
+#### 7.6 Contentlayer sebagai Indikator Kedewasaan Sistem
+
+Mengadopsi Contentlayer bukan tanda over-engineering, melainkan:
+
+- respons terhadap kebutuhan nyata
+- tanda sistem mulai matang
+- upaya menjaga kualitas jangka panjang
+
+Contentlayer:
+
+- memberi struktur pada frontmatter
+- memudahkan SEO dan listing
+- menjaga konsistensi metadata
+
+Namun:
+
+- tidak semua proyek membutuhkannya
+- tidak semua fase memerlukannya
+
+---
+
+#### 7.7 Decision Framework Sederhana
+
+Gunakan pertanyaan berikut:
+
+- Apakah konten ini **naratif atau data**?
+- Apakah jumlah halaman akan bertambah signifikan?
+- Apakah metadata perlu konsisten dan terotomasi?
+- Apakah routing masih bisa dijelaskan dengan folder?
+- Apakah SEO mulai terasa rapuh?
+
+Jika sebagian besar jawabannya **ya**,
+MDX Router polos kemungkinan **sudah tidak cukup**.
+
+---
+
+#### 7.8 Inti Bab Ini
+
+- MDX Router adalah alat yang **sangat baik**, tapi **bukan untuk semua skala**
+- Tidak semua proyek perlu kompleksitas
+- Tidak semua kompleksitas bisa ditunda
+- Desain yang baik adalah desain yang **berubah tepat waktu**
+
+Bab ini menutup pembahasan dengan satu prinsip yang sering dipegang engineer senior:
+
+> **Arsitektur yang baik bukan yang paling canggih, tetapi yang paling tepat untuk masalahnya.**
+
+Dengan kerangka ini, Anda dapat menggunakan MDX Router secara percaya diri—tanpa memaksanya, dan tanpa meremehkannya.
+
+---
+
+### 🌐 Dokumentasi & Referensi Resmi
+
+Berikut beberapa **referensi teknis valid dan relevan** yang bisa Anda jadikan rujukan langsung untuk memperdalam **MDX Router dengan Next.js**, termasuk integrasi MDX, Contentlayer, frontmatter, dan SEO:
+
+1. **Next.js Official Docs** — Sumber primer untuk semua aspek Next.js (termasuk App Router).
+   👉 Dokumentasi resmi Next.js sebagai basis framework keseluruhan. ([Next.js][1])
+
+2. **Advanced Features: Using MDX dengan Next.js** — Panduan setup MDX, penggunaan JSX dalam konten, dan integrasi MDX dengan App Router. ([nextjs-ja-translation-docs.vercel.app][2])
+
+3. **Contentlayer — Dokumentasi Resmi** — Content SDK untuk memvalidasi dan mengubah konten MDX/Markdown jadi data terstruktur (type-safe), sangat berguna untuk SEO, listing, dan scale. ([Contentlayer][3])
+
+---
+
+#### 📘 Artikel Tutorial & Panduan Praktis
+
+4. **Build a Next.js Blog with MDX & Contentlayer** — Contoh membuat blog di Next.js dengan MDX dan Contentlayer dari awal sampai akhir (pembahasan kasus nyata). ([Ben Orloff Blog][4])
+
+5. **Building an SEO-Optimized Blog with Next.js and MDX** — Panduan menyiapkan blog MDX dengan fokus SEO (routing, rendering, frontmatter untuk slug/metadata). ([DEV Community][5])
+
+---
+
+#### 🧠 Diskusi & Komunitas
+
+6. **Stack Overflow / Next.js MDX dengan App Directory** — Thread komunitas yang membahas penggunaan `@next/mdx` pada App Router dan detail setup `pageExtensions`. ([Stack Overflow][6])
+
+7. **GitHub Discussion: MDX Blog & Dynamic Routing** — Diskusi tentang tantangan routing dinamis dengan banyak file MDX dalam App Router dan pendekatan alternatifnya. ([GitHub][7])
+
+---
+
+#### 🎯 Bagaimana Menggunakan Referensi Ini
+
+Berikut rekomendasi cara pakai referensi di atas saat membuat artikel atau dokumentasi:
+
+##### 🔧 Untuk Setup & Implementasi
+
+- Gunakan **Next.js Docs** untuk langkah dasar App Router dan MDX setup. ([Next.js][1])
+- Kombinasikan dengan **MDX + Contentlayer** docs untuk alur konten → data pipeline. ([Contentlayer][3])
+
+##### 🧩 Untuk Studi Kasus Dinamis
+
+- Baca tutorial blog (Ben Orloff, Pavel Buyeu) untuk pola dynamic route, SEO, dan frontmatter praktis. ([Ben Orloff Blog][4])
+
+##### 🛠️ Untuk Problem-Solving
+
+- Gunakan thread komunitas (Stack Overflow / GitHub) untuk solusi error common terkait MDX di App Router. ([Stack Overflow][6])
+
+---
+
+#### 📌 Catatan Khusus
+
+- MDX dengan App Router modern memiliki setup tersendiri — berbeda dengan Pages Router tradisional. ([nextjs-ja-translation-docs.vercel.app][2])
+- Frontmatter tidak otomatis menjadi metadata SEO — butuh adapter atau Contentlayer untuk mengolahnya secara eksplisit. ([DEV Community][5])
+- Contentlayer adalah solusi yang stabil untuk skala besar konten MDX. ([Contentlayer][3])
+
+---
+
+Jika Anda ingin, saya bisa susun **daftar URL langsung** dari sumber-sumber di atas yang paling relevan untuk dimasukkan sebagai footnote artikel, atau diringkas dalam format daftar pustaka yang rapih.
+
+[1]: https://nextjs.org/docs?utm_source=chatgpt.com 'Next.js Docs | Next.js'
+[2]: https://nextjs-ja-translation-docs.vercel.app/docs/advanced-features/using-mdx?utm_source=chatgpt.com 'Advanced Features: Using MDX | Next.js'
+[3]: https://www.contentlayer.dev/?utm_source=chatgpt.com 'Contentlayer makes content easy for developers'
+[4]: https://blog.benorloff.co/build-a-nextjs-blog-with-mdx-contentlayer?utm_source=chatgpt.com 'Build a Next.js Blog with MDX & Contentlayer - Ben Orloff'
+[5]: https://dev.to/pavel_buyeu/building-an-seo-optimized-blog-with-nextjs-and-mdx-from-routing-to-rendering-2h72?utm_source=chatgpt.com 'Building an SEO-Optimized Blog with Next.js and MDX'
+[6]: https://stackoverflow.com/questions/74493702/how-to-use-next-mdx-with-nextjs-13-app-directory?utm_source=chatgpt.com 'How to use @next/mdx with NextJS 13 app directory?'
+[7]: https://github.com/vercel/next.js/discussions/58575?utm_source=chatgpt.com 'MDX Blog (v14 App router) with `[slug]` path structure.'
+
+---
+
+### Catatan Penyusunan
+
+Artikel ini disusun sebagai materi edukasi dan referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
