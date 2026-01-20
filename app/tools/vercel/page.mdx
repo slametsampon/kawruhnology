@@ -1,94 +1,76 @@
+export const metadata = {
+  title: 'Vercel',
+  description:
+    'Catatan penggunaan Vercel sebagai platform deployment frontend untuk Next.js dan static site, berdasarkan praktik teknis dan kebutuhan nyata.',
+};
+
 # Vercel
 
 ## Overview
 
-Vercel adalah platform deployment frontend yang dirancang untuk framework modern seperti **Next.js**, dengan fokus pada kecepatan build, preview environment, dan workflow berbasis Git.
+Vercel adalah platform deployment frontend yang dirancang khusus untuk framework modern seperti **Next.js**, dengan fokus pada kecepatan build, preview environment, dan workflow berbasis Git.
 
-Dalam praktiknya, Vercel berperan sebagai **hosting + CI/CD terintegrasi**, khusus untuk aplikasi frontend dan static site.
+Dalam praktiknya, Vercel lebih tepat diposisikan sebagai **layer deployment frontend + CI/CD terintegrasi**, bukan sebagai pengganti server tradisional atau platform backend umum.
 
 ---
 
-## Use Cases Nyata
+## Use Cases
 
-Berdasarkan penggunaan personal dan konteks teknis:
+Berdasarkan penggunaan personal dan konteks teknis, Vercel relevan untuk:
 
-- Deployment **Next.js App Router** tanpa konfigurasi server
+- Deployment **Next.js (App Router maupun Pages Router)** tanpa konfigurasi server
 - Preview otomatis untuk setiap **pull request**
-- Hosting blog statis (MDX / Contentlayer)
-- Validasi SEO & routing sebelum production
-- Proof-of-concept atau MVP frontend
+- Hosting blog statis berbasis **MDX / Contentlayer**
+- Validasi routing, SEO, dan build sebelum production
+- Proof-of-concept atau MVP frontend dengan iterasi cepat
 
-Vercel sangat cocok digunakan pada fase **eksplorasi, validasi arsitektur, dan iterasi cepat**.
+Vercel paling efektif pada fase **eksplorasi, validasi arsitektur, dan pengembangan iteratif**.
 
 ---
 
 ## Strength
 
-Beberapa keunggulan yang terasa nyata:
+Beberapa kekuatan yang terasa signifikan dalam praktik:
 
 - Integrasi **native** dengan Next.js
-- Zero-config deployment
-- Preview environment otomatis
-- Build & rollback cepat
+- Zero-configuration deployment
+- Preview environment otomatis per branch / PR
+- Build, rollback, dan redeploy cepat
 - Dukungan edge & serverless tanpa setup manual
 
-Dalam konteks developer experience, Vercel **mengurangi beban operasional**, sehingga fokus bisa langsung ke kode dan konten.
+Dalam konteks developer experience, Vercel membantu **mengurangi beban operasional**, sehingga fokus dapat langsung diarahkan ke kode dan konten.
 
 ---
 
 ## Limitation
 
-Namun, ada batasan yang perlu dipahami sejak awal:
+Batasan yang perlu disadari sejak awal:
 
-- Kontrol server sangat terbatas
-- Kurang cocok untuk backend berat atau stateful
-- Pricing dapat meningkat seiring traffic & build
-- Tidak ideal untuk kebutuhan compliance ketat (on-prem, audit, dsb)
+- Kontrol server dan runtime sangat terbatas
+- Kurang cocok untuk backend kompleks atau stateful
+- Biaya dapat meningkat seiring traffic dan frekuensi build
+- Tidak ideal untuk kebutuhan compliance ketat (on-prem, audit, isolasi jaringan)
 
-Vercel **bukan pengganti server tradisional**, dan tidak ditujukan untuk sistem operasional kritikal.
-
----
-
-## Kapan Cocok Digunakan
-
-Gunakan Vercel jika:
-
-- Fokus pada frontend / static site
-- Menggunakan Next.js atau React modern
-- Membutuhkan preview cepat & kolaborasi
-- Mengutamakan DX (developer experience)
-
----
-
-## Kapan Tidak Cocok Digunakan
-
-Pertimbangkan alternatif jika:
-
-- Aplikasi backend kompleks
-- Butuh kontrol penuh atas OS / runtime
-- Data sensitif industri
-- Sistem harus berjalan on-premise
+Vercel **bukan pengganti server tradisional**, dan tidak ditujukan untuk sistem operasional atau industri kritikal.
 
 ---
 
 ## Alternatif
 
-Beberapa alternatif yang sering digunakan untuk use case serupa:
+Tergantung konteks dan kebutuhan, beberapa alternatif yang sering dipertimbangkan:
 
-- Netlify
-- Cloudflare Pages
-- GitHub Pages (untuk static sederhana)
-- Self-hosted (VPS / container)
+- **Netlify** — pendekatan serupa untuk static site & frontend
+- **Cloudflare Pages** — fokus edge & performance global
+- **GitHub Pages** — static sederhana dengan kontrol minimal
+- **Self-hosted (VPS / container)** — kontrol penuh dengan beban operasional lebih tinggi
 
-Pemilihan platform **sangat tergantung konteks**, bukan “mana yang paling populer”.
+Pemilihan platform sebaiknya didasarkan pada **konteks teknis dan risiko**, bukan popularitas.
 
 ---
 
-## Catatan Akhir
+## Referensi Resmi
 
-Vercel paling tepat diposisikan sebagai **frontend deployment layer**, bukan sebagai platform universal untuk semua jenis aplikasi.
-
-> Situs resmi: https://vercel.com
+- 🌐 Situs resmi: https://vercel.com
 
 ---
 
