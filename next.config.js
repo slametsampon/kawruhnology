@@ -1,21 +1,24 @@
 // next.config.js
 
 const { withContentlayer } = require('next-contentlayer');
+const nextMDX = require('@next/mdx')({
+  extension: /\.mdx?$/,
+});
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
 
-  // ✅ Tetap trailing slash agar URL tetap konsisten (misal: /about/)
   trailingSlash: true,
 
-  // ✅ Aktifkan image optimization bawaan Vercel
   images: {
     unoptimized: false,
   },
 
-  // ✅ SVGR support tetap dipertahankan (bagus!)
+  // ⬅️ WAJIB agar page.mdx dikenali App Router
+  pageExtensions: ['ts', 'tsx', 'js', 'jsx', 'md', 'mdx'],
+
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/i,
@@ -27,4 +30,4 @@ const nextConfig = {
   },
 };
 
-module.exports = withContentlayer(nextConfig);
+module.exports = withContentlayer(nextMDX(nextConfig));
