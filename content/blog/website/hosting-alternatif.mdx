@@ -1,0 +1,484 @@
+---
+title: Hosting Platform & Pemilihan Stack untuk Full-Stack Web + IoT App
+date: '2026-01-20'
+tags:
+  [
+    'hosting',
+    'full-stack',
+    'iot',
+    'nextjs',
+    'supabase',
+    'postgresql',
+    'vercel',
+    'mqtt',
+    'web-development',
+  ]
+draft: false
+summary: Artikel ini membahas pemilihan platform hosting dan stack teknologi untuk membangun aplikasi full-stack web yang terintegrasi dengan IoT. Dimulai dari konsep fundamental full-stack (frontend, backend, dan database), artikel mengulas keterbatasan hosting statis seperti GitHub Pages serta keunggulan platform modern seperti Vercel dan Netlify. Fokus utama diberikan pada kebutuhan backend dan database, dengan penekanan pada PostgreSQL (RDBMS) melalui layanan seperti Supabase. Dibahas pula perbandingan PostgreSQL vs SQLite, serta studi kasus dashboard IoT berbasis ESP32 dan MQTT. Artikel ini membantu pembaca menentukan hosting dan stack yang tepat berdasarkan kebutuhan teknis, skalabilitas, dan ketersediaan free tier.
+---
+
+**Hosting Platform & Pemilihan Stack untuk Full-Stack Web + IoT App**
+
+---
+
+- [✅ **1. Fundamental: Apa itu Full-Stack App?**](#-1-fundamental-apa-itu-full-stack-app)
+- [✅ **2. Tiga Platform Hosting Populer: GitHub Pages, Vercel, Netlify**](#-2-tiga-platform-hosting-populer-github-pages-vercel-netlify)
+  - [🟦 **GitHub Pages**](#-github-pages)
+  - [⚫ **Vercel**](#-vercel)
+  - [🟩 **Netlify**](#-netlify)
+- [✅ **3. Full-Stack App Butuh Database — Apa Saja Opsinya?**](#-3-full-stack-app-butuh-database--apa-saja-opsinya)
+  - [⚙️ **Database Eksternal yang Cocok**](#️-database-eksternal-yang-cocok)
+- [✅ **4. Hosting Platform Lain yang Support Database (Free Tier)**](#-4-hosting-platform-lain-yang-support-database-free-tier)
+- [🔍 Penjelasan Singkat Per Platform:](#-penjelasan-singkat-per-platform)
+- [✅ **5. PostgreSQL vs SQLite: Memilih Database Engine**](#-5-postgresql-vs-sqlite-memilih-database-engine)
+  - [🟦 **PostgreSQL**](#-postgresql)
+  - [🟩 **SQLite**](#-sqlite)
+  - [🎯 **Kesimpulan Teknis**](#-kesimpulan-teknis)
+- [✅ **6. Studi Kasus: Dashboard IoT Realtime**](#-6-studi-kasus-dashboard-iot-realtime)
+  - [🎯 Use Case](#-use-case)
+  - [🧱 Rekomendasi Stack: 📦 **Stack A** (Rekomendasi Utama)](#-rekomendasi-stack--stack-a-rekomendasi-utama)
+  - [🔄 Alur Data](#-alur-data)
+  - [📈 Tambahan Opsional](#-tambahan-opsional)
+  - [⚙️ Struktur Tabel Contoh di Supabase](#️-struktur-tabel-contoh-di-supabase)
+- [✅ **7. Kriteria Pemilihan Hosting \& Stack**](#-7-kriteria-pemilihan-hosting--stack)
+- [📝 Penjelasan Tiap Kriteria](#-penjelasan-tiap-kriteria)
+- [✅ **8. Template \& Link Referensi**](#-8-template--link-referensi)
+- [🔗 **Link Referensi Terkait Materi Sebelumnya**](#-link-referensi-terkait-materi-sebelumnya)
+  - [🧠 Fundamental \& Stack](#-fundamental--stack)
+  - [🗃️ Database \& Teknologi Pendukung](#️-database--teknologi-pendukung)
+  - [⚡ MQTT dan IoT](#-mqtt-dan-iot)
+  - [🧪 Tools Prototyping \& Hosting Tambahan](#-tools-prototyping--hosting-tambahan)
+- [🔚 **Kesimpulan Akhir**](#-kesimpulan-akhir)
+- [Catatan Penyusunan](#catatan-penyusunan)
+
+---
+
+### ✅ **1. Fundamental: Apa itu Full-Stack App?**
+
+**Full-stack application** adalah jenis aplikasi yang mencakup keseluruhan elemen arsitektur perangkat lunak, mulai dari antarmuka pengguna (frontend), logika pemrosesan di sisi server (backend), hingga penyimpanan data (database). Dalam konteks pengembangan aplikasi web modern, pendekatan full-stack memungkinkan pengembang untuk mengelola seluruh proses pengembangan dari satu sisi hingga sisi lainnya secara terpadu.
+
+Komponen utama dalam arsitektur full-stack meliputi:
+
+- **Frontend (User Interface)**
+  Merupakan bagian aplikasi yang berinteraksi langsung dengan pengguna. Biasanya dibangun menggunakan framework JavaScript seperti **React**, **Vue**, atau **Next.js** (yang mendukung SSR dan SSG). Di sisi ini pula diterapkan desain UI/UX, integrasi API, dan pemrosesan data sebelum ditampilkan ke pengguna.
+
+- **Backend (Application Logic)**
+  Bagian server yang menangani pemrosesan logika bisnis, pengambilan data dari database, otorisasi, dan penyediaan endpoint API. Backend dapat dibangun dengan berbagai bahasa dan framework seperti **Node.js (Express, NestJS)**, **Python (FastAPI, Django)**, atau backend serverless seperti **API Routes di Next.js**.
+
+- **Database (Persistence Layer)**
+  Komponen penyimpanan data secara permanen. Database dapat bersifat **relasional (RDBMS)** seperti **PostgreSQL**, **MySQL**, atau **non-relasional (NoSQL)** seperti **MongoDB**, **Firestore**, atau **Redis**. Database merupakan sumber data utama untuk frontend dan backend.
+
+Dalam pengembangan aplikasi **IoT (Internet of Things)**, arsitektur full-stack diperluas dengan dua elemen tambahan:
+
+- **Device Layer**
+  Merupakan perangkat keras (biasanya mikrokontroler seperti **ESP32** atau **ESP8266**) yang melakukan sensing (mengukur suhu, kelembapan, dll.) dan/atau actuation (mengontrol relay, LED, dsb.). Perangkat ini dikonfigurasi untuk mengirim dan menerima data melalui jaringan.
+
+- **Communication Protocol**
+  Protokol komunikasi yang digunakan antara device dan backend. Umumnya digunakan **MQTT (Message Queuing Telemetry Transport)** untuk komunikasi ringan dan efisien dalam IoT, atau **HTTP** untuk endpoint API konvensional. MQTT sangat cocok untuk aplikasi real-time dan hemat daya.
+
+Dengan menyatukan kelima elemen tersebut, aplikasi full-stack dalam konteks IoT mampu menyediakan sistem yang lengkap—mulai dari pengumpulan data sensor oleh perangkat, pengiriman data ke server, penyimpanan di database, hingga visualisasi melalui dashboard berbasis web.
+
+---
+
+### ✅ **2. Tiga Platform Hosting Populer: GitHub Pages, Vercel, Netlify**
+
+Pemilihan platform hosting merupakan aspek penting dalam pengembangan aplikasi full-stack. Hosting yang sesuai tidak hanya mempengaruhi performa dan skalabilitas aplikasi, tetapi juga menentukan batasan teknis terkait fitur backend dan integrasi dengan database.
+
+Berikut adalah tiga platform hosting yang umum digunakan oleh pengembang web modern, beserta karakteristik dan kegunaannya masing-masing.
+
+---
+
+#### 🟦 **GitHub Pages**
+
+**GitHub Pages** adalah layanan hosting statis yang disediakan oleh GitHub. Layanan ini memungkinkan pengguna untuk menyajikan file HTML, CSS, dan JavaScript langsung dari repository GitHub ke internet.
+
+Karakteristik utama:
+
+- Hanya mendukung **static site** yang tidak memerlukan server-side logic.
+- Tidak mendukung **backend logic**, **API endpoints**, maupun **integrasi langsung dengan database**.
+- Sangat cocok untuk **halaman portofolio**, **dokumentasi proyek**, atau situs web sederhana berbasis **HTML statis**.
+
+Karena keterbatasan pada sisi backend dan tidak adanya eksekusi runtime server, GitHub Pages tidak direkomendasikan untuk aplikasi full-stack, terutama yang memerlukan interaksi dengan database atau perangkat IoT secara dinamis.
+
+---
+
+#### ⚫ **Vercel**
+
+**Vercel** adalah platform hosting modern yang dikembangkan oleh tim di balik framework **Next.js**. Platform ini didesain khusus untuk mendukung alur kerja aplikasi React berbasis Next.js, termasuk berbagai fitur canggih seperti SSR (Server-Side Rendering), SSG (Static Site Generation), dan ISR (Incremental Static Regeneration).
+
+Karakteristik utama:
+
+- **Native support** untuk **Next.js**, termasuk fitur seperti API Routes (untuk backend ringan) dan Edge Functions.
+- Mendukung **serverless functions**, memungkinkan pengembang untuk menulis logic backend langsung di dalam proyek frontend.
+- Mendukung koneksi ke **database eksternal** seperti **Supabase**, **PlanetScale**, **MongoDB Atlas**, dan lainnya.
+- Otomatisasi CI/CD dengan integrasi Git yang sangat baik.
+
+Vercel sangat cocok untuk **dashboard IoT**, **aplikasi data-driven**, dan **aplikasi full-stack modern**, karena mampu menyatukan frontend dan backend dalam satu proyek yang terintegrasi dengan baik.
+
+---
+
+#### 🟩 **Netlify**
+
+**Netlify** adalah platform hosting yang fokus pada arsitektur **JAMstack**, namun telah berkembang menjadi solusi full-stack ringan dengan dukungan untuk **serverless functions**, **form handling**, dan **authentikasi sederhana**.
+
+Karakteristik utama:
+
+- Mendukung **static site deployment**, serta fitur **serverless function** berbasis AWS Lambda melalui folder khusus.
+- Integrasi yang baik dengan berbagai layanan backend seperti **Supabase**, **FaunaDB**, dan **Firebase**.
+- Mendukung framework modern seperti Next.js, Astro, dan Vue, walaupun tidak se-native Vercel untuk Next.js.
+- Menyediakan fitur tambahan seperti identity management, plugins, dan deploy preview otomatis.
+
+Netlify merupakan pilihan yang baik untuk aplikasi dengan kebutuhan backend yang ringan, seperti **blog interaktif**, **form submission**, atau **dashboard sederhana**. Meskipun bisa digunakan untuk aplikasi IoT, performanya pada fitur SSR dan integrasi Next.js masih kalah dari Vercel.
+
+---
+
+Ketiga platform ini menawarkan **tier gratis**, dan dapat digunakan secara optimal tergantung pada kompleksitas aplikasi yang dibangun. Untuk kebutuhan aplikasi IoT yang bersifat interaktif dan terhubung dengan database secara real-time, Vercel menjadi platform paling sesuai karena mendukung penuh teknologi yang dibutuhkan oleh arsitektur full-stack modern.
+
+---
+
+### ✅ **3. Full-Stack App Butuh Database — Apa Saja Opsinya?**
+
+Dalam arsitektur **full-stack application**, database merupakan komponen inti yang berfungsi sebagai **lapisan persistensi data**. Frontend dan backend berinteraksi secara langsung maupun tidak langsung dengan database untuk melakukan operasi baca dan tulis data. Oleh karena itu, pemilihan database harus mempertimbangkan model data, pola akses, skalabilitas, dan integrasi dengan platform hosting.
+
+Karena **GitHub Pages** hanya mendukung static site dan tidak menyediakan lingkungan eksekusi backend, platform ini tidak dapat digunakan untuk aplikasi yang memerlukan koneksi database. Dengan demikian, dalam konteks pembahasan ini, hanya **Vercel** dan **Netlify** yang relevan karena keduanya mendukung backend (serverless) dan memungkinkan koneksi ke **database eksternal**.
+
+Berikut adalah beberapa opsi database eksternal yang umum digunakan dalam pengembangan aplikasi full-stack modern:
+
+---
+
+#### ⚙️ **Database Eksternal yang Cocok**
+
+| Database          | Tipe                       | Karakteristik & Kecocokan                                                                                                      |
+| ----------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **Supabase**      | PostgreSQL (RDBMS)         | Cocok untuk web app, realtime application, dan IoT dashboard. Menyediakan Auth, Storage, dan API otomatis berbasis PostgreSQL. |
+| **PlanetScale**   | MySQL (RDBMS)              | Dirancang untuk aplikasi web berskala besar dengan arsitektur serverless-friendly. Sangat cocok untuk Next.js di Vercel.       |
+| **Neon**          | PostgreSQL (RDBMS)         | Serverless PostgreSQL modern dengan koneksi cepat dan cocok untuk workload berbasis cloud.                                     |
+| **MongoDB Atlas** | NoSQL (Document)           | Cocok untuk data semi-terstruktur dan skema fleksibel. Banyak digunakan pada aplikasi dengan struktur data dinamis.            |
+| **Firebase**      | NoSQL (Realtime/Firestore) | Sangat cocok untuk aplikasi mobile dan web yang membutuhkan sinkronisasi data real-time tanpa skema relasional.                |
+| **FaunaDB**       | NoSQL + GraphQL            | Cocok untuk arsitektur JAMstack, khususnya dengan Netlify, dengan akses data berbasis GraphQL.                                 |
+| **Upstash**       | Redis (Key-Value)          | Digunakan untuk cache, pub/sub, session storage, dan kebutuhan IoT real-time berlatensi rendah.                                |
+
+---
+
+Secara umum, database berbasis **RDBMS** seperti PostgreSQL dan MySQL lebih sesuai untuk aplikasi IoT dan dashboard web yang membutuhkan **relasi data**, **query kompleks**, dan **integritas data**. Sementara itu, database **NoSQL** lebih unggul dalam fleksibilitas skema dan kemudahan integrasi pada aplikasi yang menuntut kecepatan pengembangan dan realtime update.
+
+Pemilihan database harus selalu disesuaikan dengan karakteristik aplikasi, pola komunikasi data, serta kemampuan platform hosting yang digunakan.
+
+---
+
+### ✅ **4. Hosting Platform Lain yang Support Database (Free Tier)**
+
+Selain Vercel dan Netlify, terdapat beberapa platform alternatif yang mendukung hosting untuk **backend application** dan memiliki kemampuan terhubung dengan, atau menyediakan langsung, **database** dalam **free tier**. Platform-platform ini sangat bermanfaat untuk pengembangan **full-stack web apps**, termasuk untuk **IoT backend API**, **real-time data service**, atau **prototyping cepat** tanpa biaya awal.
+
+Berikut adalah daftar platform yang mendukung backend execution dan dapat digunakan untuk mengelola atau terhubung ke database:
+
+---
+
+| Platform           | Dukungan Backend                  | Built-in Database     | Cocok Untuk                                                                                                                                             |
+| ------------------ | --------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Supabase**       | ✅ API, Auth, Realtime            | ✅ PostgreSQL         | Solusi backend lengkap: database relasional, API otomatis, auth, dan file storage. Cocok untuk IoT dashboard real-time dan aplikasi web.                |
+| **Railway**        | ✅ Web service, cron jobs         | ✅ PostgreSQL         | Mendukung deployment backend (Express, Fastify, dsb) dengan database terintegrasi. Ideal untuk API server dengan skema data relasional.                 |
+| **Render**         | ✅ Web service, background worker | ❌                    | Menyediakan hosting backend permanen. Harus menggunakan database eksternal (seperti Supabase, Neon, dsb). Cocok untuk web server kecil hingga menengah. |
+| **Replit**         | ✅ Runtime berbagai bahasa        | ⚠️ ReplDB (key-value) | Platform edukasi dan prototyping. Cocok untuk membangun demo API atau aplikasi kecil. Terbatas untuk aplikasi skala produksi.                           |
+| **Glitch**         | ✅ Node.js (Express)              | ❌                    | Fokus pada proyek berbasis Node.js ringan dan prototipe cepat. Ideal untuk demo backend, bukan untuk aplikasi jangka panjang.                           |
+| **Koyeb / Fly.io** | ✅ Docker-based & global VM       | ❌                    | Cocok untuk deployment containerized apps dengan kebutuhan distribusi geografis dan latency rendah. Perlu integrasi database eksternal.                 |
+
+---
+
+### 🔍 Penjelasan Singkat Per Platform:
+
+- **Supabase**
+  Menyediakan PostgreSQL dengan antarmuka modern berbasis web dan SDK siap pakai. Otomatis menghasilkan REST API, menyediakan autentikasi, storage, dan dukungan WebSocket untuk realtime data. Tidak perlu backend tambahan untuk banyak kasus umum.
+
+- **Railway**
+  Menyediakan pengalaman developer-friendly untuk menjalankan backend dan database secara terintegrasi. Mendukung plugin database seperti PostgreSQL, Redis, dan MySQL, serta memiliki pengelolaan environment variable dan deployment berbasis Git.
+
+- **Render**
+  Fokus pada aplikasi server dan backend tradisional dengan infrastruktur yang stabil. Cocok untuk hosting API REST/GraphQL, background job, dan dapat dihubungkan ke database pihak ketiga seperti PlanetScale atau MongoDB Atlas.
+
+- **Replit**
+  Platform kolaboratif online untuk berbagai bahasa pemrograman. Tersedia fitur hosting HTTP dan ReplDB, database key-value yang cocok untuk percobaan, bukan produksi. Sangat bermanfaat untuk edukasi dan proof-of-concept.
+
+- **Glitch**
+  Menyediakan pengalaman live-coding dan deployment langsung dari browser. Cocok untuk pengujian ide backend kecil dengan Express.js. Terbatas dalam kontrol dan skalabilitas.
+
+- **Koyeb / Fly.io**
+  Menyediakan deployment container secara global, cocok untuk aplikasi backend ringan hingga kompleks yang membutuhkan performa tinggi. Harus menggunakan database eksternal (misalnya Neon, Supabase, dsb) untuk penyimpanan data.
+
+---
+
+Platform-platform ini dapat menjadi pilihan menarik untuk pengembangan full-stack dengan keterbatasan anggaran, selama disesuaikan dengan kompleksitas dan kebutuhan teknis dari aplikasi yang dibangun. Khusus untuk aplikasi IoT dengan kebutuhan **realtime, autentikasi, dan dashboard**, **Supabase** dan **Railway** menjadi dua alternatif terkuat dalam kategori ini.
+
+---
+
+### ✅ **5. PostgreSQL vs SQLite: Memilih Database Engine**
+
+Pemilihan database engine merupakan bagian penting dari desain arsitektur full-stack, terutama untuk aplikasi yang menangani data dari berbagai sumber dan pengguna. Dua pilihan populer yang sering dibandingkan adalah **PostgreSQL** dan **SQLite**, keduanya merupakan sistem **Relational Database Management System (RDBMS)**, namun dengan pendekatan arsitektur dan kapabilitas yang sangat berbeda.
+
+Tabel berikut menunjukkan perbandingan utama antara keduanya:
+
+| Aspek              | PostgreSQL                               | SQLite                                         |
+| ------------------ | ---------------------------------------- | ---------------------------------------------- |
+| **Tipe**           | Server-based, multi-client, concurrent   | Embedded, single-process, file-based           |
+| **Skalabilitas**   | ✅ Sangat tinggi                         | ❌ Terbatas untuk aplikasi ringan              |
+| **Koneksi**        | Mendukung koneksi jaringan dan cloud     | Koneksi lokal, tidak cocok untuk client-server |
+| **Cocok untuk**    | Aplikasi web, backend API, IoT dashboard | Aplikasi embedded, prototipe lokal, CLI tools  |
+| **Digunakan oleh** | Supabase, Neon, Railway, dsb             | Digunakan di Android, Firefox, Replit, dsb     |
+
+---
+
+#### 🟦 **PostgreSQL**
+
+PostgreSQL adalah RDBMS **server-based** yang bersifat **multi-user dan multi-threaded**, serta mendukung berbagai fitur canggih untuk keperluan enterprise maupun aplikasi modern seperti:
+
+- Transaksi ACID
+- Constraint kompleks
+- Indexing tingkat lanjut
+- JSON/JSONB support
+- Triggers dan stored procedures
+- Dukungan native untuk geospasial (PostGIS)
+
+PostgreSQL digunakan secara luas di berbagai layanan modern seperti **Supabase**, **Neon**, dan **Railway**, yang menyediakan database ini sebagai managed service dengan kemampuan koneksi via internet (hosted DB). Cocok untuk aplikasi **IoT Dashboard berbasis web** karena mampu menangani data real-time dari banyak perangkat, menyediakan query kompleks, dan integrasi yang solid dengan backend API.
+
+---
+
+#### 🟩 **SQLite**
+
+SQLite adalah RDBMS **embedded** yang ringan dan mudah digunakan. Database disimpan sebagai satu file `.db` yang dapat diakses langsung dari aplikasi lokal tanpa server terpisah. SQLite sangat cocok untuk:
+
+- Aplikasi mobile (Android, iOS)
+- Aplikasi desktop atau lokal
+- CLI tools
+- Prototyping
+
+Karena tidak mendukung multi-threading dan koneksi simultan secara optimal, SQLite **tidak cocok untuk aplikasi web yang melayani banyak pengguna secara bersamaan**. SQLite juga tidak dirancang untuk dideploy di lingkungan client-server atau cloud secara langsung.
+
+---
+
+#### 🎯 **Kesimpulan Teknis**
+
+- Untuk **aplikasi full-stack berbasis web**, terutama yang membutuhkan **akses multi-user**, integrasi cloud, dan data real-time dari perangkat IoT, **PostgreSQL adalah pilihan yang tepat dan matang.**
+
+- Untuk **proyek lokal, pengembangan awal (dev/test)**, atau aplikasi yang tidak memerlukan komunikasi jaringan, **SQLite** dapat menjadi pilihan yang ringan dan efisien.
+
+PostgreSQL menawarkan skalabilitas dan fleksibilitas tinggi, yang menjadikannya standar industri dalam berbagai layanan backend modern, dan pilihan paling tepat ketika digunakan bersama platform seperti **Supabase**, **Railway**, dan **Neon** dalam konteks full-stack web dan IoT.
+
+---
+
+### ✅ **6. Studi Kasus: Dashboard IoT Realtime**
+
+#### 🎯 Use Case
+
+Kasus ini berfokus pada pengembangan **dashboard IoT** untuk memantau data lingkungan seperti **suhu** dan **kelembaban** yang dikirimkan oleh perangkat **ESP32** secara periodik. Sistem ini bertugas menerima data dari perangkat melalui protokol **MQTT**, menyimpannya ke **database relasional**, serta menyajikan data secara **real-time** melalui antarmuka web yang responsif.
+
+Aplikasi semacam ini umum dalam sistem **monitoring ruangan**, **smart agriculture**, **greenhouse**, dan berbagai solusi **data logging berbasis sensor**.
+
+---
+
+#### 🧱 Rekomendasi Stack: 📦 **Stack A** (Rekomendasi Utama)
+
+Untuk memenuhi kebutuhan fungsional dan teknis dari use case ini, berikut adalah susunan stack teknologi yang direkomendasikan:
+
+| Komponen        | Teknologi                                 | Peran dalam Arsitektur                                                             |
+| --------------- | ----------------------------------------- | ---------------------------------------------------------------------------------- |
+| **Frontend**    | Next.js + Tailwind CSS (hosted di Vercel) | Menyajikan UI dashboard, menampilkan data sensor secara real-time                  |
+| **Backend**     | Next.js API Routes (Vercel Serverless)    | Menerima data dari MQTT broker atau webhook, melakukan validasi dan penyimpanan    |
+| **Database**    | Supabase (PostgreSQL + Realtime)          | Menyimpan data sensor, menyediakan API akses data, dan mendukung realtime listener |
+| **MQTT Broker** | CloudMQTT / Mosquitto                     | Mengelola komunikasi antara ESP32 dan server melalui protokol MQTT                 |
+
+---
+
+#### 🔄 Alur Data
+
+```
+[ESP32] → MQTT Publish → CloudMQTT
+                          ↓
+              [Webhook/API Route @ Vercel]
+                          ↓
+               [Supabase PostgreSQL → Simpan data]
+                          ↑
+         [Next.js Dashboard @ Vercel ← Realtime Fetch]
+```
+
+Penjelasan alur:
+
+1. **ESP32** membaca data suhu dan kelembaban dari sensor (misalnya DHT11/DHT22/BME280), kemudian mengirimkannya secara berkala melalui protokol **MQTT** ke broker seperti **CloudMQTT**.
+
+2. **MQTT Broker** menerima publish dari ESP32 pada topik tertentu (misalnya `sensor/ruang1`). Broker kemudian dapat meneruskan data tersebut ke endpoint **webhook** (API Route) yang telah di-deploy di Vercel.
+
+3. **API Route** di dalam aplikasi Next.js yang di-host di Vercel bertindak sebagai **receiver endpoint**. Data yang masuk akan divalidasi dan disimpan ke database **Supabase (PostgreSQL)** menggunakan client SDK atau REST API.
+
+4. **Supabase** menyimpan data sensor dalam tabel relasional yang terstruktur. Fitur **realtime subscription** dapat digunakan agar dashboard bisa menampilkan update secara langsung tanpa polling berkala.
+
+5. **Dashboard Web** yang dibangun menggunakan Next.js dan Tailwind CSS mengambil data dari Supabase, baik secara manual (query) maupun melalui **WebSocket realtime listener**, lalu menyajikannya dalam bentuk visual (tabel, grafik, indikator status, dsb).
+
+---
+
+#### 📈 Tambahan Opsional
+
+- **Visualisasi Data**: Gunakan `react-chartjs-2` atau `Recharts` untuk menampilkan grafik suhu/kelembaban per waktu.
+- **Notifikasi**: Tambahkan sistem notifikasi jika suhu melewati ambang batas.
+- **Autentikasi Pengguna**: Gunakan Supabase Auth untuk membatasi akses dashboard hanya pada user tertentu.
+- **Control Device**: Tambahkan endpoint untuk mengirim perintah balik ke ESP32 via MQTT (misal, menyalakan kipas jika suhu tinggi).
+
+---
+
+#### ⚙️ Struktur Tabel Contoh di Supabase
+
+```sql
+CREATE TABLE sensor_data (
+  id SERIAL PRIMARY KEY,
+  device_id TEXT NOT NULL,
+  temperature FLOAT,
+  humidity FLOAT,
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+---
+
+Studi kasus ini mencerminkan penerapan nyata dari arsitektur **full-stack IoT**, menggabungkan perangkat keras, komunikasi jaringan, backend web, database relasional, serta frontend modern — semua dihosting pada platform cloud **dengan free tier**, menjadikannya solusi yang efisien dan mudah direplikasi.
+
+---
+
+### ✅ **7. Kriteria Pemilihan Hosting & Stack**
+
+Pemilihan hosting platform dan teknologi stack harus disesuaikan dengan **kebutuhan teknis**, **skala proyek**, serta **kemampuan infrastruktur** dari aplikasi yang akan dibangun. Setiap kombinasi stack memiliki keunggulan dan batasan masing-masing tergantung pada:
+
+- Kompleksitas logika backend
+- Jumlah pengguna yang diharapkan
+- Kebutuhan real-time atau tidak
+- Jenis aplikasi (web app, IoT, mobile companion, dll)
+- Model pengembangan (prototipe cepat atau sistem produksi)
+
+Berikut adalah beberapa kriteria umum dan rekomendasi stack atau platform yang sesuai:
+
+---
+
+| **Kebutuhan**                    | **Rekomendasi Stack / Platform**                                                                                  |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **Full-stack web app**           | **Vercel + Supabase** _(ideal untuk Next.js)_ atau **Railway** _(lebih fleksibel untuk backend kustom)_           |
+| **Realtime data (IoT)**          | **Supabase** _(PostgreSQL + Realtime API via WebSocket)_                                                          |
+| **Mudah digunakan & gratis**     | **Vercel** _(frontend & serverless backend)_ + **Supabase** _(DB, auth, realtime, storage)_                       |
+| **Backend kompleks (API penuh)** | **Railway** _(support untuk Express, NestJS, Fastify, dsb, dengan integrasi DB langsung)_                         |
+| **Web statis saja**              | **Netlify** _(SSG apps, JAMstack, dengan optional functions)_ atau **GitHub Pages** _(untuk halaman HTML statis)_ |
+| **Embedded/single-user app**     | **SQLite** _(digunakan lokal, tidak memerlukan hosting, cocok untuk CLI tools atau aplikasi desktop/mobile)_      |
+
+---
+
+### 📝 Penjelasan Tiap Kriteria
+
+- **Full-stack web app**:
+  Membutuhkan kemampuan untuk menyajikan frontend modern (React/Next.js) sekaligus menjalankan logic backend dan integrasi dengan database. Kombinasi Vercel + Supabase memberikan integrasi ringan namun fungsional penuh, sedangkan Railway cocok untuk backend kustom yang lebih kompleks.
+
+- **Realtime data (IoT use case)**:
+  Perangkat IoT seperti ESP32 sering mengirim data berkala yang perlu ditampilkan langsung di dashboard. Supabase mendukung real-time query listener melalui WebSocket dari PostgreSQL `LISTEN/NOTIFY`, membuatnya cocok untuk aplikasi ini tanpa perlu setup tambahan.
+
+- **Mudah digunakan & gratis**:
+  Untuk tim kecil, edukasi, atau MVP, Vercel dan Supabase sangat mudah digunakan, punya CLI, dashboard web yang intuitif, dan free tier yang cukup untuk tahap awal pengembangan.
+
+- **Backend kompleks**:
+  Aplikasi dengan logic berat, queue processing, background job, atau API skala besar memerlukan kontrol penuh terhadap server backend. Railway memberikan fleksibilitas untuk menjalankan backend framework penuh seperti **Express**, **NestJS**, atau **Fastify**, dan menyediakan plugin database internal.
+
+- **Web statis**:
+  Proyek seperti landing page, blog, dokumentasi, atau visualisasi data sederhana dapat disajikan tanpa backend. Netlify dan GitHub Pages cocok untuk ini, dengan Netlify mendukung extensibility melalui serverless functions jika dibutuhkan.
+
+- **Embedded or Single-user apps**:
+  Jika aplikasi hanya berjalan lokal, tidak perlu backend online, dan hanya memerlukan penyimpanan ringan, maka **SQLite** menjadi solusi yang efisien dan minimal. SQLite digunakan pada banyak aplikasi mobile, embedded system, dan prototipe offline.
+
+---
+
+Kriteria ini dapat digunakan sebagai **acuan praktis** untuk menentukan stack terbaik sesuai konteks aplikasi, baik untuk pengembangan internal, eksperimen, maupun sistem produksi skala kecil hingga menengah.
+
+---
+
+### ✅ **8. Template & Link Referensi**
+
+Berikut adalah kumpulan **tautan resmi dan template starter** yang dapat digunakan untuk memulai proyek full-stack web dengan atau tanpa integrasi IoT. Link berikut mencakup platform hosting, database, dan starter project untuk stack Next.js + Supabase yang telah direkomendasikan sebelumnya.
+
+| **Stack / Tool**    | **Link**                                                                                                                                                                                                    |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Supabase**        | [https://supabase.com](https://supabase.com) — Platform backend open source berbasis PostgreSQL dengan fitur Auth, Realtime, dan REST/GraphQL API                                                           |
+| **Vercel**          | [https://vercel.com](https://vercel.com) — Hosting modern untuk aplikasi frontend (khususnya Next.js), mendukung API Routes dan deployment edge                                                             |
+| **Railway**         | [https://railway.app](https://railway.app) — Platform untuk mengembangkan, menghosting, dan mengelola backend + database secara terintegrasi                                                                |
+| **Firebase**        | [https://firebase.google.com](https://firebase.google.com) — Backend-as-a-service dari Google yang menawarkan hosting, realtime DB, auth, dsb                                                               |
+| **Render**          | [https://render.com](https://render.com) — Alternatif hosting backend full-stack (Express, Fastify, PostgreSQL, dsb) dengan UI pengelolaan infrastruktur                                                    |
+| **GitHub Template** | [Next.js + Supabase Starter](https://github.com/supabase/supabase/tree/master/examples/nextjs-with-supabase) — Template boilerplate untuk Next.js dengan Supabase, sudah termasuk auth dan koneksi database |
+
+---
+
+### 🔗 **Link Referensi Terkait Materi Sebelumnya**
+
+Berikut adalah link tambahan yang relevan dengan topik pembahasan teknis dari setiap bab dalam artikel ini:
+
+#### 🧠 Fundamental & Stack
+
+- Next.js (official): [https://nextjs.org](https://nextjs.org)
+- Tailwind CSS: [https://tailwindcss.com](https://tailwindcss.com)
+- TypeScript: [https://www.typescriptlang.org](https://www.typescriptlang.org)
+
+#### 🗃️ Database & Teknologi Pendukung
+
+- PlanetScale (MySQL-compatible serverless DB): [https://planetscale.com](https://planetscale.com)
+- Neon (Serverless PostgreSQL): [https://neon.tech](https://neon.tech)
+- MongoDB Atlas (Cloud-hosted NoSQL): [https://www.mongodb.com/cloud/atlas](https://www.mongodb.com/cloud/atlas)
+- Upstash (Serverless Redis/Kafka): [https://upstash.com](https://upstash.com)
+- FaunaDB (Serverless NoSQL + GraphQL): [https://fauna.com](https://fauna.com)
+
+#### ⚡ MQTT dan IoT
+
+- CloudMQTT (Free MQTT broker for testing): [https://www.cloudmqtt.com](https://www.cloudmqtt.com)
+- Eclipse Mosquitto (Open source MQTT broker): [https://mosquitto.org](https://mosquitto.org)
+
+#### 🧪 Tools Prototyping & Hosting Tambahan
+
+- Replit: [https://replit.com](https://replit.com)
+- Glitch: [https://glitch.com](https://glitch.com)
+- Koyeb: [https://www.koyeb.com](https://www.koyeb.com)
+- Fly.io: [https://fly.io](https://fly.io)
+- Netlify: [https://netlify.com](https://netlify.com)
+- GitHub Pages: [https://pages.github.com](https://pages.github.com)
+
+---
+
+Link-link ini dapat menjadi **panduan awal yang lengkap** untuk eksplorasi, eksperimen, dan implementasi nyata dari aplikasi **full-stack web + IoT** berbasis teknologi modern. Seluruh referensi telah disesuaikan dengan konteks stack yang aman, efisien, dan tersedia dalam **tier gratis** untuk kebutuhan pengembangan awal.
+
+---
+
+### 🔚 **Kesimpulan Akhir**
+
+Pembangunan aplikasi **full-stack web** yang terhubung dengan perangkat **IoT** membutuhkan pemilihan teknologi yang tepat, baik dari sisi **hosting platform**, **database**, hingga **arsitektur komunikasi data**. Melalui pembahasan ini, telah dijabarkan berbagai opsi hosting, sistem database, serta stack teknologi yang relevan untuk pengembangan dashboard monitoring real-time berbasis web.
+
+Dengan mempertimbangkan aspek seperti kemudahan integrasi, kemampuan realtime, skalabilitas, dan ketersediaan free-tier, berikut adalah **rekomendasi utama** yang layak dijadikan standar untuk proyek pengembangan awal:
+
+---
+
+🎯 **Rekomendasi Umum**:
+
+- Untuk proyek **IoT Dashboard + Web UI** dengan basis modern dan minim biaya:
+
+  - Gunakan **Next.js** untuk frontend dan backend ringan (API Routes)
+  - Hosting di **Vercel** untuk deployment cepat dan integrasi langsung
+  - Gunakan **Supabase** sebagai backend database (PostgreSQL), sekaligus penyedia realtime API, auth, dan storage
+  - Tambahkan **MQTT broker** seperti **CloudMQTT** untuk menjembatani komunikasi data dari perangkat ESP32/ESP8266
+
+---
+
+🧩 **Stack ini memiliki keunggulan sebagai berikut**:
+
+- ✅ **Scalable**: Mendukung peningkatan jumlah pengguna dan perangkat tanpa perlu migrasi infrastruktur awal.
+- ✅ **Modern**: Menggunakan teknologi web terbaru seperti **TypeScript**, **Tailwind CSS**, dan **PostgreSQL realtime**.
+- ✅ **Developer-friendly**: Tooling dan dokumentasi lengkap, cocok untuk tim kecil, pengembang solo, maupun edukasi.
+- ✅ **Efisien dari segi biaya**: Seluruh komponen utama tersedia dengan **free tier** yang cukup untuk pengembangan dan uji coba.
+
+---
+
+Dengan pendekatan ini, pengembang dapat fokus pada **fungsi dan logika aplikasi** tanpa harus terbebani dengan kompleksitas infrastruktur. Stack yang direkomendasikan dapat digunakan tidak hanya untuk dashboard IoT, tetapi juga untuk berbagai aplikasi web lain yang membutuhkan integrasi backend ringan, realtime update, dan deployment cepat.
+
+Dokumentasi resmi dari masing-masing platform, serta template yang telah disediakan, memungkinkan adopsi cepat dan efisien, menjadikan kombinasi ini solusi ideal untuk **pengembangan full-stack web + IoT yang praktis dan tangguh**.
+
+---
+
+### Catatan Penyusunan
+
+Artikel ini disusun sebagai materi edukasi dan referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
