@@ -7,6 +7,7 @@ import siteMetadata from '@/data/siteMetadata';
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = siteMetadata.siteUrl.replace(/\/$/, '');
 
+  // Blog & content routes (dynamic, from Contentlayer)
   const blogRoutes = allBlogs
     .filter((blog) => blog.draft !== true)
     .map((blog) => ({
@@ -14,14 +15,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: blog.lastmod ?? blog.date,
     }));
 
+  // Static routes (explicit, sesuai struktur app/)
   const staticRoutes = [
     '/',
     '/blog',
+    '/posts',
+    '/tags',
+    '/author',
+
     '/tools',
-    '/tools/vercel',
-    '/tools/openai',
+    '/tools/ai',
+    '/tools/cloudmqtt',
+    '/tools/github-pages',
     '/tools/notion',
-    '/affiliate-disclosure',
+    '/tools/openai',
+    '/tools/supabase',
+    '/tools/vercel',
   ].map((path) => ({
     url: `${baseUrl}${path}`,
     lastModified: new Date(),

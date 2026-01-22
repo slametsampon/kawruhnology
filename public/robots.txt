@@ -1,4 +1,16 @@
 User-agent: *
 Allow: /
 
+# Block Next.js runtime & internal system
+Disallow: /_next/
+Disallow: /api/
+
+# Block build & tooling artifacts
+Disallow: /.contentlayer/
+Disallow: /.github/
+Disallow: /.vscode/
+Disallow: /node_modules/
+Disallow: /out/
+
+# Sitemap
 Sitemap: https://kawruhnology.vercel.app/sitemap.xml
