@@ -1,0 +1,1112 @@
+---
+title: Panduan Pengembangan Web dengan CDD
+date: '2026-01-23'
+tags:
+  [
+    'nextjs',
+    'component-driven-development',
+    'typescript-tailwind',
+    'app-router',
+    'clean-architecture',
+    'web-development',
+    'scalable-structure',
+  ]
+draft: false
+summary: Panduan ini merinci pendekatan Component-Driven Development (CDD) menggunakan Next.js App Router, TypeScript, dan Tailwind CSS dalam struktur proyek yang moderat namun scalable. Setiap folder seperti components, views, hooks, services, dan types memiliki peran jelas untuk memisahkan UI, logika bisnis, dan akses data. Dengan contoh fitur Checkout, semua bagian saling terhubung dan mudah ditelusuri. Struktur ini cocok untuk tim kecil hingga menengah, menjaga kode tetap bersih, reusable, dan maintainable tanpa over-engineering, serta siap dikembangkan seiring pertumbuhan aplikasi.
+---
+
+- [🔰 1. **Pendahuluan**](#-1-pendahuluan)
+  - [Apa itu Component-Driven Development (CDD)?](#apa-itu-component-driven-development-cdd)
+  - [Kenapa Menggunakan CDD?](#kenapa-menggunakan-cdd)
+  - [Tujuan dan Manfaat Panduan Ini](#tujuan-dan-manfaat-panduan-ini)
+  - [Prasyarat Teknologi](#prasyarat-teknologi)
+- [📐 2. **Fundamental Arsitektur Proyek**](#-2-fundamental-arsitektur-proyek)
+  - [Filosofi Clean Architecture Berbasis Komponen](#filosofi-clean-architecture-berbasis-komponen)
+  - [Perbedaan: `Component` vs `View` vs `Page`](#perbedaan-component-vs-view-vs-page)
+  - [Perbedaan: `Hook` vs `Service` vs `Utils`](#perbedaan-hook-vs-service-vs-utils)
+  - [Pendekatan “Just Enough Architecture”](#pendekatan-just-enough-architecture)
+- [🗂️ 3. **Struktur Folder (Terkunci)**](#️-3-struktur-folder-terkunci)
+  - [📁 Deskripsi Per Folder](#-deskripsi-per-folder)
+  - [🔐 Catatan Penggunaan](#-catatan-penggunaan)
+  - [📦 Struktur Folder dalam Tampilan Visual (Markdown Friendly)](#-struktur-folder-dalam-tampilan-visual-markdown-friendly)
+- [📘 4. **Definisi dan Fungsi Masing-masing Folder**](#-4-definisi-dan-fungsi-masing-masing-folder)
+  - [`components/`](#components)
+  - [`views/`](#views)
+  - [`app/`](#app)
+  - [`layouts/`](#layouts)
+  - [`services/`](#services)
+  - [`hooks/`](#hooks)
+  - [`lib/`](#lib)
+  - [`constants/`](#constants)
+  - [`types/`](#types)
+  - [`styles/`](#styles)
+- [🧱 5. **Template Inline: Fitur Sederhana Terstruktur**](#-5-template-inline-fitur-sederhana-terstruktur)
+  - [🧩 5.1. `types/cart.ts`](#-51-typescartts)
+  - [🧩 5.2. `lib/formatCurrency.ts`](#-52-libformatcurrencyts)
+  - [🧩 5.3. `components/CartItem.tsx`](#-53-componentscartitemtsx)
+  - [🧩 5.4. `views/CheckoutView.tsx`](#-54-viewscheckoutviewtsx)
+  - [🧩 5.5. `services/cartService.ts`](#-55-servicescartservicets)
+  - [🧩 5.6. `app/checkout/page.tsx`](#-56-appcheckoutpagetsx)
+  - [🧩 5.7. `layouts/DefaultLayout.tsx`](#-57-layoutsdefaultlayouttsx)
+  - [🧩 5.8. `app/layout.tsx`](#-58-applayouttsx)
+  - [🧩 5.9. `hooks/useCart.ts`](#-59-hooksusecartts)
+  - [🧩 5.10. `styles/globals.css`](#-510-stylesglobalscss)
+- [📎 Dependensi](#-dependensi)
+- [📌 Kesimpulan Teknis Template](#-kesimpulan-teknis-template)
+- [✅ 6. **Best Practices \& Conventions**](#-6-best-practices--conventions)
+  - [Penamaan File dan Komponen PascalCase](#penamaan-file-dan-komponen-pascalcase)
+  - [Impor Pakai Alias (gunakan `tsconfig.json` `paths`)](#impor-pakai-alias-gunakan-tsconfigjson-paths)
+  - [Jangan Tulis Logika Bisnis di Komponen](#jangan-tulis-logika-bisnis-di-komponen)
+  - [Pisahkan Logika API ke `services/`](#pisahkan-logika-api-ke-services)
+  - [Gunakan `views/` untuk Menyusun Fitur dari Komponen](#gunakan-views-untuk-menyusun-fitur-dari-komponen)
+  - [Hindari Over-Engineering – Gunakan Hanya Folder yang Diperlukan](#hindari-over-engineering--gunakan-hanya-folder-yang-diperlukan)
+  - [Rangkuman Konvensi](#rangkuman-konvensi)
+- [🧪 7. **Testing \& Deployment**](#-7-testing--deployment)
+  - [Struktur Pengujian](#struktur-pengujian)
+  - [Struktur Folder Pengujian](#struktur-folder-pengujian)
+  - [Contoh Unit Test: `formatCurrency`](#contoh-unit-test-formatcurrency)
+  - [Contoh Unit Test: Komponen `CartItem`](#contoh-unit-test-komponen-cartitem)
+  - [Alur CI/CD Sederhana dengan Vercel](#alur-cicd-sederhana-dengan-vercel)
+  - [Konfigurasi Tambahan (Opsional)](#konfigurasi-tambahan-opsional)
+  - [CI/CD Otomatis dengan GitHub Actions](#cicd-otomatis-dengan-github-actions)
+  - [Rekomendasi Testing Minimal](#rekomendasi-testing-minimal)
+- [📎 8. **Penutup dan Referensi**](#-8-penutup-dan-referensi)
+  - [Checklist Sebelum Push/Merge](#checklist-sebelum-pushmerge)
+    - [✅ Struktur dan Organisasi](#-struktur-dan-organisasi)
+    - [✅ Penamaan dan Konsistensi](#-penamaan-dan-konsistensi)
+    - [✅ Kualitas Kode](#-kualitas-kode)
+    - [✅ Fungsi Fitur](#-fungsi-fitur)
+    - [✅ Dokumen dan Metadata](#-dokumen-dan-metadata)
+  - [Referensi Resmi](#referensi-resmi)
+  - [Repositori Starter (Opsional)](#repositori-starter-opsional)
+
+---
+
+### 🔰 1. **Pendahuluan**
+
+#### Apa itu Component-Driven Development (CDD)?
+
+Component-Driven Development (CDD) adalah pendekatan pengembangan antarmuka pengguna (UI) yang berfokus pada pembuatan aplikasi dari unit terkecil bernama _komponen_ (components). Komponen adalah blok bangunan fungsional dan visual yang independen, dapat digunakan ulang, serta disusun menjadi _view_ dan _halaman penuh_ (pages). Dalam praktiknya, CDD menekankan isolasi, komposabilitas, dan reusabilitas komponen UI untuk membangun sistem yang modular dan scalable.
+
+CDD mendorong proses pengembangan berbasis bottom-up, di mana komponen UI dikembangkan, diuji, dan dirakit secara bertahap hingga membentuk tampilan aplikasi lengkap. Pendekatan ini sangat cocok untuk framework seperti React dan Next.js yang berbasis pada komposisi komponen.
+
+<ResourceBox
+  items={[
+    {
+      name: 'Software Development Life Cycle -SDLC',
+      href: '/blog/website/sdlc-template',
+      description: 'Software Development Life Cycle -SDLC',
+    },
+    {
+      name: 'Hosting Server',
+      href: '/blog/website/hosting-server',
+      description: 'Memilih Hosting dan Server untuk Aplikasi Next.js',
+    },
+    {
+      name: 'Search Engine Optimization',
+      href: '/blog/website/search-engine-optimization',
+      description: 'Search Engine Optimization',
+    },
+    {
+      name: 'Search Engine Indexing',
+      href: '/blog/website/search-engine-indexing',
+      description: 'Search Engine Indexing',
+    },
+  ]}
+  note="Rujukan ini membantu memahami posisi masing-masing platform dalam konteks hosting, bukan rekomendasi tunggal."
+/>
+
+---
+
+#### Kenapa Menggunakan CDD?
+
+1. **Isolasi & Reusabilitas**
+   Komponen dikembangkan secara mandiri dan dapat digunakan ulang di berbagai bagian aplikasi tanpa perlu menyalin kode.
+
+2. **Skalabilitas Kode**
+   Dengan struktur modular, pengelolaan fitur kompleks menjadi lebih mudah karena tanggung jawab tiap komponen terpisah dengan jelas.
+
+3. **Maintainability**
+   Perubahan di satu bagian tidak berdampak langsung ke bagian lain, sehingga lebih mudah melakukan refactor atau pembaruan.
+
+4. **Produktivitas Developer**
+   Developer dapat bekerja paralel dengan komponen berbeda, meningkatkan efisiensi dalam tim.
+
+5. **Kesesuaian dengan Modern Stack**
+   CDD sangat kompatibel dengan ekosistem modern seperti Next.js, Tailwind CSS, dan TypeScript yang mendukung pengembangan UI secara terstruktur.
+
+---
+
+#### Tujuan dan Manfaat Panduan Ini
+
+Panduan ini dibuat sebagai referensi tunggal (single source of truth) untuk tim pengembangan web yang mengadopsi pendekatan CDD pada framework **Next.js App Router**, menggunakan **TypeScript** dan **Tailwind CSS**.
+
+Tujuan utama panduan ini adalah:
+
+- Menstandarisasi struktur proyek dan arsitektur frontend berbasis CDD.
+- Menyediakan contoh praktis dan dapat ditelusuri antar bagian (traceable).
+- Meningkatkan konsistensi, skalabilitas, dan kecepatan pengembangan.
+- Meminimalkan over-engineering dengan pendekatan modular yang proporsional.
+
+Panduan ini juga memberikan dasar yang kuat untuk pengembangan sistem desain internal, dokumentasi teknis, serta pemisahan tanggung jawab antar tim (component owner, view integrator, page developer).
+
+---
+
+#### Prasyarat Teknologi
+
+Panduan ini diasumsikan digunakan pada proyek dengan spesifikasi teknologi berikut:
+
+- **Next.js 13+ atau 14**, menggunakan **App Router** (`/app` directory)
+- **React 18+**, berbasis komponen fungsional
+- **Tailwind CSS** sebagai framework styling utility-first
+- **TypeScript** untuk pengetikan statis dan skalabilitas kode
+- **Node.js 18+**, dengan paket manajer (npm, pnpm, yarn)
+- **ESLint + Prettier** (opsional) untuk konsistensi penulisan kode
+- **Environment modular** (bisa single repo atau monorepo)
+
+Penggunaan App Router Next.js menjadi penting karena mendukung struktur file-based routing yang mendekati CDD secara alami. Seluruh kode pada panduan ini berbasis pada `use client` dan `use server` sesuai kebutuhan, dan mengikuti idiom idiom terbaru Next.js.
+
+---
+
+### 📐 2. **Fundamental Arsitektur Proyek**
+
+#### Filosofi Clean Architecture Berbasis Komponen
+
+Clean Architecture dalam konteks pengembangan frontend modern menekankan pada **separasi tanggung jawab (separation of concerns)** dan **dependensi satu arah (one-way dependency flow)**. Arsitektur ini diadaptasi ke dalam pendekatan **Component-Driven Development (CDD)** dengan membagi aplikasi ke dalam layer terpisah: _komponen UI_, _view fitur_, dan _halaman aplikasi_, serta layer pendukung seperti _hooks_, _services_, dan _utilities_.
+
+Filosofi ini memastikan bahwa:
+
+- Komponen UI tidak memiliki logika bisnis.
+- View bertanggung jawab terhadap satu fitur lengkap.
+- Halaman (Page) hanya menyusun dan mengoordinasikan view berdasarkan route.
+- Akses data dan efek samping dipisahkan dalam layer khusus seperti service dan hook.
+
+Tujuan akhirnya adalah menjaga agar kode:
+
+- **Mudah dibaca**
+- **Mudah diuji**
+- **Mudah dipelihara**
+- **Mudah diskalakan**
+
+---
+
+#### Perbedaan: `Component` vs `View` vs `Page`
+
+| Level       | Tujuan Utama                               | Isi Umum                      | Letak Folder          | Boleh Ada Logika Bisnis? |
+| ----------- | ------------------------------------------ | ----------------------------- | --------------------- | ------------------------ |
+| `Component` | Unit UI kecil & reusable                   | HTML + styling + props        | `/components`         | ❌ Tidak                 |
+| `View`      | Menyusun satu fitur dari beberapa komponen | Komponen + logika lokal fitur | `/views`              | ✅ Ya                    |
+| `Page`      | Entry point berdasarkan URL (routing)      | View + data fetching + layout | `/app/route/page.tsx` | ✅ Ya                    |
+
+- `Component` bersifat pure dan presentational, tanpa state internal atau efek samping.
+- `View` mengandung komposisi UI dan logika bisnis spesifik, misalnya perhitungan total harga atau validasi input.
+- `Page` menangani pemetaan URL ke tampilan dan logika tingkat halaman seperti autentikasi, redirect, atau data loader.
+
+---
+
+#### Perbedaan: `Hook` vs `Service` vs `Utils`
+
+| Layer     | Tujuan                                   | Contoh Fungsi                   | Letak Folder |
+| --------- | ---------------------------------------- | ------------------------------- | ------------ |
+| `Hook`    | Mengelola logika reusable berbasis state | `useCart`, `useAuth`, `useForm` | `/hooks`     |
+| `Service` | Abstraksi akses data eksternal           | `getProducts`, `loginUser`      | `/services`  |
+| `Utils`   | Fungsi bantu murni (pure function)       | `formatCurrency`, `slugify`     | `/lib`       |
+
+- `Hook` digunakan untuk menyimpan dan mengelola state, atau menjalankan efek samping (`useEffect`, `useState`), dan dipakai di komponen client-side.
+- `Service` bertanggung jawab penuh terhadap komunikasi dengan data layer seperti REST API, GraphQL, atau Supabase.
+- `Utils` bersifat stateless dan tidak bergantung pada React atau state aplikasi. Mereka dapat digunakan di mana saja, baik server maupun client.
+
+Struktur ini memastikan bahwa:
+
+- UI tidak bergantung langsung pada API.
+- Hook tidak menyimpan logika transformasi data mentah.
+- Utils dapat diuji dan digunakan ulang tanpa dependensi React.
+
+---
+
+#### Pendekatan “Just Enough Architecture”
+
+“Just Enough Architecture” adalah prinsip menjaga arsitektur tetap **ringkas namun siap berkembang**, tanpa menambahkan abstraksi atau struktur yang belum diperlukan.
+
+Ciri-ciri pendekatan ini:
+
+- **Mulai dari yang sederhana**, seperti `components` dan `pages` saja.
+- **Tambah `views`, `hooks`, `services` hanya saat dibutuhkan** oleh kompleksitas fitur.
+- **Hindari premature abstraction**, yaitu membuat abstraksi atau folder kosong hanya karena mengikuti template.
+- **Refactor iteratif** saat aplikasi bertambah besar, bukan sekaligus di awal.
+
+Pendekatan ini menghindari over-engineering, sambil tetap mengarahkan proyek ke arsitektur modular yang sehat dan maintainable. Struktur proyek dalam panduan ini disusun berdasarkan prinsip tersebut: cukup modular untuk aplikasi menengah, namun tidak kompleks berlebihan untuk tim kecil atau fitur terbatas.
+
+---
+
+### 🗂️ 3. **Struktur Folder (Terkunci)**
+
+Struktur folder berikut dirancang untuk mendukung pendekatan **Component-Driven Development (CDD)** dalam proyek web menggunakan **Next.js App Router**, **TypeScript**, dan **Tailwind CSS**. Struktur ini ditetapkan sebagai _standar referensi_ dan tidak disarankan untuk dimodifikasi kecuali pada kasus khusus yang dibenarkan oleh kebutuhan arsitektural.
+
+```
+/app                 # Routing utama berbasis file (App Router)
+/components          # Komponen UI kecil dan reusable (presentational)
+/views               # Komposisi fitur, mengandung logika bisnis lokal
+/layouts             # Template struktur halaman atau section (page shells)
+/services            # Komunikasi dengan backend, API client abstraction
+/hooks               # Custom hook reusable untuk logika state dan efek
+/lib                 # Pure function helper, tanpa side-effect
+/constants           # Konstanta global: roles, endpoint, konfigurasi
+/types               # Definisi tipe TypeScript untuk domain data
+/styles              # Global styles, konfigurasi Tailwind, font, dll.
+```
+
+---
+
+#### 📁 Deskripsi Per Folder
+
+| Folder        | Tujuan Utama                                                                  |
+| ------------- | ----------------------------------------------------------------------------- |
+| `/app`        | Routing berbasis direktori (Next.js App Router). Satu direktori per halaman.  |
+| `/components` | Komponen stateless yang hanya menerima props, tidak mengandung logika bisnis. |
+| `/views`      | Menyusun komponen menjadi fitur UI lengkap, boleh mengandung logika bisnis.   |
+| `/layouts`    | Struktur layout halaman, mendukung komposisi layout bertingkat.               |
+| `/services`   | Abstraksi akses ke data eksternal: REST API, GraphQL, Supabase, dsb.          |
+| `/hooks`      | Hook custom berbasis React: state handler, data transformer, event logic.     |
+| `/lib`        | Utilitas murni, bebas dependensi React. Contoh: formatDate, slugify.          |
+| `/constants`  | Nilai tetap yang digunakan lintas modul: roles, setting, URL base.            |
+| `/types`      | Deklarasi tipe dan interface TypeScript untuk model data.                     |
+| `/styles`     | File Tailwind config, global CSS, atau import font dari CDN.                  |
+
+---
+
+#### 🔐 Catatan Penggunaan
+
+- Folder `views/`, `hooks/`, dan `services/` tidak diisi kecuali ada kebutuhan fungsional yang jelas.
+- Semua file di `components/` harus bersifat presentational. Jika mengandung logika atau state, pindahkan ke `views/`.
+- `types/` harus bersifat global dan bebas dari logic.
+- `lib/` hanya untuk fungsi murni tanpa efek samping atau akses eksternal.
+- Semua `services/` harus dipanggil dari `hooks`, `views`, atau `pages`, bukan langsung dari komponen.
+
+---
+
+#### 📦 Struktur Folder dalam Tampilan Visual (Markdown Friendly)
+
+```bash
+my-app/
+├── app/                 # Next.js App Router structure
+│   └── page.tsx
+│   └── layout.tsx
+│   └── [route]/page.tsx
+│
+├── components/          # UI components (Button, Input, Card, etc.)
+│   └── Button.tsx
+│   └── ProductCard.tsx
+│
+├── views/               # Feature composition layer
+│   └── ProductListView.tsx
+│
+├── layouts/             # Page layout shells
+│   └── DefaultLayout.tsx
+│
+├── services/            # API layer / external data interaction
+│   └── productService.ts
+│
+├── hooks/               # Custom React hooks
+│   └── useCart.ts
+│
+├── lib/                 # Utility helpers
+│   └── formatCurrency.ts
+│
+├── constants/           # Static global values
+│   └── roles.ts
+│
+├── types/               # Global TypeScript types
+│   └── product.ts
+│
+├── styles/              # Tailwind & global styles
+│   └── globals.css
+│
+├── tailwind.config.ts
+├── tsconfig.json
+├── package.json
+```
+
+Struktur ini dapat dikembangkan secara modular dengan tetap menjaga _traceability_ antar layer: `components` → `views` → `pages`, dengan dependensi satu arah yang jelas. Seluruh elemen terhubung melalui TypeScript dan mengikuti prinsip _separation of concerns_.
+
+---
+
+### 📘 4. **Definisi dan Fungsi Masing-masing Folder**
+
+#### `components/`
+
+Folder ini berisi **komponen UI stateless dan presentational**, yaitu elemen visual terkecil yang tidak mengandung logika bisnis atau akses data. Komponen di sini hanya menerima props dan bertugas menampilkan tampilan berdasarkan input tersebut. Komponen ini dapat digunakan ulang lintas view dan halaman, serta mudah untuk diuji secara terisolasi.
+
+- **Contoh:** `Button.tsx`, `Input.tsx`, `ProductCard.tsx`
+- **Ciri:** Tidak memiliki state lokal, tidak melakukan fetching, tidak bergantung pada hook global
+
+---
+
+#### `views/`
+
+Berisi komposisi dari beberapa komponen `components/` untuk membentuk sebuah **fitur fungsional utuh**, seperti form login, daftar produk, atau halaman checkout. Folder ini juga menjadi tempat **logika bisnis lokal** yang relevan dengan tampilan tertentu, seperti perhitungan total harga, validasi form, atau pengelolaan data hasil hook.
+
+- **Contoh:** `LoginView.tsx`, `CheckoutView.tsx`, `DashboardView.tsx`
+- **Ciri:** Mengandung komponen, hook, dan state lokal khusus fitur
+
+---
+
+#### `app/`
+
+Merupakan direktori utama untuk routing berbasis file pada **Next.js App Router**. Setiap folder di dalam `app/` mewakili sebuah route atau dynamic segment. Di dalamnya terdapat file `page.tsx` sebagai entry point halaman, serta `layout.tsx` sebagai wrapper UI global atau per bagian. File dalam `app/` biasanya berperan dalam orchestrating _view_, _data fetching_, _authorization_, dan pengelolaan metadata.
+
+- **Contoh:** `app/products/page.tsx`, `app/(auth)/login/page.tsx`
+- **Ciri:** Server component secara default, bisa mengandung logika autentikasi, routing, dan SSR/ISR
+
+---
+
+#### `layouts/`
+
+Folder ini menyimpan **struktur tampilan halaman secara global atau per-seksi**, seperti layout untuk halaman publik, dashboard admin, atau form wizard. Layout bertugas menyediakan kerangka (shell) UI yang konsisten seperti header, sidebar, dan footer, serta membungkus konten halaman melalui komposisi `children`.
+
+- **Contoh:** `DefaultLayout.tsx`, `DashboardLayout.tsx`
+- **Ciri:** Dapat digunakan di `app/layout.tsx` atau nested layout per route
+
+---
+
+#### `services/`
+
+Berfungsi sebagai lapisan **akses data eksternal** seperti REST API, GraphQL, Supabase, atau Firebase. Di sini, semua komunikasi ke backend ditangani secara terpisah dari komponen. Fungsi dalam `services/` bersifat pure dan dapat digunakan di server maupun client tergantung konteks.
+
+- **Contoh:** `authService.ts`, `productService.ts`, `orderService.ts`
+- **Ciri:** Tidak menggunakan React hook, hanya mengembalikan promise hasil data
+
+---
+
+#### `hooks/`
+
+Berisi **custom React hooks** untuk mengabstraksi logika stateful, efek samping, atau reusable logic yang digunakan lintas view dan komponen. Hook dapat menggabungkan state lokal (`useState`, `useReducer`), efek (`useEffect`), dan data (`useSWR`, `useQuery`) untuk kebutuhan client-side logic yang terpisah dari UI.
+
+- **Contoh:** `useCart.ts`, `useAuth.ts`, `useDebounce.ts`
+- **Ciri:** Memiliki awalan `use`, hanya digunakan di komponen client
+
+---
+
+#### `lib/`
+
+Folder ini berisi **helper function murni** (_pure functions_) yang bebas dari dependensi React, side-effect, atau state. Fungsi di dalam `lib/` bertugas melakukan transformasi data, perhitungan, atau formatting, dan dapat digunakan di mana saja: client, server, service, maupun testing.
+
+- **Contoh:** `formatCurrency.ts`, `slugify.ts`, `generateOTP.ts`
+- **Ciri:** Stateless, tidak mengakses API, tidak mengubah global state
+
+---
+
+#### `constants/`
+
+Digunakan untuk menyimpan **nilai tetap (immutable constants)** yang digunakan lintas modul atau sistem. Nilai ini dapat berupa string, number, enum, atau object konfigurasi yang tidak berubah selama runtime. Constants mencegah penggunaan hard-coded value secara langsung di dalam komponen atau logic.
+
+- **Contoh:** `API_BASE_URL.ts`, `userRoles.ts`, `themePresets.ts`
+- **Ciri:** Tidak mengandung logic, hanya nilai tetap yang dapat diimpor
+
+---
+
+#### `types/`
+
+Berisi definisi **tipe dan interface TypeScript** yang digunakan secara global dalam aplikasi. Tipe ini meliputi domain model, payload request/response, atau struktur konfigurasi. Penggunaan folder ini memudahkan validasi dan autocomplete saat menulis kode, serta menjaga konsistensi antar modul.
+
+- **Contoh:** `Product.ts`, `User.ts`, `CartItem.ts`
+- **Ciri:** Tidak mengandung logic, hanya tipe dan struktur data
+
+---
+
+#### `styles/`
+
+Folder ini digunakan untuk mengatur **styling global**, seperti konfigurasi Tailwind CSS, import font, dan file CSS umum (`globals.css`). Biasanya digunakan di `app/layout.tsx` sebagai entry styling root.
+
+- **Contoh:** `globals.css`, `tailwind.config.ts`, `font.css`
+- **Ciri:** Digunakan sekali di level root, bukan untuk komponen individu
+
+---
+
+Struktur folder ini saling melengkapi dan mendukung traceability penuh dari halaman ke komponen terkecil, serta memastikan pemisahan tanggung jawab sesuai prinsip Clean Architecture berbasis komponen.
+
+---
+
+### 🧱 5. **Template Inline: Fitur Sederhana Terstruktur**
+
+Template berikut mendemonstrasikan bagaimana sebuah fitur kecil seperti _Checkout Page_ dapat dibangun dengan **struktur modular CDD**. Seluruh bagian saling terhubung secara eksplisit, menjaga konsistensi dan traceability antara lapisan `types → lib → services → hooks → views → components → app`.
+
+Semua file ditulis dalam **TypeScript**, menggunakan **Tailwind CSS**, dan memanfaatkan **Next.js App Router**.
+
+---
+
+#### 🧩 5.1. `types/cart.ts`
+
+```ts
+// types/cart.ts
+
+export type CartItem = {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+};
+```
+
+---
+
+#### 🧩 5.2. `lib/formatCurrency.ts`
+
+```ts
+// lib/formatCurrency.ts
+
+export function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+  }).format(value);
+}
+```
+
+---
+
+#### 🧩 5.3. `components/CartItem.tsx`
+
+```tsx
+// components/CartItem.tsx
+
+import { formatCurrency } from '@/lib/formatCurrency';
+import { CartItem as CartItemType } from '@/types/cart';
+
+export const CartItem = ({ name, price, quantity }: CartItemType) => {
+  return (
+    <div className="flex items-center justify-between border-b py-3">
+      <div>
+        <p className="font-medium">{name}</p>
+        <p className="text-sm text-gray-500">x {quantity}</p>
+      </div>
+      <div className="font-semibold text-gray-800">
+        {formatCurrency(price * quantity)}
+      </div>
+    </div>
+  );
+};
+```
+
+---
+
+#### 🧩 5.4. `views/CheckoutView.tsx`
+
+```tsx
+// views/CheckoutView.tsx
+
+'use client';
+
+import { CartItem } from '@/components/CartItem';
+import { CartItem as CartItemType } from '@/types/cart';
+import { formatCurrency } from '@/lib/formatCurrency';
+
+type Props = {
+  cart: CartItemType[];
+};
+
+export const CheckoutView = ({ cart }: Props) => {
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  return (
+    <div className="mx-auto max-w-2xl rounded bg-white p-6 shadow">
+      <h1 className="mb-4 text-2xl font-bold">Checkout</h1>
+      <div className="space-y-4">
+        {cart.map((item) => (
+          <CartItem key={item.id} {...item} />
+        ))}
+      </div>
+      <div className="mt-6 text-right text-lg font-semibold">
+        Total: <span className="text-blue-600">{formatCurrency(total)}</span>
+      </div>
+    </div>
+  );
+};
+```
+
+---
+
+#### 🧩 5.5. `services/cartService.ts`
+
+```ts
+// services/cartService.ts
+
+import { CartItem } from '@/types/cart';
+
+export async function getCart(): Promise<CartItem[]> {
+  // Simulasi data statis
+  return [
+    { id: '1', name: 'Keyboard', price: 300000, quantity: 1 },
+    { id: '2', name: 'Mouse', price: 150000, quantity: 2 },
+  ];
+}
+```
+
+---
+
+#### 🧩 5.6. `app/checkout/page.tsx`
+
+```tsx
+// app/checkout/page.tsx
+
+import { getCart } from '@/services/cartService';
+import { CheckoutView } from '@/views/CheckoutView';
+import { redirect } from 'next/navigation';
+
+export default async function CheckoutPage() {
+  const cart = await getCart();
+
+  if (cart.length === 0) {
+    redirect('/cart');
+  }
+
+  return <CheckoutView cart={cart} />;
+}
+```
+
+---
+
+#### 🧩 5.7. `layouts/DefaultLayout.tsx`
+
+```tsx
+// layouts/DefaultLayout.tsx
+
+export default function DefaultLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <header className="bg-white p-4 shadow">
+        <h1 className="text-xl font-bold">My Store</h1>
+      </header>
+      <main className="p-4">{children}</main>
+    </div>
+  );
+}
+```
+
+---
+
+#### 🧩 5.8. `app/layout.tsx`
+
+```tsx
+// app/layout.tsx
+
+import './globals.css';
+import DefaultLayout from '@/layouts/DefaultLayout';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Checkout Page',
+  description: 'Demo CDD with Next.js App Router',
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="id">
+      <body>
+        <DefaultLayout>{children}</DefaultLayout>
+      </body>
+    </html>
+  );
+}
+```
+
+---
+
+#### 🧩 5.9. `hooks/useCart.ts`
+
+```tsx
+// hooks/useCart.ts
+
+'use client';
+
+import { useEffect, useState } from 'react';
+import { CartItem } from '@/types/cart';
+import { getCart } from '@/services/cartService';
+
+export function useCart() {
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchCart() {
+      const data = await getCart();
+      setCart(data);
+      setLoading(false);
+    }
+
+    fetchCart();
+  }, []);
+
+  const total = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+
+  return {
+    cart,
+    total,
+    loading,
+  };
+}
+```
+
+---
+
+> 🧩 **Contoh Penggunaan `useCart()` (opsional)**
+
+```tsx
+// views/CheckoutView.tsx
+
+'use client';
+
+import { CartItem } from '@/components/CartItem';
+import { formatCurrency } from '@/lib/formatCurrency';
+import { useCart } from '@/hooks/useCart';
+
+export const CheckoutView = () => {
+  const { cart, total, loading } = useCart();
+
+  if (loading) {
+    return <p>Loading keranjang...</p>;
+  }
+
+  return (
+    <div className="mx-auto max-w-2xl rounded bg-white p-6 shadow">
+      <h1 className="mb-4 text-2xl font-bold">Checkout</h1>
+      <div className="space-y-4">
+        {cart.map((item) => (
+          <CartItem key={item.id} {...item} />
+        ))}
+      </div>
+      <div className="mt-6 text-right text-lg font-semibold">
+        Total: <span className="text-blue-600">{formatCurrency(total)}</span>
+      </div>
+    </div>
+  );
+};
+```
+
+---
+
+#### 🧩 5.10. `styles/globals.css`
+
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gray-50 text-gray-800;
+}
+```
+
+---
+
+### 📎 Dependensi
+
+- **React** v18+
+- **Next.js** 13+ App Router
+- **Tailwind CSS** (via `with-tailwind` starter template)
+- **TypeScript** aktif secara default (`tsconfig.json`)
+- Folder alias (`@/`) dikonfigurasi melalui `tsconfig.json` → `compilerOptions.paths`
+
+---
+
+### 📌 Kesimpulan Teknis Template
+
+| Layer         | File                              | Tujuan                                         |
+| ------------- | --------------------------------- | ---------------------------------------------- |
+| `types/`      | `cart.ts`                         | Model data keranjang                           |
+| `lib/`        | `formatCurrency.ts`               | Helper untuk format nilai mata uang            |
+| `components/` | `CartItem.tsx`                    | Komponen UI item keranjang                     |
+| `views/`      | `CheckoutView.tsx`                | Komposisi fitur checkout, termasuk total harga |
+| `services/`   | `cartService.ts`                  | Simulasi fetch data keranjang                  |
+| `hooks/`      | `useCart.ts`                      | Custom hook pengelola state cart               |
+| `layouts/`    | `DefaultLayout.tsx`               | Template struktur halaman global               |
+| `app/`        | `checkout/page.tsx`, `layout.tsx` | Routing halaman checkout dan layout utama      |
+| `styles/`     | `globals.css`                     | Styling global + Tailwind                      |
+
+Struktur ini dapat digunakan sebagai **baseline CDD** untuk fitur apapun dan dengan mudah diperluas untuk kebutuhan nyata di skala kecil-menengah.
+
+---
+
+### ✅ 6. **Best Practices & Conventions**
+
+#### Penamaan File dan Komponen PascalCase
+
+Gunakan format **PascalCase** (`NamaFile.tsx`) untuk seluruh komponen React, file hook, dan view. Ini menciptakan konsistensi dengan cara React mengenali komponen, dan memudahkan navigasi dalam proyek besar.
+
+- ✅ `ProductCard.tsx`
+- ✅ `LoginView.tsx`
+- ✅ `useAuth.ts`
+- ❌ `product-card.tsx`
+- ❌ `login_view.tsx`
+
+---
+
+#### Impor Pakai Alias (gunakan `tsconfig.json` `paths`)
+
+Gunakan alias `@/` untuk mengimpor modul lintas folder, bukan relative path (`../../../`) yang sulit dipelihara. Alias ini dikonfigurasi di `tsconfig.json` dan mencerminkan root folder proyek.
+
+**tsconfig.json**:
+
+```json
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    }
+  }
+}
+```
+
+**Contoh penggunaan:**
+
+```ts
+// ✅ Baik
+import { CartItem } from '@/components/CartItem';
+
+// ❌ Hindari
+import { CartItem } from '../../../components/CartItem';
+```
+
+---
+
+#### Jangan Tulis Logika Bisnis di Komponen
+
+Komponen dalam `/components` harus tetap **presentational**, yaitu hanya bertugas menampilkan UI berdasarkan props. Semua logika bisnis seperti perhitungan, validasi, atau filtering data harus ditempatkan di `views/`, `hooks/`, atau `services/`.
+
+**✅ Benar (di view):**
+
+```tsx
+// CheckoutView.tsx
+const total = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+```
+
+**❌ Salah (di component):**
+
+```tsx
+// CartItem.tsx
+const total = price * quantity; // Hindari logika di sini
+```
+
+---
+
+#### Pisahkan Logika API ke `services/`
+
+Semua akses data ke backend harus disimpan di folder `services/` untuk menjaga keterpisahan antara **UI dan data layer**. Hal ini memudahkan testing, reusability, dan perubahan API tanpa menyentuh komponen atau view.
+
+**✅ Contoh:**
+
+```ts
+// services/userService.ts
+export async function login(email: string, password: string) {
+  const res = await fetch('/api/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+  return res.json();
+}
+```
+
+---
+
+#### Gunakan `views/` untuk Menyusun Fitur dari Komponen
+
+Folder `views/` berfungsi sebagai layer tengah antara `page.tsx` dan `components/`. Di sinilah komponen disusun dan diintegrasikan dengan hook, service, dan logika fitur. View juga dapat menyimpan local state, transformasi data, dan render kondisi berdasarkan state.
+
+**Struktur yang ideal:**
+
+```
+page.tsx → CheckoutView.tsx → CartItem.tsx
+```
+
+---
+
+#### Hindari Over-Engineering – Gunakan Hanya Folder yang Diperlukan
+
+Tidak semua folder harus dibuat sejak awal. Gunakan pendekatan **Just Enough Architecture**: buat struktur tambahan (`hooks/`, `services/`, `views/`) **hanya ketika ada kebutuhan nyata**.
+
+**Contoh:**
+
+- Jangan buat `useCart.ts` jika cart hanya dipakai di satu file.
+- Jangan buat `services/` jika datanya masih hardcoded.
+- Hindari membuat folder kosong yang belum digunakan.
+
+---
+
+#### Rangkuman Konvensi
+
+| Aspek                | Konvensi                                                                |
+| -------------------- | ----------------------------------------------------------------------- |
+| **Penamaan**         | PascalCase untuk file dan komponen                                      |
+| **Impor**            | Gunakan alias `@/` daripada relative path panjang                       |
+| **Komponen**         | Hindari logika bisnis di `components/`, buat presentational saja        |
+| **Service Layer**    | Tempatkan semua API call di `services/`                                 |
+| **View Layer**       | Gunakan `views/` untuk fitur lengkap, termasuk logika transformasi data |
+| **Struktur Modular** | Tambahkan folder baru hanya saat dibutuhkan (hindari over-engineering)  |
+
+Konvensi ini dirancang untuk menjaga konsistensi, keterbacaan, dan skalabilitas proyek tanpa memperumit struktur sejak awal.
+
+---
+
+### 🧪 7. **Testing & Deployment**
+
+#### Struktur Pengujian
+
+Testing dalam proyek berbasis Next.js + TypeScript + CDD dibagi menjadi dua kategori utama:
+
+1. **Unit Test**
+   Digunakan untuk menguji fungsi atau komponen secara terisolasi.
+
+   - Cocok untuk: helper di `lib/`, komponen di `components/`, logic di `hooks/`
+   - Tools: [Jest](https://jestjs.io/), [Vitest](https://vitest.dev/), [React Testing Library](https://testing-library.com/)
+
+2. **End-to-End (E2E) Test**
+   Digunakan untuk menguji alur nyata dari sudut pandang pengguna.
+
+   - Cocok untuk: checkout flow, login flow, interaksi UI secara penuh
+   - Tools: [Playwright](https://playwright.dev/), [Cypress](https://www.cypress.io/)
+
+---
+
+#### Struktur Folder Pengujian
+
+Struktur pengujian dapat disesuaikan untuk mendekati struktur CDD utama, dengan suffix `.test.ts` atau `.spec.ts`:
+
+```
+/__tests__
+  └── lib/
+      └── formatCurrency.test.ts
+  └── hooks/
+      └── useCart.test.ts
+  └── components/
+      └── CartItem.test.tsx
+  └── views/
+      └── CheckoutView.test.tsx
+  └── e2e/
+      └── checkoutFlow.spec.ts
+```
+
+Atau disatukan berdampingan dengan file utama:
+
+```
+/lib/
+  └── formatCurrency.ts
+  └── formatCurrency.test.ts
+
+/components/
+  └── CartItem.tsx
+  └── CartItem.test.tsx
+```
+
+---
+
+#### Contoh Unit Test: `formatCurrency`
+
+```ts
+// lib/formatCurrency.test.ts
+import { formatCurrency } from './formatCurrency';
+
+describe('formatCurrency', () => {
+  it('should format number to IDR correctly', () => {
+    expect(formatCurrency(150000)).toBe('Rp 150.000,00');
+  });
+});
+```
+
+---
+
+#### Contoh Unit Test: Komponen `CartItem`
+
+```tsx
+// components/CartItem.test.tsx
+
+import { render, screen } from '@testing-library/react';
+import { CartItem } from './CartItem';
+
+describe('CartItem', () => {
+  it('renders item name and total price', () => {
+    render(<CartItem name="Mouse" price={100000} quantity={2} id="1" />);
+    expect(screen.getByText('Mouse')).toBeInTheDocument();
+    expect(screen.getByText(/Rp/)).toBeInTheDocument();
+  });
+});
+```
+
+---
+
+#### Alur CI/CD Sederhana dengan Vercel
+
+Untuk deployment otomatis, **Vercel** dapat digunakan langsung tanpa konfigurasi tambahan.
+
+**Langkah:**
+
+1. Push proyek ke GitHub
+2. Login ke [vercel.com](https://vercel.com/)
+3. Import project dari GitHub
+4. Vercel akan mendeteksi Next.js secara otomatis
+5. Set `NODE_ENV`, `NEXT_PUBLIC_API_URL`, atau variabel lingkungan lainnya di dashboard
+
+---
+
+#### Konfigurasi Tambahan (Opsional)
+
+- **`vercel.json`**
+
+```json
+{
+  "rewrites": [{ "source": "/api/(.*)", "destination": "/api" }]
+}
+```
+
+- **Build command:** `next build`
+- **Output directory:** `.next`
+
+---
+
+#### CI/CD Otomatis dengan GitHub Actions
+
+Untuk pengujian dan deployment terkontrol, gunakan GitHub Actions:
+
+```yaml
+# .github/workflows/ci.yml
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-args: '--prod'
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+```
+
+---
+
+#### Rekomendasi Testing Minimal
+
+| Lapisan       | Direkomendasikan?         | Tools                        |
+| ------------- | ------------------------- | ---------------------------- |
+| `lib/`        | ✅ Wajib                  | Jest, Vitest                 |
+| `hooks/`      | ✅ Wajib                  | React Testing Library + Jest |
+| `components/` | ✅ Prioritas tinggi       | React Testing Library        |
+| `views/`      | ❌ Tidak wajib            | Opsional, tergantung fitur   |
+| `pages/app/`  | ❌ Tidak perlu            | Lebih baik diuji via E2E     |
+| `services/`   | ✅ Jika transformasi data | Mock API + Jest              |
+
+---
+
+Testing dan deployment otomatis merupakan tahap opsional namun direkomendasikan dalam tim kolaboratif. Pendekatan modular CDD memudahkan pengujian unit karena setiap bagian memiliki tanggung jawab spesifik dan terbatas.
+
+---
+
+### 📎 8. **Penutup dan Referensi**
+
+#### Checklist Sebelum Push/Merge
+
+Gunakan daftar periksa berikut untuk memastikan setiap perubahan kode telah mengikuti standar arsitektur CDD, konvensi penulisan, dan tidak menyebabkan regresi:
+
+##### ✅ Struktur dan Organisasi
+
+- [ ] File dan folder ditempatkan sesuai struktur: `components/`, `views/`, `services/`, dll.
+- [ ] Tidak ada logika bisnis di dalam `components/`.
+- [ ] Semua API call ditempatkan di dalam `services/`.
+- [ ] Fitur kompleks dibungkus dalam `views/`.
+
+##### ✅ Penamaan dan Konsistensi
+
+- [ ] Semua nama file dan komponen menggunakan format PascalCase.
+- [ ] Import menggunakan alias `@/` (tidak menggunakan relative path `../../`).
+- [ ] Tidak ada magic number atau string hardcoded tanpa konstanta (`constants/`).
+
+##### ✅ Kualitas Kode
+
+- [ ] Kode bersih, terformat dengan Prettier atau alat serupa.
+- [ ] Tidak ada error atau warning dari ESLint/TypeScript.
+- [ ] Unit test tersedia untuk fungsi logika (`lib/`, `hooks/`) bila relevan.
+- [ ] Fungsi dan hook memiliki tipe eksplisit.
+
+##### ✅ Fungsi Fitur
+
+- [ ] Fitur dapat dijalankan dan diuji secara manual.
+- [ ] Data tampil dengan benar dan tidak memunculkan error di runtime.
+- [ ] Routing dan navigasi berjalan sesuai ekspektasi.
+
+##### ✅ Dokumen dan Metadata
+
+- [ ] File `metadata` pada halaman `app/` telah diisi dengan `title` dan `description`.
+- [ ] File README atau dokumentasi fitur diupdate bila diperlukan.
+
+---
+
+#### Referensi Resmi
+
+| Topik            | Dokumentasi                                                                                                    |
+| ---------------- | -------------------------------------------------------------------------------------------------------------- |
+| **Next.js**      | [https://nextjs.org/docs](https://nextjs.org/docs)                                                             |
+| **App Router**   | [https://nextjs.org/docs/app/building-your-application](https://nextjs.org/docs/app/building-your-application) |
+| **Tailwind CSS** | [https://tailwindcss.com/docs](https://tailwindcss.com/docs)                                                   |
+| **TypeScript**   | [https://www.typescriptlang.org/docs/](https://www.typescriptlang.org/docs/)                                   |
+| **React**        | [https://react.dev/learn](https://react.dev/learn)                                                             |
+| **Testing**      | [https://testing-library.com/](https://testing-library.com/)                                                   |
+| **Playwright**   | [https://playwright.dev/docs/intro](https://playwright.dev/docs/intro)                                         |
+
+---
+
+#### Repositori Starter (Opsional)
+
+Jika tersedia, gunakan repositori starter berikut sebagai dasar proyek baru:
+
+> 🔗 **Starter Repository** > `https://github.com/your-org/next-cdd-starter`
+> Berisi struktur direktori lengkap dengan:
+>
+> - Tailwind & TypeScript
+> - App Router aktif
+> - Sample fitur Checkout (seperti pada Bab 5)
+> - Konfigurasi eslint, prettier, dan alias
+
+---
+
+Panduan ini dirancang sebagai referensi tunggal yang dapat diadopsi lintas tim dan proyek, dengan fleksibilitas untuk berkembang seiring bertambahnya kompleksitas aplikasi.
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>
