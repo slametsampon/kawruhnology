@@ -1,0 +1,661 @@
+---
+title: Pengembangan Aplikasi Web Statis untuk Display Produk dan Dukungan Afiliasi
+date: '2026-01-15'
+tags:
+  [
+    'affiliate-site',
+    'nextjs-typescript',
+    'tailwindcss-seo',
+    'static-web',
+    'sdlc-brs',
+  ]
+draft: false
+summary: Proyek ini bertujuan mengembangkan aplikasi web statis menggunakan Next.js, TypeScript, dan Tailwind CSS untuk menampilkan produk-produk afiliasi secara modular dan SEO-friendly. Aplikasi akan menampilkan informasi produk dalam format yang menarik, responsif, dan cepat diakses. Tautan afiliasi akan diarahkan langsung ke platform pihak ketiga, tanpa sistem pembayaran internal. Dengan pendekatan statis dan arsitektur SoC, platform ini dirancang untuk efisiensi, skalabilitas, dan kemudahan pemeliharaan. Proyek ini ditargetkan untuk marketer individu atau tim kecil yang membutuhkan solusi afiliasi ringan, cepat, dan siap produksi dengan sekali deploy.
+---
+
+- [🧩 1. Business Requirement Specification (BRS)](#-1-business-requirement-specification-brs)
+- [🧩 2. Software Requirement Specification (SRS)](#-2-software-requirement-specification-srs)
+- [🧩 3. System Design](#-3-system-design)
+- [🧩 4. **Implementation (Coding)**](#-4-implementation-coding)
+- [🧩 5. **Testing**](#-5-testing)
+- [🧩 6. **Deployment**](#-6-deployment)
+- [🧩 7. **Maintenance \& Support**](#-7-maintenance--support)
+- [🧩 **Lampiran**](#-lampiran)
+
+---
+
+🧭 **Prolog**
+
+Dalam mengembangkan sebuah aplikasi, terutama pada level industrial atau enterprise, pendekatan yang sistematis dan terdokumentasi dengan baik menjadi kunci keberhasilan. Proses ini tidak hanya dimulai dari sekadar menulis kode, melainkan dari pemahaman mendalam terhadap **kebutuhan bisnis (BRS)**, yang kemudian diterjemahkan menjadi **kebutuhan sistem (SRS)** lengkap dengan use-case yang rinci.
+
+Selanjutnya, desain sistem dilakukan dalam dua level: **High-Level Design (HLD)** yang memetakan komponen utama dan hubungan antar modul, serta **Low-Level Design (LLD)** yang merinci model data, algoritma, hingga skema API. Setelah perancangan matang, proses **implementasi** dapat dimulai secara terstruktur, disusul oleh fase **pengujian**, **deployment**, dan akhirnya **maintenance** untuk menjamin keberlangsungan dan skalabilitas sistem.
+
+Template ini disusun sebagai pedoman menyeluruh untuk membangun aplikasi dari nol, dan dapat diadaptasi untuk berbagai jenis proyek, mulai dari aplikasi umum hingga sistem teknis kompleks seperti **MxCore**, **IoT-based platform**, dan lainnya.
+
+```
+[BRS]
+  ⇩ Kebutuhan bisnis
+[SRS]
+  ⇩ Functional Requirements
+  ⇨ Di sinilah use-case dijabarkan
+[System Design]
+  ⇨ HLD: Komponen sistem
+  ⇨ LLD: Data model, algoritma, API schema
+[Implementation]
+[Testing]
+[Deployment]
+[Maintenance]
+```
+
+---
+
+📘 **Pengembangan Aplikasi Web Statis untuk Display Produk dan Dukungan Afiliasi**
+
+---
+
+### 🧩 1. Business Requirement Specification (BRS)
+
+---
+
+> **Judul Proyek**
+
+**Pengembangan Aplikasi Web Statis untuk Display Produk dan Dukungan Afiliasi**
+
+---
+
+> **Latar Belakang Masalah**
+
+Seiring meningkatnya tren digital marketing dan affiliate commerce, pelaku bisnis individu maupun organisasi membutuhkan platform yang efisien untuk menampilkan produk dan mengarahkan audiens ke tautan afiliasi yang menghasilkan komisi. Banyak solusi saat ini masih bersifat dinamis dan kompleks, sehingga tidak cocok untuk kebutuhan sederhana yang mengutamakan kecepatan akses, SEO, dan kemudahan deploy. Oleh karena itu, diperlukan aplikasi web statis yang ringan, modular, dan terstruktur.
+
+---
+
+> **Visi dan Tujuan Bisnis**
+
+**Visi:**
+Menyediakan platform web afiliasi yang cepat, ringan, dan mudah dikelola untuk menampilkan produk-produk dari berbagai sumber afiliasi dengan struktur yang terstandarisasi.
+
+**Tujuan:**
+
+- Menyediakan tampilan produk yang menarik dan informatif.
+- Mengarahkan pengunjung ke tautan afiliasi untuk konversi penjualan.
+- Meningkatkan traffic organik melalui SEO.
+- Memungkinkan skalabilitas dan kustomisasi tampilan.
+- Meminimalkan biaya operasional dengan pendekatan statis dan hosting efisien.
+
+---
+
+> **Stakeholders dan Peran**
+
+| Nama Peran                | Deskripsi                                           |
+| ------------------------- | --------------------------------------------------- |
+| Product Owner             | Menetapkan visi produk, validasi requirement        |
+| Web Developer             | Implementasi sistem berdasarkan desain              |
+| UI/UX Designer            | Mendesain tampilan antarmuka pengguna               |
+| Affiliate Marketer        | Mengelola konten dan tautan afiliasi                |
+| End User (Pengunjung Web) | Mengakses informasi produk dan klik tautan afiliasi |
+
+---
+
+> **Kebutuhan Bisnis Tingkat Tinggi**
+
+- Platform menampilkan produk secara grid atau list view.
+- Setiap produk memiliki deskripsi singkat, harga, gambar, dan tombol CTA ke tautan afiliasi.
+- Admin (developer/marketer) dapat menambahkan data produk dari file JSON atau headless CMS/API.
+- Website bersifat statis namun modular, sehingga mudah dikelola dan dikembangkan.
+- SEO dioptimalkan melalui meta tag dinamis dan struktur HTML yang sesuai standar.
+- Desain responsif dan user-friendly.
+
+---
+
+> **Kriteria Keberhasilan Proyek**
+
+| Kriteria         | Deskripsi                                      |
+| ---------------- | ---------------------------------------------- |
+| Performa         | Halaman memuat dalam LT 1.5 detik              |
+| SEO              | Terindeks dengan baik di Google Search         |
+| Modularitas      | Komponen UI reusable dan terpisah              |
+| Kemudahan Deploy | Satu klik deploy ke Vercel/Netlify             |
+| Skalabilitas     | Dapat menambah produk tanpa perlu refactor     |
+| Validasi Bisnis  | Tautan afiliasi terbukti menghasilkan konversi |
+
+---
+
+> **Batasan dan Asumsi**
+
+**Batasan:**
+
+- Tidak ada sistem pembayaran langsung di platform.
+- Tidak menggunakan backend server (serverless/static-only pada MVP).
+- Tidak menyimpan user data (non-interactive model).
+
+**Asumsi:**
+
+- Data produk disediakan dalam format JSON atau API endpoint eksternal.
+- Tautan afiliasi sudah dikonfigurasi dari sisi marketer/vendor.
+- Project akan dikembangkan oleh tim kecil (1–3 orang) dengan CI/CD ringan.
+
+---
+
+> **Referensi Pendukung**
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [TailwindCSS Guide](https://tailwindcss.com/docs)
+- [Vercel Deployment](https://vercel.com/docs)
+- Panduan Afiliasi Shopee/Tokopedia/Amazon
+- SEO Optimization Guides (Google Search Central)
+
+---
+
+✅ **Output:**
+**Dokumen BRS Final – disetujui sebagai acuan tahap SRS**
+
+---
+
+### 🧩 2. Software Requirement Specification (SRS)
+
+---
+
+> **1. Pendahuluan**
+
+- 📌 Tujuan Dokumen
+
+Dokumen ini mendefinisikan kebutuhan sistem teknis untuk aplikasi **Static Product Display Affiliate Site**, sebagai dasar desain, implementasi, dan pengujian sistem.
+
+- 📌 Ruang Lingkup
+
+Aplikasi adalah platform web statis berbasis **Next.js**, **TypeScript**, dan **Tailwind CSS**. Tujuannya adalah menampilkan katalog produk dengan link afiliasi, tanpa backend server, namun dengan struktur modular, SEO-optimized, dan mudah dipelihara.
+
+- 📌 Definisi & Akronim
+
+| Istilah | Definisi                          |
+| ------- | --------------------------------- |
+| SSG     | Static Site Generation            |
+| CTA     | Call to Action                    |
+| SoC     | Separation of Concerns            |
+| SEO     | Search Engine Optimization        |
+| API     | Application Programming Interface |
+| JSON    | JavaScript Object Notation        |
+
+---
+
+> **2. Gambaran Umum Sistem**
+
+Aplikasi akan:
+
+- Menampilkan produk dalam grid responsif
+- Mengarahkan pengguna ke link afiliasi eksternal
+- Menyediakan halaman detail produk (`/product/[slug]`)
+- Memuat data produk dari file JSON atau API eksternal (di masa depan)
+- Menggunakan metadata dinamis untuk SEO
+- Berbasis komponen modular sesuai prinsip Separation of Concerns (SoC)
+
+---
+
+> **3. Functional Requirements**
+
+| Kode  | Requirement                                                                          |
+| ----- | ------------------------------------------------------------------------------------ |
+| FR-01 | Sistem menampilkan daftar produk dari sumber data JSON                               |
+| FR-02 | Sistem menampilkan halaman utama (landing page) dengan struktur responsif            |
+| FR-03 | Setiap produk memiliki tombol “Beli Sekarang” yang mengarah ke tautan afiliasi       |
+| FR-04 | Sistem mendukung routing dinamis untuk halaman detail produk (`/product/[slug]`)     |
+| FR-05 | Sistem memuat metadata SEO dinamis berdasarkan konten produk                         |
+| FR-06 | Developer dapat menambah/mengubah produk melalui file JSON tanpa mengubah kode utama |
+
+---
+
+> **4. Non-Functional Requirements**
+
+| Kategori        | Detail                                                |
+| --------------- | ----------------------------------------------------- |
+| Availability    | 99.9% uptime (via Vercel/Netlify)                     |
+| Performance     | Halaman dimuat LT 1.5 detik                           |
+| Scalability     | Menambah produk tanpa refactor struktural             |
+| Maintainability | Modular, SoC, reusable components                     |
+| Security        | Tidak menyimpan data pengguna; afiliasi eksternal     |
+| SEO             | Metadata dan semantic HTML sesuai praktik terbaik SEO |
+
+---
+
+> **5. Use-Case List & Detail**
+
+- ✅ UC-1: View Product List
+
+* **Aktor:** Visitor
+* **Deskripsi:** Pengguna melihat daftar produk
+* **Trigger:** Akses halaman utama
+* **Alur Utama:**
+
+  1. Halaman utama dimuat
+  2. Data dari JSON di-render sebagai grid
+
+* **Alternatif:** File data gagal dimuat → tampilkan fallback
+* **Kondisi Sukses:** Produk tampil dengan benar
+
+---
+
+- ✅ UC-2: Click Affiliate Link
+
+* **Aktor:** Visitor
+* **Deskripsi:** Pengguna menekan tombol afiliasi
+* **Trigger:** Klik tombol “Beli Sekarang”
+* **Alur Utama:**
+
+  1. Klik tombol
+  2. Browser membuka tautan afiliasi di tab baru
+
+* **Alternatif:** Link rusak → tampilkan alert
+* **Kondisi Sukses:** Redirect berhasil
+
+---
+
+- ✅ UC-3: View Product Detail
+
+* **Aktor:** Visitor
+* **Deskripsi:** Pengguna melihat halaman detail produk
+* **Trigger:** Klik pada produk di halaman utama
+* **Alur Utama:**
+
+  1. Akses `/product/[slug]`
+  2. Sistem render konten produk + metadata SEO
+
+* **Alternatif:** Slug tidak valid → tampilkan 404
+* **Kondisi Sukses:** Detail produk dan SEO metadata tampil
+
+---
+
+- ✅ UC-4: Maintain Product Data (Developer)
+
+* **Aktor:** Developer
+* **Deskripsi:** Menambahkan atau mengubah data produk
+* **Trigger:** Perubahan file `products.json`
+* **Alur Utama:**
+
+  1. Developer ubah data
+  2. Sistem re-build
+  3. Produk baru tampil di situs
+
+* **Alternatif:** File tidak valid → build gagal
+* **Kondisi Sukses:** Produk tampil setelah deploy
+
+---
+
+> **6. Prioritas Pengembangan (MoSCoW)**
+
+| Kode                | Kebutuhan                     | Prioritas   |
+| ------------------- | ----------------------------- | ----------- |
+| FR-01               | Produk grid dari JSON         | Must Have   |
+| FR-02               | Responsive landing page       | Must Have   |
+| FR-03               | Tombol afiliasi               | Must Have   |
+| FR-04               | Routing dinamis detail produk | Should Have |
+| FR-05               | Metadata SEO                  | Should Have |
+| FR-06               | Maintain produk via JSON      | Must Have   |
+| Tracking Analytics  | Could Have                    |             |
+| API/CMS Integration | Could Have                    |             |
+| Auth / Payment      | Won’t Have (MVP)              |             |
+
+---
+
+> **7. Traceability Matrix** (Opsional)
+
+> Belum diaktifkan pada fase MVP, akan ditambahkan saat integrasi dengan QA/UAT.
+
+---
+
+✅ **Output:**
+**Dokumen SRS Final – digunakan sebagai dasar High-Level Design (HLD)**
+
+---
+
+### 🧩 3. System Design
+
+---
+
+> 🔷 **3.1 High-Level Design (HLD)**
+
+> 📌 _Tujuan:_ Menjabarkan struktur sistem secara modular dan terintegrasi.
+
+---
+
+- 🧭 Diagram Arsitektur Sistem
+
+```
+┌────────────────────┐
+│    End User (Web)  │
+└─────────┬──────────┘
+          │
+          ▼
+┌─────────────────────────────┐
+│  Next.js Static Frontend    │
+│  (Pre-rendered via SSG)     │
+│  - Landing Page             │
+│  - Product List Page        │
+│  - Product Detail Page      │
+└─────────┬─────────┬─────────┘
+          │         │
+          ▼         ▼
+  JSON File     SEO Metadata Generator
+(product.json)      (Dynamic Head)
+
+          ▼
+┌─────────────────────────────┐
+│       Hosting Platform      │
+│ (Vercel/Netlify/CDN Layer) │
+└─────────────────────────────┘
+```
+
+---
+
+- 🔧 Modul/Subsystem Overview
+
+| Modul               | Deskripsi                                                 |
+| ------------------- | --------------------------------------------------------- |
+| UI Module           | Tampilan halaman produk dan detail                        |
+| Routing Module      | Navigasi antar halaman (Next.js file-based)               |
+| Data Loader         | Loader dari JSON statis (SSG `getStaticProps`)            |
+| SEO Engine          | Dynamic head tag berdasarkan konten                       |
+| Affiliate Engine    | Redirect ke URL afiliasi via tombol CTA                   |
+| Developer Interface | Maintain produk via file JSON atau CMS eksternal (future) |
+
+---
+
+- 🔁 Komunikasi Antar Modul
+
+| Source Modul | Target Modul     | Protokol          | Tujuan                    |
+| ------------ | ---------------- | ----------------- | ------------------------- |
+| UI           | Data Loader      | Internal (props)  | Mendapatkan data produk   |
+| Routing      | Detail Page      | Dynamic Routing   | Navigasi `product/[slug]` |
+| Detail Page  | SEO Engine       | Props to `<Head>` | Metadata dinamis          |
+| ProductCard  | Affiliate Engine | HTML Anchor       | Redirect link afiliasi    |
+
+---
+
+- 🌐 External Interfaces
+
+| Interface               | Deskripsi                         |
+| ----------------------- | --------------------------------- |
+| Link Afiliasi Eksternal | Tautan ke Shopee/Amazon/Tokopedia |
+| Hosting Service         | Deploy via Vercel/Netlify         |
+| (Optional) Headless CMS | API endpoint (masa depan)         |
+
+---
+
+- 🔐 Security & Auth Flow
+
+| Aspek          | Penanganan                                                                     |
+| -------------- | ------------------------------------------------------------------------------ |
+| Auth           | Tidak ada – publik, non-interaktif                                             |
+| Data Integrity | Validasi struktur JSON saat build                                              |
+| External Link  | Dibuka di tab baru (`target="_blank"`)                                         |
+| XSS/Injection  | Tidak relevan karena data non-input, tetapi sanitasi konten tetap diperhatikan |
+
+---
+
+- 🔗 Integrasi (Internal & Eksternal)
+
+| Jenis        | Tujuan                   | Status                        |
+| ------------ | ------------------------ | ----------------------------- |
+| JSON Static  | Sumber data produk       | ✅ Implementasi awal          |
+| Headless CMS | Manajemen konten dinamis | 🔄 Future integration         |
+| Analytics    | Pelacakan klik CTA       | 🔄 Optional (fase berikutnya) |
+
+---
+
+> 🔷 **3.2 Low-Level Design (LLD)**
+
+> 📌 _Tujuan:_ Spesifikasi teknis rinci setiap komponen utama
+
+---
+
+- 📊 Data Model
+
+- ERD Sederhana (Stateless)
+
+```
+[Product]
+ ├─ id: string
+ ├─ name: string
+ ├─ slug: string
+ ├─ description: string
+ ├─ image: string (URL)
+ ├─ price: number
+ └─ affiliateUrl: string
+```
+
+- Data Dictionary
+
+| Field        | Tipe Data | Constraint | Keterangan                |
+| ------------ | --------- | ---------- | ------------------------- |
+| id           | string    | unique     | ID produk                 |
+| name         | string    | required   | Nama produk               |
+| slug         | string    | unique     | URL-friendly identifier   |
+| description  | string    | optional   | Deskripsi produk          |
+| image        | string    | required   | URL gambar produk         |
+| price        | number    | required   | Harga (angka)             |
+| affiliateUrl | string    | valid URL  | Tautan afiliasi eksternal |
+
+---
+
+- 🔄 Algoritma/Flowchart
+
+**Flow: Load Homepage → Render Produk**
+
+1. `getStaticProps()` load `products.json`
+2. Validasi struktur data
+3. Kirim ke komponen `ProductCard[]`
+4. Tampilkan grid produk
+
+**Flow: Click Produk → Halaman Detail**
+
+1. Klik `Link` → `/product/[slug]`
+2. `getStaticPaths()` pre-generate semua slug
+3. `getStaticProps()` ambil data sesuai slug
+4. Render detail + metadata SEO dinamis
+
+---
+
+- 🧩 Schema API (Future CMS Integration)
+
+```
+GET /api/products
+Response:
+[
+  {
+    "id": "p001",
+    "name": "Product A",
+    "slug": "product-a",
+    "price": 199000,
+    "description": "...",
+    "image": "https://...",
+    "affiliateUrl": "https://tokopedia.com/..."
+  }
+]
+```
+
+---
+
+- 🛢️ Database Design
+
+> Tidak digunakan pada fase MVP (stateless). Jika menggunakan CMS/API di masa depan, relasi dapat di-normalisasi berdasarkan entity `Product`.
+
+---
+
+- ⚙️ Config & Parameter List
+
+| Parameter      | Deskripsi         | Default                     |             |
+| -------------- | ----------------- | --------------------------- | ----------- |
+| DATA_SOURCE    | Lokasi file JSON  | `public/data/products.json` |             |
+| BUILD_MODE     | Mode build        | `SSG`                       |             |
+| IMAGE_BASE_URL | Path CDN image    | `/images/`                  |             |
+| SEO_TEMPLATE   | Template metadata | `Product Name               | Site Title` |
+
+---
+
+> 🔷 **3.3 MoSCoW Prioritization (berdasarkan FR & UC)**
+
+| FR Code | UC Terkait | Deskripsi                                                               | MoSCoW      |
+| ------- | ---------- | ----------------------------------------------------------------------- | ----------- |
+| FR-01   | UC-1       | Menampilkan daftar produk dari file JSON statis                         | Must Have   |
+| FR-02   | UC-1       | Landing page dengan tampilan responsif dan grid layout                  | Must Have   |
+| FR-03   | UC-2       | Tombol CTA untuk setiap produk yang mengarah ke link afiliasi eksternal | Must Have   |
+| FR-04   | UC-3       | Routing dinamis ke detail produk berdasarkan `slug`                     | Should Have |
+| FR-05   | UC-3       | Metadata SEO dinamis per halaman produk                                 | Should Have |
+| FR-06   | UC-4       | Developer dapat maintain produk melalui JSON                            | Must Have   |
+
+---
+
+> 🔷 **3.4 Sprint Implementation Plan**
+
+---
+
+- 🚀 Sprint 1 – MVP: Produk Grid
+
+| Task                               | FR/UC        | Komponen       | Estimasi |
+| ---------------------------------- | ------------ | -------------- | -------- |
+| Setup proyek Next.js, TS, Tailwind | —            | Setup          | 0.5 hari |
+| Strukturisasi folder modular (SoC) | FR-06        | Struktur awal  | 0.5 hari |
+| Buat `products.json`               | FR-06        | Data Layer     | 0.5 hari |
+| Komponen `ProductCard.tsx`         | FR-01        | UI Component   | 0.5 hari |
+| Halaman utama (`/`) grid produk    | FR-01, FR-02 | Page           | 1 hari   |
+| Integrasi `getStaticProps`         | FR-01, FR-06 | Data Load      | 0.5 hari |
+| Tombol afiliasi CTA                | FR-03        | UX Logic       | 0.5 hari |
+| Validasi struktur JSON & fallback  | FR-01        | Error Handling | 0.5 hari |
+| QA: Responsiveness check           | FR-02        | QA             | 0.5 hari |
+| Dokumentasi maintain produk        | FR-06        | Docs           | 0.5 hari |
+
+---
+
+- 🚀 Sprint 2 – Produk Detail & SEO
+
+| Task                              | FR/UC        | Komponen   | Estimasi  |
+| --------------------------------- | ------------ | ---------- | --------- |
+| Halaman dinamis `[slug].tsx`      | FR-04, UC-3  | Routing    | 0.5 hari  |
+| `getStaticPaths + getStaticProps` | FR-04, FR-05 | Data Layer | 0.5 hari  |
+| Layout detail produk + CTA        | FR-04        | UI         | 1 hari    |
+| SEO dinamis via `<Head>`          | FR-05        | SEO Engine | 0.5 hari  |
+| Fallback 404                      | UC-3 (alt)   | Routing    | 0.5 hari  |
+| Tombol kembali ke homepage        | —            | UX         | 0.25 hari |
+| QA SEO tag & detail page          | —            | QA         | 0.5 hari  |
+
+---
+
+✅ **Output:**
+Dokumen System Design lengkap sebagai acuan implementasi dan pengujian tahap selanjutnya.
+
+---
+
+### 🧩 4. **Implementation (Coding)**
+
+> 📌 _Tujuan:_ Penerjemahan desain ke dalam kode sumber
+
+> 🔹 Struktur Aktivitas:
+
+- Setup repositori (Git)
+- Coding by module/sprint
+- Kode mengacu pada LLD
+- Versioning dan dokumentasi
+- Code review & integration checklist
+
+> ✅ Output:
+
+- Source code versi alpha → siap diuji
+
+---
+
+### 🧩 5. **Testing**
+
+> 📌 _Tujuan:_ Validasi bahwa sistem bekerja sesuai SRS dan use-case
+
+> 🔹 Jenis Pengujian:
+
+- **Unit Test**: Pengujian fungsi spesifik
+- **Integration Test**: Antarmuka antar modul
+- **System Test**: End-to-end dari perspektif use-case
+- **User Acceptance Test (UAT)**: Verifikasi oleh user
+
+> 🔹 Dokumen Terkait:
+
+- Test Plan
+- Test Case
+- Bug Log & Traceability
+
+> ✅ Output:
+
+- Release Candidate → siap deploy
+
+---
+
+### 🧩 6. **Deployment**
+
+> 📌 _Tujuan:_ Meluncurkan aplikasi ke lingkungan produksi
+
+> 🔹 Checklist:
+
+- Build & CI/CD pipeline
+- Environment setup (Dev, Staging, Prod)
+- Backup & Rollback Plan
+- Dokumen Release Notes
+- Deployment Log
+
+> ✅ Output:
+
+- Aplikasi berjalan di production environment
+
+---
+
+### 🧩 7. **Maintenance & Support**
+
+> 📌 _Tujuan:_ Menjamin kelangsungan layanan, perbaikan bug, dan peningkatan
+
+> 🔹 Aktivitas:
+
+- Monitoring performance
+- Patch & bug fix
+- User feedback loop
+- Model retraining (jika AI)
+- Feature improvement roadmap
+
+> ✅ Output:
+
+- SLA & KPI pemeliharaan terukur
+
+---
+
+- 🔚 **Kesimpulan**
+
+Template di atas memberikan kerangka lengkap dan runtut dari:
+
+- 🏢 **Kebutuhan bisnis** →
+- ⚙️ **Spesifikasi teknis** →
+- 🔧 **Desain sistem** →
+- 💻 **Implementasi dan pengujian** →
+- 📦 **Deploy dan rawat**
+
+> 📌 Cocok digunakan untuk proyek dengan pendekatan _structured (Waterfall)_ maupun _iterative (Agile Hybrid)_
+
+---
+
+### 🧩 **Lampiran**
+
+Berikut adalah **tabulasi matriks SDLC** yang merangkum 7 poin utama dalam proses pengembangan sistem, lengkap dengan deskripsi, pelaku, objek kegiatan, deliverable, dan kolom tambahan relevan:
+
+| No  | **Tahapan SDLC**                             | **Deskripsi Kegiatan**                                                                  | **Pelaku (Role)**                      | **Objek/Target**                     | **Deliverable Dokumen**          | **Tools/Metode Umum**                       |
+| --- | -------------------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------- | ------------------------------------ | -------------------------------- | ------------------------------------------- |
+| 1   | **BRS (Business Requirement Specification)** | Identifikasi kebutuhan bisnis, latar belakang, visi, dan tujuan strategis.              | Business Analyst, Product Owner        | Stakeholders bisnis, user level atas | Dokumen BRS                      | Interview, Workshop, Business Canvas        |
+| 2   | **SRS (Software Requirement Specification)** | Menjabarkan kebutuhan sistem secara teknis, termasuk use-case dan requirement detail.   | System Analyst, Product Owner, QA Lead | Tim teknis dan QA                    | Dokumen SRS, Use-case Detail     | UML, MoSCoW, Use-case Diagram               |
+| 3   | **System Design (HLD & LLD)**                | Mendesain arsitektur sistem secara modular (HLD) dan detail teknis tiap komponen (LLD). | System Architect, Backend Lead         | Modul sistem, interface, data model  | Dokumen HLD & LLD                | Draw.io, Lucidchart, ERD tools, Swagger     |
+| 4   | **Implementation**                           | Menerjemahkan desain ke dalam kode program, sesuai modul & LLD.                         | Developer (Front/Back/Fullstack)       | Source code modul                    | Source Code, Repo Versioning     | Git, VSCode, Linter, ESLint, CI/CD Pipeline |
+| 5   | **Testing**                                  | Verifikasi sistem bekerja sesuai requirement, melalui berbagai jenis testing.           | QA Engineer, Tester, User (UAT)        | Fitur aplikasi dan logic             | Test Plan, Test Case, Bug Report | Postman, Jest, Cypress, TestRail            |
+| 6   | **Deployment**                               | Proses build, rilis, dan konfigurasi sistem ke lingkungan produksi.                     | DevOps Engineer, Release Manager       | Environments (Dev, Staging, Prod)    | Deployment Log, Release Notes    | Docker, GitHub Actions, Vercel, PM2         |
+| 7   | **Maintenance & Support**                    | Monitoring, perbaikan bug, update fitur, dan peningkatan sistem.                        | Support Engineer, Developer, QA        | Produksi dan user aktif              | SLA Report, Patch Log, Roadmap   | Grafana, Sentry, Feedback Tracker           |
+
+---
+
+📌 _Keterangan Tambahan:_
+
+- **Pelaku** → Pihak yang aktif melaksanakan kegiatan di tahap tersebut.
+- **Objek/Target** → Siapa atau apa yang menjadi sasaran aktivitas pada tahap tersebut.
+- **Deliverable** → Hasil nyata yang harus dihasilkan sebagai bukti tahapan selesai.
+- **Tools/Metode Umum** → Alat bantu yang umum digunakan untuk mendukung aktivitas di tahap tersebut.
+
+---
