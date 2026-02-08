@@ -1,0 +1,660 @@
+---
+title: Interrupt dan Tombol
+date: '2026-02-08'
+tags:
+  [
+    'interrupt-handling',
+    'event-driven-firmware',
+    'esp32-esp8266',
+    'non-blocking-architecture',
+    'oop-iot-design',
+  ]
+draft: false
+summary: Modul 5 memperkenalkan mekanisme interrupt sebagai langkah transisi dari firmware yang bersifat sinkron dan polling-based menuju sistem yang mampu menangani event asinkron secara real-time. Berlandaskan arsitektur ComponentBase dari Modul 4, modul ini menunjukkan bagaimana input fisik (tombol) diintegrasikan tanpa merusak modularitas dan keterbacaan kode. Fokus utama terletak pada penulisan ISR yang aman dan ringkas, penggunaan volatile dan static secara tepat, serta pemisahan tegas antara ISR dan logika aplikasi. Hasilnya adalah firmware non-blocking yang responsif, stabil, dan siap diskalakan untuk sensor, actuator, serta sistem IoT yang lebih kompleks.
+---
+
+🔁 **_Modul 5 – Interrupt dan Tombol_**
+
+---
+
+- [🧭 **Prolog Modul: Posisi dan Peran Modul 5**](#-prolog-modul-posisi-dan-peran-modul-5)
+- [🧠 **Konteks Pengetahuan: Relasi Antar Modul**](#-konteks-pengetahuan-relasi-antar-modul)
+  - [🔙 **Prasyarat Konseptual**](#-prasyarat-konseptual)
+  - [🔜 **Digunakan Kembali di Modul Selanjutnya**](#-digunakan-kembali-di-modul-selanjutnya)
+- [🎯 **Tujuan Modul (Learning Objectives)**](#-tujuan-modul-learning-objectives)
+- [🧩 **Masalah yang Diselesaikan Modul Ini**](#-masalah-yang-diselesaikan-modul-ini)
+- [🏗️ **Konsep Inti yang Diperkenalkan**](#️-konsep-inti-yang-diperkenalkan)
+  - [**Konsep Utama**](#konsep-utama)
+  - [**Konsep yang Tidak Dibahas**](#konsep-yang-tidak-dibahas)
+- [🛠️ **Desain Teknis \& Arsitektur**](#️-desain-teknis--arsitektur)
+- [🧪 **Implementasi Bertahap (High-Level)**](#-implementasi-bertahap-high-level)
+  - [**0) Struktur Folder (artefak yang harus ada)**](#0-struktur-folder-artefak-yang-harus-ada)
+  - [**1. Identifikasi kebutuhan input berbasis event**](#1-identifikasi-kebutuhan-input-berbasis-event)
+  - [**2. Konfigurasi pin dan interrupt**](#2-konfigurasi-pin-dan-interrupt)
+  - [**3. Penulisan ISR minimal**](#3-penulisan-isr-minimal)
+  - [**4. Penggunaan `volatile` flag**](#4-penggunaan-volatile-flag)
+  - [**5. Desain class `ButtonHandler`**](#5-desain-class-buttonhandler)
+  - [**6. Integrasi event tombol dengan LED**](#6-integrasi-event-tombol-dengan-led)
+  - [**7. Validasi non-blocking behavior**](#7-validasi-non-blocking-behavior)
+  - [✅ Checklist Validasi (WAJIB)](#-checklist-validasi-wajib)
+- [🧾 **Validasi dan Pengujian**](#-validasi-dan-pengujian)
+- [🔁 **Refleksi dan Keterkaitan ke Modul Lain**](#-refleksi-dan-keterkaitan-ke-modul-lain)
+- [🧭 **Navigasi Modul**](#-navigasi-modul)
+- [📌 **Penutup Analitis**](#-penutup-analitis)
+
+---
+
+Baik. Berikut **penulisan Prolog Modul 5** dengan gaya **teknis, disiplin, dan langsung ke konteks**, tanpa pengantar naratif tambahan.
+
+---
+
+## 🧭 **Prolog Modul: Posisi dan Peran Modul 5**
+
+Modul 5 menandai peralihan arsitektural dari firmware yang **sinkron dan berbasis polling** menuju firmware yang mampu menangani **event asinkron** secara deterministik. Setelah Modul 4 menetapkan struktur sistem melalui `ComponentBase`, modul ini memperkenalkan **interrupt** sebagai mekanisme utama untuk merespons kejadian eksternal.
+
+Pada tahap ini, firmware telah tersusun rapi dan modular, namun masih bergantung pada eksekusi berurutan di dalam `loop()`. Pendekatan tersebut tidak memadai untuk input fisik yang membutuhkan respons cepat dan konsisten. Modul 5 melengkapi arsitektur dengan integrasi **ISR (Interrupt Service Routine)** yang dirancang aman, minimal, dan terpisah dari logika aplikasi.
+
+Fokus modul ini adalah memastikan bahwa **event asinkron** dapat diproses tanpa merusak kontrak komponen, tanpa menambah kompleksitas di `main.ino`, dan tanpa mengorbankan stabilitas sistem. Dengan demikian, interrupt menjadi bagian yang terkontrol dalam arsitektur firmware modular, bukan pengecualian yang merusak desain.
+
+---
+
+## 🧠 **Konteks Pengetahuan: Relasi Antar Modul**
+
+### 🔙 **Prasyarat Konseptual**
+
+- **Modul 4 – ComponentBase**
+  Wajib paham:
+
+  - kontrak `begin()` / `update()`
+  - pengelolaan komponen via pointer base class
+
+- **Modul 2 – LED Modular dengan Class**
+  LED digunakan sebagai **target aksi event tombol**
+  (tidak ada desain LED baru di modul ini)
+
+Tanpa dua modul ini, integrasi interrupt **tidak valid secara arsitektur**.
+
+---
+
+### 🔜 **Digunakan Kembali di Modul Selanjutnya**
+
+Konsep di Modul 5 dipakai langsung pada:
+
+- **Modul 6 – Sensor Modular**
+- **Modul 7 – Actuator Modular**
+- **Modul 8 – MQTT Integration**
+
+Yang dibawa ke depan:
+
+- event → state
+- sinkronisasi data
+- pemisahan event dan aksi
+
+<ResourceBox
+  title="Rujukan internal-link"
+  items={[
+    {
+      name: 'Kerangka Pengembangan Firmware IoT Modular',
+      href: '/blog/IoT/iot-0-panduan',
+      description:
+        'Modul 0 – Kerangka Pengembangan Firmware IoT Modular Berbasis OOP untuk ESP8266/ESP32',
+    },
+    {
+      name: 'Dasar OOP & Struktur Proyek ESP',
+      href: '/blog/IoT/iot-1-dasar-oop',
+      description: 'Modul 1 – Dasar OOP & Struktur Proyek ESP',
+    },
+    {
+      name: 'LED Modular Dengan Class',
+      href: '/blog/IoT/iot-2-led-modular',
+      description: 'Modul 2 – LED Modular Dengan Class',
+    },
+    {
+      name: 'Object dari JSON',
+      href: '/blog/IoT/iot-3-object-json',
+      description: 'Modul 3 – Object dari JSON',
+    },
+    {
+      name: 'ComponentBase',
+      href: '/blog/IoT/iot-4-component-base',
+      description: 'Modul 4 – ComponentBase',
+    },
+    {
+      name: 'Interrupt dan Tombol',
+      href: '/blog/IoT/iot-5-interrupt-tombol',
+      description: 'Modul 5 – Interrupt dan Tombol',
+    },
+    {
+      name: 'Sensor Modular',
+      href: '/blog/IoT/iot-6-sensor-modular',
+      description: 'Modul 6 – Sensor Modular',
+    },
+    {
+      name: 'Actuator Modular',
+      href: '/blog/IoT/iot-7-actuator-modular',
+      description: 'Modul 7 – Actuator Modular',
+    },
+    {
+      name: 'MQTT Integration',
+      href: '/blog/IoT/iot-8-mqtt-integration',
+      description: 'Modul 7 – MQTT Integration',
+    },
+    {
+      name: 'Final Project: Node IoT Modular',
+      href: '/blog/IoT/iot-9-final-project',
+      description: 'Modul 7 – Final Project: Node IoT Modular',
+    },
+  ]}
+/>
+
+---
+
+## 🎯 **Tujuan Modul (Learning Objectives)**
+
+Setelah Modul 5, pembaca **harus bisa**:
+
+- Membedakan **polling vs interrupt** secara praktis
+- Menjelaskan **fungsi ISR dan batasannya**
+- Menggunakan `volatile` untuk data lintas ISR
+- Menggunakan `static` pada konteks ISR dengan benar
+- Mendesain **handler tombol berbasis interrupt**
+- Menghubungkan event interrupt ke arsitektur `ComponentBase`
+
+Jika salah satu tidak tercapai → modul gagal.
+
+---
+
+## 🧩 **Masalah yang Diselesaikan Modul Ini**
+
+Masalah polling input fisik:
+
+- Respons bergantung ke kecepatan `loop()`
+- `loop()` membengkak dan sulit dirawat
+- Tidak efisien untuk banyak input
+- Mengganggu proses lain (sensor / komunikasi)
+
+Solusi Modul 5:
+
+- Input ditangani dengan **interrupt**
+- ISR hanya mengubah **flag**
+- Logika aplikasi tetap di `loop()`
+- Firmware tetap **non-blocking**
+
+---
+
+## 🏗️ **Konsep Inti yang Diperkenalkan**
+
+### **Konsep Utama**
+
+- Interrupt dan ISR
+- `volatile` untuk data yang diubah ISR
+- `static` untuk state lokal ISR
+- Event flag
+- Deferred processing (ISR ≠ logic)
+
+### **Konsep yang Tidak Dibahas**
+
+- Sensor kompleks
+- Actuator selain LED
+- MQTT
+- RTOS / multitasking
+
+Scope modul ini **hanya event handling dasar**.
+
+---
+
+## 🛠️ **Desain Teknis & Arsitektur**
+
+Aturan desain **wajib**:
+
+- ISR:
+
+  - singkat
+  - tanpa logika bisnis
+  - tanpa `delay`
+  - tanpa alokasi memori
+
+- ISR **hanya**:
+
+  - set/reset flag (`volatile`)
+
+- Aksi:
+
+  - dilakukan di `loop()` / `update()`
+
+Peran class tombol:
+
+- Mendaftarkan interrupt
+- Menyediakan event (flag)
+- Tidak mengendalikan actuator langsung
+
+Hasil desain:
+
+- Interrupt **tidak merusak** `ComponentBase`
+- Modularitas tetap utuh
+- Event terintegrasi ke sistem, bukan pengecualian
+
+---
+
+## 🧪 **Implementasi Bertahap (High-Level)**
+
+Di bawah ini adalah implementasi **rinci, detail, dan siap compile** untuk ESP32/ESP8266 (Arduino IDE). Tidak ada teori—hanya langkah dan artefak kode.
+
+---
+
+### **0) Struktur Folder (artefak yang harus ada)**
+
+```
+src/
+├── ComponentBase.h
+├── LedController.h
+├── LedController.cpp
+├── ButtonHandler.h
+├── ButtonHandler.cpp
+└── main.ino
+```
+
+> `ComponentBase.h` Anda pakai dari Modul 4 (kontrak `begin()` / `update()`).
+
+---
+
+### **1. Identifikasi kebutuhan input berbasis event**
+
+Kebutuhan minimal yang harus dipenuhi:
+
+- Tombol memicu event **tanpa polling**.
+- ISR **tidak** menjalankan logic aplikasi.
+- ISR hanya set **flag**.
+- Pemrosesan event dilakukan di `update()` (deferred processing).
+- Tidak boleh ada `delay()` untuk respon tombol.
+
+Artefak: akan diwujudkan sebagai `ButtonHandler` (komponen) + event flag.
+
+---
+
+### **2. Konfigurasi pin dan interrupt**
+
+> Konvensi wiring (stabil dan umum)
+
+- Gunakan **INPUT_PULLUP** (tombol ke GND).
+- Event dianggap terjadi saat **FALLING**.
+
+Parameter:
+
+- `buttonPin` = GPIO tombol
+- Interrupt attach: `attachInterrupt(digitalPinToInterrupt(pin), isr, FALLING)`
+
+---
+
+### **3. Penulisan ISR minimal**
+
+ISR wajib:
+
+- sangat singkat
+- tidak ada `Serial`
+- tidak ada `delay`
+- tidak ada alokasi memori
+- hanya set flag dan (opsional) timestamp
+
+Kita buat macro atribut ISR agar kompatibel:
+
+- ESP32: `IRAM_ATTR`
+- ESP8266: `ICACHE_RAM_ATTR`
+
+---
+
+### **4. Penggunaan `volatile` flag**
+
+Flag yang diubah ISR harus `volatile` agar compiler tidak mengoptimasi salah.
+
+Kita pakai:
+
+- `volatile bool _irqFlag;`
+- `volatile uint32_t _irqUs;` (timestamp microseconds saat interrupt)
+
+---
+
+### **5. Desain class `ButtonHandler`**
+
+> `ButtonHandler.h`
+
+```cpp
+#ifndef BUTTON_HANDLER_H
+#define BUTTON_HANDLER_H
+
+#include <Arduino.h>
+#include "ComponentBase.h"
+
+// ISR attribute compatibility
+#if defined(ESP32)
+  #define ISR_ATTR IRAM_ATTR
+#elif defined(ESP8266)
+  #define ISR_ATTR ICACHE_RAM_ATTR
+#else
+  #define ISR_ATTR
+#endif
+
+class ButtonHandler : public ComponentBase {
+  public:
+    using Callback = void (*)();
+
+    ButtonHandler(uint8_t pin, Callback onPress, uint32_t debounceMs = 50);
+
+    void begin() override;
+    void update() override;
+
+    // ISR must be static
+    static void ISR_ATTR isrRouter();
+
+  private:
+    uint8_t _pin;
+    Callback _onPress;
+    uint32_t _debounceMs;
+
+    // ISR-shared state
+    static volatile bool _irqFlag;
+    static volatile uint32_t _irqUs;
+
+    // instance pointer for static ISR routing (single-button version)
+    static ButtonHandler* _instance;
+
+    // runtime state
+    uint32_t _lastHandledMs = 0;
+
+    void handleIrqDeferred();
+};
+
+#endif
+```
+
+> `ButtonHandler.cpp`
+
+```cpp
+#include "ButtonHandler.h"
+
+// static members
+volatile bool ButtonHandler::_irqFlag = false;
+volatile uint32_t ButtonHandler::_irqUs = 0;
+ButtonHandler* ButtonHandler::_instance = nullptr;
+
+ButtonHandler::ButtonHandler(uint8_t pin, Callback onPress, uint32_t debounceMs)
+: _pin(pin), _onPress(onPress), _debounceMs(debounceMs) {}
+
+void ButtonHandler::begin() {
+  pinMode(_pin, INPUT_PULLUP);
+
+  // register instance for ISR routing (single instance)
+  _instance = this;
+
+  attachInterrupt(digitalPinToInterrupt(_pin), ButtonHandler::isrRouter, FALLING);
+}
+
+void ButtonHandler::update() {
+  handleIrqDeferred();
+}
+
+void ButtonHandler::handleIrqDeferred() {
+  // Fast check first (no lock)
+  if (!_irqFlag) return;
+
+  // Critical section to read+clear flag safely
+  noInterrupts();
+  bool flagged = _irqFlag;
+  _irqFlag = false;
+  interrupts();
+
+  if (!flagged) return;
+
+  // Debounce in main context (NOT in ISR)
+  uint32_t nowMs = millis();
+  if (nowMs - _lastHandledMs < _debounceMs) return;
+  _lastHandledMs = nowMs;
+
+  if (_onPress) _onPress();
+}
+
+void ButtonHandler::ISR_ATTR isrRouter() {
+  // Minimal ISR: set flag + timestamp
+  _irqUs = micros();
+  _irqFlag = true;
+}
+```
+
+> Catatan: versi ini **single-button** (1 instance) untuk menjaga modul tetap fokus. Multi-button akan dibahas saat arsitektur makin matang.
+
+---
+
+### **6. Integrasi event tombol dengan LED**
+
+Agar event tombol mengubah LED, kita buat `LedController` sebagai komponen yang:
+
+- `begin()` melakukan inisialisasi hardware
+- `update()` kosong (LED tidak perlu polling)
+- menyediakan `toggle()` untuk dipanggil dari callback tombol
+
+> `LedController.h` (Modul 5)
+
+```cpp
+#ifndef LED_CONTROLLER_H
+#define LED_CONTROLLER_H
+
+#include <Arduino.h>
+#include "ComponentBase.h"
+
+class LedController : public ComponentBase {
+  public:
+    LedController(uint8_t pin, bool initialState = false);
+
+    void begin() override;
+    void update() override;
+
+    void on();
+    void off();
+    void toggle();
+    bool isOn() const;
+
+  private:
+    uint8_t _pin;
+    bool _state;
+};
+
+#endif
+```
+
+> `LedController.cpp` (Modul 5)
+
+```cpp
+#include "LedController.h"
+
+LedController::LedController(uint8_t pin, bool initialState)
+: _pin(pin), _state(initialState) {}
+
+void LedController::begin() {
+  pinMode(_pin, OUTPUT);
+  digitalWrite(_pin, _state ? HIGH : LOW);
+}
+
+void LedController::update() {
+  // LED tidak butuh loop/polling pada Modul 5
+}
+
+void LedController::on() {
+  _state = true;
+  digitalWrite(_pin, HIGH);
+}
+
+void LedController::off() {
+  _state = false;
+  digitalWrite(_pin, LOW);
+}
+
+void LedController::toggle() {
+  _state = !_state;
+  digitalWrite(_pin, _state ? HIGH : LOW);
+}
+
+bool LedController::isOn() const {
+  return _state;
+}
+```
+
+---
+
+### **7. Validasi non-blocking behavior**
+
+> `main.ino` (FINAL, UTUH, SIAP COPAS)
+
+```cpp
+#include <Arduino.h>
+#include "ComponentBase.h"
+#include "LedController.h"
+#include "ButtonHandler.h"
+
+// ====== Konfigurasi pin ======
+static const uint8_t LED_PIN = 2;     // sesuaikan board Anda
+static const uint8_t BTN_PIN = 0;     // contoh: GPIO0 (sesuaikan wiring)
+
+// ====== Komponen ======
+LedController led(LED_PIN, false);
+
+// Callback harus fungsi bebas / static
+void onButtonPressed() {
+  led.toggle();
+}
+
+ButtonHandler button(BTN_PIN, onButtonPressed, 50);
+
+// ====== Registry komponen ======
+ComponentBase* components[] = {
+  &led,
+  &button
+};
+
+const size_t COMPONENT_COUNT = sizeof(components) / sizeof(components[0]);
+
+void setup() {
+  Serial.begin(115200);
+  delay(200);
+
+  for (size_t i = 0; i < COMPONENT_COUNT; i++) {
+    components[i]->begin();
+  }
+
+  Serial.println("Modul 5: Interrupt button -> LED toggle (non-blocking)");
+}
+
+void loop() {
+  // Tidak ada delay untuk tombol
+  for (size_t i = 0; i < COMPONENT_COUNT; i++) {
+    components[i]->update();
+  }
+
+  // Opsional: kerja lain bisa jalan di sini (sensor/MQTT) tanpa terganggu
+}
+```
+
+---
+
+### ✅ Checklist Validasi (WAJIB)
+
+1. **Tombol memicu LED**
+
+   - Tekan tombol → LED toggle.
+
+2. **Respons cepat tanpa delay di loop**
+
+   - `loop()` tidak mengandung `delay()`.
+
+3. **ISR minimal**
+
+   - Tidak ada `Serial`, tidak ada `delay`, tidak ada logika toggle di ISR.
+
+4. **Stabil saat spam tombol**
+
+   - Tekan cepat berulang → tidak hang/reset (debounce di `update()`).
+
+5. **main.ino tidak mengandung logic hardware tombol/LED**
+
+   - Tidak ada `digitalWrite`, tidak ada `attachInterrupt` di `main.ino`.
+
+---
+
+## 🧾 **Validasi dan Pengujian**
+
+Keberhasilan Modul 5 divalidasi melalui:
+
+- Tombol fisik memicu perubahan state LED
+- Respons cepat tanpa delay
+- Firmware tetap stabil saat tombol ditekan berulang
+- Tidak ada logika berat di dalam ISR
+- Serial Monitor menunjukkan alur event yang benar
+
+---
+
+## 🔁 **Refleksi dan Keterkaitan ke Modul Lain**
+
+Kondisi firmware **setelah Modul 5**:
+
+- Event eksternal (tombol) diproses **secara asinkron** melalui interrupt
+- ISR dibatasi hanya untuk **set flag**
+- Seluruh logika aplikasi tetap dijalankan di konteks normal (`update()`)
+- Kontrak `ComponentBase` **tidak dilanggar**
+- `main.ino` tetap berperan sebagai orchestrator, bukan tempat logika event
+
+Implikasi langsung:
+
+- Firmware aman terhadap event cepat dan berulang
+- Tidak ada blocking behavior
+- Sistem siap menangani banyak sumber event secara bersamaan
+
+Konsep ini menjadi **fondasi teknis wajib** untuk:
+
+- **Modul 6 – Sensor Modular** (data periodik + event)
+- **Modul 7 – Actuator Modular** (aksi berbasis state dan event)
+
+---
+
+## 🧭 **Navigasi Modul**
+
+- ⬅️ **Modul sebelumnya – Modul 4: ComponentBase**
+  Menyediakan kontrak dan lifecycle komponen.
+
+- ➡️ **Modul selanjutnya – Modul 6: Sensor Modular**
+  Memperluas arsitektur untuk menangani data sensor yang berjalan paralel dengan event.
+
+<ResourceBox
+  title="Rujukan internal-link"
+  items={[
+    {
+      name: 'ComponentBase',
+      href: '/blog/IoT/iot-4-component-base',
+      description: 'Modul 4 – ComponentBase',
+    },
+    {
+      name: 'Sensor Modular',
+      href: '/blog/IoT/iot-6-sensor-modular',
+      description: 'Modul 6 – Sensor Modular',
+    },
+  ]}
+/>
+
+---
+
+## 📌 **Penutup Analitis**
+
+Modul 5 menambahkan **dimensi waktu dan event** ke dalam firmware tanpa merusak struktur arsitektur. Setelah modul ini, firmware:
+
+- tidak lagi bergantung pada polling,
+- tidak bergantung pada delay,
+- dan tidak terikat pada alur linier `loop()`.
+
+Sistem kini mampu merespons dunia nyata **secara asinkron dan terkontrol**, yang merupakan prasyarat teknis untuk firmware IoT yang stabil dan dapat diskalakan.
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

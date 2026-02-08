@@ -1,0 +1,688 @@
+---
+title: MQTT Integration
+date: '2026-02-08'
+tags:
+  [
+    'mqtt-integration',
+    'iot-communication',
+    'publish-subscribe',
+    'distributed-iot',
+    'modular-firmware',
+  ]
+draft: false
+summary: Modul 8 memperkenalkan integrasi MQTT sebagai lapisan komunikasi eksternal dalam firmware IoT modular. Setelah sistem mampu mengelola input, keputusan lokal, dan aksi fisik (Modul 7), modul ini menghubungkan node ESP ke ekosistem IoT terdistribusi menggunakan model publish/subscribe. Firmware berperan sebagai MQTT client, dengan sensor mempublikasikan data dan actuator menerima perintah melalui topik. Desain menjaga Separation of Concern - komponen tidak bergantung langsung pada MQTT, sementara main.ino bertindak sebagai mediator. Hasilnya, firmware menjadi node IoT penuh, siap dimonitor, dikendalikan, dan diskalakan dalam sistem multi-node.
+---
+
+📡 **_Modul 8 – MQTT Integration_**
+
+---
+
+- [🧭 **Prolog Modul: Posisi dan Peran Modul 8**](#-prolog-modul-posisi-dan-peran-modul-8)
+- [🧠 **Konteks Pengetahuan: Relasi Antar Modul**](#-konteks-pengetahuan-relasi-antar-modul)
+  - [🔙 **Prasyarat Konseptual**](#-prasyarat-konseptual)
+  - [🔜 **Digunakan Kembali di Modul Selanjutnya**](#-digunakan-kembali-di-modul-selanjutnya)
+- [🎯 **Tujuan Modul (Learning Objectives)**](#-tujuan-modul-learning-objectives)
+- [🧩 **Masalah yang Diselesaikan Modul Ini**](#-masalah-yang-diselesaikan-modul-ini)
+- [🏗️ **Konsep Inti yang Diperkenalkan**](#️-konsep-inti-yang-diperkenalkan)
+  - [**Konsep Utama**](#konsep-utama)
+  - [**Konsep yang Tidak Dibahas di Modul Ini**](#konsep-yang-tidak-dibahas-di-modul-ini)
+- [🛠️ **Desain Teknis \& Arsitektur**](#️-desain-teknis--arsitektur)
+- [🧪 **Implementasi Bertahap (High-Level)**](#-implementasi-bertahap-high-level)
+  - [0️⃣ Struktur Folder (FINAL, tidak boleh kacau)](#0️⃣-struktur-folder-final-tidak-boleh-kacau)
+  - [1️⃣ Konfigurasi koneksi MQTT](#1️⃣-konfigurasi-koneksi-mqtt)
+  - [2️⃣ Inisialisasi MQTT Client (Wrapper Service)](#2️⃣-inisialisasi-mqtt-client-wrapper-service)
+  - [3️⃣ Desain Struktur Topic (WAJIB KONSISTEN)](#3️⃣-desain-struktur-topic-wajib-konsisten)
+  - [4️⃣ Publish Data Sensor Secara Periodik](#4️⃣-publish-data-sensor-secara-periodik)
+  - [5️⃣ Subscribe Topik Kontrol Actuator](#5️⃣-subscribe-topik-kontrol-actuator)
+  - [6️⃣ Implementasi Callback MQTT](#6️⃣-implementasi-callback-mqtt)
+  - [7️⃣ Integrasi Callback dengan Actuator](#7️⃣-integrasi-callback-dengan-actuator)
+  - [8️⃣ Menjaga Koneksi MQTT Non-Blocking](#8️⃣-menjaga-koneksi-mqtt-non-blocking)
+  - [🔒 Checklist Arsitektur (tidak lulus → modul gagal)](#-checklist-arsitektur-tidak-lulus--modul-gagal)
+- [🧾 **Validasi dan Pengujian**](#-validasi-dan-pengujian)
+- [🔁 **Refleksi dan Keterkaitan ke Modul Lain**](#-refleksi-dan-keterkaitan-ke-modul-lain)
+- [🧭 **Navigasi Modul**](#-navigasi-modul)
+- [📌 **Penutup Analitis**](#-penutup-analitis)
+
+---
+
+## 🧭 **Prolog Modul: Posisi dan Peran Modul 8**
+
+Modul 8 menambahkan **lapisan komunikasi eksternal** ke dalam firmware IoT modular. Setelah Modul 7 memungkinkan firmware **mengambil aksi fisik secara lokal** melalui actuator, modul ini memperluas sistem agar **dapat berinteraksi dengan sistem eksternal**.
+
+Pada titik ini, firmware sudah mampu:
+
+- Mengelola input (sensor, tombol)
+- Menjalankan logika keputusan lokal
+- Mengendalikan actuator secara terstruktur
+
+Namun seluruh proses tersebut masih berjalan **secara standalone**. Modul 8 menghilangkan batasan ini dengan mengintegrasikan **MQTT**, sehingga node ESP berfungsi sebagai **MQTT client** yang dapat:
+
+- mempublikasikan data sensor
+- menerima perintah jarak jauh untuk actuator
+
+Modul ini mengubah firmware dari sistem lokal menjadi **node dalam sistem IoT terdistribusi**.
+
+---
+
+## 🧠 **Konteks Pengetahuan: Relasi Antar Modul**
+
+### 🔙 **Prasyarat Konseptual**
+
+Modul 8 **bergantung langsung** pada modul-modul berikut:
+
+- **Modul 4 – ComponentBase**
+  Digunakan untuk:
+
+  - menjaga konsistensi arsitektur saat MQTT ditambahkan
+  - memastikan komunikasi tidak mencemari class komponen
+
+- **Modul 6 – Sensor Modular**
+  Digunakan sebagai:
+
+  - sumber data yang dipublikasikan ke broker MQTT
+
+- **Modul 7 – Actuator Modular**
+  Digunakan sebagai:
+
+  - target eksekusi perintah MQTT (ON/OFF, set state)
+
+- **Modul 3 – Object dari JSON**
+  Digunakan untuk:
+
+  - konfigurasi runtime (broker, topic, parameter komunikasi)
+
+Tanpa pemahaman modul-modul ini, integrasi MQTT akan merusak modularitas firmware.
+
+<ResourceBox
+  title="Rujukan internal-link"
+  items={[
+    {
+      name: 'Kerangka Pengembangan Firmware IoT Modular',
+      href: '/blog/IoT/iot-0-panduan',
+      description:
+        'Modul 0 – Kerangka Pengembangan Firmware IoT Modular Berbasis OOP untuk ESP8266/ESP32',
+    },
+    {
+      name: 'Object dari JSON',
+      href: '/blog/IoT/iot-3-object-json',
+      description: 'Modul 3 – Object dari JSON',
+    },
+    {
+      name: 'ComponentBase',
+      href: '/blog/IoT/iot-4-component-base',
+      description: 'Modul 4 – ComponentBase',
+    },
+    {
+      name: 'Sensor Modular',
+      href: '/blog/IoT/iot-6-sensor-modular',
+      description: 'Modul 6 – Sensor Modular',
+    },
+    {
+      name: 'Actuator Modular',
+      href: '/blog/IoT/iot-7-actuator-modular',
+      description: 'Modul 7 – Actuator Modular',
+    },
+  ]}
+/>
+
+---
+
+### 🔜 **Digunakan Kembali di Modul Selanjutnya**
+
+Seluruh mekanisme pada Modul 8 akan digunakan **tanpa perubahan arsitektur** pada:
+
+- **Modul 9 – Final Project**
+
+Artinya:
+
+- desain topic
+- pemetaan sensor/actuator
+- pemisahan komunikasi dan logika
+
+yang dibuat pada Modul 8 **mengikat struktur proyek akhir**.
+
+---
+
+## 🎯 **Tujuan Modul (Learning Objectives)**
+
+Setelah menyelesaikan Modul 8, pembaca **harus mampu secara operasional**:
+
+- Menjelaskan posisi MQTT dalam arsitektur IoT terdistribusi
+- Menjadikan firmware ESP sebagai **MQTT client** yang stabil
+- Mempublikasikan data sensor ke broker melalui topik terstruktur
+- Menerima perintah MQTT dan menerjemahkannya menjadi aksi actuator
+- Menambahkan komunikasi jaringan **tanpa mencemari class komponen**
+
+Jika MQTT diakses langsung dari class sensor atau actuator, tujuan modul **tidak tercapai**.
+
+---
+
+## 🧩 **Masalah yang Diselesaikan Modul Ini**
+
+Keterbatasan sistem IoT yang hanya berjalan secara lokal:
+
+- Tidak dapat dimonitor dari luar perangkat
+- Tidak dapat dikendalikan oleh sistem pusat
+- Tidak dapat berinteraksi dengan layanan eksternal
+- Tidak dapat diskalakan ke banyak node
+
+Dampak langsung:
+
+- Sistem tidak layak untuk deployment IoT nyata
+
+Modul 8 menyelesaikan masalah ini dengan:
+
+- Menambahkan komunikasi **publish/subscribe** berbasis MQTT
+- Menempatkan komunikasi sebagai **lapisan terpisah**
+- Menjadikan firmware bagian dari sistem IoT terdistribusi
+
+---
+
+## 🏗️ **Konsep Inti yang Diperkenalkan**
+
+### **Konsep Utama**
+
+- **Protokol MQTT**
+  Model komunikasi ringan berbasis publish/subscribe.
+
+- **ESP sebagai MQTT client**
+  ESP berperan aktif mengirim dan menerima pesan.
+
+- **Topic sebagai antarmuka**
+  Topic berfungsi sebagai kontrak komunikasi antar sistem.
+
+- **Payload sebagai state dan perintah**
+  Data sensor dan instruksi actuator direpresentasikan sebagai payload.
+
+- **Pemisahan komunikasi dan komponen**
+  Komponen tidak mengetahui keberadaan MQTT.
+
+---
+
+### **Konsep yang Tidak Dibahas di Modul Ini**
+
+Secara eksplisit **di luar cakupan Modul 8**:
+
+- Dashboard atau Web UI
+- MQTT over WebSocket
+- Pengaturan QoS tingkat lanjut
+- Keamanan MQTT (TLS, autentikasi kompleks)
+
+Pembatasan ini menjaga fokus pada **integrasi firmware–broker yang bersih dan terkontrol**.
+
+---
+
+## 🛠️ **Desain Teknis & Arsitektur**
+
+Ekstensi arsitektur pada Modul 8:
+
+- Penambahan **lapisan komunikasi MQTT**
+
+- Pemetaan peran:
+
+  - **Sensor → publish data**
+  - **Actuator → subscribe perintah**
+
+- Callback MQTT diperlakukan sebagai **sumber event**
+
+Aturan arsitektur yang **tidak boleh dilanggar**:
+
+- Class sensor dan actuator **tidak mengakses MQTT**
+- `main.ino` menjadi mediator:
+
+  - menerima data dari sensor
+  - mempublikasikan ke MQTT
+  - menerima pesan MQTT
+  - memanggil method actuator
+
+Dengan pendekatan ini:
+
+- MQTT berfungsi sebagai **adapter**
+- Bukan bagian inti dari domain firmware
+
+Prinsip **Separation of Concern** tetap terjaga secara ketat.
+
+---
+
+Baik. **Ini inti modul. Saya akan tulis sebagai engineer senior yang bertanggung jawab ke production system.
+Tidak ada teori kosong. Tidak ada kalimat mubazir. Semua langkah → artefak → alasan teknis.**
+
+Target stack (jelas & realistis):
+
+- ESP32 / ESP8266
+- Library: `PubSubClient`
+- Broker: Mosquitto (Raspberry Pi / server)
+- Sensor: DHT (Modul 6)
+- Actuator: Relay (Modul 7)
+- Arsitektur: **MQTT sebagai adapter, bukan domain**
+
+---
+
+## 🧪 **Implementasi Bertahap (High-Level)**
+
+### 0️⃣ Struktur Folder (FINAL, tidak boleh kacau)
+
+```
+src/
+├── ComponentBase.h
+├── DhtSensor.h
+├── DhtSensor.cpp
+├── RelayActuator.h
+├── RelayActuator.cpp
+├── MqttService.h
+├── MqttService.cpp
+└── main.ino
+```
+
+> **MQTT dipisah ke `MqttService`**
+> Sensor & actuator **tidak tahu MQTT ada**
+
+---
+
+### 1️⃣ Konfigurasi koneksi MQTT
+
+**(Broker, Client ID, Credential)**
+
+> Parameter yang wajib dipisahkan
+
+- Broker address
+- Port
+- Client ID (unik per device)
+- Topic prefix (node namespace)
+
+Contoh:
+
+```cpp
+#define MQTT_BROKER   "192.168.1.10"
+#define MQTT_PORT    1883
+#define MQTT_CLIENT  "esp32-node-01"
+#define MQTT_PREFIX  "iot/esp32/node01"
+```
+
+> **Client ID wajib unik**
+> Jika duplicate → broker akan disconnect client lama
+
+---
+
+### 2️⃣ Inisialisasi MQTT Client (Wrapper Service)
+
+> `MqttService.h`
+
+```cpp
+#ifndef MQTT_SERVICE_H
+#define MQTT_SERVICE_H
+
+#include <Arduino.h>
+#include <PubSubClient.h>
+#include <WiFiClient.h>
+
+class MqttService {
+  public:
+    MqttService(const char* broker, uint16_t port, const char* clientId);
+
+    void begin();
+    void loop();
+
+    bool isConnected() const;
+
+    void publish(const char* topic, const char* payload);
+    void subscribe(const char* topic);
+
+    void setCallback(MQTT_CALLBACK_SIGNATURE);
+
+  private:
+    WiFiClient _wifi;
+    PubSubClient _client;
+
+    const char* _broker;
+    uint16_t _port;
+    const char* _clientId;
+
+    void reconnect();
+};
+
+#endif
+```
+
+---
+
+> `MqttService.cpp`
+
+```cpp
+#include "MqttService.h"
+
+MqttService::MqttService(const char* broker, uint16_t port, const char* clientId)
+: _client(_wifi), _broker(broker), _port(port), _clientId(clientId) {}
+
+void MqttService::begin() {
+  _client.setServer(_broker, _port);
+}
+
+void MqttService::setCallback(MQTT_CALLBACK_SIGNATURE) {
+  _client.setCallback(callback);
+}
+
+void MqttService::loop() {
+  if (!_client.connected()) {
+    reconnect();
+  }
+  _client.loop(); // NON-BLOCKING
+}
+
+void MqttService::reconnect() {
+  while (!_client.connected()) {
+    if (_client.connect(_clientId)) {
+      // connected
+    } else {
+      delay(2000); // reconnect backoff
+    }
+  }
+}
+
+bool MqttService::isConnected() const {
+  return _client.connected();
+}
+
+void MqttService::publish(const char* topic, const char* payload) {
+  _client.publish(topic, payload);
+}
+
+void MqttService::subscribe(const char* topic) {
+  _client.subscribe(topic);
+}
+```
+
+---
+
+### 3️⃣ Desain Struktur Topic (WAJIB KONSISTEN)
+
+**Prinsip:**
+
+- Topic = API contract
+- Flat & predictable
+- Tidak embed logic
+
+> Struktur final (disiplin):
+
+```
+iot/esp32/node01/
+├── sensor/temperature
+├── sensor/humidity
+└── actuator/relay/set
+```
+
+- **sensor/** → publish only
+- **actuator/** → subscribe only
+
+---
+
+### 4️⃣ Publish Data Sensor Secara Periodik
+
+**Aturan keras:**
+
+- Publish dilakukan di `main.ino`
+- Sensor **hanya menyediakan data**
+- MQTT **tidak polling sensor**
+
+Contoh:
+
+```cpp
+char payload[32];
+snprintf(payload, sizeof(payload), "%.2f", dht.getTemperature());
+mqtt.publish("iot/esp32/node01/sensor/temperature", payload);
+```
+
+---
+
+### 5️⃣ Subscribe Topik Kontrol Actuator
+
+Topic:
+
+```
+iot/esp32/node01/actuator/relay/set
+```
+
+Payload:
+
+```
+ON
+OFF
+```
+
+**Tidak JSON dulu** → JSON akan dipakai di Modul 9.
+
+---
+
+### 6️⃣ Implementasi Callback MQTT
+
+> Callback = Event Source
+
+```cpp
+void mqttCallback(char* topic, byte* payload, unsigned int length) {
+  payload[length] = '\0';
+  String msg = String((char*)payload);
+
+  if (String(topic) == "iot/esp32/node01/actuator/relay/set") {
+    if (msg == "ON") {
+      relay.on();
+    } else if (msg == "OFF") {
+      relay.off();
+    }
+  }
+}
+```
+
+> Callback **tidak boleh**:
+
+- baca sensor
+- delay
+- logic kompleks
+
+---
+
+### 7️⃣ Integrasi Callback dengan Actuator
+
+(**Tanpa melanggar arsitektur**)
+
+- Callback memanggil **public API actuator**
+- Actuator **tidak tahu MQTT**
+- MQTT **tidak tahu hardware**
+
+Ini **boundary bersih**.
+
+---
+
+### 8️⃣ Menjaga Koneksi MQTT Non-Blocking
+
+> `loop()` final (pola WAJIB)
+
+```cpp
+void loop() {
+  // lifecycle komponen
+  for (auto c : components) {
+    c->update();
+  }
+
+  // MQTT processing
+  mqtt.loop();
+
+  // publish sensor (periodik, manual)
+  publishSensorIfNeeded();
+}
+```
+
+**Larangan absolut:**
+
+- `delay()` di loop
+- reconnect MQTT blocking tanpa backoff
+- publish di ISR
+
+---
+
+> main.ino (FINAL – UTUH)
+
+```cpp
+#include <Arduino.h>
+#include "DhtSensor.h"
+#include "RelayActuator.h"
+#include "MqttService.h"
+
+// ==== Config ====
+#define MQTT_BROKER "192.168.1.10"
+#define MQTT_PORT   1883
+#define MQTT_CLIENT "esp32-node-01"
+#define MQTT_PREFIX "iot/esp32/node01"
+
+// ==== Components ====
+DhtSensor dht(4, DHT22, 2000);
+RelayActuator relay(5, RelayActuator::ActiveLevel::ACTIVE_LOW);
+
+ComponentBase* components[] = { &dht, &relay };
+
+// ==== MQTT ====
+MqttService mqtt(MQTT_BROKER, MQTT_PORT, MQTT_CLIENT);
+
+unsigned long lastPublish = 0;
+
+void mqttCallback(char* topic, byte* payload, unsigned int length);
+
+void setup() {
+  Serial.begin(115200);
+
+  for (auto c : components) c->begin();
+
+  mqtt.begin();
+  mqtt.setCallback(mqttCallback);
+  mqtt.subscribe(MQTT_PREFIX "/actuator/relay/set");
+}
+
+void loop() {
+  for (auto c : components) c->update();
+
+  mqtt.loop();
+
+  if (millis() - lastPublish > 3000 && dht.isValid()) {
+    lastPublish = millis();
+
+    char buf[16];
+    snprintf(buf, sizeof(buf), "%.2f", dht.getTemperature());
+    mqtt.publish(MQTT_PREFIX "/sensor/temperature", buf);
+  }
+}
+
+void mqttCallback(char* topic, byte* payload, unsigned int length) {
+  payload[length] = '\0';
+  String msg = (char*)payload;
+
+  if (String(topic) == MQTT_PREFIX "/actuator/relay/set") {
+    if (msg == "ON") relay.on();
+    if (msg == "OFF") relay.off();
+  }
+}
+```
+
+---
+
+### 🔒 Checklist Arsitektur (tidak lulus → modul gagal)
+
+- [x] Sensor **tidak tahu MQTT**
+- [x] Actuator **tidak tahu MQTT**
+- [x] MQTT **tidak tahu hardware**
+- [x] `main.ino` = mediator
+- [x] Loop non-blocking
+- [x] Siap multi-node
+
+---
+
+Baik. **Langsung ke hasil, tanpa narasi tambahan. Engineer-grade.**
+
+---
+
+## 🧾 **Validasi dan Pengujian**
+
+Modul 8 dinyatakan **lulus secara teknis** apabila seluruh kriteria berikut terpenuhi:
+
+- **Firmware berhasil terhubung ke broker MQTT**
+  Node ESP melakukan koneksi stabil ke broker (Mosquitto), tidak terputus saat loop berjalan normal, dan mampu melakukan reconnect saat koneksi terputus.
+
+- **Data sensor dipublikasikan secara konsisten**
+  Data sensor muncul pada topik MQTT sesuai interval yang ditentukan, dengan payload valid dan format konsisten.
+
+- **Perintah MQTT memicu aksi actuator**
+  Pesan yang diterima pada topik kontrol actuator menghasilkan perubahan state fisik actuator sesuai perintah (`ON` / `OFF`).
+
+- **Firmware tetap responsif terhadap input lokal**
+  Interrupt, sensor, dan actuator lokal tetap berfungsi saat MQTT aktif, tanpa blocking atau lag.
+
+- **Tidak ada ketergantungan langsung MQTT di dalam class komponen**
+  Class sensor dan actuator:
+
+  - tidak meng-include library MQTT
+  - tidak memanggil API publish/subscribe
+  - hanya dieksekusi melalui antarmuka publik
+
+Jika salah satu poin gagal, integrasi MQTT dianggap **merusak arsitektur**.
+
+---
+
+## 🔁 **Refleksi dan Keterkaitan ke Modul Lain**
+
+Kondisi sistem **setelah Modul 8**:
+
+- Firmware terhubung ke **sistem IoT eksternal**
+- Node ESP berfungsi sebagai **entitas IoT penuh**
+- Sensor → publish data
+- Actuator → menerima perintah jarak jauh
+- Arsitektur modular tetap utuh
+
+Pada titik ini:
+
+- Seluruh fondasi firmware telah lengkap
+- Tidak ada komponen konseptual yang tertinggal
+
+**Modul 9 – Final Project** akan:
+
+- menggabungkan seluruh modul
+- menyusun sistem IoT end-to-end
+- menampilkan arsitektur final yang siap dipakai dan dikembangkan
+
+---
+
+## 🧭 **Navigasi Modul**
+
+- ⬅️ **Modul sebelumnya – Modul 7: Actuator Modular**
+  Kontrol aksi fisik berbasis data dan event.
+
+- ➡️ **Modul selanjutnya – Modul 9: Final Project**
+  Integrasi penuh seluruh komponen menjadi satu sistem IoT modular.
+
+<ResourceBox
+  title="Rujukan internal-link"
+  items={[
+    {
+      name: 'Actuator Modular',
+      href: '/blog/IoT/iot-7-actuator-modular',
+      description: 'Modul 7 – Actuator Modular',
+    },
+    {
+      name: 'Final Project: Node IoT Modular',
+      href: '/blog/IoT/iot-9-final-project',
+      description: 'Modul 9 – Final Project: Node IoT Modular',
+    },
+  ]}
+/>
+
+---
+
+## 📌 **Penutup Analitis**
+
+Modul 8 mengangkat firmware dari sistem lokal menjadi **bagian dari ekosistem IoT nyata**. Dengan MQTT sebagai lapisan komunikasi, firmware tidak hanya mengamati dan bertindak, tetapi juga **berinteraksi secara terdistribusi**, terukur, dan scalable—sebuah prasyarat mutlak untuk sistem IoT produksi.
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

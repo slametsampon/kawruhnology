@@ -1,0 +1,529 @@
+---
+title: Object dari JSON
+date: '2026-02-08'
+tags:
+  [
+    'object-from-json',
+    'runtime-configuration',
+    'data-driven-firmware',
+    'arduinojson',
+    'iot-scalable-architecture',
+  ]
+draft: false
+summary: Modul 3 memperkenalkan pergeseran fundamental dari firmware ESP yang bersifat statis menuju firmware yang data-driven dan dikonfigurasi saat runtime. Dengan memanfaatkan JSON sebagai sumber konfigurasi, object firmware—seperti LED—tidak lagi ditentukan secara hard-coded di dalam kode, melainkan dibuat berdasarkan data. Modul ini membangun langsung di atas pola class modular dari Modul 2 dan menambahkan lapisan konfigurasi yang terpisah dari implementasi. Hasilnya adalah firmware yang lebih fleksibel, mudah digunakan ulang, dan siap diskalakan untuk banyak node IoT dengan konfigurasi berbeda tanpa perlu recompile kode.
+---
+
+⚙️ **_Modul 3 – Object dari JSON_**
+
+---
+
+- [🧭 **Prolog Modul: Posisi dan Peran Modul 3**](#-prolog-modul-posisi-dan-peran-modul-3)
+- [🧠 **Konteks Pengetahuan: Relasi Antar Modul**](#-konteks-pengetahuan-relasi-antar-modul)
+  - [🔙 **Prasyarat Konseptual**](#-prasyarat-konseptual)
+  - [🔜 **Digunakan Kembali di Modul Selanjutnya**](#-digunakan-kembali-di-modul-selanjutnya)
+- [🎯 **Tujuan Modul (Learning Objectives)**](#-tujuan-modul-learning-objectives)
+- [🧩 **Masalah yang Diselesaikan Modul Ini**](#-masalah-yang-diselesaikan-modul-ini)
+- [🏗️ **Konsep Inti yang Diperkenalkan**](#️-konsep-inti-yang-diperkenalkan)
+  - [**Konsep Utama**](#konsep-utama)
+  - [**Konsep yang Tidak Dibahas di Modul Ini**](#konsep-yang-tidak-dibahas-di-modul-ini)
+- [🛠️ **Desain Teknis \& Arsitektur**](#️-desain-teknis--arsitektur)
+  - [**1. Lapisan Konfigurasi**](#1-lapisan-konfigurasi)
+  - [**2. Lapisan Implementasi**](#2-lapisan-implementasi)
+  - [**Peran `main.ino` dalam Arsitektur**](#peran-mainino-dalam-arsitektur)
+  - [**Alur Eksekusi Firmware (Ringkas)**](#alur-eksekusi-firmware-ringkas)
+  - [**Implikasi Desain**](#implikasi-desain)
+- [🧪 **Implementasi Bertahap (High-Level)**](#-implementasi-bertahap-high-level)
+  - [**1. Menentukan Struktur JSON Konfigurasi**](#1-menentukan-struktur-json-konfigurasi)
+  - [**2. Membaca dan Mem-parsing JSON**](#2-membaca-dan-mem-parsing-json)
+  - [**3. Mengekstrak Parameter Konfigurasi**](#3-mengekstrak-parameter-konfigurasi)
+  - [**4. Membuat Object LED Berdasarkan Data JSON**](#4-membuat-object-led-berdasarkan-data-json)
+  - [**5. Mengelola Object di `main.ino`**](#5-mengelola-object-di-mainino)
+  - [**6. Firmware Berjalan dengan Konfigurasi Runtime**](#6-firmware-berjalan-dengan-konfigurasi-runtime)
+- [✅ **FINAL `main.ino` (UTUH, SIAP COPAS)**](#-final-mainino-utuh-siap-copas)
+  - [🧾 **Validasi Teknis (WAJIB LULUS)**](#-validasi-teknis-wajib-lulus)
+- [🧾 **Validasi dan Pengujian**](#-validasi-dan-pengujian)
+- [🔁 **Refleksi dan Keterkaitan ke Modul Lain**](#-refleksi-dan-keterkaitan-ke-modul-lain)
+- [🧭 **Navigasi Modul**](#-navigasi-modul)
+- [📌 **Penutup Analitis**](#-penutup-analitis)
+
+---
+
+## 🧭 **Prolog Modul: Posisi dan Peran Modul 3**
+
+Modul 3 menandai **titik transisi arsitektural** dalam rangkaian pengembangan firmware ini. Pada tahap ini, firmware mulai bergerak dari pendekatan **statis (hard-coded)** menuju pendekatan **dinamis berbasis konfigurasi runtime**, sebuah karakteristik penting dalam sistem IoT yang skalabel dan dapat digunakan ulang.
+
+Modul ini dibangun langsung di atas fondasi Modul 2, di mana LED telah direpresentasikan sebagai komponen modular berbasis class. Pada pendekatan tersebut, seluruh object firmware—termasuk parameter seperti pin dan status awal—ditentukan secara eksplisit di dalam kode sumber. Pendekatan ini valid untuk pembelajaran dasar, namun mulai menunjukkan keterbatasan ketika firmware harus digunakan pada perangkat dengan konfigurasi yang bervariasi.
+
+Modul 3 memperluas desain tersebut dengan memperkenalkan **inisialisasi object berbasis data konfigurasi (JSON)**. Dengan memindahkan parameter konfigurasi ke dalam data, firmware tidak lagi bergantung pada nilai hard-coded dan dapat beradaptasi terhadap perubahan tanpa memerlukan modifikasi maupun proses kompilasi ulang.
+
+Dengan demikian, Modul 3 berfungsi sebagai **fondasi utama firmware yang dapat dikonfigurasi**—membuka jalan menuju arsitektur yang lebih fleksibel, reusable, dan siap diskalakan untuk skenario IoT multi-node pada modul-modul berikutnya.
+
+---
+
+## 🧠 **Konteks Pengetahuan: Relasi Antar Modul**
+
+Modul 3 berada pada posisi strategis sebagai **jembatan konseptual** antara firmware modular statis dan firmware yang sepenuhnya dikonfigurasi oleh data. Pemahaman konteks antar modul diperlukan agar pembaca melihat evolusi arsitektur firmware secara berurutan dan terencana.
+
+### 🔙 **Prasyarat Konseptual**
+
+Sebelum memasuki Modul 3, pembaca harus telah menyelesaikan:
+
+- **Modul 2 – LED Modular dengan Class**
+  Pembaca diharapkan memahami:
+
+  - Struktur class `LedController`
+  - Peran constructor dalam inisialisasi object
+  - Pengelolaan state internal object
+  - Pemisahan logika hardware dari `main.ino`
+
+Tanpa pemahaman ini, konsep pembuatan object berbasis konfigurasi akan sulit dipahami secara utuh.
+
+### 🔜 **Digunakan Kembali di Modul Selanjutnya**
+
+Pendekatan **object-from-configuration** yang diperkenalkan pada Modul 3 tidak bersifat sementara. Pola ini akan digunakan kembali dan diperluas pada beberapa modul lanjutan, antara lain:
+
+- **Modul 4 – ComponentBase**
+  Menyatukan berbagai komponen firmware di bawah satu struktur dasar yang seragam.
+
+- **Modul 6 – Sensor Modular**
+  Menggunakan konfigurasi untuk membuat object sensor secara dinamis.
+
+- **Modul 7 – Actuator Modular**
+  Menerapkan pendekatan yang sama pada berbagai jenis actuator dengan parameter berbeda.
+
+- **Modul 8 – MQTT Integration**
+  Mengaitkan konfigurasi komponen dengan komunikasi dan kontrol berbasis jaringan.
+
+Dengan demikian, Modul 3 berfungsi sebagai **fondasi pola konfigurasi runtime**, yang akan menjadi tulang punggung arsitektur firmware pada modul-modul berikutnya.
+
+<ResourceBox
+  title="Rujukan internal-link"
+  items={[
+    {
+      name: 'Kerangka Pengembangan Firmware IoT Modular',
+      href: '/blog/IoT/iot-0-panduan',
+      description:
+        'Modul 0 – Kerangka Pengembangan Firmware IoT Modular Berbasis OOP untuk ESP8266/ESP32',
+    },
+    {
+      name: 'ComponentBase',
+      href: '/blog/IoT/iot-4-component-base',
+      description: 'Modul 4 – ComponentBase',
+    },
+    {
+      name: 'Sensor Modular',
+      href: '/blog/IoT/iot-6-sensor-modular',
+      description: 'Modul 6 – Sensor Modular',
+    },
+    {
+      name: 'Actuator Modular',
+      href: '/blog/IoT/iot-7-actuator-modular',
+      description: 'Modul 7 – Actuator Modular',
+    },
+    {
+      name: 'MQTT Integration',
+      href: '/blog/IoT/iot-8-mqtt-integration',
+      description: 'Modul 8 – MQTT Integration',
+    },
+  ]}
+/>
+
+---
+
+## 🎯 **Tujuan Modul (Learning Objectives)**
+
+Setelah menyelesaikan Modul 3, pembaca diharapkan memiliki pemahaman dan kemampuan teknis yang jelas terkait penggunaan konfigurasi runtime dalam firmware ESP. Tujuan modul ini tidak berhenti pada konsep, tetapi menekankan pada **kemampuan implementatif** yang dapat diterapkan langsung.
+
+Secara spesifik, pembaca akan mampu:
+
+- **Memahami keterbatasan konfigurasi statis dalam firmware ESP**
+  Mengidentifikasi masalah yang muncul ketika parameter perangkat keras dan perilaku firmware ditentukan secara hard-coded.
+
+- **Menjelaskan konsep inisialisasi object secara runtime**
+  Memahami perbedaan antara pembuatan object saat kompilasi dan pembuatan object berdasarkan data yang tersedia saat firmware berjalan.
+
+- **Menggunakan JSON sebagai sumber konfigurasi firmware**
+  Memanfaatkan struktur data JSON untuk menyimpan parameter konfigurasi seperti pin, nama komponen, dan status awal.
+
+- **Membuat object firmware berdasarkan data konfigurasi**
+  Menghubungkan data JSON dengan constructor class untuk menghasilkan object yang dikonfigurasi secara dinamis.
+
+- **Memisahkan logika konfigurasi dari logika implementasi class**
+  Menjaga class firmware tetap generik dan reusable, sementara detail konfigurasi dikelola di lapisan terpisah.
+
+Tujuan-tujuan ini memastikan bahwa pembaca tidak hanya memahami **apa** yang berubah dari Modul 2, tetapi juga **mengapa dan bagaimana** perubahan tersebut diterapkan dalam arsitektur firmware.
+
+---
+
+## 🧩 **Masalah yang Diselesaikan Modul Ini**
+
+Pendekatan konfigurasi statis yang digunakan pada Modul 2 merupakan langkah awal yang tepat untuk memahami desain class dan modularitas firmware. Namun, pendekatan tersebut memiliki keterbatasan mendasar ketika firmware mulai diarahkan untuk penggunaan yang lebih luas.
+
+Beberapa permasalahan utama dari konfigurasi statis antara lain:
+
+- **Setiap perubahan pin atau perilaku membutuhkan perubahan kode**
+  Perubahan sederhana pada konfigurasi perangkat keras mengharuskan modifikasi source code dan proses kompilasi ulang firmware.
+
+- **Firmware sulit digunakan ulang untuk perangkat dengan konfigurasi berbeda**
+  Firmware yang sama tidak dapat langsung digunakan pada board atau node dengan susunan pin yang berbeda tanpa penyesuaian kode.
+
+- **Tidak memungkinkan firmware generik untuk banyak node**
+  Pendekatan hard-coded menghambat pembuatan firmware tunggal yang dapat diterapkan ke banyak perangkat dengan konfigurasi unik.
+
+Modul 3 menyelesaikan permasalahan tersebut dengan memperkenalkan pendekatan konfigurasi berbasis data, yaitu:
+
+- **Memindahkan parameter konfigurasi ke dalam data JSON**
+  Nilai seperti pin, nama komponen, dan status awal tidak lagi ditentukan di dalam kode.
+
+- **Menjadikan firmware lebih fleksibel dan adaptif**
+  Perubahan konfigurasi dapat dilakukan tanpa menyentuh implementasi class firmware.
+
+- **Mempersiapkan firmware untuk skenario IoT multi-node**
+  Firmware yang sama dapat dijalankan pada banyak perangkat dengan konfigurasi berbeda, cukup dengan mengganti data konfigurasi.
+
+Dengan pendekatan ini, firmware mulai berevolusi dari sekadar program statis menjadi **sistem yang dapat dikonfigurasi**.
+
+---
+
+## 🏗️ **Konsep Inti yang Diperkenalkan**
+
+Modul 3 secara khusus memperkenalkan konsep-konsep yang menjadi dasar firmware **data-driven**. Fokus utama modul ini adalah bagaimana data konfigurasi memengaruhi proses pembuatan dan pengelolaan object, tanpa mengubah implementasi class itu sendiri.
+
+### **Konsep Utama**
+
+Beberapa konsep inti yang diperkenalkan dan dipraktikkan pada modul ini meliputi:
+
+- **Konfigurasi firmware berbasis JSON**
+  JSON digunakan sebagai format data untuk menyimpan parameter konfigurasi firmware, seperti pin, nama komponen, dan status awal, secara terpisah dari kode.
+
+- **Inisialisasi object secara runtime**
+  Object firmware tidak lagi dibuat berdasarkan nilai yang ditentukan saat kompilasi, melainkan berdasarkan data yang tersedia ketika firmware dijalankan.
+
+- **Pemisahan konfigurasi dan implementasi**
+  Class firmware tetap fokus pada perilaku dan logika perangkat, sementara konfigurasi dikelola di lapisan terpisah sebagai data.
+
+- **Factory-style object creation (konsep dasar)**
+  Proses pembuatan object dilakukan melalui mekanisme terpusat yang membaca konfigurasi dan menghasilkan object sesuai data, tanpa logika pembuatan tersebar di `main.ino`.
+
+Konsep-konsep ini membentuk fondasi bagi arsitektur firmware yang fleksibel dan mudah dikembangkan.
+
+### **Konsep yang Tidak Dibahas di Modul Ini**
+
+Untuk menjaga ruang lingkup tetap terkendali dan fokus, Modul 3 secara eksplisit **tidak membahas** topik-topik berikut:
+
+- Inheritance dan polymorphism
+- Interrupt dan concurrency
+- Sensor dan actuator dengan kompleksitas tinggi
+- MQTT dan komunikasi jaringan
+
+Pembatasan ini bertujuan agar perhatian pembaca tetap tertuju pada **konsep konfigurasi runtime**, tanpa terdistraksi oleh kompleksitas sistem yang akan dibahas secara bertahap pada modul-modul selanjutnya.
+
+---
+
+## 🛠️ **Desain Teknis & Arsitektur**
+
+Pada Modul 3, arsitektur firmware **secara eksplisit dipisahkan menjadi dua lapisan eksekusi yang berbeda**, dengan tanggung jawab yang tidak saling tumpang tindih. Pemisahan ini bersifat **struktural dan operasional**, bukan sekadar konseptual.
+
+---
+
+### **1. Lapisan Konfigurasi**
+
+Lapisan ini direpresentasikan oleh **data JSON** yang berisi parameter konfigurasi firmware.
+
+Karakteristik lapisan konfigurasi:
+
+- Berisi **data murni**, seperti:
+
+  - nomor pin
+  - nama komponen
+  - status awal
+
+- Tidak mengandung:
+
+  - pemanggilan fungsi
+  - logika kontrol
+  - referensi ke API hardware
+
+JSON diperlakukan sebagai **sumber kebenaran konfigurasi**, bukan sebagai bagian dari logika firmware.
+
+---
+
+### **2. Lapisan Implementasi**
+
+Lapisan ini berisi **class firmware**, seperti `LedController`, yang:
+
+- Menerima parameter melalui constructor
+- Mengenkapsulasi seluruh logika perangkat
+- Mengelola state dan interaksi hardware
+
+Class **tidak mengetahui**:
+
+- dari mana data konfigurasi berasal
+- apakah parameter berasal dari JSON, hard-coded, atau sumber lain
+
+Dengan demikian, implementasi class tetap **stabil dan reusable**.
+
+---
+
+### **Peran `main.ino` dalam Arsitektur**
+
+Pada Modul 3, `main.ino` memiliki peran yang **spesifik dan terbatas**:
+
+- Membaca dan mem-parsing data JSON
+- Mengekstrak parameter konfigurasi
+- Membuat object firmware berdasarkan data tersebut
+- Menyimpan dan mengelola lifecycle object
+
+`main.ino` **tidak berisi**:
+
+- logika perangkat keras
+- detail implementasi class
+- konfigurasi hard-coded
+
+---
+
+### **Alur Eksekusi Firmware (Ringkas)**
+
+1. Firmware start
+2. JSON konfigurasi dibaca
+3. Parameter diekstrak
+4. Object dibuat berdasarkan data
+5. Loop berjalan menggunakan object hasil konfigurasi
+
+Alur ini menandai pergeseran firmware dari **code-driven** menjadi **data-driven**.
+
+---
+
+### **Implikasi Desain**
+
+Dengan arsitektur ini:
+
+- Perubahan konfigurasi **tidak memerlukan perubahan kode**
+- Firmware yang sama dapat dijalankan pada banyak perangkat
+- Penambahan komponen cukup dengan menambah data konfigurasi
+
+Desain ini menjadi **fondasi teknis** untuk modul selanjutnya, di mana jumlah komponen dan kompleksitas sistem meningkat.
+
+---
+
+## 🧪 **Implementasi Bertahap (High-Level)**
+
+Sub-bab ini menunjukkan **implementasi runtime configuration secara lengkap**, dari JSON hingga firmware berjalan. Seluruh potongan kode di bawah membentuk **satu firmware utuh**.
+
+---
+
+### **1. Menentukan Struktur JSON Konfigurasi**
+
+Konfigurasi didefinisikan sebagai **data murni**.
+
+```json
+{
+  "led": {
+    "pin": 2,
+    "initialState": false
+  }
+}
+```
+
+---
+
+### **2. Membaca dan Mem-parsing JSON**
+
+Library yang digunakan:
+
+- `ArduinoJson`
+- `LedController` (dari Modul 2)
+
+---
+
+### **3. Mengekstrak Parameter Konfigurasi**
+
+Parameter diambil **sebelum object dibuat**.
+
+---
+
+### **4. Membuat Object LED Berdasarkan Data JSON**
+
+Object LED dibuat **berdasarkan data**, bukan nilai hard-coded.
+
+---
+
+### **5. Mengelola Object di `main.ino`**
+
+`main.ino` bertugas:
+
+- parsing konfigurasi
+- membuat object
+- menjalankan aplikasi
+
+---
+
+### **6. Firmware Berjalan dengan Konfigurasi Runtime**
+
+Perubahan JSON → perubahan perilaku
+Tanpa mengubah class
+Tanpa menyentuh logika hardware
+
+---
+
+## ✅ **FINAL `main.ino` (UTUH, SIAP COPAS)**
+
+```cpp
+#include <Arduino.h>
+#include <ArduinoJson.h>
+#include "LedController.h"
+
+/*
+ * JSON konfigurasi
+ * (pada tahap ini masih hard-coded string,
+ *  sumber eksternal akan dibahas modul lanjutan)
+ */
+const char* configJson = R"rawliteral(
+{
+  "led": {
+    "pin": 2,
+    "initialState": false
+  }
+}
+)rawliteral";
+
+// Pointer object hasil konfigurasi
+LedController* led = nullptr;
+
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+
+  // Parse JSON
+  StaticJsonDocument<256> doc;
+  DeserializationError error = deserializeJson(doc, configJson);
+
+  if (error) {
+    Serial.println("ERROR: JSON parse failed");
+    while (true); // stop firmware
+  }
+
+  // Extract configuration
+  uint8_t ledPin = doc["led"]["pin"];
+  bool ledInitialState = doc["led"]["initialState"];
+
+  // Create object from configuration
+  led = new LedController(ledPin);
+
+  // Apply initial state
+  if (ledInitialState) {
+    led->on();
+  } else {
+    led->off();
+  }
+
+  Serial.println("LED object created from JSON");
+}
+
+void loop() {
+  if (led != nullptr) {
+    led->toggle();
+    delay(1000);
+  }
+}
+```
+
+---
+
+### 🧾 **Validasi Teknis (WAJIB LULUS)**
+
+- [ ] LED berkedip tiap 1 detik
+- [ ] Tidak ada `pinMode` di `main.ino`
+- [ ] Tidak ada `digitalWrite` di `main.ino`
+- [ ] Mengubah `pin` di JSON → pindah GPIO
+- [ ] Mengubah `initialState` → kondisi awal berubah
+- [ ] Class `LedController` **tidak diubah**
+
+Jika salah satu gagal → **arsitektur salah**.
+
+---
+
+## 🧾 **Validasi dan Pengujian**
+
+Validasi pada Modul 3 difokuskan pada **perilaku runtime firmware**, bukan pada struktur kode semata. Pengujian dilakukan dengan memodifikasi **data konfigurasi**, bukan source code.
+
+Keberhasilan Modul 3 dinyatakan tercapai apabila seluruh kriteria berikut terpenuhi:
+
+- **Firmware berjalan menggunakan konfigurasi LED dari JSON**
+  Object LED dibuat berdasarkan data hasil parsing JSON, bukan nilai hard-coded di kode.
+
+- **Perubahan konfigurasi tidak memerlukan perubahan kode**
+  Mengubah nilai `pin` atau `initialState` di JSON mengubah perilaku firmware tanpa modifikasi class maupun `main.ino`.
+
+- **LED merespons sesuai parameter yang ditentukan**
+  GPIO yang dikonfigurasi di JSON benar-benar digunakan, dan kondisi awal LED sesuai dengan data konfigurasi.
+
+- **Serial Monitor menunjukkan proses parsing dan inisialisasi object**
+  Output serial mengonfirmasi bahwa JSON berhasil diparse dan object dibuat saat runtime.
+
+Validasi ini memastikan bahwa firmware **benar-benar telah berpindah dari konfigurasi statis ke konfigurasi dinamis**, bukan sekadar simulasi konseptual.
+
+---
+
+## 🔁 **Refleksi dan Keterkaitan ke Modul Lain**
+
+Pada akhir Modul 3, firmware telah mencapai kemampuan berikut:
+
+- **Object firmware dapat dibuat secara runtime**
+  Pembuatan object tidak lagi bergantung pada nilai yang ditentukan saat kompilasi.
+
+- **Konfigurasi tidak lagi terikat pada kode**
+  Firmware yang sama dapat dijalankan dengan perilaku berbeda hanya dengan mengganti data konfigurasi.
+
+Namun, pada tahap ini setiap object masih:
+
+- Dibuat secara individual
+- Dikelola langsung di `main.ino`
+- Belum memiliki struktur atau kontrak umum antar komponen
+
+Keterbatasan ini **disengaja** dan menjadi alasan langsung diperkenalkannya **Modul 4**, di mana seluruh komponen firmware akan disatukan melalui class dasar **`ComponentBase`** untuk standarisasi lifecycle dan manajemen komponen.
+
+---
+
+## 🧭 **Navigasi Modul**
+
+- ⬅️ **Modul sebelumnya – Modul 2: LED Modular dengan Class**
+  Fokus pada enkapsulasi hardware dan desain class.
+
+- ➡️ **Modul selanjutnya – Modul 4: ComponentBase**
+  Fokus pada penyatuan struktur komponen dan pengelolaan object secara terpusat.
+
+Navigasi ini menegaskan evolusi firmware dari **class → object runtime → sistem komponen**.
+
+<ResourceBox
+  title="Rujukan internal-link"
+  items={[
+    {
+      name: 'LED Modular Dengan Class',
+      href: '/blog/IoT/iot-2-led-modular',
+      description: 'Modul 2 – LED Modular Dengan Class',
+    },
+    {
+      name: 'ComponentBase',
+      href: '/blog/IoT/iot-4-component-base',
+      description: 'Modul 4 – ComponentBase',
+    },
+  ]}
+/>
+
+---
+
+## 📌 **Penutup Analitis**
+
+Modul 3 merupakan **pondasi fleksibilitas firmware**. Dengan memisahkan konfigurasi dari implementasi, firmware tidak lagi bersifat kaku dan spesifik perangkat, melainkan berubah menjadi **sistem yang dikendalikan oleh data**.
+
+Transformasi ini adalah prasyarat mutlak untuk pengembangan IoT skala nyata, di mana satu firmware harus mampu berjalan pada banyak node dengan konfigurasi yang berbeda, tanpa kehilangan keteraturan arsitektur.
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

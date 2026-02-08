@@ -1,0 +1,584 @@
+---
+title: ComponentBase
+date: '2026-02-08'
+tags:
+  [
+    'componentbase',
+    'firmware-architecture',
+    'oop-inheritance',
+    'esp-iot-framework',
+    'scalable-firmware',
+  ]
+draft: false
+summary: Modul 4 memperkenalkan ComponentBase sebagai fondasi arsitektural utama dalam firmware IoT modular berbasis ESP. Setelah firmware mampu membuat object secara runtime (Modul 3), modul ini menyelesaikan masalah fragmentasi dengan menyatukan seluruh komponen di bawah kontrak perilaku yang sama. Melalui penggunaan abstract class dan virtual method seperti begin() dan update(), firmware dapat mengelola berbagai komponen secara seragam tanpa bergantung pada implementasi konkret. Hasilnya adalah arsitektur yang konsisten, scalable, dan siap menangani kompleksitas sensor, actuator, serta komunikasi IoT pada modul-modul lanjutan.
+---
+
+🧱 **_Modul 4 – ComponentBase_**
+
+---
+
+- [🧭 **Prolog Modul: Posisi dan Peran Modul 4**](#-prolog-modul-posisi-dan-peran-modul-4)
+- [🧠 **Konteks Pengetahuan: Relasi Antar Modul**](#-konteks-pengetahuan-relasi-antar-modul)
+  - [🔙 **Prasyarat Konseptual**](#-prasyarat-konseptual)
+  - [🔜 **Digunakan Kembali di Modul Selanjutnya**](#-digunakan-kembali-di-modul-selanjutnya)
+- [🎯 **Tujuan Modul (Learning Objectives)**](#-tujuan-modul-learning-objectives)
+- [🧩 **Masalah yang Diselesaikan Modul Ini**](#-masalah-yang-diselesaikan-modul-ini)
+- [🏗️ **Konsep Inti yang Diperkenalkan**](#️-konsep-inti-yang-diperkenalkan)
+  - [**Konsep Utama**](#konsep-utama)
+  - [**Konsep yang Tidak Dibahas di Modul Ini**](#konsep-yang-tidak-dibahas-di-modul-ini)
+- [🛠️ **Desain Teknis \& Arsitektur**](#️-desain-teknis--arsitektur)
+- [🧪 **Implementasi Bertahap (High-Level)**](#-implementasi-bertahap-high-level)
+  - [**1. Mengidentifikasi Perilaku Umum Seluruh Komponen**](#1-mengidentifikasi-perilaku-umum-seluruh-komponen)
+  - [**2. Mendesain `ComponentBase` sebagai Abstract Class**](#2-mendesain-componentbase-sebagai-abstract-class)
+  - [**3. Mendefinisikan Method Virtual (`begin()`, `update()`)**](#3-mendefinisikan-method-virtual-begin-update)
+  - [**4. Menurunkan Class LED dari `ComponentBase`**](#4-menurunkan-class-led-dari-componentbase)
+  - [**5. Mengelola Komponen melalui Pointer Base Class**](#5-mengelola-komponen-melalui-pointer-base-class)
+  - [**6. Menyederhanakan Logika `main.ino`**](#6-menyederhanakan-logika-mainino)
+  - [🧾 **Checklist Validasi (WAJIB LULUS)**](#-checklist-validasi-wajib-lulus)
+  - [Catatan keras (dan penting)](#catatan-keras-dan-penting)
+- [🧾 **Validasi dan Pengujian**](#-validasi-dan-pengujian)
+  - [**1. Validasi Fungsional Dasar**](#1-validasi-fungsional-dasar)
+  - [**2. Validasi Polimorfisme**](#2-validasi-polimorfisme)
+  - [**3. Validasi Multi-Komponen**](#3-validasi-multi-komponen)
+  - [**4. Validasi Ketergantungan**](#4-validasi-ketergantungan)
+  - [**5. Kriteria Lulus Modul 4**](#5-kriteria-lulus-modul-4)
+- [🔁 **Refleksi dan Keterkaitan ke Modul Lain**](#-refleksi-dan-keterkaitan-ke-modul-lain)
+- [🧭 **Navigasi Modul**](#-navigasi-modul)
+- [📌 **Penutup Analitis**](#-penutup-analitis)
+
+---
+
+## 🧭 **Prolog Modul: Posisi dan Peran Modul 4**
+
+Modul 4 merupakan **tulang punggung arsitektural** dari seluruh rangkaian pengembangan firmware IoT modular berbasis ESP dan OOP. Modul ini ditempatkan secara strategis setelah firmware mampu membuat object secara runtime (Modul 3), namun sebelum sistem diperluas untuk menangani sensor, actuator, dan komunikasi jaringan.
+
+Pada tahap ini, firmware telah memiliki sejumlah object yang berfungsi dengan baik, tetapi masih **berdiri sendiri tanpa struktur pengikat yang seragam**. Setiap komponen memiliki lifecycle dan antarmuka masing-masing, sehingga pengelolaan sistem secara keseluruhan mulai menjadi tidak efisien dan sulit dikembangkan.
+
+Modul 4 menjawab permasalahan tersebut dengan memperkenalkan **`ComponentBase`**, sebuah base class yang mendefinisikan **kontrak perilaku minimum** bagi seluruh komponen firmware. Melalui kontrak ini, setiap komponen memiliki pola lifecycle yang konsisten dan dapat dikelola secara seragam.
+
+Tanpa keberadaan Modul 4, firmware akan berkembang secara ad-hoc dan sulit diskalakan. Oleh karena itu, modul ini menjadi **fondasi struktural wajib** bagi Modul 5 hingga Modul 9, tempat kompleksitas sistem meningkat secara signifikan namun tetap terkendali.
+
+---
+
+## 🧠 **Konteks Pengetahuan: Relasi Antar Modul**
+
+Modul 4 **tidak memperkenalkan fitur baru**, tetapi **menyusun ulang cara firmware dikelola**. Pemahaman dari modul sebelumnya bersifat **wajib**, bukan opsional.
+
+### 🔙 **Prasyarat Konseptual**
+
+- **Modul 2 – LED Modular dengan Class**
+  Wajib memahami:
+
+  - class sebagai abstraksi perangkat keras
+  - constructor sebagai titik inisialisasi
+  - pemisahan logika hardware dari `main.ino`
+
+- **Modul 3 – Object dari JSON**
+  Wajib memahami:
+
+  - object dibuat saat runtime
+  - konfigurasi berasal dari data
+  - `main.ino` berperan sebagai orchestrator sementara
+
+Tanpa dua modul ini, konsep base class **tidak bermakna secara praktis**.
+
+### 🔜 **Digunakan Kembali di Modul Selanjutnya**
+
+`ComponentBase` yang diperkenalkan di Modul 4 akan menjadi **parent class langsung** bagi hampir seluruh komponen firmware pada modul berikutnya:
+
+- **Modul 5 – Interrupt dan Tombol**
+- **Modul 6 – Sensor Modular**
+- **Modul 7 – Actuator Modular**
+- **Modul 8 – MQTT Integration**
+- **Modul 9 – Final Project**
+
+Artinya:
+keputusan desain di Modul 4 **mengikat seluruh arsitektur ke depan**.
+
+<ResourceBox
+  title="Rujukan internal-link"
+  items={[
+    {
+      name: 'Kerangka Pengembangan Firmware IoT Modular',
+      href: '/blog/IoT/iot-0-panduan',
+      description:
+        'Modul 0 – Kerangka Pengembangan Firmware IoT Modular Berbasis OOP untuk ESP8266/ESP32',
+    },
+    {
+      name: 'Interrupt dan Tombol',
+      href: '/blog/IoT/iot-5-interrupt-tombol',
+      description: 'Modul 5 – Interrupt dan Tombol',
+    },
+    {
+      name: 'Sensor Modular',
+      href: '/blog/IoT/iot-6-sensor-modular',
+      description: 'Modul 6 – Sensor Modular',
+    },
+    {
+      name: 'Actuator Modular',
+      href: '/blog/IoT/iot-7-actuator-modular',
+      description: 'Modul 7 – Actuator Modular',
+    },
+    {
+      name: 'MQTT Integration',
+      href: '/blog/IoT/iot-8-mqtt-integration',
+      description: 'Modul 8 – MQTT Integration',
+    },
+    {
+      name: 'Final Project: Node IoT Modular',
+      href: '/blog/IoT/iot-9-final-project',
+      description: 'Modul 9 – Final Project: Node IoT Modular',
+    },
+  ]}
+/>
+
+---
+
+## 🎯 **Tujuan Modul (Learning Objectives)**
+
+Setelah menyelesaikan Modul 4, pembaca **harus mampu melakukan hal-hal berikut secara konkret**:
+
+- Mengidentifikasi **kebutuhan base class** ketika jumlah komponen bertambah
+- Mendesain **abstract class** sebagai fondasi arsitektur firmware
+- Mendefinisikan **kontrak perilaku minimum** (`begin()`, `update()`)
+- Menggunakan inheritance **secara terbatas dan terkontrol**
+- Mengelola berbagai komponen **tanpa mengetahui tipe konkretnya**
+
+Jika tujuan ini tidak tercapai, firmware akan kembali jatuh ke pola ad-hoc.
+
+---
+
+## 🧩 **Masalah yang Diselesaikan Modul Ini**
+
+Setelah Modul 3, firmware memang mampu membuat object secara dinamis, namun masih memiliki **masalah struktural serius**:
+
+- Setiap class memiliki **antarmuka berbeda**
+- Tidak ada cara umum untuk:
+
+  - memulai komponen
+  - memperbarui komponen
+  - mengiterasi komponen
+
+- `main.ino` mulai mengandung:
+
+  - logika spesifik komponen
+  - percabangan berbasis tipe
+
+- Sistem sulit dikembangkan tanpa **menyentuh banyak bagian kode**
+
+Modul 4 menyelesaikan masalah ini dengan pendekatan berikut:
+
+- Mendefinisikan **antarmuka umum** untuk seluruh komponen
+- Menjadikan `main.ino` hanya bergantung pada **base class**
+- Mengubah firmware dari:
+
+  > kumpulan object
+  > menjadi
+  > **sistem komponen**
+
+---
+
+## 🏗️ **Konsep Inti yang Diperkenalkan**
+
+### **Konsep Utama**
+
+Modul ini memperkenalkan konsep **yang langsung berdampak ke struktur kode**:
+
+- **Base class dan inheritance**
+  Digunakan untuk menyatukan antarmuka, bukan untuk pewarisan perilaku kompleks.
+
+- **Abstract class dan virtual method**
+  Digunakan untuk mendefinisikan **kontrak**, bukan implementasi.
+
+- **Kontrak perilaku komponen**
+  Setiap komponen _wajib_ memiliki lifecycle yang sama.
+
+- **Component-based architecture pada firmware**
+  Firmware dikelola sebagai kumpulan komponen dengan antarmuka seragam.
+
+### **Konsep yang Tidak Dibahas di Modul Ini**
+
+Secara eksplisit **tidak dibahas**:
+
+- Interrupt dan ISR
+- Sensor spesifik
+- Actuator spesifik
+- MQTT dan komunikasi jaringan
+
+Pembatasan ini disengaja agar fokus **100% pada arsitektur**, bukan fitur.
+
+---
+
+## 🛠️ **Desain Teknis & Arsitektur**
+
+Setelah Modul 4, firmware diperlakukan sebagai:
+
+- Sekumpulan **komponen dengan antarmuka yang sama**
+- Implementasi internal yang boleh berbeda
+
+Peran **`ComponentBase`**:
+
+- Mendefinisikan **lifecycle komponen**
+- Menentukan **method wajib** yang harus diimplementasikan
+- Menjadi **satu-satunya tipe** yang dikenal oleh `main.ino`
+
+Implikasi langsung:
+
+- `main.ino` **tidak tahu** apakah komponen adalah LED, sensor, atau actuator
+- `main.ino` hanya memanggil method berdasarkan **kontrak yang sama**
+- Penambahan komponen **tidak mengubah struktur utama firmware**
+
+Ini adalah titik di mana firmware **resmi naik kelas secara arsitektural**.
+
+---
+
+## 🧪 **Implementasi Bertahap (High-Level)**
+
+Sub-bab ini menunjukkan **transisi konkret** dari firmware berbasis object bebas (Modul 3) menjadi **firmware berbasis komponen dengan kontrak umum** menggunakan `ComponentBase`.
+
+---
+
+### **1. Mengidentifikasi Perilaku Umum Seluruh Komponen**
+
+Perilaku minimum yang **wajib dimiliki semua komponen firmware**:
+
+- Inisialisasi saat startup
+- Update berkala di `loop()`
+
+Kontrak yang disepakati:
+
+```text
+begin()   → dipanggil sekali di setup()
+update()  → dipanggil berulang di loop()
+```
+
+---
+
+### **2. Mendesain `ComponentBase` sebagai Abstract Class**
+
+> `ComponentBase.h`
+
+```cpp
+#ifndef COMPONENT_BASE_H
+#define COMPONENT_BASE_H
+
+class ComponentBase {
+  public:
+    virtual void begin() = 0;
+    virtual void update() = 0;
+    virtual ~ComponentBase() {}
+};
+
+#endif
+```
+
+Catatan teknis:
+
+- `= 0` → abstract class
+- Destructor virtual → aman untuk polymorphic delete
+- Tidak ada logic
+- Tidak ada dependensi Arduino
+
+---
+
+### **3. Mendefinisikan Method Virtual (`begin()`, `update()`)**
+
+Kontrak final:
+
+| Method     | Dipanggil | Tujuan                |
+| ---------- | --------- | --------------------- |
+| `begin()`  | `setup()` | Inisialisasi komponen |
+| `update()` | `loop()`  | Eksekusi berulang     |
+
+Tidak ada method lain.
+Kontrak **minimal dan mengikat**.
+
+---
+
+### **4. Menurunkan Class LED dari `ComponentBase`**
+
+> `LedController.h` (REVISI)
+
+```cpp
+#ifndef LED_CONTROLLER_H
+#define LED_CONTROLLER_H
+
+#include <Arduino.h>
+#include "ComponentBase.h"
+
+class LedController : public ComponentBase {
+  private:
+    uint8_t _pin;
+    bool _state;
+
+  public:
+    LedController(uint8_t pin);
+
+    void begin() override;
+    void update() override;
+
+    void on();
+    void off();
+};
+
+#endif
+```
+
+---
+
+> `LedController.cpp` (REVISI)
+
+```cpp
+#include "LedController.h"
+
+LedController::LedController(uint8_t pin)
+: _pin(pin), _state(false) {}
+
+void LedController::begin() {
+  pinMode(_pin, OUTPUT);
+  digitalWrite(_pin, LOW);
+}
+
+void LedController::update() {
+  _state = !_state;
+  digitalWrite(_pin, _state ? HIGH : LOW);
+  delay(1000);
+}
+
+void LedController::on() {
+  _state = true;
+  digitalWrite(_pin, HIGH);
+}
+
+void LedController::off() {
+  _state = false;
+  digitalWrite(_pin, LOW);
+}
+```
+
+Perubahan penting:
+
+- Lifecycle pindah ke `begin()` / `update()`
+- LED sekarang **komponen**, bukan object bebas
+
+---
+
+### **5. Mengelola Komponen melalui Pointer Base Class**
+
+> `main.ino` (REVISI TOTAL)
+
+```cpp
+#include "ComponentBase.h"
+#include "LedController.h"
+
+ComponentBase* components[1];
+
+void setup() {
+  components[0] = new LedController(2);
+
+  for (int i = 0; i < 1; i++) {
+    components[i]->begin();
+  }
+}
+
+void loop() {
+  for (int i = 0; i < 1; i++) {
+    components[i]->update();
+  }
+}
+```
+
+Catatan teknis:
+
+- `main.ino` **tidak tahu** jenis komponen
+- Tidak ada `digitalWrite`
+- Tidak ada logika LED
+- Semua berbasis kontrak
+
+---
+
+### **6. Menyederhanakan Logika `main.ino`**
+
+Hasil akhir:
+
+- `main.ino`:
+
+  - hanya loop array komponen
+  - hanya panggil `begin()` dan `update()`
+
+- Penambahan komponen baru:
+
+  ```cpp
+  components[1] = new ButtonComponent(...);
+  ```
+
+Tidak ada perubahan struktur.
+
+---
+
+### 🧾 **Checklist Validasi (WAJIB LULUS)**
+
+- [ ] Firmware compile tanpa error
+- [ ] LED tetap berkedip
+- [ ] `main.ino` tidak menyebut `LedController` di logic
+- [ ] Semua komponen diperlakukan sebagai `ComponentBase*`
+- [ ] Penambahan komponen **tidak mengubah loop utama**
+
+Jika satu poin gagal → desain **tidak sah**.
+
+---
+
+### Catatan keras (dan penting)
+
+Setelah Modul 4:
+
+- **Tidak boleh lagi** logic komponen di `main.ino`
+- Semua modul berikutnya **HARUS** tunduk ke `ComponentBase`
+
+Jika aturan ini dilanggar, seluruh arsitektur runtuh.
+
+---
+
+## 🧾 **Validasi dan Pengujian**
+
+Validasi Modul 4 difokuskan pada **pembuktian bahwa `ComponentBase` benar-benar berfungsi sebagai kontrak arsitektural**, bukan sekadar konsep OOP.
+
+### **1. Validasi Fungsional Dasar**
+
+- **LED tetap berfungsi setelah diturunkan dari `ComponentBase`**
+  Firmware harus tetap:
+
+  - berhasil dikompilasi
+  - mengeksekusi `begin()` dan `update()`
+  - menyalakan/mematikan LED sesuai implementasi `update()`
+
+Tidak ada perubahan perilaku hardware yang diizinkan.
+
+---
+
+### **2. Validasi Polimorfisme**
+
+- **`main.ino` menangani komponen melalui base class**
+
+Verifikasi langsung pada kode:
+
+- `main.ino` hanya menyimpan `ComponentBase*`
+- Tidak ada pemanggilan method spesifik `LedController`
+- Tidak ada `#include` class konkret selain saat instansiasi
+
+Jika `main.ino` memerlukan cast → **validasi gagal**.
+
+---
+
+### **3. Validasi Multi-Komponen**
+
+Tambahkan minimal satu komponen tambahan (contoh LED kedua):
+
+```cpp
+components[0] = new LedController(2);
+components[1] = new LedController(4);
+```
+
+Validasi lulus jika:
+
+- Keduanya diinisialisasi melalui loop `begin()`
+- Keduanya dieksekusi melalui loop `update()`
+- Tidak ada percabangan berbasis tipe
+
+---
+
+### **4. Validasi Ketergantungan**
+
+Audit `main.ino`:
+
+- Tidak ada:
+
+  - `digitalWrite`
+  - `pinMode`
+  - logika hardware
+  - dependensi ke class konkret
+
+Satu-satunya ketergantungan yang sah:
+
+```cpp
+ComponentBase*
+```
+
+---
+
+### **5. Kriteria Lulus Modul 4**
+
+Modul 4 dinyatakan **lulus** apabila:
+
+- Firmware berjalan stabil
+- Komponen dapat ditambah tanpa mengubah struktur utama
+- `main.ino` berfungsi sebagai orchestrator murni
+- Seluruh interaksi berbasis kontrak `ComponentBase`
+
+Jika satu kriteria gagal → **arsitektur belum naik kelas**.
+
+---
+
+## 🔁 **Refleksi dan Keterkaitan ke Modul Lain**
+
+Kondisi firmware **setelah Modul 4**:
+
+- Seluruh komponen **mematuhi kontrak yang sama** (`begin()`, `update()`)
+- `main.ino` tidak bergantung pada implementasi konkret
+- Penambahan komponen **tidak mengubah struktur eksekusi utama**
+
+Implikasi langsung:
+
+- Firmware dapat diskalakan tanpa merusak arsitektur
+- Lifecycle komponen dapat dikontrol secara terpusat
+- Sistem siap diuji dengan beban dan kompleksitas yang lebih tinggi
+
+Struktur ini **digunakan langsung** pada **Modul 5**, saat firmware mulai menangani:
+
+- event asinkron
+- interrupt
+- kondisi real-time yang tidak deterministik
+
+---
+
+## 🧭 **Navigasi Modul**
+
+- ⬅️ **Modul sebelumnya – Modul 3: Object dari JSON**
+  Fokus pada pembuatan object berbasis konfigurasi runtime.
+
+- ➡️ **Modul selanjutnya – Modul 5: Interrupt dan Tombol**
+  Fokus pada event-driven execution dan integrasi interrupt ke dalam arsitektur komponen.
+
+<ResourceBox
+  title="Rujukan internal-link"
+  items={[
+    {
+      name: 'Object dari JSON',
+      href: '/blog/IoT/iot-3-object-json',
+      description: 'Modul 3 – Object dari JSON',
+    },
+    {
+      name: 'Interrupt dan Tombol',
+      href: '/blog/IoT/iot-5-interrupt-tombol',
+      description: 'Modul 5 – Interrupt dan Tombol',
+    },
+  ]}
+/>
+
+---
+
+## 📌 **Penutup Analitis**
+
+Modul 4 menandai **peralihan dari firmware berbasis object menjadi firmware berbasis sistem**.
+Setelah titik ini, setiap penambahan fitur **wajib tunduk pada kontrak arsitektur**, bukan sebaliknya.
+
+Firmware tidak lagi berkembang secara ad-hoc, tetapi melalui **ekstensi yang terkontrol**, memungkinkan kompleksitas meningkat tanpa kehilangan keteraturan.
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

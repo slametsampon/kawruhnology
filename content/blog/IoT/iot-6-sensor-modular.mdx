@@ -1,0 +1,611 @@
+---
+title: Sensor Modular
+date: '2026-02-08'
+tags:
+  [
+    'sensor-modular',
+    'non-blocking-sensor',
+    'componentbase-integration',
+    'iot-firmware-architecture',
+    'data-driven-iot',
+  ]
+draft: false
+summary: Modul 6 memperkenalkan sensor sebagai komponen input utama dalam firmware IoT modular. Setelah sistem mampu menangani event asinkron (Modul 5), modul ini menambahkan kemampuan observasi lingkungan melalui pembacaan sensor yang terstruktur, periodik, dan non-blocking. Sensor diperlakukan sebagai komponen OOP yang tunduk pada kontrak ComponentBase, dengan lifecycle jelas serta manajemen state internal untuk menyimpan data. Logika pembacaan dipisahkan dari konsumsi data, sehingga main.ino tetap bersih dan modular. Modul ini menjadi fondasi bagi automasi dan keputusan sistem pada modul berikutnya, khususnya actuator dan integrasi IoT berbasis data sensor.
+---
+
+🧪 **_Modul 6 – Sensor Modular_**
+
+---
+
+- [🧭 **Prolog Modul: Posisi dan Peran Modul 6**](#-prolog-modul-posisi-dan-peran-modul-6)
+- [🧠 **Konteks Pengetahuan: Relasi Antar Modul**](#-konteks-pengetahuan-relasi-antar-modul)
+  - [🔙 **Prasyarat Konseptual**](#-prasyarat-konseptual)
+  - [🔜 **Digunakan Kembali di Modul Selanjutnya**](#-digunakan-kembali-di-modul-selanjutnya)
+- [🎯 **Tujuan Modul (Learning Objectives)**](#-tujuan-modul-learning-objectives)
+- [🧩 **Masalah yang Diselesaikan Modul Ini**](#-masalah-yang-diselesaikan-modul-ini)
+- [🏗️ **Konsep Inti yang Diperkenalkan**](#️-konsep-inti-yang-diperkenalkan)
+  - [**Konsep Utama**](#konsep-utama)
+  - [**Konsep yang Tidak Dibahas di Modul Ini**](#konsep-yang-tidak-dibahas-di-modul-ini)
+- [🛠️ **Desain Teknis \& Arsitektur**](#️-desain-teknis--arsitektur)
+- [🧪 **Implementasi Bertahap (High-Level)**](#-implementasi-bertahap-high-level)
+  - [**1️⃣ Menentukan Tanggung Jawab Class Sensor**](#1️⃣-menentukan-tanggung-jawab-class-sensor)
+  - [**2️⃣ Mendesain Class Sensor Turunan dari `ComponentBase`**](#2️⃣-mendesain-class-sensor-turunan-dari-componentbase)
+  - [**3️⃣ Menentukan Interval Pembacaan Non-Blocking**](#3️⃣-menentukan-interval-pembacaan-non-blocking)
+  - [**4️⃣ Membaca Data Sensor (DHT)**](#4️⃣-membaca-data-sensor-dht)
+  - [**5️⃣ Menyimpan Hasil Pembacaan dalam State Internal**](#5️⃣-menyimpan-hasil-pembacaan-dalam-state-internal)
+  - [**6️⃣ Mengekspos Data Sensor melalui Method Publik**](#6️⃣-mengekspos-data-sensor-melalui-method-publik)
+  - [**7️⃣ Integrasi ke `main.ino`**](#7️⃣-integrasi-ke-mainino)
+  - [✅ **Checklist Validasi (WAJIB LULUS)**](#-checklist-validasi-wajib-lulus)
+  - [**Catatan keras (WAJIB DIPATUHI)**](#catatan-keras-wajib-dipatuhi)
+- [🧾 **Validasi dan Pengujian**](#-validasi-dan-pengujian)
+- [🔁 **Refleksi dan Keterkaitan ke Modul Lain**](#-refleksi-dan-keterkaitan-ke-modul-lain)
+- [🧭 **Navigasi Modul**](#-navigasi-modul)
+- [📌 Penutup Analitis](#-penutup-analitis)
+
+---
+
+Baik. **Langsung teknis, ringkas, tidak berbelit.**
+
+---
+
+## 🧭 **Prolog Modul: Posisi dan Peran Modul 6**
+
+Modul 6 memperkenalkan **sensor sebagai sumber data input** dalam arsitektur firmware IoT modular. Setelah Modul 5 memastikan firmware mampu menangani event asinkron (interrupt) secara aman dan non-blocking, modul ini memperluas sistem dengan kemampuan **membaca data lingkungan secara periodik dan terstruktur**.
+
+Pada titik ini, firmware tidak lagi hanya merespons event eksternal, tetapi juga **secara aktif mengumpulkan data** dari sensor. Sensor diperlakukan sebagai **komponen OOP penuh**, setara dengan LED dan tombol, dan **wajib mengikuti kontrak `ComponentBase`** (`begin()` dan `update()`).
+
+Fokus Modul 6 adalah memastikan bahwa pembacaan sensor:
+
+- terenkapsulasi dalam class,
+- tidak mengganggu komponen lain,
+- dan dapat diintegrasikan tanpa menambah kompleksitas di `main.ino`.
+
+Modul ini menjadi **fondasi teknis** bagi modul-modul berikutnya, karena seluruh automasi dan komunikasi IoT akan bergantung langsung pada **data sensor yang dikelola dengan benar**.
+
+---
+
+## 🧠 **Konteks Pengetahuan: Relasi Antar Modul**
+
+### 🔙 **Prasyarat Konseptual**
+
+Modul 6 **bergantung langsung** pada fondasi yang sudah dibangun sebelumnya:
+
+- **Modul 4 – ComponentBase**
+  Wajib memahami:
+
+  - kontrak `begin()` dan `update()`
+  - pengelolaan komponen melalui base class
+  - pemisahan lifecycle komponen dari `main.ino`
+
+- **Modul 5 – Interrupt dan Tombol**
+  Wajib memahami:
+
+  - konsep event dan state
+  - firmware non-blocking
+  - pemrosesan terpisah antara trigger dan aksi
+
+- **Modul 3 – Object dari JSON**
+  Digunakan untuk:
+
+  - konfigurasi sensor secara runtime
+  - pemisahan parameter sensor dari implementasi class
+
+Tanpa pemahaman ini, sensor modular tidak dapat diintegrasikan secara konsisten.
+
+<ResourceBox
+  title="Rujukan internal-link"
+  items={[
+    {
+      name: 'Kerangka Pengembangan Firmware IoT Modular',
+      href: '/blog/IoT/iot-0-panduan',
+      description:
+        'Modul 0 – Kerangka Pengembangan Firmware IoT Modular Berbasis OOP untuk ESP8266/ESP32',
+    },
+    {
+      name: 'Object dari JSON',
+      href: '/blog/IoT/iot-3-object-json',
+      description: 'Modul 3 – Object dari JSON',
+    },
+    {
+      name: 'ComponentBase',
+      href: '/blog/IoT/iot-4-component-base',
+      description: 'Modul 4 – ComponentBase',
+    },
+    {
+      name: 'Interrupt dan Tombol',
+      href: '/blog/IoT/iot-5-interrupt-tombol',
+      description: 'Modul 5 – Interrupt dan Tombol',
+    },
+  ]}
+/>
+
+---
+
+### 🔜 **Digunakan Kembali di Modul Selanjutnya**
+
+Class sensor yang dibangun pada Modul 6 akan digunakan langsung pada:
+
+- **Modul 7 – Actuator Modular**
+  Sensor menjadi sumber data pengambilan keputusan.
+
+- **Modul 8 – MQTT Integration**
+  Data sensor menjadi payload komunikasi.
+
+- **Modul 9 – Final Project**
+  Sensor berperan sebagai input utama sistem IoT.
+
+Dengan kata lain, desain sensor di modul ini **mengikat perilaku sistem ke depan**.
+
+---
+
+## 🎯 **Tujuan Modul (Learning Objectives)**
+
+Setelah menyelesaikan Modul 6, pembaca **harus mampu secara praktis**:
+
+- Menempatkan sensor sebagai **komponen input** dalam sistem IoT
+- Mendesain class sensor berbasis OOP yang terenkapsulasi
+- Melakukan pembacaan sensor **secara periodik tanpa `delay()`**
+- Menyimpan data sensor sebagai state internal yang konsisten
+- Mengekspos data sensor melalui antarmuka class yang jelas
+- Mengintegrasikan sensor ke sistem berbasis `ComponentBase`
+
+Jika sensor masih dibaca langsung di `loop()`, modul dianggap gagal.
+
+---
+
+## 🧩 **Masalah yang Diselesaikan Modul Ini**
+
+Masalah umum pada pembacaan sensor di firmware konvensional:
+
+- Logika pembacaan tersebar di `loop()`
+- Penggunaan `delay()` menghambat komponen lain
+- Penambahan sensor memaksa perubahan struktur kode
+- Tidak ada standar penyimpanan dan akses data sensor
+
+Dampak langsung:
+
+- Firmware sulit diskalakan
+- Sulit diuji
+- Sulit diintegrasikan dengan sistem yang lebih besar
+
+Modul 6 menyelesaikan masalah ini dengan:
+
+- Mengenkapsulasi seluruh logika sensor dalam class khusus
+- Menggunakan mekanisme waktu non-blocking
+- Menyatukan sensor ke arsitektur modular berbasis komponen
+
+---
+
+## 🏗️ **Konsep Inti yang Diperkenalkan**
+
+### **Konsep Utama**
+
+Modul ini memperkenalkan pola teknis berikut:
+
+- **Sensor sebagai komponen OOP**
+  Sensor diperlakukan sebagai unit logika mandiri.
+
+- **Pembacaan sensor periodik**
+  Menggunakan waktu (`millis()`), bukan `delay()`.
+
+- **Manajemen state dan data sensor**
+  Data disimpan sebagai cache internal class.
+
+- **Pemisahan pembacaan dan konsumsi data**
+  Sensor membaca data, komponen lain mengonsumsi data.
+
+- **Integrasi dengan `ComponentBase`**
+  Sensor tunduk pada lifecycle sistem.
+
+---
+
+### **Konsep yang Tidak Dibahas di Modul Ini**
+
+Secara eksplisit **di luar scope Modul 6**:
+
+- Kalibrasi sensor lanjutan
+- Filtering dan smoothing data
+- Interrupt berbasis sensor
+- MQTT dan komunikasi jaringan
+
+Fokus modul ini **murni pada struktur dan pola sensor modular**.
+
+---
+
+## 🛠️ **Desain Teknis & Arsitektur**
+
+Pada level arsitektur, sensor diperlakukan sebagai:
+
+- Komponen pasif yang **menghasilkan data**
+- Memiliki lifecycle standar (`begin()`, `update()`)
+- Menyimpan hasil pembacaan sebagai **state internal**
+
+Tanggung jawab class sensor:
+
+- Menentukan interval pembacaan
+- Mengakses hardware sensor
+- Memperbarui cache data internal
+- Menyediakan method akses data (getter)
+
+Peran `main.ino`:
+
+- Tidak membaca sensor
+- Tidak mengatur timing sensor
+- Hanya mengelola lifecycle komponen
+
+Dengan desain ini, sensor dapat ditambah, diganti, atau dikonfigurasi ulang **tanpa mengubah struktur firmware utama**.
+
+---
+
+## 🧪 **Implementasi Bertahap (High-Level)**
+
+> **0️⃣ Struktur Folder (WAJIB seperti ini)**
+
+```
+src/
+├── ComponentBase.h
+├── LedController.h
+├── LedController.cpp
+├── DhtSensor.h
+├── DhtSensor.cpp
+└── main.ino
+```
+
+> `ComponentBase` dan `LedController` **dipakai ulang** dari Modul 4–5
+> Tidak ada refactor ke modul sebelumnya.
+
+---
+
+### **1️⃣ Menentukan Tanggung Jawab Class Sensor**
+
+Class sensor **HANYA** bertanggung jawab atas:
+
+- Inisialisasi hardware sensor
+- Penjadwalan pembacaan periodik
+- Pembacaan data dari sensor
+- Penyimpanan data terakhir (cache)
+- Penyediaan data via getter
+
+Class sensor **TIDAK**:
+
+- Mengontrol actuator
+- Menulis ke Serial (kecuali debug opsional)
+- Mengatur logic aplikasi
+- Menggunakan `delay()`
+
+---
+
+### **2️⃣ Mendesain Class Sensor Turunan dari `ComponentBase`**
+
+> `DhtSensor.h`
+
+```cpp
+#ifndef DHT_SENSOR_H
+#define DHT_SENSOR_H
+
+#include <Arduino.h>
+#include "ComponentBase.h"
+#include <DHT.h>
+
+class DhtSensor : public ComponentBase {
+  public:
+    DhtSensor(uint8_t pin, uint8_t type, uint32_t intervalMs);
+
+    void begin() override;
+    void update() override;
+
+    // Public API (getter)
+    float getTemperature() const;
+    float getHumidity() const;
+    bool isValid() const;
+
+  private:
+    uint8_t _pin;
+    uint8_t _type;
+    uint32_t _intervalMs;
+
+    DHT _dht;
+
+    // Timing
+    uint32_t _lastReadMs = 0;
+
+    // Cached data
+    float _temperature = NAN;
+    float _humidity = NAN;
+    bool _valid = false;
+
+    void readSensor();
+};
+
+#endif
+```
+
+---
+
+### **3️⃣ Menentukan Interval Pembacaan Non-Blocking**
+
+- Menggunakan `millis()`
+- Tidak ada `delay()`
+- Interval disimpan sebagai parameter constructor
+- Sensor **tidak dibaca setiap loop**
+
+Interval dicek di `update()`.
+
+---
+
+### **4️⃣ Membaca Data Sensor (DHT)**
+
+> `DhtSensor.cpp`
+
+```cpp
+#include "DhtSensor.h"
+
+DhtSensor::DhtSensor(uint8_t pin, uint8_t type, uint32_t intervalMs)
+: _pin(pin),
+  _type(type),
+  _intervalMs(intervalMs),
+  _dht(pin, type) {}
+
+void DhtSensor::begin() {
+  _dht.begin();
+  _lastReadMs = 0;
+}
+
+void DhtSensor::update() {
+  uint32_t now = millis();
+  if (now - _lastReadMs >= _intervalMs) {
+    _lastReadMs = now;
+    readSensor();
+  }
+}
+
+void DhtSensor::readSensor() {
+  float h = _dht.readHumidity();
+  float t = _dht.readTemperature();
+
+  if (isnan(h) || isnan(t)) {
+    _valid = false;
+    return;
+  }
+
+  _humidity = h;
+  _temperature = t;
+  _valid = true;
+}
+```
+
+---
+
+### **5️⃣ Menyimpan Hasil Pembacaan dalam State Internal**
+
+State yang disimpan:
+
+```cpp
+float _temperature;
+float _humidity;
+bool  _valid;
+```
+
+Aturan:
+
+- Data **hanya ditulis oleh sensor**
+- Data **dibaca oleh pihak lain**
+- Tidak ada race condition (single-thread loop)
+
+---
+
+### **6️⃣ Mengekspos Data Sensor melalui Method Publik**
+
+Getter **WAJIB const**:
+
+```cpp
+float DhtSensor::getTemperature() const {
+  return _temperature;
+}
+
+float DhtSensor::getHumidity() const {
+  return _humidity;
+}
+
+bool DhtSensor::isValid() const {
+  return _valid;
+}
+```
+
+Tidak ada setter.
+Sensor adalah **source of truth**.
+
+---
+
+### **7️⃣ Integrasi ke `main.ino`**
+
+> `main.ino` (FINAL – UTUH)
+
+```cpp
+#include <Arduino.h>
+#include "ComponentBase.h"
+#include "LedController.h"
+#include "DhtSensor.h"
+
+// ===== Konfigurasi =====
+#define LED_PIN   2
+#define DHT_PIN   4
+#define DHT_TYPE  DHT22
+
+// ===== Komponen =====
+LedController led(LED_PIN, false);
+DhtSensor dht(DHT_PIN, DHT_TYPE, 2000); // baca tiap 2 detik
+
+ComponentBase* components[] = {
+  &led,
+  &dht
+};
+
+const size_t COMPONENT_COUNT =
+  sizeof(components) / sizeof(components[0]);
+
+void setup() {
+  Serial.begin(115200);
+  delay(200);
+
+  for (size_t i = 0; i < COMPONENT_COUNT; i++) {
+    components[i]->begin();
+  }
+
+  Serial.println("Modul 6: Sensor Modular (DHT)");
+}
+
+void loop() {
+  for (size_t i = 0; i < COMPONENT_COUNT; i++) {
+    components[i]->update();
+  }
+
+  // Konsumsi data sensor (contoh observasi)
+  if (dht.isValid()) {
+    Serial.print("Temp: ");
+    Serial.print(dht.getTemperature());
+    Serial.print(" C | Hum: ");
+    Serial.print(dht.getHumidity());
+    Serial.println(" %");
+  }
+}
+```
+
+---
+
+### ✅ **Checklist Validasi (WAJIB LULUS)**
+
+Checklist ini digunakan sebagai **kriteria kelulusan teknis** Modul 6.
+Jika satu poin gagal, implementasi **tidak dianggap benar secara arsitektural**.
+
+1. **Sensor terbaca periodik**
+
+   - Output Serial Monitor muncul setiap ± interval yang ditentukan (mis. 2000 ms)
+   - Interval dikendalikan oleh logika waktu (`millis()`), bukan `delay()`
+
+2. **Firmware tetap responsif**
+
+   - Tidak ada pemanggilan `delay()` di class sensor
+   - Komponen lain (LED, tombol) tetap berfungsi normal saat sensor aktif
+
+3. **`main.ino` bersih**
+
+   - Tidak ada pemanggilan API sensor (`readTemperature()`, `readHumidity()`, dsb.)
+   - Tidak ada logika pembacaan atau timing sensor
+
+4. **Sensor modular**
+
+   - Mengganti:
+
+     - DHT → PIR → sensor analog
+
+   - Tidak memerlukan perubahan:
+
+     - `main.ino`
+     - struktur `ComponentBase`
+     - loop utama firmware
+
+5. **`ComponentBase` tetap utuh**
+
+   - Sensor diperlakukan sama seperti komponen lain
+   - Sensor diinisialisasi via `begin()`
+   - Sensor dijalankan via `update()`
+
+---
+
+### **Catatan keras (WAJIB DIPATUHI)**
+
+Setelah Modul 6:
+
+- **Tidak boleh** membaca sensor di `loop()`
+- **Tidak boleh** menggunakan `delay()` untuk pembacaan sensor
+- Sensor **bukan logic**
+- Sensor **hanya data source**
+
+Pelanggaran terhadap poin ini berarti **arsitektur rusak**.
+
+---
+
+## 🧾 **Validasi dan Pengujian**
+
+Modul 6 dinyatakan **lulus** apabila seluruh kondisi berikut terpenuhi:
+
+- Data sensor terbaca secara periodik dan konsisten
+- Firmware tetap responsif terhadap:
+
+  - interrupt tombol
+  - komponen lain
+
+- Tidak ada blocking behavior akibat pembacaan sensor
+- Serial Monitor menampilkan data yang stabil (tidak acak karena race)
+- Penambahan atau penggantian sensor:
+
+  - tidak mengubah komponen lain
+  - tidak mengubah struktur firmware
+
+Validasi ini memastikan sensor telah terintegrasi **sebagai komponen sistem**, bukan sebagai potongan kode ad-hoc.
+
+---
+
+## 🔁 **Refleksi dan Keterkaitan ke Modul Lain**
+
+Kondisi firmware **setelah Modul 6**:
+
+- Sistem memiliki **sumber data lingkungan**
+- Sensor berjalan periodik dan non-blocking
+- Data sensor tersedia untuk dikonsumsi komponen lain
+
+Batasan saat ini:
+
+- Data sensor **belum memicu aksi**
+
+Keterbatasan ini **disengaja** dan akan diselesaikan pada:
+
+👉 **Modul 7 – Actuator Modular**
+
+Di modul tersebut:
+
+- Data sensor dan event akan digunakan untuk **mengendalikan aksi nyata**
+- Logika keputusan mulai diperkenalkan
+- Sensor → Actuator → Sistem
+
+---
+
+## 🧭 **Navigasi Modul**
+
+- ⬅️ **Modul sebelumnya – Modul 5: Interrupt dan Tombol**
+  Event asinkron dan input real-time.
+
+- ➡️ **Modul selanjutnya – Modul 7: Actuator Modular**
+  Aksi berbasis data sensor dan event.
+
+<ResourceBox
+  title="Rujukan internal-link"
+  items={[
+    {
+      name: 'Interrupt dan Tombol',
+      href: '/blog/IoT/iot-5-interrupt-tombol',
+      description: 'Modul 5 – Interrupt dan Tombol',
+    },
+    {
+      name: 'Actuator Modular',
+      href: '/blog/IoT/iot-7-actuator-modular',
+      description: 'Modul 7 – Actuator Modular',
+    },
+  ]}
+/>
+
+---
+
+## 📌 Penutup Analitis
+
+Modul 6 mengubah firmware dari sistem yang **reaktif** menjadi sistem yang **observasional**. Dengan sensor modular, firmware mulai memahami kondisi lingkungan—sebuah prasyarat mutlak untuk membangun sistem IoT yang cerdas dan adaptif.
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

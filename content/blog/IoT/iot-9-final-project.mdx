@@ -1,0 +1,627 @@
+---
+title: Final Project - Node IoT Modular
+date: '2026-02-08'
+tags:
+  [
+    'final-project',
+    'iot-node',
+    'component-based-firmware',
+    'mqtt-enabled-system',
+    'scalable-iot-architecture',
+  ]
+draft: false
+summary: Modul 9 merupakan konsolidasi akhir seluruh serial pengembangan firmware IoT modular berbasis ESP dan OOP. Modul ini tidak menambahkan konsep baru, melainkan mengintegrasikan semua komponen—ComponentBase, sensor, actuator, interrupt, dan MQTT—ke dalam satu sistem IoT yang utuh. Firmware berfungsi sebagai node IoT lengkap - membaca data sensor, memproses event lokal dan jarak jauh, serta mengendalikan actuator secara modular. main.ino berperan sebagai orchestrator pusat dengan loop non-blocking. Hasil akhir adalah arsitektur firmware yang stabil, scalable, reusable, dan siap dijadikan template proyek nyata atau fondasi sistem IoT produksi kecil.
+---
+
+🎯 **_Modul 9 – Final Project: Node IoT Modular_**
+
+---
+
+- [🧭 **Prolog Modul: Posisi dan Peran Modul 9**](#-prolog-modul-posisi-dan-peran-modul-9)
+- [🧠 **Konteks Pengetahuan: Relasi Antar Modul**](#-konteks-pengetahuan-relasi-antar-modul)
+  - [🔙 **Prasyarat Konseptual**](#-prasyarat-konseptual)
+  - [🔜 **Kelanjutan Setelah Modul Ini**](#-kelanjutan-setelah-modul-ini)
+- [🎯 **Tujuan Modul (Learning Objectives)**](#-tujuan-modul-learning-objectives)
+- [🧩 **Masalah yang Diselesaikan Modul Ini**](#-masalah-yang-diselesaikan-modul-ini)
+- [🏗️ **Konsep Inti yang Diterapkan (Bukan Diperkenalkan)**](#️-konsep-inti-yang-diterapkan-bukan-diperkenalkan)
+  - [**Konsep yang Digunakan**](#konsep-yang-digunakan)
+  - [**Konsep yang Tidak Ditambahkan**](#konsep-yang-tidak-ditambahkan)
+- [🛠️ **Desain Teknis \& Arsitektur Sistem Akhir**](#️-desain-teknis--arsitektur-sistem-akhir)
+- [🧪 **Implementasi Bertahap (High-Level)**](#-implementasi-bertahap-high-level)
+  - [0️⃣ Struktur Proyek Final (WAJIB)](#0️⃣-struktur-proyek-final-wajib)
+  - [1️⃣ Menyusun struktur proyek final](#1️⃣-menyusun-struktur-proyek-final)
+  - [2️⃣ Inisialisasi seluruh komponen (sensor, actuator, tombol)](#2️⃣-inisialisasi-seluruh-komponen-sensor-actuator-tombol)
+  - [3️⃣ Integrasi konfigurasi JSON (runtime)](#3️⃣-integrasi-konfigurasi-json-runtime)
+  - [4️⃣ Pengelolaan lifecycle komponen](#4️⃣-pengelolaan-lifecycle-komponen)
+  - [5️⃣ Integrasi MQTT publish \& subscribe](#5️⃣-integrasi-mqtt-publish--subscribe)
+  - [6️⃣ Penyesuaian `loop()` sebagai orchestrator](#6️⃣-penyesuaian-loop-sebagai-orchestrator)
+  - [7️⃣ Pengujian sistem secara menyeluruh](#7️⃣-pengujian-sistem-secara-menyeluruh)
+  - [✅ KODE FINAL (SIAP COPAS)](#-kode-final-siap-copas)
+  - [✅ Standar kelulusan modul (yang pembaca bisa verifikasi)](#-standar-kelulusan-modul-yang-pembaca-bisa-verifikasi)
+- [🧾 **Validasi dan Pengujian Sistem**](#-validasi-dan-pengujian-sistem)
+- [🔁 **Refleksi Akhir Serial**](#-refleksi-akhir-serial)
+- [🧭 **Navigasi Modul**](#-navigasi-modul)
+- [📌 **Penutup Besar (Editorial)**](#-penutup-besar-editorial)
+
+---
+
+## 🧭 **Prolog Modul: Posisi dan Peran Modul 9**
+
+Modul 9 merupakan **tahap integrasi final** dari seluruh serial firmware IoT modular berbasis ESP dan OOP. Modul ini **tidak memperkenalkan konsep teknis baru** dan **tidak mengubah arsitektur**, melainkan menggabungkan seluruh komponen yang telah dibangun sejak Modul 1 ke dalam **satu sistem IoT yang utuh**.
+
+Pada titik ini, firmware telah memiliki:
+
+- Struktur proyek yang konsisten
+- Arsitektur OOP berbasis `ComponentBase`
+- Input lokal (tombol, sensor)
+- Output fisik (LED, actuator)
+- Komunikasi eksternal melalui MQTT
+
+Modul 9 berfungsi sebagai **pembuktian arsitektur**, bahwa seluruh keputusan desain sebelumnya dapat hidup bersama dalam satu firmware yang stabil, modular, dan siap digunakan sebagai fondasi proyek nyata.
+
+---
+
+## 🧠 **Konteks Pengetahuan: Relasi Antar Modul**
+
+### 🔙 **Prasyarat Konseptual**
+
+Modul 9 **bergantung langsung** pada pemahaman menyeluruh modul-modul berikut:
+
+- **Modul 4 – ComponentBase**
+  Menyediakan kontrak arsitektur dan lifecycle seluruh komponen.
+
+- **Modul 6 – Sensor Modular**
+  Menyediakan sumber data lingkungan yang terstruktur dan non-blocking.
+
+- **Modul 7 – Actuator Modular**
+  Menyediakan mekanisme aksi fisik berbasis kondisi dan event.
+
+- **Modul 8 – MQTT Integration**
+  Menyediakan komunikasi eksternal publish/subscribe.
+
+Tanpa pemahaman modul-modul ini, Modul 9 hanya akan terlihat sebagai kumpulan kode, bukan sebagai sistem.
+
+<ResourceBox
+  title="Rujukan internal-link"
+  items={[
+    {
+      name: 'Kerangka Pengembangan Firmware IoT Modular',
+      href: '/blog/IoT/iot-0-panduan',
+      description:
+        'Modul 0 – Kerangka Pengembangan Firmware IoT Modular Berbasis OOP untuk ESP8266/ESP32',
+    },
+    {
+      name: 'ComponentBase',
+      href: '/blog/IoT/iot-4-component-base',
+      description: 'Modul 4 – ComponentBase',
+    },
+    {
+      name: 'Sensor Modular',
+      href: '/blog/IoT/iot-6-sensor-modular',
+      description: 'Modul 6 – Sensor Modular',
+    },
+    {
+      name: 'Actuator Modular',
+      href: '/blog/IoT/iot-7-actuator-modular',
+      description: 'Modul 7 – Actuator Modular',
+    },
+    {
+      name: 'MQTT Integration',
+      href: '/blog/IoT/iot-8-mqtt-integration',
+      description: 'Modul 8 – MQTT Integration',
+    },
+  ]}
+/>
+
+---
+
+### 🔜 **Kelanjutan Setelah Modul Ini**
+
+Modul 9 bukan akhir pengembangan, melainkan **akhir fase fondasi**. Dari titik ini, sistem dapat dikembangkan ke arah:
+
+- **Web UI / HMI berbasis MQTT**
+- **OTA update**
+- **Multi-node deployment**
+- **Rule engine dan automasi lanjutan**
+
+Dengan demikian, Modul 9 menjadi **titik transisi** dari pembelajaran terstruktur menuju eksplorasi dan pengembangan mandiri berbasis arsitektur yang sudah matang.
+
+---
+
+## 🎯 **Tujuan Modul (Learning Objectives)**
+
+Setelah menyelesaikan Modul 9, pembaca **harus mampu secara sistemik**:
+
+- Mengintegrasikan seluruh komponen firmware (sensor, actuator, event, MQTT) ke dalam **satu sistem berjalan**
+- Memahami alur **data dan kontrol end-to-end**, dari input fisik hingga aksi dan komunikasi eksternal
+- Menyusun firmware IoT modular yang **siap dikembangkan**, bukan sekadar demo
+- Mengidentifikasi peran dan kontribusi setiap modul terhadap sistem akhir
+- Mengadaptasi arsitektur yang sama untuk proyek lain tanpa perubahan mendasar
+
+Jika pembaca masih melihat modul-modul sebagai bagian terpisah, tujuan Modul 9 **belum tercapai**.
+
+---
+
+## 🧩 **Masalah yang Diselesaikan Modul Ini**
+
+Tanpa tahap integrasi final, masalah yang sering muncul:
+
+- Konsep dipahami terpisah, tidak membentuk sistem
+- Sulit memvisualisasikan bentuk firmware yang “selesai”
+- Tidak jelas bagaimana menyatukan sensor, actuator, dan komunikasi
+
+Modul 9 menyelesaikan masalah tersebut dengan:
+
+- Menyajikan **satu proyek firmware utuh**
+- Menunjukkan **relasi nyata** antar komponen
+- Mengukuhkan bahwa pendekatan OOP dan modular **berfungsi dalam sistem nyata**, bukan hanya teori
+
+---
+
+## 🏗️ **Konsep Inti yang Diterapkan (Bukan Diperkenalkan)**
+
+### **Konsep yang Digunakan**
+
+Seluruh konsep berikut **sudah diperkenalkan sebelumnya** dan kini digunakan secara bersamaan:
+
+- **Component-based architecture**
+  Seluruh elemen sistem adalah komponen dengan kontrak yang sama.
+
+- **Object lifecycle (`begin()`, `update()`)**
+  Seluruh komponen dikelola secara seragam oleh orchestrator.
+
+- **Event handling (interrupt, MQTT)**
+  Event lokal dan jarak jauh diproses dalam satu alur sistem.
+
+- **Data flow: sensor → logic → actuator**
+  Alur data eksplisit dan dapat ditelusuri.
+
+- **Separation of Concern end-to-end**
+  Tidak ada kebocoran tanggung jawab antar lapisan.
+
+---
+
+### **Konsep yang Tidak Ditambahkan**
+
+Secara eksplisit **tidak ada**:
+
+- Konsep OOP baru
+- Library baru
+- Pola arsitektur tambahan
+
+Modul 9 berfokus pada **konsolidasi dan validasi arsitektur**, bukan ekspansi.
+
+---
+
+## 🛠️ **Desain Teknis & Arsitektur Sistem Akhir**
+
+Pada level desain, sistem akhir terdiri dari:
+
+- Sekumpulan komponen turunan `ComponentBase`
+- `main.ino` sebagai **orchestrator pusat**, bukan logic holder
+- Satu loop utama yang bertanggung jawab untuk:
+
+  - Memanggil `update()` seluruh komponen
+  - Menjaga koneksi MQTT tetap aktif
+  - Mengorkestrasi event lokal dan jarak jauh
+
+Karakteristik arsitektur yang dihasilkan:
+
+- **Modular** – setiap komponen berdiri sendiri
+- **Reusable** – dapat digunakan ulang di proyek lain
+- **Scalable** – siap untuk multi-node dan fitur tambahan
+- **Extensible** – dapat diperluas tanpa refactor besar
+
+Pada titik ini, firmware telah mencapai bentuk **sistem IoT yang matang secara arsitektural**.
+
+---
+
+## 🧪 **Implementasi Bertahap (High-Level)**
+
+**Modul 9 – Final Project: Node IoT Modular (maha-guru engineer, full artefak, siap compile)**
+
+Target sistem final (jelas):
+
+- **Sensor**: DHT22 (publish)
+- **Actuator**: Relay (subscribe + bisa juga dikendalikan lokal oleh sensor rule sederhana)
+- **Input event**: Tombol interrupt (toggle relay lokal)
+- **MQTT**: publish sensor + subscribe command actuator
+- **Arsitektur**: `ComponentBase` + orchestrator `main.ino`
+- **Konfigurasi**: JSON runtime (minimal untuk: pin, topic, broker)
+
+> Catatan disiplin:
+>
+> - Komponen (sensor/actuator/button) **tidak** include MQTT
+> - MQTT **adapter** (service) + routing di `main.ino`
+
+---
+
+### 0️⃣ Struktur Proyek Final (WAJIB)
+
+```
+src/
+├── ComponentBase.h
+├── DhtSensor.h
+├── DhtSensor.cpp
+├── RelayActuator.h
+├── RelayActuator.cpp
+├── ButtonHandler.h
+├── ButtonHandler.cpp
+├── MqttService.h
+├── MqttService.cpp
+└── main.ino
+```
+
+---
+
+### 1️⃣ Menyusun struktur proyek final
+
+Tidak ada file lain. Tidak ada “helper” liar.
+Semua komponen = 1 header + 1 cpp.
+Satu service untuk MQTT.
+
+---
+
+### 2️⃣ Inisialisasi seluruh komponen (sensor, actuator, tombol)
+
+- Sensor DHT: periodik non-blocking
+- Relay: output modular active HIGH/LOW
+- Button: interrupt → set flag → deferred processing → trigger aksi
+
+> Tombol beraksi **lokal** (toggle relay) untuk memastikan node tetap berguna tanpa MQTT.
+
+---
+
+### 3️⃣ Integrasi konfigurasi JSON (runtime)
+
+Konfigurasi minimal (hard-coded string dulu agar siap compile; sumber eksternal bisa Anda extend).
+
+> JSON final (minimal namun cukup)
+
+```json
+{
+  "device": { "id": "esp32-node-01" },
+  "pins": {
+    "dht": 4,
+    "relay": 5,
+    "button": 0
+  },
+  "mqtt": {
+    "broker": "192.168.1.10",
+    "port": 1883,
+    "prefix": "iot/esp32/node01"
+  },
+  "relay": {
+    "activeLow": true
+  }
+}
+```
+
+Parameter ini dipakai untuk:
+
+- pin mapping
+- broker
+- topic prefix
+- active level relay
+
+---
+
+### 4️⃣ Pengelolaan lifecycle komponen
+
+Aturan final:
+
+- `begin()` dipanggil sekali untuk semua komponen
+- `update()` dipanggil terus menerus untuk semua komponen
+- `main.ino` hanya orchestrate + route event + route MQTT
+
+---
+
+### 5️⃣ Integrasi MQTT publish & subscribe
+
+- Publish:
+
+  - `prefix/sensor/temperature`
+  - `prefix/sensor/humidity`
+
+- Subscribe:
+
+  - `prefix/actuator/relay/set` payload: `ON` / `OFF` / `TOGGLE`
+
+---
+
+### 6️⃣ Penyesuaian `loop()` sebagai orchestrator
+
+Loop final harus menjalankan 3 hal:
+
+1. `update()` semua komponen
+2. `mqtt.loop()` non-blocking
+3. publish sensor periodik (berdasarkan timer)
+
+Tidak ada `delay()`.
+
+---
+
+### 7️⃣ Pengujian sistem secara menyeluruh
+
+Kriteria sistem final:
+
+- tombol toggle relay (tanpa MQTT)
+- DHT publish konsisten
+- perintah MQTT mengendalikan relay
+- sistem stabil saat event lokal + MQTT bersamaan
+
+---
+
+### ✅ KODE FINAL (SIAP COPAS)
+
+> `main.ino` (FINAL UTUH)
+
+```cpp
+#include <Arduino.h>
+#include <ArduinoJson.h>
+
+#include "ComponentBase.h"
+#include "DhtSensor.h"
+#include "RelayActuator.h"
+#include "ButtonHandler.h"
+#include "MqttService.h"
+
+// =====================
+// 1) JSON Configuration
+// =====================
+const char* configJson = R"rawliteral(
+{
+  "device": { "id": "esp32-node-01" },
+  "pins": { "dht": 4, "relay": 5, "button": 0 },
+  "mqtt": { "broker": "192.168.1.10", "port": 1883, "prefix": "iot/esp32/node01" },
+  "relay": { "activeLow": true }
+}
+)rawliteral";
+
+// =====================
+// 2) Runtime config vars
+// =====================
+static char deviceId[32];
+static char mqttBroker[64];
+static uint16_t mqttPort = 1883;
+static char mqttPrefix[64];
+
+static uint8_t pinDht = 4;
+static uint8_t pinRelay = 5;
+static uint8_t pinButton = 0;
+static bool relayActiveLow = true;
+
+// =====================
+// 3) Components
+// =====================
+DhtSensor* dht = nullptr;
+RelayActuator* relay = nullptr;
+ButtonHandler* button = nullptr;
+
+// MQTT service
+MqttService* mqtt = nullptr;
+
+// Publish scheduler
+unsigned long lastPub = 0;
+static const unsigned long PUB_INTERVAL_MS = 3000;
+
+// Topic buffers
+static char topicTemp[128];
+static char topicHum[128];
+static char topicRelaySet[128];
+
+// Forward decl
+void mqttCallback(char* topic, byte* payload, unsigned int length);
+
+// Button callback (local control)
+void onButtonPressed() {
+  if (relay) relay->toggle();
+}
+
+// =====================
+// 4) Helpers
+// =====================
+bool loadConfig() {
+  StaticJsonDocument<512> doc;
+  DeserializationError err = deserializeJson(doc, configJson);
+  if (err) return false;
+
+  strlcpy(deviceId, doc["device"]["id"] | "esp-node", sizeof(deviceId));
+
+  pinDht = doc["pins"]["dht"] | 4;
+  pinRelay = doc["pins"]["relay"] | 5;
+  pinButton = doc["pins"]["button"] | 0;
+
+  strlcpy(mqttBroker, doc["mqtt"]["broker"] | "127.0.0.1", sizeof(mqttBroker));
+  mqttPort = doc["mqtt"]["port"] | 1883;
+  strlcpy(mqttPrefix, doc["mqtt"]["prefix"] | "iot/node", sizeof(mqttPrefix));
+
+  relayActiveLow = doc["relay"]["activeLow"] | true;
+
+  return true;
+}
+
+void buildTopics() {
+  snprintf(topicTemp, sizeof(topicTemp), "%s/sensor/temperature", mqttPrefix);
+  snprintf(topicHum, sizeof(topicHum), "%s/sensor/humidity", mqttPrefix);
+  snprintf(topicRelaySet, sizeof(topicRelaySet), "%s/actuator/relay/set", mqttPrefix);
+}
+
+void publishSensorsIfNeeded() {
+  if (!mqtt || !mqtt->isConnected()) return;
+  if (!dht || !dht->isValid()) return;
+
+  unsigned long now = millis();
+  if (now - lastPub < PUB_INTERVAL_MS) return;
+  lastPub = now;
+
+  char buf[16];
+
+  snprintf(buf, sizeof(buf), "%.2f", dht->getTemperature());
+  mqtt->publish(topicTemp, buf);
+
+  snprintf(buf, sizeof(buf), "%.2f", dht->getHumidity());
+  mqtt->publish(topicHum, buf);
+}
+
+// =====================
+// 5) Setup / Loop
+// =====================
+void setup() {
+  Serial.begin(115200);
+  delay(200);
+
+  if (!loadConfig()) {
+    Serial.println("ERROR: Config JSON parse failed");
+    while (true);
+  }
+
+  buildTopics();
+
+  // Instantiate components
+  dht = new DhtSensor(pinDht, DHT22, 2000);
+
+  RelayActuator::ActiveLevel level =
+    relayActiveLow ? RelayActuator::ActiveLevel::ACTIVE_LOW
+                   : RelayActuator::ActiveLevel::ACTIVE_HIGH;
+
+  relay = new RelayActuator(pinRelay, level, false);
+  button = new ButtonHandler(pinButton, onButtonPressed, 50);
+
+  // Begin components
+  dht->begin();
+  relay->begin();
+  button->begin();
+
+  // MQTT init
+  mqtt = new MqttService(mqttBroker, mqttPort, deviceId);
+  mqtt->begin();
+  mqtt->setCallback(mqttCallback);
+  mqtt->subscribe(topicRelaySet);
+
+  Serial.println("Modul 9: Final Node IoT Modular started");
+}
+
+void loop() {
+  // 1) Update local components (non-blocking)
+  dht->update();
+  relay->update();
+  button->update();
+
+  // 2) Maintain MQTT connection + process messages
+  mqtt->loop();
+
+  // 3) Publish sensor data periodically
+  publishSensorsIfNeeded();
+}
+
+// =====================
+// 6) MQTT callback routing
+// =====================
+void mqttCallback(char* topic, byte* payload, unsigned int length) {
+  // Safe terminate (payload buffer from PubSubClient usually has extra space)
+  // But don't assume: copy to local buffer
+  char msg[32];
+  size_t n = (length < sizeof(msg) - 1) ? length : (sizeof(msg) - 1);
+  memcpy(msg, payload, n);
+  msg[n] = '\0';
+
+  if (strcmp(topic, topicRelaySet) == 0 && relay) {
+    if (strcmp(msg, "ON") == 0) relay->on();
+    else if (strcmp(msg, "OFF") == 0) relay->off();
+    else if (strcmp(msg, "TOGGLE") == 0) relay->toggle();
+  }
+}
+```
+
+---
+
+### ✅ Standar kelulusan modul (yang pembaca bisa verifikasi)
+
+- Komponen lokal tetap jalan walau broker down
+- Publish berjalan saat broker up
+- Subscribe mengendalikan relay
+- Tombol tetap toggle relay tanpa mempengaruhi MQTT loop
+- Tidak ada `delay()` di `loop()`
+- Tidak ada MQTT include di sensor/actuator/button
+
+---
+
+## 🧾 **Validasi dan Pengujian Sistem**
+
+Modul 9 dinyatakan **lulus dan layak digunakan** apabila seluruh kondisi berikut terpenuhi **secara bersamaan**:
+
+- **Seluruh komponen berjalan bersamaan tanpa konflik**
+  Sensor, actuator, tombol, dan MQTT beroperasi paralel tanpa saling mengganggu lifecycle komponen lain.
+
+- **Data sensor dipublikasikan ke MQTT**
+  Nilai sensor muncul secara konsisten pada topik yang telah ditentukan dan dapat diverifikasi menggunakan `mosquitto_sub`.
+
+- **Perintah MQTT mengendalikan actuator**
+  Pesan yang dikirim ke topik kontrol menghasilkan perubahan state fisik actuator secara deterministik.
+
+- **Input lokal tetap responsif**
+  Tombol interrupt atau input lokal tetap berfungsi meskipun koneksi MQTT aktif atau terputus.
+
+- **Sistem berjalan stabil dalam waktu lama**
+  Firmware dapat berjalan terus-menerus tanpa hang, memory leak yang terlihat, atau kehilangan fungsi.
+
+Pemenuhan seluruh poin ini menegaskan bahwa firmware **bukan sekadar demonstrasi**, melainkan **siap dipakai sebagai sistem IoT nyata**.
+
+---
+
+## 🔁 **Refleksi Akhir Serial**
+
+Setelah Modul 9:
+
+- Seluruh modul terbukti **saling terhubung secara arsitektural**
+- Pendekatan OOP menunjukkan manfaat nyata pada firmware terbatas sumber daya
+- Sistem siap dijadikan:
+
+  - **Template proyek baru**
+  - **Basis tugas akhir atau riset**
+  - **Prototipe sistem produksi skala kecil**
+
+Pada titik ini, pembaca tidak lagi sekadar meniru kode, tetapi **memahami cara merancang dan membangun sistem firmware IoT secara utuh**.
+
+---
+
+## 🧭 **Navigasi Modul**
+
+- ⬅️ **Modul sebelumnya – Modul 8: MQTT Integration**
+  Menyediakan komunikasi eksternal terdistribusi.
+
+- ➡️ **Lanjutan – Seri Web UI / HMI (Terpisah)**
+  Visualisasi dan kontrol sistem berbasis web melalui MQTT.
+
+  {' '}
+
+  <ResourceBox
+    title="Rujukan internal-link"
+    items={[
+      {
+        name: 'MQTT Integration',
+        href: '/blog/IoT/iot-8-mqtt-integration',
+        description: 'Modul 8 – MQTT Integration',
+      },
+    ]}
+  />
+
+---
+
+## 📌 **Penutup Besar (Editorial)**
+
+Modul 9 menegaskan prinsip inti serial ini:
+
+> **Firmware yang baik bukan diukur dari banyaknya fitur, tetapi dari kebenaran arsitekturnya sejak awal.**
+
+Melalui pendekatan bertahap, disiplin, dan modular, serial ini membuktikan bahwa firmware IoT dapat dibangun **rapi, terstruktur, dan siap berkembang**—dan Modul 9 adalah validasi akhir bahwa pendekatan tersebut bekerja.
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

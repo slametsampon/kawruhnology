@@ -1,0 +1,630 @@
+---
+title: Actuator Modular
+date: '2026-02-08'
+tags:
+  [
+    'actuator-modular',
+    'output-control',
+    'componentbase-architecture',
+    'sensor-to-action',
+    'iot-firmware-design',
+  ]
+draft: false
+summary: Modul 7 memperkenalkan actuator sebagai lapisan aksi dalam firmware IoT modular. Setelah sensor menyediakan data lingkungan (Modul 6), modul ini memungkinkan sistem mengambil tindakan fisik nyata melalui relay, servo, atau output digital lain. Actuator diperlakukan sebagai komponen OOP penuh yang mengikuti kontrak ComponentBase, dengan enkapsulasi logika hardware dan manajemen state internal. Modul ini menekankan konsistensi kontrol output (aktif HIGH/LOW), pemisahan keputusan dan eksekusi, serta integrasi langsung dengan data sensor dan event. Hasilnya adalah rantai sistem yang lengkap - input → proses → aksi, siap diperluas ke kontrol jarak jauh pada modul berikutnya.
+---
+
+🧪 **_Modul 7 – Actuator Modular_**
+
+---
+
+- [🧭 **Prolog Modul: Posisi dan Peran Modul 7**](#-prolog-modul-posisi-dan-peran-modul-7)
+- [🧠 **Konteks Pengetahuan: Relasi Antar Modul**](#-konteks-pengetahuan-relasi-antar-modul)
+  - [🔙 **Prasyarat Konseptual**](#-prasyarat-konseptual)
+  - [🔜 **Digunakan Kembali di Modul Selanjutnya**](#-digunakan-kembali-di-modul-selanjutnya)
+- [🎯 **Tujuan Modul (Learning Objectives)**](#-tujuan-modul-learning-objectives)
+- [🧩 **Masalah yang Diselesaikan Modul Ini**](#-masalah-yang-diselesaikan-modul-ini)
+- [🏗️ **Konsep Inti yang Diperkenalkan**](#️-konsep-inti-yang-diperkenalkan)
+  - [**Konsep Utama**](#konsep-utama)
+  - [**Konsep yang Tidak Dibahas di Modul Ini**](#konsep-yang-tidak-dibahas-di-modul-ini)
+- [🛠️ **Desain Teknis \& Arsitektur**](#️-desain-teknis--arsitektur)
+- [🧪 **Implementasi Bertahap (High-Level)**](#-implementasi-bertahap-high-level)
+  - [1️⃣ Identifikasi jenis actuator (relay/servo/output digital)](#1️⃣-identifikasi-jenis-actuator-relayservooutput-digital)
+  - [2️⃣ Mendesain class actuator turunan dari `ComponentBase`](#2️⃣-mendesain-class-actuator-turunan-dari-componentbase)
+  - [3️⃣ Menentukan logika aktif HIGH/LOW](#3️⃣-menentukan-logika-aktif-highlow)
+  - [4️⃣ Implementasi method kontrol dasar](#4️⃣-implementasi-method-kontrol-dasar)
+  - [5️⃣ Integrasi actuator dengan data sensor](#5️⃣-integrasi-actuator-dengan-data-sensor)
+  - [6️⃣ Pengujian aksi berdasarkan kondisi tertentu](#6️⃣-pengujian-aksi-berdasarkan-kondisi-tertentu)
+  - [7️⃣ Validasi perilaku actuator](#7️⃣-validasi-perilaku-actuator)
+  - [Catatan penting (praktis)](#catatan-penting-praktis)
+- [🧾 **Validasi dan Pengujian**](#-validasi-dan-pengujian)
+- [🔁 **Refleksi dan Keterkaitan ke Modul Lain**](#-refleksi-dan-keterkaitan-ke-modul-lain)
+- [🧭 **Navigasi Modul**](#-navigasi-modul)
+- [📌 **Penutup Analitis**](#-penutup-analitis)
+
+---
+
+## 🧭 **Prolog Modul: Posisi dan Peran Modul 7**
+
+Modul 7 memperkenalkan **actuator sebagai lapisan aksi** dalam arsitektur firmware IoT modular. Setelah Modul 6 menyediakan **data lingkungan melalui sensor**, modul ini menambahkan kemampuan sistem untuk **mengubah kondisi fisik secara langsung** melalui output seperti relay, servo, atau digital output.
+
+Pada titik ini, firmware telah memiliki:
+
+- Arsitektur komponen yang konsisten (`ComponentBase`)
+- Mekanisme event asinkron (interrupt)
+- Sumber data terstruktur (sensor)
+
+Modul 7 melengkapi rantai sistem dengan menempatkan actuator sebagai **komponen OOP penuh**, bukan sekadar pemanggilan `digitalWrite()`. Dengan demikian, sistem mulai membentuk alur yang lengkap dan eksplisit: **input → proses → aksi**, yang menjadi dasar seluruh sistem IoT operasional.
+
+---
+
+## 🧠 **Konteks Pengetahuan: Relasi Antar Modul**
+
+### 🔙 **Prasyarat Konseptual**
+
+Modul 7 **bergantung langsung** pada modul-modul berikut:
+
+- **Modul 4 – ComponentBase**
+  Digunakan untuk:
+
+  - kontrak lifecycle komponen (`begin()`, `update()`)
+  - pengelolaan actuator secara polimorfik
+
+- **Modul 6 – Sensor Modular**
+  Digunakan sebagai:
+
+  - sumber data yang memicu perubahan state actuator
+  - contoh integrasi data → aksi
+
+- **Modul 2 – LED Modular dengan Class**
+  Digunakan sebagai:
+
+  - referensi dasar desain actuator
+  - pembanding antara actuator sederhana dan actuator modular
+
+Tanpa pemahaman modul-modul ini, actuator tidak dapat diintegrasikan secara konsisten.
+
+<ResourceBox
+  title="Rujukan internal-link"
+  items={[
+    {
+      name: 'Kerangka Pengembangan Firmware IoT Modular',
+      href: '/blog/IoT/iot-0-panduan',
+      description:
+        'Modul 0 – Kerangka Pengembangan Firmware IoT Modular Berbasis OOP untuk ESP8266/ESP32',
+    },
+    {
+      name: 'LED Modular Dengan Class',
+      href: '/blog/IoT/iot-2-led-modular',
+      description: 'Modul 2 – LED Modular Dengan Class',
+    },
+    {
+      name: 'ComponentBase',
+      href: '/blog/IoT/iot-4-component-base',
+      description: 'Modul 4 – ComponentBase',
+    },
+    {
+      name: 'Sensor Modular',
+      href: '/blog/IoT/iot-6-sensor-modular',
+      description: 'Modul 6 – Sensor Modular',
+    },
+  ]}
+/>
+
+---
+
+### 🔜 **Digunakan Kembali di Modul Selanjutnya**
+
+Class actuator yang dibangun pada Modul 7 akan digunakan langsung pada:
+
+- **Modul 8 – MQTT Integration**
+  Actuator menjadi target perintah jarak jauh.
+
+- **Modul 9 – Final Project**
+  Actuator menjadi elemen aksi utama sistem IoT.
+
+Artinya, desain actuator pada Modul 7 **mengikat perilaku sistem hingga tahap akhir proyek**.
+
+---
+
+## 🎯 **Tujuan Modul (Learning Objectives)**
+
+Setelah menyelesaikan Modul 7, pembaca **harus mampu secara praktis**:
+
+- Menempatkan actuator sebagai **komponen aksi** dalam sistem IoT
+- Mendesain class actuator berbasis OOP yang terenkapsulasi
+- Mengisolasi logika hardware output dari logika aplikasi
+- Menangani perbedaan **aktif HIGH / aktif LOW** secara konsisten
+- Menghubungkan actuator dengan **data sensor dan event** tanpa menambah kompleksitas di `main.ino`
+
+Jika actuator masih dikendalikan langsung dari `loop()`, modul dianggap gagal.
+
+---
+
+## 🧩 **Masalah yang Diselesaikan Modul Ini**
+
+Masalah umum pada pengendalian actuator tanpa struktur:
+
+- Logika kontrol tersebar di `loop()`
+- Perubahan perilaku actuator membutuhkan banyak perubahan kode
+- Setiap jenis output memiliki pola kontrol berbeda
+- Penambahan actuator baru merusak struktur firmware
+
+Dampak langsung:
+
+- Firmware sulit dirawat
+- Sulit diskalakan
+- Tidak siap diintegrasikan dengan sistem eksternal
+
+Modul 7 menyelesaikan masalah ini dengan:
+
+- Menjadikan actuator **komponen mandiri**
+- Menyatukan pola kontrol output dalam class
+- Memisahkan:
+
+  - **logika keputusan** (kapan aktif)
+  - **logika hardware** (bagaimana aktif)
+
+---
+
+## 🏗️ **Konsep Inti yang Diperkenalkan**
+
+### **Konsep Utama**
+
+- **Actuator sebagai komponen OOP**
+  Actuator memiliki lifecycle dan state sendiri.
+
+- **Logika aktif HIGH vs aktif LOW**
+  Perbedaan hardware ditangani di dalam class, bukan di aplikasi.
+
+- **Abstraksi output digital**
+  Aksi direpresentasikan sebagai method (`on()`, `off()`, `set()`).
+
+- **Integrasi actuator dengan data sensor**
+  Actuator bereaksi terhadap kondisi, bukan dipicu manual.
+
+- **Kontrol aksi berbasis kondisi**
+  Sensor → kondisi → actuator, tanpa coupling langsung.
+
+---
+
+### **Konsep yang Tidak Dibahas di Modul Ini**
+
+Secara eksplisit **di luar scope Modul 7**:
+
+- MQTT dan komunikasi jaringan
+- Kontrol jarak jauh
+- Rule engine dan automasi kompleks
+- Safety, interlock, dan fail-safe lanjutan
+
+Fokus modul ini **hanya pada kontrol output lokal yang terstruktur**.
+
+---
+
+## 🛠️ **Desain Teknis & Arsitektur**
+
+Pada level arsitektur, actuator diperlakukan sebagai:
+
+- Komponen aktif yang **mengubah kondisi fisik**
+- Dikendalikan melalui **antarmuka method yang eksplisit**
+- Tunduk pada lifecycle `ComponentBase`
+
+Tanggung jawab class actuator:
+
+- Inisialisasi pin dan mode output
+- Menyimpan state internal (ON/OFF)
+- Menerjemahkan perintah logis ke sinyal hardware
+
+Sumber keputusan aktivasi actuator dapat berasal dari:
+
+- Data sensor
+- Event tombol (interrupt)
+- Logika aplikasi lokal (sementara, sebelum MQTT)
+
+`main.ino` **tidak**:
+
+- mengatur pin output
+- menentukan logika aktif HIGH/LOW
+- mengandung logika hardware actuator
+
+Dengan desain ini, actuator dapat ditambah, diganti, atau dikombinasikan **tanpa mengubah arsitektur firmware utama**.
+
+---
+
+## 🧪 **Implementasi Bertahap (High-Level)**
+
+**Modul 7 – Actuator Modular (Engineer-grade, rinci, siap compile)**
+
+Contoh actuator yang dipakai: **Relay 1-channel (digital output)** karena paling umum dan mewakili kasus **aktif HIGH / aktif LOW**.
+Sensor yang dipakai: **DHT22** dari Modul 6 (data suhu sebagai pemicu aksi).
+Event tambahan (opsional): tombol dari Modul 5 bisa ditambahkan belakangan—tidak wajib untuk modul ini.
+
+---
+
+> 0️⃣ Struktur Folder (artefak wajib)
+
+```
+src/
+├── ComponentBase.h
+├── LedController.h
+├── LedController.cpp
+├── DhtSensor.h
+├── DhtSensor.cpp
+├── RelayActuator.h
+├── RelayActuator.cpp
+└── main.ino
+```
+
+---
+
+### 1️⃣ Identifikasi jenis actuator (relay/servo/output digital)
+
+Untuk modul ini, kita definisikan 1 jenis actuator yang **wajib tuntas**:
+
+> ✅ Relay / Digital Output
+
+Karakteristik:
+
+- Controlled via GPIO (HIGH/LOW)
+- Memiliki state: ON/OFF
+- Ada variasi hardware:
+
+  - **Active HIGH** (ON saat GPIO HIGH)
+  - **Active LOW** (ON saat GPIO LOW) → paling sering pada board relay murah
+
+> Servo/PWM sengaja tidak dimasukkan agar fokus modul tidak melebar.
+
+---
+
+### 2️⃣ Mendesain class actuator turunan dari `ComponentBase`
+
+> Tujuan class actuator
+
+- Mengenkapsulasi:
+
+  - pin output
+  - logika aktif HIGH/LOW
+  - state internal
+
+- Menyediakan API:
+
+  - `on()`, `off()`, `set(bool)`, `toggle()`, `isOn()`
+
+> `RelayActuator.h`
+
+```cpp
+#ifndef RELAY_ACTUATOR_H
+#define RELAY_ACTUATOR_H
+
+#include <Arduino.h>
+#include "ComponentBase.h"
+
+class RelayActuator : public ComponentBase {
+  public:
+    enum class ActiveLevel : uint8_t {
+      ACTIVE_HIGH = 1,
+      ACTIVE_LOW  = 0
+    };
+
+    RelayActuator(uint8_t pin, ActiveLevel activeLevel, bool initialOn = false);
+
+    void begin() override;
+    void update() override;
+
+    void on();
+    void off();
+    void toggle();
+    void set(bool on);
+    bool isOn() const;
+
+  private:
+    uint8_t _pin;
+    ActiveLevel _activeLevel;
+    bool _state; // logical state: true=ON, false=OFF
+
+    void applyHardware();
+};
+
+#endif
+```
+
+---
+
+### 3️⃣ Menentukan logika aktif HIGH/LOW
+
+Rules yang dipakai di class:
+
+- State logis `true` = actuator ON
+- Sinyal hardware tergantung active level:
+
+| Active Level | ON   | OFF  |
+| ------------ | ---- | ---- |
+| ACTIVE_HIGH  | HIGH | LOW  |
+| ACTIVE_LOW   | LOW  | HIGH |
+
+Implementasinya dilakukan di `applyHardware()`.
+
+---
+
+### 4️⃣ Implementasi method kontrol dasar
+
+> `RelayActuator.cpp`
+
+```cpp
+#include "RelayActuator.h"
+
+RelayActuator::RelayActuator(uint8_t pin, ActiveLevel activeLevel, bool initialOn)
+: _pin(pin), _activeLevel(activeLevel), _state(initialOn) {}
+
+void RelayActuator::begin() {
+  pinMode(_pin, OUTPUT);
+  applyHardware();
+}
+
+void RelayActuator::update() {
+  // Actuator tidak perlu polling pada Modul 7
+  // Keputusan aktivasi dilakukan di logic aplikasi (mis. main.ino) berdasarkan data sensor
+}
+
+void RelayActuator::on() {
+  set(true);
+}
+
+void RelayActuator::off() {
+  set(false);
+}
+
+void RelayActuator::toggle() {
+  set(!_state);
+}
+
+void RelayActuator::set(bool on) {
+  _state = on;
+  applyHardware();
+}
+
+bool RelayActuator::isOn() const {
+  return _state;
+}
+
+void RelayActuator::applyHardware() {
+  // Translate logical state -> electrical level
+  if (_activeLevel == ActiveLevel::ACTIVE_HIGH) {
+    digitalWrite(_pin, _state ? HIGH : LOW);
+  } else {
+    digitalWrite(_pin, _state ? LOW : HIGH);
+  }
+}
+```
+
+---
+
+### 5️⃣ Integrasi actuator dengan data sensor
+
+Kita buat aturan kondisi sederhana:
+
+> Jika suhu **>= THRESHOLD_C** → relay ON
+> Jika suhu **< THRESHOLD_C - HYSTERESIS_C** → relay OFF
+
+Alasan pakai hysteresis:
+
+- mencegah relay chatter (ON/OFF cepat) saat suhu berada di sekitar threshold.
+
+Parameter:
+
+- `THRESHOLD_C` contoh 30.0
+- `HYSTERESIS_C` contoh 1.0
+
+---
+
+### 6️⃣ Pengujian aksi berdasarkan kondisi tertentu
+
+> `main.ino` (FINAL – UTUH)
+
+```cpp
+#include <Arduino.h>
+#include "ComponentBase.h"
+#include "DhtSensor.h"
+#include "RelayActuator.h"
+
+// ===== Konfigurasi pin =====
+#define DHT_PIN   4
+#define DHT_TYPE  DHT22
+#define RELAY_PIN 5
+
+// ===== Parameter kontrol =====
+static const float THRESHOLD_C = 30.0;
+static const float HYSTERESIS_C = 1.0;
+
+// ===== Komponen =====
+DhtSensor dht(DHT_PIN, DHT_TYPE, 2000); // update tiap 2 detik
+
+// Set active level sesuai hardware relay Anda:
+// - Banyak relay module: ACTIVE_LOW
+// - Jika relay ON saat GPIO HIGH: ACTIVE_HIGH
+RelayActuator relay(RELAY_PIN, RelayActuator::ActiveLevel::ACTIVE_LOW, false);
+
+// Registry komponen
+ComponentBase* components[] = { &dht, &relay };
+const size_t COMPONENT_COUNT = sizeof(components) / sizeof(components[0]);
+
+void setup() {
+  Serial.begin(115200);
+  delay(200);
+
+  for (size_t i = 0; i < COMPONENT_COUNT; i++) {
+    components[i]->begin();
+  }
+
+  Serial.println("Modul 7: Actuator Modular (Relay) + Sensor DHT");
+}
+
+// Logic keputusan: data sensor -> actuator
+void processControlLogic() {
+  if (!dht.isValid()) return;
+
+  float t = dht.getTemperature();
+
+  // Hysteresis control
+  if (!relay.isOn() && t >= THRESHOLD_C) {
+    relay.on();
+    Serial.println("[ACT] Relay ON (temp >= threshold)");
+  }
+  else if (relay.isOn() && t < (THRESHOLD_C - HYSTERESIS_C)) {
+    relay.off();
+    Serial.println("[ACT] Relay OFF (temp < threshold-hyst)");
+  }
+}
+
+void loop() {
+  // Jalankan lifecycle komponen
+  for (size_t i = 0; i < COMPONENT_COUNT; i++) {
+    components[i]->update();
+  }
+
+  // Konsumsi data sensor & kontrol actuator
+  if (dht.isValid()) {
+    Serial.print("[SEN] Temp: ");
+    Serial.print(dht.getTemperature());
+    Serial.print(" C | Hum: ");
+    Serial.print(dht.getHumidity());
+    Serial.println(" %");
+  }
+
+  processControlLogic();
+}
+```
+
+---
+
+### 7️⃣ Validasi perilaku actuator
+
+> Checklist validasi teknis (wajib)
+
+1. **Actuator merespons kondisi sensor**
+
+   - Saat suhu melewati threshold → relay ON
+   - Saat suhu turun melewati threshold-hysteresis → relay OFF
+
+2. **Tidak ada logika hardware actuator di `main.ino`**
+
+   - `pinMode`, `digitalWrite` hanya ada di `RelayActuator`
+
+3. **Logika aktif HIGH/LOW terenkapsulasi**
+
+   - Mengubah active level cukup ganti:
+
+     ```cpp
+     RelayActuator::ActiveLevel::ACTIVE_LOW
+     ```
+
+     tanpa ubah `main.ino` logic kontrol
+
+4. **Firmware modular**
+
+   - Menambah actuator kedua:
+
+     - tambah object `RelayActuator relay2(...)`
+     - tambah ke registry
+     - tanpa ubah struktur loop
+
+5. **Stabil (no chatter)**
+
+   - Hysteresis mencegah relay flicker ON/OFF di sekitar threshold
+
+---
+
+### Catatan penting (praktis)
+
+- Jika relay Anda **menyala saat boot** padahal `initialOn=false`, kemungkinan:
+
+  - relay module aktif LOW, tapi Anda set ACTIVE_HIGH (atau sebaliknya)
+
+- Ubah `ActiveLevel` sampai perilaku sesuai.
+
+---
+
+## 🧾 **Validasi dan Pengujian**
+
+Modul 7 dinyatakan **lulus secara teknis** apabila seluruh kriteria berikut terpenuhi:
+
+- **Actuator merespons kondisi sensor dengan benar**
+  Perubahan nilai sensor (melewati threshold dan hysteresis) memicu perubahan state actuator sesuai logika kontrol.
+
+- **Tidak ada logika hardware di `main.ino`**
+  Tidak terdapat `pinMode`, `digitalWrite`, atau detail aktif HIGH/LOW di `main.ino`. Seluruhnya terenkapsulasi di class actuator.
+
+- **Firmware tetap modular dan mudah diperluas**
+  Penambahan actuator baru cukup dengan:
+
+  - membuat instance class actuator
+  - menambahkannya ke registry komponen
+    tanpa mengubah struktur loop utama.
+
+- **Serial Monitor menunjukkan perubahan state actuator**
+  Log serial mencerminkan transisi ON/OFF actuator yang sinkron dengan kondisi sensor.
+
+- **Penambahan actuator tidak memengaruhi sistem lain**
+  Sensor, event, dan actuator lain tetap berjalan normal tanpa side effect.
+
+Jika satu poin gagal → **arsitektur tidak valid**.
+
+---
+
+## 🔁 **Refleksi dan Keterkaitan ke Modul Lain**
+
+Kondisi sistem **setelah Modul 7**:
+
+- Firmware mampu melakukan **aksi fisik nyata**
+- Rantai **input → process → output** telah terbentuk secara eksplisit
+- Sensor menghasilkan data
+- Logika menentukan kondisi
+- Actuator mengeksekusi aksi
+
+Batasan saat ini:
+
+- Seluruh aksi masih **lokal** (on-device)
+- Tidak ada kontrol atau observasi dari sistem eksternal
+
+Keterbatasan ini **disengaja** dan akan diselesaikan pada **Modul 8**, dengan mengintegrasikan firmware ke sistem luar melalui **MQTT**.
+
+---
+
+## 🧭 **Navigasi Modul**
+
+- ⬅️ **Modul sebelumnya – Modul 6: Sensor Modular**
+  Menyediakan data lingkungan terstruktur.
+
+- ➡️ **Modul selanjutnya – Modul 8: MQTT Integration**
+  Menjadikan actuator dan sensor dapat dikendalikan dan dipantau dari luar perangkat.
+
+<ResourceBox
+  title="Rujukan internal-link"
+  items={[
+    {
+      name: 'Sensor Modular',
+      href: '/blog/IoT/iot-6-sensor-modular',
+      description: 'Modul 6 – Sensor Modular',
+    },
+    {
+      name: 'MQTT Integration',
+      href: '/blog/IoT/iot-8-mqtt-integration',
+      description: 'Modul 8 – MQTT Integration',
+    },
+  ]}
+/>
+
+---
+
+## 📌 **Penutup Analitis**
+
+Modul 7 menandai titik di mana firmware **berdampak langsung pada dunia fisik**.
+Dengan actuator modular, sistem IoT tidak lagi sekadar mengamati dan melaporkan, tetapi **mengambil tindakan** berdasarkan data dan event, secara terstruktur, teruji, dan siap diperluas ke kontrol terdistribusi pada modul berikutnya.
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>
