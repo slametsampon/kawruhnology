@@ -33,7 +33,7 @@ summary: Modul 4 memperkenalkan ComponentBase sebagai fondasi arsitektural utama
   - [**3. Mendefinisikan Method Virtual (`begin()`, `update()`)**](#3-mendefinisikan-method-virtual-begin-update)
   - [**4. Menurunkan Class LED dari `ComponentBase`**](#4-menurunkan-class-led-dari-componentbase)
   - [**5. Mengelola Komponen melalui Pointer Base Class**](#5-mengelola-komponen-melalui-pointer-base-class)
-  - [**6. Menyederhanakan Logika `main.ino`**](#6-menyederhanakan-logika-mainino)
+  - [**6. Menyederhanakan Logika `firmware.ino`**](#6-menyederhanakan-logika-firmwareino)
   - [🧾 **Checklist Validasi (WAJIB LULUS)**](#-checklist-validasi-wajib-lulus)
   - [Catatan keras (dan penting)](#catatan-keras-dan-penting)
 - [🧾 **Validasi dan Pengujian**](#-validasi-dan-pengujian)
@@ -71,14 +71,14 @@ Modul 4 **tidak memperkenalkan fitur baru**, tetapi **menyusun ulang cara firmwa
 
   - class sebagai abstraksi perangkat keras
   - constructor sebagai titik inisialisasi
-  - pemisahan logika hardware dari `main.ino`
+  - pemisahan logika hardware dari `firmware.ino`
 
 - **Modul 3 – Object dari JSON**
   Wajib memahami:
 
   - object dibuat saat runtime
   - konfigurasi berasal dari data
-  - `main.ino` berperan sebagai orchestrator sementara
+  - `firmware.ino` berperan sebagai orchestrator sementara
 
 Tanpa dua modul ini, konsep base class **tidak bermakna secara praktis**.
 
@@ -159,7 +159,7 @@ Setelah Modul 3, firmware memang mampu membuat object secara dinamis, namun masi
   - memperbarui komponen
   - mengiterasi komponen
 
-- `main.ino` mulai mengandung:
+- `firmware.ino` mulai mengandung:
 
   - logika spesifik komponen
   - percabangan berbasis tipe
@@ -169,7 +169,7 @@ Setelah Modul 3, firmware memang mampu membuat object secara dinamis, namun masi
 Modul 4 menyelesaikan masalah ini dengan pendekatan berikut:
 
 - Mendefinisikan **antarmuka umum** untuk seluruh komponen
-- Menjadikan `main.ino` hanya bergantung pada **base class**
+- Menjadikan `firmware.ino` hanya bergantung pada **base class**
 - Mengubah firmware dari:
 
   > kumpulan object
@@ -220,12 +220,12 @@ Peran **`ComponentBase`**:
 
 - Mendefinisikan **lifecycle komponen**
 - Menentukan **method wajib** yang harus diimplementasikan
-- Menjadi **satu-satunya tipe** yang dikenal oleh `main.ino`
+- Menjadi **satu-satunya tipe** yang dikenal oleh `firmware.ino`
 
 Implikasi langsung:
 
-- `main.ino` **tidak tahu** apakah komponen adalah LED, sensor, atau actuator
-- `main.ino` hanya memanggil method berdasarkan **kontrak yang sama**
+- `firmware.ino` **tidak tahu** apakah komponen adalah LED, sensor, atau actuator
+- `firmware.ino` hanya memanggil method berdasarkan **kontrak yang sama**
 - Penambahan komponen **tidak mengubah struktur utama firmware**
 
 Ini adalah titik di mana firmware **resmi naik kelas secara arsitektural**.
@@ -365,7 +365,7 @@ Perubahan penting:
 
 ### **5. Mengelola Komponen melalui Pointer Base Class**
 
-> `main.ino` (REVISI TOTAL)
+> `firmware.ino` (REVISI TOTAL)
 
 ```cpp
 #include "ComponentBase.h"
@@ -390,18 +390,18 @@ void loop() {
 
 Catatan teknis:
 
-- `main.ino` **tidak tahu** jenis komponen
+- `firmware.ino` **tidak tahu** jenis komponen
 - Tidak ada `digitalWrite`
 - Tidak ada logika LED
 - Semua berbasis kontrak
 
 ---
 
-### **6. Menyederhanakan Logika `main.ino`**
+### **6. Menyederhanakan Logika `firmware.ino`**
 
 Hasil akhir:
 
-- `main.ino`:
+- `firmware.ino`:
 
   - hanya loop array komponen
   - hanya panggil `begin()` dan `update()`
@@ -420,7 +420,7 @@ Tidak ada perubahan struktur.
 
 - [ ] Firmware compile tanpa error
 - [ ] LED tetap berkedip
-- [ ] `main.ino` tidak menyebut `LedController` di logic
+- [ ] `firmware.ino` tidak menyebut `LedController` di logic
 - [ ] Semua komponen diperlakukan sebagai `ComponentBase*`
 - [ ] Penambahan komponen **tidak mengubah loop utama**
 
@@ -432,7 +432,7 @@ Jika satu poin gagal → desain **tidak sah**.
 
 Setelah Modul 4:
 
-- **Tidak boleh lagi** logic komponen di `main.ino`
+- **Tidak boleh lagi** logic komponen di `firmware.ino`
 - Semua modul berikutnya **HARUS** tunduk ke `ComponentBase`
 
 Jika aturan ini dilanggar, seluruh arsitektur runtuh.
@@ -458,15 +458,15 @@ Tidak ada perubahan perilaku hardware yang diizinkan.
 
 ### **2. Validasi Polimorfisme**
 
-- **`main.ino` menangani komponen melalui base class**
+- **`firmware.ino` menangani komponen melalui base class**
 
 Verifikasi langsung pada kode:
 
-- `main.ino` hanya menyimpan `ComponentBase*`
+- `firmware.ino` hanya menyimpan `ComponentBase*`
 - Tidak ada pemanggilan method spesifik `LedController`
 - Tidak ada `#include` class konkret selain saat instansiasi
 
-Jika `main.ino` memerlukan cast → **validasi gagal**.
+Jika `firmware.ino` memerlukan cast → **validasi gagal**.
 
 ---
 
@@ -489,7 +489,7 @@ Validasi lulus jika:
 
 ### **4. Validasi Ketergantungan**
 
-Audit `main.ino`:
+Audit `firmware.ino`:
 
 - Tidak ada:
 
@@ -512,7 +512,7 @@ Modul 4 dinyatakan **lulus** apabila:
 
 - Firmware berjalan stabil
 - Komponen dapat ditambah tanpa mengubah struktur utama
-- `main.ino` berfungsi sebagai orchestrator murni
+- `firmware.ino` berfungsi sebagai orchestrator murni
 - Seluruh interaksi berbasis kontrak `ComponentBase`
 
 Jika satu kriteria gagal → **arsitektur belum naik kelas**.
@@ -524,7 +524,7 @@ Jika satu kriteria gagal → **arsitektur belum naik kelas**.
 Kondisi firmware **setelah Modul 4**:
 
 - Seluruh komponen **mematuhi kontrak yang sama** (`begin()`, `update()`)
-- `main.ino` tidak bergantung pada implementasi konkret
+- `firmware.ino` tidak bergantung pada implementasi konkret
 - Penambahan komponen **tidak mengubah struktur eksekusi utama**
 
 Implikasi langsung:

@@ -134,7 +134,7 @@ Setelah menyelesaikan Modul 7, pembaca **harus mampu secara praktis**:
 - Mendesain class actuator berbasis OOP yang terenkapsulasi
 - Mengisolasi logika hardware output dari logika aplikasi
 - Menangani perbedaan **aktif HIGH / aktif LOW** secara konsisten
-- Menghubungkan actuator dengan **data sensor dan event** tanpa menambah kompleksitas di `main.ino`
+- Menghubungkan actuator dengan **data sensor dan event** tanpa menambah kompleksitas di `firmware.ino`
 
 Jika actuator masih dikendalikan langsung dari `loop()`, modul dianggap gagal.
 
@@ -220,7 +220,7 @@ Sumber keputusan aktivasi actuator dapat berasal dari:
 - Event tombol (interrupt)
 - Logika aplikasi lokal (sementara, sebelum MQTT)
 
-`main.ino` **tidak**:
+`firmware.ino` **tidak**:
 
 - mengatur pin output
 - menentukan logika aktif HIGH/LOW
@@ -243,7 +243,7 @@ Event tambahan (opsional): tombol dari Modul 5 bisa ditambahkan belakangan—tid
 > 0️⃣ Struktur Folder (artefak wajib)
 
 ```
-src/
+firmware/
 ├── ComponentBase.h
 ├── LedController.h
 ├── LedController.cpp
@@ -251,7 +251,7 @@ src/
 ├── DhtSensor.cpp
 ├── RelayActuator.h
 ├── RelayActuator.cpp
-└── main.ino
+└── firmware.ino
 ```
 
 ---
@@ -362,7 +362,7 @@ void RelayActuator::begin() {
 
 void RelayActuator::update() {
   // Actuator tidak perlu polling pada Modul 7
-  // Keputusan aktivasi dilakukan di logic aplikasi (mis. main.ino) berdasarkan data sensor
+  // Keputusan aktivasi dilakukan di logic aplikasi (mis. firmware.ino) berdasarkan data sensor
 }
 
 void RelayActuator::on() {
@@ -418,7 +418,7 @@ Parameter:
 
 ### 6️⃣ Pengujian aksi berdasarkan kondisi tertentu
 
-> `main.ino` (FINAL – UTUH)
+> `firmware.ino` (FINAL – UTUH)
 
 ```cpp
 #include <Arduino.h>
@@ -505,7 +505,7 @@ void loop() {
    - Saat suhu melewati threshold → relay ON
    - Saat suhu turun melewati threshold-hysteresis → relay OFF
 
-2. **Tidak ada logika hardware actuator di `main.ino`**
+2. **Tidak ada logika hardware actuator di `firmware.ino`**
 
    - `pinMode`, `digitalWrite` hanya ada di `RelayActuator`
 
@@ -517,7 +517,7 @@ void loop() {
      RelayActuator::ActiveLevel::ACTIVE_LOW
      ```
 
-     tanpa ubah `main.ino` logic kontrol
+     tanpa ubah `firmware.ino` logic kontrol
 
 4. **Firmware modular**
 
@@ -550,8 +550,8 @@ Modul 7 dinyatakan **lulus secara teknis** apabila seluruh kriteria berikut terp
 - **Actuator merespons kondisi sensor dengan benar**
   Perubahan nilai sensor (melewati threshold dan hysteresis) memicu perubahan state actuator sesuai logika kontrol.
 
-- **Tidak ada logika hardware di `main.ino`**
-  Tidak terdapat `pinMode`, `digitalWrite`, atau detail aktif HIGH/LOW di `main.ino`. Seluruhnya terenkapsulasi di class actuator.
+- **Tidak ada logika hardware di `firmware.ino`**
+  Tidak terdapat `pinMode`, `digitalWrite`, atau detail aktif HIGH/LOW di `firmware.ino`. Seluruhnya terenkapsulasi di class actuator.
 
 - **Firmware tetap modular dan mudah diperluas**
   Penambahan actuator baru cukup dengan:

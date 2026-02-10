@@ -54,7 +54,7 @@ Modul 5 menandai peralihan arsitektural dari firmware yang **sinkron dan berbasi
 
 Pada tahap ini, firmware telah tersusun rapi dan modular, namun masih bergantung pada eksekusi berurutan di dalam `loop()`. Pendekatan tersebut tidak memadai untuk input fisik yang membutuhkan respons cepat dan konsisten. Modul 5 melengkapi arsitektur dengan integrasi **ISR (Interrupt Service Routine)** yang dirancang aman, minimal, dan terpisah dari logika aplikasi.
 
-Fokus modul ini adalah memastikan bahwa **event asinkron** dapat diproses tanpa merusak kontrak komponen, tanpa menambah kompleksitas di `main.ino`, dan tanpa mengorbankan stabilitas sistem. Dengan demikian, interrupt menjadi bagian yang terkontrol dalam arsitektur firmware modular, bukan pengecualian yang merusak desain.
+Fokus modul ini adalah memastikan bahwa **event asinkron** dapat diproses tanpa merusak kontrak komponen, tanpa menambah kompleksitas di `firmware.ino`, dan tanpa mengorbankan stabilitas sistem. Dengan demikian, interrupt menjadi bagian yang terkontrol dalam arsitektur firmware modular, bukan pengecualian yang merusak desain.
 
 ---
 
@@ -245,13 +245,13 @@ Di bawah ini adalah implementasi **rinci, detail, dan siap compile** untuk ESP32
 ### **0) Struktur Folder (artefak yang harus ada)**
 
 ```
-src/
+firmware/
 ├── ComponentBase.h
 ├── LedController.h
 ├── LedController.cpp
 ├── ButtonHandler.h
 ├── ButtonHandler.cpp
-└── main.ino
+└── firmware.ino
 ```
 
 > `ComponentBase.h` Anda pakai dari Modul 4 (kontrak `begin()` / `update()`).
@@ -502,7 +502,7 @@ bool LedController::isOn() const {
 
 ### **7. Validasi non-blocking behavior**
 
-> `main.ino` (FINAL, UTUH, SIAP COPAS)
+> `firmware.ino` (FINAL, UTUH, SIAP COPAS)
 
 ```cpp
 #include <Arduino.h>
@@ -573,9 +573,9 @@ void loop() {
 
    - Tekan cepat berulang → tidak hang/reset (debounce di `update()`).
 
-5. **main.ino tidak mengandung logic hardware tombol/LED**
+5. **firmware.ino tidak mengandung logic hardware tombol/LED**
 
-   - Tidak ada `digitalWrite`, tidak ada `attachInterrupt` di `main.ino`.
+   - Tidak ada `digitalWrite`, tidak ada `attachInterrupt` di `firmware.ino`.
 
 ---
 
@@ -599,7 +599,7 @@ Kondisi firmware **setelah Modul 5**:
 - ISR dibatasi hanya untuk **set flag**
 - Seluruh logika aplikasi tetap dijalankan di konteks normal (`update()`)
 - Kontrak `ComponentBase` **tidak dilanggar**
-- `main.ino` tetap berperan sebagai orchestrator, bukan tempat logika event
+- `firmware.ino` tetap berperan sebagai orchestrator, bukan tempat logika event
 
 Implikasi langsung:
 

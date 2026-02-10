@@ -31,17 +31,17 @@ summary: Modul 1 adalah fondasi utama dalam serial pengembangan firmware IoT ber
   - [2. **Class dan Object sebagai Representasi Komponen**](#2-class-dan-object-sebagai-representasi-komponen)
   - [3. **Separation of Concern pada Firmware ESP**](#3-separation-of-concern-pada-firmware-esp)
   - [4. **Struktur Proyek Modular**](#4-struktur-proyek-modular)
-  - [5. **Peran `main.ino` sebagai Orchestrator**](#5-peran-mainino-sebagai-orchestrator)
+  - [5. **Peran `firmware.ino` sebagai Orchestrator**](#5-peran-firmwareino-sebagai-orchestrator)
   - [6. **Boundary Modul: Apa yang Sengaja Tidak Dibahas**](#6-boundary-modul-apa-yang-sengaja-tidak-dibahas)
 - [🛠️ **Desain Teknis \& Arsitektur: Bentuk Firmware yang Ditargetkan**](#️-desain-teknis--arsitektur-bentuk-firmware-yang-ditargetkan)
   - [1. **Firmware sebagai Kumpulan Komponen**](#1-firmware-sebagai-kumpulan-komponen)
-  - [2. **Tanggung Jawab `main.ino`**](#2-tanggung-jawab-mainino)
+  - [2. **Tanggung Jawab `firmware.ino`**](#2-tanggung-jawab-firmwareino)
   - [3. **Isolasi Class**](#3-isolasi-class)
 - [🧪 **Implementasi Bertahap: Dari Struktur ke Firmware Berjalan**](#-implementasi-bertahap-dari-struktur-ke-firmware-berjalan)
   - [1. **Penetapan Struktur Folder Proyek**](#1-penetapan-struktur-folder-proyek)
   - [2. **Pemisahan Header dan Implementasi**](#2-pemisahan-header-dan-implementasi)
   - [3. **Pembuatan Class Dasar Non-Hardware**](#3-pembuatan-class-dasar-non-hardware)
-  - [4. **Integrasi Class ke `main.ino`**](#4-integrasi-class-ke-mainino)
+  - [4. **Integrasi Class ke `firmware.ino`**](#4-integrasi-class-ke-firmwareino)
   - [5. **Build dan Upload melalui Visual Studio Code**](#5-build-dan-upload-melalui-visual-studio-code)
 - [🧾 **Validasi dan Pengujian: Kriteria Keberhasilan Modul**](#-validasi-dan-pengujian-kriteria-keberhasilan-modul)
   - [1. **Validasi Struktural**](#1-validasi-struktural)
@@ -62,7 +62,7 @@ summary: Modul 1 adalah fondasi utama dalam serial pengembangan firmware IoT ber
 
 Modul 1 menempati posisi strategis sebagai **fondasi arsitektural** dalam keseluruhan serial pengembangan firmware IoT berbasis ESP dengan pendekatan _Object-Oriented Programming_ (OOP). Modul ini tidak dirancang untuk menghasilkan fungsi perangkat keras yang langsung terlihat, melainkan untuk membentuk **cara berpikir, struktur kode, dan disiplin pengembangan** yang akan menjadi standar tetap hingga modul-modul lanjutan.
 
-Pada tahap ini, pembaca secara sadar diarahkan untuk meninggalkan pola firmware prosedural yang umum—di mana seluruh logika terkonsentrasi dalam satu berkas `main.ino`—menuju pendekatan **firmware sebagai sistem terkomposisi**, yang dibangun dari kumpulan class dengan tanggung jawab yang terdefinisi jelas. Peralihan ini bukan sekadar perubahan gaya penulisan kode, tetapi perubahan paradigma dalam merancang firmware yang scalable dan maintainable.
+Pada tahap ini, pembaca secara sadar diarahkan untuk meninggalkan pola firmware prosedural yang umum—di mana seluruh logika terkonsentrasi dalam satu berkas `firmware.ino`—menuju pendekatan **firmware sebagai sistem terkomposisi**, yang dibangun dari kumpulan class dengan tanggung jawab yang terdefinisi jelas. Peralihan ini bukan sekadar perubahan gaya penulisan kode, tetapi perubahan paradigma dalam merancang firmware yang scalable dan maintainable.
 
 Selain aspek konseptual OOP, Modul 1 juga menetapkan **struktur proyek, pemisahan file, serta workflow pengembangan** yang akan digunakan secara konsisten hingga Modul 9. Keputusan desain pada modul ini bersifat kumulatif: setiap modul selanjutnya mengasumsikan bahwa pembaca telah memahami dan menerapkan struktur yang diperkenalkan di sini.
 
@@ -98,7 +98,7 @@ Seluruh konsep yang diperkenalkan pada Modul 1 akan digunakan kembali secara eks
   Penerapan object-oriented design untuk merepresentasikan data terstruktur.
 
 - **Modul 4 – ComponentBase**
-  Abstraksi lanjutan yang sepenuhnya bergantung pada pemahaman struktur class dan peran `main.ino`.
+  Abstraksi lanjutan yang sepenuhnya bergantung pada pemahaman struktur class dan peran `firmware.ino`.
 
 - **Modul 5 hingga Modul 9**
   Seluruh modul lanjutan mengasumsikan struktur proyek, pola pemisahan file, dan prinsip OOP yang sama.
@@ -151,7 +151,7 @@ Setelah menyelesaikan Modul 1, pembaca diharapkan memiliki pemahaman konseptual 
 
 - **Menggunakan Visual Studio Code dengan Arduino CLI atau Arduino Extension** untuk mengelola proyek firmware multi-file, termasuk pemanfaatan IntelliSense dan navigasi kode lintas berkas.
 
-- **Menulis class dasar C++ untuk firmware ESP**, mencakup deklarasi header (`.h`), implementasi (`.cpp`), serta integrasinya ke dalam `main.ino` sebagai titik orkestrasi firmware.
+- **Menulis class dasar C++ untuk firmware ESP**, mencakup deklarasi header (`.h`), implementasi (`.cpp`), serta integrasinya ke dalam `firmware.ino` sebagai titik orkestrasi firmware.
 
 Tujuan-tujuan ini dirancang sebagai fondasi teknis yang akan digunakan secara langsung pada modul-modul berikutnya, tanpa perlu redefinisi atau penyesuaian struktur dasar.
 
@@ -161,7 +161,7 @@ Tujuan-tujuan ini dirancang sebagai fondasi teknis yang akan digunakan secara la
 
 Firmware ESP yang dikembangkan tanpa struktur dan pola desain yang jelas cenderung mengalami degradasi kualitas seiring bertambahnya fitur. Pada tahap awal, pendekatan ini mungkin terlihat sederhana dan cepat diimplementasikan, namun dalam praktiknya akan menimbulkan sejumlah masalah fundamental, antara lain:
 
-- **Seluruh logika terkonsentrasi di `main.ino`**, sehingga berkas utama menjadi besar, sulit dibaca, dan sulit ditelusuri alur eksekusinya.
+- **Seluruh logika terkonsentrasi di `firmware.ino`**, sehingga berkas utama menjadi besar, sulit dibaca, dan sulit ditelusuri alur eksekusinya.
 - **Penambahan fitur baru berisiko merusak kode yang sudah ada**, karena tidak adanya batas tanggung jawab yang jelas antar bagian firmware.
 - **Kode sulit digunakan kembali antar proyek**, meskipun fungsi yang dibangun sebenarnya serupa.
 - **Kompleksitas meningkat secara eksponensial**, bukan linier, sehingga setiap perubahan kecil membutuhkan usaha yang semakin besar.
@@ -245,11 +245,11 @@ Modul 1 menetapkan struktur ini sebagai standar yang akan digunakan **tanpa peru
 
 ---
 
-### 5. **Peran `main.ino` sebagai Orchestrator**
+### 5. **Peran `firmware.ino` sebagai Orchestrator**
 
-Dalam desain firmware berbasis OOP, `main.ino` tidak lagi berperan sebagai pusat seluruh logika. Sebaliknya, berkas ini berfungsi sebagai **orchestrator** yang mengatur alur eksekusi sistem.
+Dalam desain firmware berbasis OOP, `firmware.ino` tidak lagi berperan sebagai pusat seluruh logika. Sebaliknya, berkas ini berfungsi sebagai **orchestrator** yang mengatur alur eksekusi sistem.
 
-Peran `main.ino` dibatasi secara eksplisit menjadi:
+Peran `firmware.ino` dibatasi secara eksplisit menjadi:
 
 - Membuat object dari class yang diperlukan
 - Memanggil metode inisialisasi seperti `begin()`
@@ -257,7 +257,7 @@ Peran `main.ino` dibatasi secara eksplisit menjadi:
 
 Fungsi `setup()` dan `loop()` diperlakukan sebagai **pengendali alur**, bukan tempat implementasi detail. Seluruh logika spesifik didelegasikan ke class masing-masing.
 
-Pembatasan peran ini bersifat strategis. Dengan menjaga `main.ino` tetap ringkas dan bersih, firmware menjadi lebih mudah dipahami, diuji, dan dikembangkan.
+Pembatasan peran ini bersifat strategis. Dengan menjaga `firmware.ino` tetap ringkas dan bersih, firmware menjadi lebih mudah dipahami, diuji, dan dikembangkan.
 
 ---
 
@@ -300,11 +300,11 @@ Dengan memandang firmware sebagai kumpulan komponen, kompleksitas sistem dapat d
 
 ---
 
-### 2. **Tanggung Jawab `main.ino`**
+### 2. **Tanggung Jawab `firmware.ino`**
 
-Dalam arsitektur ini, `main.ino` memiliki peran yang sangat terbatas dan terdefinisi dengan jelas. Berkas ini tidak lagi menjadi pusat implementasi logika, melainkan bertindak sebagai **lapisan orkestrasi** yang mengatur siklus hidup komponen.
+Dalam arsitektur ini, `firmware.ino` memiliki peran yang sangat terbatas dan terdefinisi dengan jelas. Berkas ini tidak lagi menjadi pusat implementasi logika, melainkan bertindak sebagai **lapisan orkestrasi** yang mengatur siklus hidup komponen.
 
-Tanggung jawab `main.ino` dibatasi pada tiga hal utama:
+Tanggung jawab `firmware.ino` dibatasi pada tiga hal utama:
 
 - Melakukan inisialisasi object dari class yang diperlukan.
 - Memanggil metode _lifecycle_ seperti `begin()` untuk persiapan awal sistem.
@@ -312,7 +312,7 @@ Tanggung jawab `main.ino` dibatasi pada tiga hal utama:
 
 Seluruh logika domain—baik yang berkaitan dengan perangkat keras, pengolahan data, maupun kontrol perilaku—ditempatkan di dalam class yang sesuai. Dengan pembatasan ini, fungsi `setup()` dan `loop()` berperan sebagai **pengendali alur**, bukan sebagai tempat detail implementasi.
 
-Pendekatan ini memastikan bahwa `main.ino` tetap ringkas, mudah dibaca, dan tidak berubah secara signifikan meskipun kompleksitas firmware meningkat.
+Pendekatan ini memastikan bahwa `firmware.ino` tetap ringkas, mudah dibaca, dan tidak berubah secara signifikan meskipun kompleksitas firmware meningkat.
 
 ---
 
@@ -382,17 +382,17 @@ Dengan menggunakan contoh non-hardware, perhatian pembaca diarahkan sepenuhnya p
 
 ---
 
-### 4. **Integrasi Class ke `main.ino`**
+### 4. **Integrasi Class ke `firmware.ino`**
 
-Setelah class dasar dibuat, langkah berikutnya adalah mengintegrasikannya ke dalam `main.ino` sesuai dengan desain arsitektur yang telah ditetapkan. Integrasi ini dilakukan dengan pola yang akan digunakan ulang pada seluruh modul berikutnya.
+Setelah class dasar dibuat, langkah berikutnya adalah mengintegrasikannya ke dalam `firmware.ino` sesuai dengan desain arsitektur yang telah ditetapkan. Integrasi ini dilakukan dengan pola yang akan digunakan ulang pada seluruh modul berikutnya.
 
-Pada tahap ini, `main.ino` hanya bertugas untuk:
+Pada tahap ini, `firmware.ino` hanya bertugas untuk:
 
 - Membuat instance object dari class.
 - Memanggil metode inisialisasi pada fase `setup()`.
 - Menjalankan metode `loop()` pada siklus utama firmware.
 
-Integrasi ini menegaskan kembali peran `main.ino` sebagai orchestrator, sekaligus memvalidasi bahwa class dapat berfungsi secara independen dan terkoordinasi dalam sistem.
+Integrasi ini menegaskan kembali peran `firmware.ino` sebagai orchestrator, sekaligus memvalidasi bahwa class dapat berfungsi secara independen dan terkoordinasi dalam sistem.
 
 ---
 
@@ -516,7 +516,7 @@ Navigasi ini menegaskan bahwa setiap modul saling terkait dan dirancang untuk di
 
 Modul 1 mungkin tidak memberikan hasil yang langsung terlihat di tingkat perangkat keras, namun justru menjadi **titik penentu kualitas seluruh serial pengembangan firmware**. Modul ini berperan memastikan bahwa setiap langkah implementasi pada modul-modul berikutnya dilakukan di atas **fondasi arsitektur yang benar**, bukan sekadar penambahan fitur yang bersifat ad hoc.
 
-Dengan menetapkan struktur proyek, peran `main.ino`, serta pendekatan OOP sebagai kerangka desain firmware sejak awal, Modul 1 mencegah akumulasi kompleksitas yang tidak terkendali. Setiap LED, sensor, dan actuator yang akan diperkenalkan selanjutnya tidak berdiri sebagai potongan kode terisolasi, melainkan sebagai bagian dari **sistem firmware yang koheren, modular, dan dapat dikembangkan**.
+Dengan menetapkan struktur proyek, peran `firmware.ino`, serta pendekatan OOP sebagai kerangka desain firmware sejak awal, Modul 1 mencegah akumulasi kompleksitas yang tidak terkendali. Setiap LED, sensor, dan actuator yang akan diperkenalkan selanjutnya tidak berdiri sebagai potongan kode terisolasi, melainkan sebagai bagian dari **sistem firmware yang koheren, modular, dan dapat dikembangkan**.
 
 Oleh karena itu, meskipun Modul 1 tidak spektakuler secara hardware, modul ini menjadi **fondasi kritis** yang menentukan apakah seluruh serial akan berkembang sebagai sistem yang terstruktur atau berakhir sebagai kumpulan skrip yang sulit dipelihara.
 

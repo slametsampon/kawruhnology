@@ -10,7 +10,7 @@ tags:
     'data-driven-iot',
   ]
 draft: false
-summary: Modul 6 memperkenalkan sensor sebagai komponen input utama dalam firmware IoT modular. Setelah sistem mampu menangani event asinkron (Modul 5), modul ini menambahkan kemampuan observasi lingkungan melalui pembacaan sensor yang terstruktur, periodik, dan non-blocking. Sensor diperlakukan sebagai komponen OOP yang tunduk pada kontrak ComponentBase, dengan lifecycle jelas serta manajemen state internal untuk menyimpan data. Logika pembacaan dipisahkan dari konsumsi data, sehingga main.ino tetap bersih dan modular. Modul ini menjadi fondasi bagi automasi dan keputusan sistem pada modul berikutnya, khususnya actuator dan integrasi IoT berbasis data sensor.
+summary: Modul 6 memperkenalkan sensor sebagai komponen input utama dalam firmware IoT modular. Setelah sistem mampu menangani event asinkron (Modul 5), modul ini menambahkan kemampuan observasi lingkungan melalui pembacaan sensor yang terstruktur, periodik, dan non-blocking. Sensor diperlakukan sebagai komponen OOP yang tunduk pada kontrak ComponentBase, dengan lifecycle jelas serta manajemen state internal untuk menyimpan data. Logika pembacaan dipisahkan dari konsumsi data, sehingga firmware.ino tetap bersih dan modular. Modul ini menjadi fondasi bagi automasi dan keputusan sistem pada modul berikutnya, khususnya actuator dan integrasi IoT berbasis data sensor.
 ---
 
 🧪 **_Modul 6 – Sensor Modular_**
@@ -34,7 +34,7 @@ summary: Modul 6 memperkenalkan sensor sebagai komponen input utama dalam firmwa
   - [**4️⃣ Membaca Data Sensor (DHT)**](#4️⃣-membaca-data-sensor-dht)
   - [**5️⃣ Menyimpan Hasil Pembacaan dalam State Internal**](#5️⃣-menyimpan-hasil-pembacaan-dalam-state-internal)
   - [**6️⃣ Mengekspos Data Sensor melalui Method Publik**](#6️⃣-mengekspos-data-sensor-melalui-method-publik)
-  - [**7️⃣ Integrasi ke `main.ino`**](#7️⃣-integrasi-ke-mainino)
+  - [**7️⃣ Integrasi ke `firmware.ino`**](#7️⃣-integrasi-ke-firmwareino)
   - [✅ **Checklist Validasi (WAJIB LULUS)**](#-checklist-validasi-wajib-lulus)
   - [**Catatan keras (WAJIB DIPATUHI)**](#catatan-keras-wajib-dipatuhi)
 - [🧾 **Validasi dan Pengujian**](#-validasi-dan-pengujian)
@@ -58,7 +58,7 @@ Fokus Modul 6 adalah memastikan bahwa pembacaan sensor:
 
 - terenkapsulasi dalam class,
 - tidak mengganggu komponen lain,
-- dan dapat diintegrasikan tanpa menambah kompleksitas di `main.ino`.
+- dan dapat diintegrasikan tanpa menambah kompleksitas di `firmware.ino`.
 
 Modul ini menjadi **fondasi teknis** bagi modul-modul berikutnya, karena seluruh automasi dan komunikasi IoT akan bergantung langsung pada **data sensor yang dikelola dengan benar**.
 
@@ -75,7 +75,7 @@ Modul 6 **bergantung langsung** pada fondasi yang sudah dibangun sebelumnya:
 
   - kontrak `begin()` dan `update()`
   - pengelolaan komponen melalui base class
-  - pemisahan lifecycle komponen dari `main.ino`
+  - pemisahan lifecycle komponen dari `firmware.ino`
 
 - **Modul 5 – Interrupt dan Tombol**
   Wajib memahami:
@@ -227,7 +227,7 @@ Tanggung jawab class sensor:
 - Memperbarui cache data internal
 - Menyediakan method akses data (getter)
 
-Peran `main.ino`:
+Peran `firmware.ino`:
 
 - Tidak membaca sensor
 - Tidak mengatur timing sensor
@@ -242,13 +242,13 @@ Dengan desain ini, sensor dapat ditambah, diganti, atau dikonfigurasi ulang **ta
 > **0️⃣ Struktur Folder (WAJIB seperti ini)**
 
 ```
-src/
+firmware/
 ├── ComponentBase.h
 ├── LedController.h
 ├── LedController.cpp
 ├── DhtSensor.h
 ├── DhtSensor.cpp
-└── main.ino
+└── firmware.ino
 ```
 
 > `ComponentBase` dan `LedController` **dipakai ulang** dari Modul 4–5
@@ -417,9 +417,9 @@ Sensor adalah **source of truth**.
 
 ---
 
-### **7️⃣ Integrasi ke `main.ino`**
+### **7️⃣ Integrasi ke `firmware.ino`**
 
-> `main.ino` (FINAL – UTUH)
+> `firmware.ino` (FINAL – UTUH)
 
 ```cpp
 #include <Arduino.h>
@@ -488,7 +488,7 @@ Jika satu poin gagal, implementasi **tidak dianggap benar secara arsitektural**.
    - Tidak ada pemanggilan `delay()` di class sensor
    - Komponen lain (LED, tombol) tetap berfungsi normal saat sensor aktif
 
-3. **`main.ino` bersih**
+3. **`firmware.ino` bersih**
 
    - Tidak ada pemanggilan API sensor (`readTemperature()`, `readHumidity()`, dsb.)
    - Tidak ada logika pembacaan atau timing sensor
@@ -501,7 +501,7 @@ Jika satu poin gagal, implementasi **tidak dianggap benar secara arsitektural**.
 
    - Tidak memerlukan perubahan:
 
-     - `main.ino`
+     - `firmware.ino`
      - struktur `ComponentBase`
      - loop utama firmware
 

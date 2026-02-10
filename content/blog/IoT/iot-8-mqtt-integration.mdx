@@ -10,7 +10,7 @@ tags:
     'modular-firmware',
   ]
 draft: false
-summary: Modul 8 memperkenalkan integrasi MQTT sebagai lapisan komunikasi eksternal dalam firmware IoT modular. Setelah sistem mampu mengelola input, keputusan lokal, dan aksi fisik (Modul 7), modul ini menghubungkan node ESP ke ekosistem IoT terdistribusi menggunakan model publish/subscribe. Firmware berperan sebagai MQTT client, dengan sensor mempublikasikan data dan actuator menerima perintah melalui topik. Desain menjaga Separation of Concern - komponen tidak bergantung langsung pada MQTT, sementara main.ino bertindak sebagai mediator. Hasilnya, firmware menjadi node IoT penuh, siap dimonitor, dikendalikan, dan diskalakan dalam sistem multi-node.
+summary: Modul 8 memperkenalkan integrasi MQTT sebagai lapisan komunikasi eksternal dalam firmware IoT modular. Setelah sistem mampu mengelola input, keputusan lokal, dan aksi fisik (Modul 7), modul ini menghubungkan node ESP ke ekosistem IoT terdistribusi menggunakan model publish/subscribe. Firmware berperan sebagai MQTT client, dengan sensor mempublikasikan data dan actuator menerima perintah melalui topik. Desain menjaga Separation of Concern - komponen tidak bergantung langsung pada MQTT, sementara firmware.ino bertindak sebagai mediator. Hasilnya, firmware menjadi node IoT penuh, siap dimonitor, dikendalikan, dan diskalakan dalam sistem multi-node.
 ---
 
 📡 **_Modul 8 – MQTT Integration_**
@@ -228,7 +228,7 @@ Ekstensi arsitektur pada Modul 8:
 Aturan arsitektur yang **tidak boleh dilanggar**:
 
 - Class sensor dan actuator **tidak mengakses MQTT**
-- `main.ino` menjadi mediator:
+- `firmware.ino` menjadi mediator:
 
   - menerima data dari sensor
   - mempublikasikan ke MQTT
@@ -263,7 +263,7 @@ Target stack (jelas & realistis):
 ### 0️⃣ Struktur Folder (FINAL, tidak boleh kacau)
 
 ```
-src/
+firmware/
 ├── ComponentBase.h
 ├── DhtSensor.h
 ├── DhtSensor.cpp
@@ -271,7 +271,7 @@ src/
 ├── RelayActuator.cpp
 ├── MqttService.h
 ├── MqttService.cpp
-└── main.ino
+└── firmware.ino
 ```
 
 > **MQTT dipisah ke `MqttService`**
@@ -420,7 +420,7 @@ iot/esp32/node01/
 
 **Aturan keras:**
 
-- Publish dilakukan di `main.ino`
+- Publish dilakukan di `firmware.ino`
 - Sensor **hanya menyediakan data**
 - MQTT **tidak polling sensor**
 
@@ -519,7 +519,7 @@ void loop() {
 
 ---
 
-> main.ino (FINAL – UTUH)
+> firmware.ino (FINAL – UTUH)
 
 ```cpp
 #include <Arduino.h>
@@ -588,7 +588,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 - [x] Sensor **tidak tahu MQTT**
 - [x] Actuator **tidak tahu MQTT**
 - [x] MQTT **tidak tahu hardware**
-- [x] `main.ino` = mediator
+- [x] `firmware.ino` = mediator
 - [x] Loop non-blocking
 - [x] Siap multi-node
 

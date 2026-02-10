@@ -10,7 +10,7 @@ tags:
     'scalable-iot-architecture',
   ]
 draft: false
-summary: Modul 9 merupakan konsolidasi akhir seluruh serial pengembangan firmware IoT modular berbasis ESP dan OOP. Modul ini tidak menambahkan konsep baru, melainkan mengintegrasikan semua komponen—ComponentBase, sensor, actuator, interrupt, dan MQTT—ke dalam satu sistem IoT yang utuh. Firmware berfungsi sebagai node IoT lengkap - membaca data sensor, memproses event lokal dan jarak jauh, serta mengendalikan actuator secara modular. main.ino berperan sebagai orchestrator pusat dengan loop non-blocking. Hasil akhir adalah arsitektur firmware yang stabil, scalable, reusable, dan siap dijadikan template proyek nyata atau fondasi sistem IoT produksi kecil.
+summary: Modul 9 merupakan konsolidasi akhir seluruh serial pengembangan firmware IoT modular berbasis ESP dan OOP. Modul ini tidak menambahkan konsep baru, melainkan mengintegrasikan semua komponen—ComponentBase, sensor, actuator, interrupt, dan MQTT—ke dalam satu sistem IoT yang utuh. Firmware berfungsi sebagai node IoT lengkap - membaca data sensor, memproses event lokal dan jarak jauh, serta mengendalikan actuator secara modular. firmware.ino berperan sebagai orchestrator pusat dengan loop non-blocking. Hasil akhir adalah arsitektur firmware yang stabil, scalable, reusable, dan siap dijadikan template proyek nyata atau fondasi sistem IoT produksi kecil.
 ---
 
 🎯 **_Modul 9 – Final Project: Node IoT Modular_**
@@ -198,7 +198,7 @@ Modul 9 berfokus pada **konsolidasi dan validasi arsitektur**, bukan ekspansi.
 Pada level desain, sistem akhir terdiri dari:
 
 - Sekumpulan komponen turunan `ComponentBase`
-- `main.ino` sebagai **orchestrator pusat**, bukan logic holder
+- `firmware.ino` sebagai **orchestrator pusat**, bukan logic holder
 - Satu loop utama yang bertanggung jawab untuk:
 
   - Memanggil `update()` seluruh komponen
@@ -226,20 +226,20 @@ Target sistem final (jelas):
 - **Actuator**: Relay (subscribe + bisa juga dikendalikan lokal oleh sensor rule sederhana)
 - **Input event**: Tombol interrupt (toggle relay lokal)
 - **MQTT**: publish sensor + subscribe command actuator
-- **Arsitektur**: `ComponentBase` + orchestrator `main.ino`
+- **Arsitektur**: `ComponentBase` + orchestrator `firmware.ino`
 - **Konfigurasi**: JSON runtime (minimal untuk: pin, topic, broker)
 
 > Catatan disiplin:
 >
 > - Komponen (sensor/actuator/button) **tidak** include MQTT
-> - MQTT **adapter** (service) + routing di `main.ino`
+> - MQTT **adapter** (service) + routing di `firmware.ino`
 
 ---
 
 ### 0️⃣ Struktur Proyek Final (WAJIB)
 
 ```
-src/
+firmware/
 ├── ComponentBase.h
 ├── DhtSensor.h
 ├── DhtSensor.cpp
@@ -249,7 +249,7 @@ src/
 ├── ButtonHandler.cpp
 ├── MqttService.h
 ├── MqttService.cpp
-└── main.ino
+└── firmware.ino
 ```
 
 ---
@@ -312,7 +312,7 @@ Aturan final:
 
 - `begin()` dipanggil sekali untuk semua komponen
 - `update()` dipanggil terus menerus untuk semua komponen
-- `main.ino` hanya orchestrate + route event + route MQTT
+- `firmware.ino` hanya orchestrate + route event + route MQTT
 
 ---
 
@@ -354,7 +354,7 @@ Kriteria sistem final:
 
 ### ✅ KODE FINAL (SIAP COPAS)
 
-> `main.ino` (FINAL UTUH)
+> `firmware.ino` (FINAL UTUH)
 
 ```cpp
 #include <Arduino.h>

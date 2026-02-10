@@ -15,7 +15,7 @@ tags:
     'software-architecture',
   ]
 draft: false
-summary: Artikel ini menyajikan kerangka pengembangan firmware IoT modular berbasis Object-Oriented Programming (OOP) untuk platform ESP8266 dan ESP32. Sebagai modul pengantar, pembahasan difokuskan pada struktur serial, alur pembelajaran, serta pendekatan arsitektur yang digunakan untuk membangun sistem yang scalable, maintainable, dan reusable. Pembaca akan memahami bagaimana setiap modul saling terhubung, mulai dari dasar OOP, pengelolaan proyek menggunakan Visual Studio Code, hingga integrasi sensor, aktuator, dan komunikasi MQTT. Dengan panduan ini, pengembang diharapkan mampu mengikuti rangkaian modul secara sistematis dan membangun fondasi yang kuat sebelum memasuki implementasi teknis pada tahap-tahap berikutnya.
+summary: Artikel ini menyajikan kerangka pengembangan firmware IoT modular berbasis Object-Oriented Programming (OOP) untuk platform ESP8266 dan ESP32. Sebagai modul pengantar, pembahasan difokuskan pada struktur serial, alur pembelajaran, serta pendekatan arsitektur yang digunakan untuk membangun sistem yang scalable, firmwaretainable, dan reusable. Pembaca akan memahami bagaimana setiap modul saling terhubung, mulai dari dasar OOP, pengelolaan proyek menggunakan Visual Studio Code, hingga integrasi sensor, aktuator, dan komunikasi MQTT. Dengan panduan ini, pengembang diharapkan mampu mengikuti rangkaian modul secara sistematis dan membangun fondasi yang kuat sebelum memasuki implementasi teknis pada tahap-tahap berikutnya.
 ---
 
 **_Kerangka Pengembangan Firmware IoT Modular Berbasis OOP untuk ESP8266/ESP32_**
@@ -37,7 +37,7 @@ summary: Artikel ini menyajikan kerangka pengembangan firmware IoT modular berba
 - [🛠️ **IV. Struktur Proyek (Folder \& File)**](#️-iv-struktur-proyek-folder--file)
   - [📁 **Struktur Folder Utama**](#-struktur-folder-utama)
   - [📌 **Penjelasan Tiap Folder dan File**](#-penjelasan-tiap-folder-dan-file)
-    - [`/src`](#src)
+    - [`/firmware`](#firmware)
     - [`/config`](#config)
     - [`.vscode`](#vscode)
     - [`arduino.json`](#arduinojson)
@@ -89,11 +89,11 @@ Pada pengembangan firmware skala kecil, pendekatan prosedural sering kali terasa
 
 ## 🧭 **Apa yang Dimaksud dengan OOP dalam Serial Ini**
 
-Dalam serial ini, istilah **Object-Oriented Programming (OOP)** digunakan sebagai **kerangka berpikir arsitektural untuk merancang firmware**, bukan sebagai pembahasan teori OOP secara akademis atau kursus bahasa C++ konvensional. Fokus utama OOP dalam konteks serial ini adalah **bagaimana firmware ESP dipisahkan ke dalam komponen berbasis class dengan tanggung jawab yang jelas**, bagaimana komponen tersebut dikelola sepanjang _lifecycle_ sistem, serta bagaimana struktur ini memungkinkan firmware berkembang secara modular, scalable, dan maintainable.
+Dalam serial ini, istilah **Object-Oriented Programming (OOP)** digunakan sebagai **kerangka berpikir arsitektural untuk merancang firmware**, bukan sebagai pembahasan teori OOP secara akademis atau kursus bahasa C++ konvensional. Fokus utama OOP dalam konteks serial ini adalah **bagaimana firmware ESP dipisahkan ke dalam komponen berbasis class dengan tanggung jawab yang jelas**, bagaimana komponen tersebut dikelola sepanjang _lifecycle_ sistem, serta bagaimana struktur ini memungkinkan firmware berkembang secara modular, scalable, dan firmwaretainable.
 
 Serial ini **tidak bertujuan** mengulas konsep OOP klasik seperti _inheritance_, _polymorphism_, atau _design pattern_ secara teoritis. Konsep-konsep tersebut akan muncul **secara implisit dan kontekstual** ketika dibutuhkan oleh desain firmware, bukan sebagai topik pembelajaran terpisah. Dengan demikian, pembaca tidak diarahkan untuk mempelajari OOP sebagai disiplin akademik, melainkan sebagai **alat praktis untuk mengelola kompleksitas sistem embedded**.
 
-Seluruh modul dalam serial ini dibangun di atas asumsi bahwa OOP adalah **sarana desain sistem**, bukan tujuan akhir. Class diperlakukan sebagai representasi komponen firmware, object sebagai instance runtime dari komponen tersebut, dan `main.ino` sebagai _orchestrator_ yang mengatur alur eksekusi tanpa memuat detail implementasi. Pendekatan ini dipilih agar pembaca dapat langsung menerapkan prinsip OOP pada firmware ESP nyata, tanpa terjebak pada teori yang tidak relevan dengan keterbatasan dan kebutuhan sistem embedded.
+Seluruh modul dalam serial ini dibangun di atas asumsi bahwa OOP adalah **sarana desain sistem**, bukan tujuan akhir. Class diperlakukan sebagai representasi komponen firmware, object sebagai instance runtime dari komponen tersebut, dan `firmware.ino` sebagai _orchestrator_ yang mengatur alur eksekusi tanpa memuat detail implementasi. Pendekatan ini dipilih agar pembaca dapat langsung menerapkan prinsip OOP pada firmware ESP nyata, tanpa terjebak pada teori yang tidak relevan dengan keterbatasan dan kebutuhan sistem embedded.
 
 Dengan membaca dan mengikuti serial ini, pembaca diharapkan memahami bahwa **nilai utama OOP terletak pada struktur dan batas tanggung jawab**, bukan pada kompleksitas bahasa. Setiap modul selanjutnya akan menggunakan definisi OOP yang sama sebagaimana dijelaskan pada bagian ini, dan pembaca disarankan untuk merujuk kembali ke kontrak epistemik ini apabila menemui perbedaan antara ekspektasi teori OOP umum dan pendekatan yang digunakan dalam serial.
 
@@ -321,15 +321,15 @@ Tujuan utama dari penetapan struktur ini adalah:
 ### 📁 **Struktur Folder Utama**
 
 ```
-/firmware-project
-├── /src
+/nama-project
+├── /firmware
 │   ├── LedController.h
 │   ├── LedController.cpp
 │   ├── SensorDHT.h
 │   ├── SensorDHT.cpp
 │   ├── ComponentBase.h
 │   ├── ComponentBase.cpp
-│   └── main.ino
+│   └── firmware.ino
 ├── /config
 │   └── config.json
 ├── .vscode
@@ -341,11 +341,11 @@ Tujuan utama dari penetapan struktur ini adalah:
 
 ### 📌 **Penjelasan Tiap Folder dan File**
 
-#### `/src`
+#### `/firmware`
 
 Folder ini berisi **seluruh source code firmware** dan menjadi pusat pengembangan OOP.
 
-- `main.ino`
+- `firmware.ino`
   Berfungsi sebagai _entry point_ firmware. File ini berperan sebagai **orchestrator**, menginisialisasi object, memanggil `begin()`, dan menjalankan loop utama.
   Logika perangkat keras **tidak** ditulis langsung di sini, melainkan didelegasikan ke class.
 
@@ -406,7 +406,7 @@ Struktur ini dibangun dengan prinsip:
   Setiap class memiliki satu tanggung jawab yang jelas.
 
 - **Scalability**
-  Menambahkan sensor atau actuator baru cukup dengan menambahkan file class baru di `/src`.
+  Menambahkan sensor atau actuator baru cukup dengan menambahkan file class baru di `/firmware`.
 
 - **Maintainability**
   Perubahan pada satu komponen tidak berdampak langsung pada komponen lain.

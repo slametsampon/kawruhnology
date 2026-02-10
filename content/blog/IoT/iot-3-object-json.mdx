@@ -29,7 +29,7 @@ summary: Modul 3 memperkenalkan pergeseran fundamental dari firmware ESP yang be
 - [🛠️ **Desain Teknis \& Arsitektur**](#️-desain-teknis--arsitektur)
   - [**1. Lapisan Konfigurasi**](#1-lapisan-konfigurasi)
   - [**2. Lapisan Implementasi**](#2-lapisan-implementasi)
-  - [**Peran `main.ino` dalam Arsitektur**](#peran-mainino-dalam-arsitektur)
+  - [**Peran `firmware.ino` dalam Arsitektur**](#peran-firmwareino-dalam-arsitektur)
   - [**Alur Eksekusi Firmware (Ringkas)**](#alur-eksekusi-firmware-ringkas)
   - [**Implikasi Desain**](#implikasi-desain)
 - [🧪 **Implementasi Bertahap (High-Level)**](#-implementasi-bertahap-high-level)
@@ -37,9 +37,9 @@ summary: Modul 3 memperkenalkan pergeseran fundamental dari firmware ESP yang be
   - [**2. Membaca dan Mem-parsing JSON**](#2-membaca-dan-mem-parsing-json)
   - [**3. Mengekstrak Parameter Konfigurasi**](#3-mengekstrak-parameter-konfigurasi)
   - [**4. Membuat Object LED Berdasarkan Data JSON**](#4-membuat-object-led-berdasarkan-data-json)
-  - [**5. Mengelola Object di `main.ino`**](#5-mengelola-object-di-mainino)
+  - [**5. Mengelola Object di `firmware.ino`**](#5-mengelola-object-di-firmwareino)
   - [**6. Firmware Berjalan dengan Konfigurasi Runtime**](#6-firmware-berjalan-dengan-konfigurasi-runtime)
-- [✅ **FINAL `main.ino` (UTUH, SIAP COPAS)**](#-final-mainino-utuh-siap-copas)
+- [✅ **FINAL `firmware.ino` (UTUH, SIAP COPAS)**](#-final-firmwareino-utuh-siap-copas)
   - [🧾 **Validasi Teknis (WAJIB LULUS)**](#-validasi-teknis-wajib-lulus)
 - [🧾 **Validasi dan Pengujian**](#-validasi-dan-pengujian)
 - [🔁 **Refleksi dan Keterkaitan ke Modul Lain**](#-refleksi-dan-keterkaitan-ke-modul-lain)
@@ -74,7 +74,7 @@ Sebelum memasuki Modul 3, pembaca harus telah menyelesaikan:
   - Struktur class `LedController`
   - Peran constructor dalam inisialisasi object
   - Pengelolaan state internal object
-  - Pemisahan logika hardware dari `main.ino`
+  - Pemisahan logika hardware dari `firmware.ino`
 
 Tanpa pemahaman ini, konsep pembuatan object berbasis konfigurasi akan sulit dipahami secara utuh.
 
@@ -203,7 +203,7 @@ Beberapa konsep inti yang diperkenalkan dan dipraktikkan pada modul ini meliputi
   Class firmware tetap fokus pada perilaku dan logika perangkat, sementara konfigurasi dikelola di lapisan terpisah sebagai data.
 
 - **Factory-style object creation (konsep dasar)**
-  Proses pembuatan object dilakukan melalui mekanisme terpusat yang membaca konfigurasi dan menghasilkan object sesuai data, tanpa logika pembuatan tersebar di `main.ino`.
+  Proses pembuatan object dilakukan melalui mekanisme terpusat yang membaca konfigurasi dan menghasilkan object sesuai data, tanpa logika pembuatan tersebar di `firmware.ino`.
 
 Konsep-konsep ini membentuk fondasi bagi arsitektur firmware yang fleksibel dan mudah dikembangkan.
 
@@ -265,16 +265,16 @@ Dengan demikian, implementasi class tetap **stabil dan reusable**.
 
 ---
 
-### **Peran `main.ino` dalam Arsitektur**
+### **Peran `firmware.ino` dalam Arsitektur**
 
-Pada Modul 3, `main.ino` memiliki peran yang **spesifik dan terbatas**:
+Pada Modul 3, `firmware.ino` memiliki peran yang **spesifik dan terbatas**:
 
 - Membaca dan mem-parsing data JSON
 - Mengekstrak parameter konfigurasi
 - Membuat object firmware berdasarkan data tersebut
 - Menyimpan dan mengelola lifecycle object
 
-`main.ino` **tidak berisi**:
+`firmware.ino` **tidak berisi**:
 
 - logika perangkat keras
 - detail implementasi class
@@ -348,9 +348,9 @@ Object LED dibuat **berdasarkan data**, bukan nilai hard-coded.
 
 ---
 
-### **5. Mengelola Object di `main.ino`**
+### **5. Mengelola Object di `firmware.ino`**
 
-`main.ino` bertugas:
+`firmware.ino` bertugas:
 
 - parsing konfigurasi
 - membuat object
@@ -366,7 +366,7 @@ Tanpa menyentuh logika hardware
 
 ---
 
-## ✅ **FINAL `main.ino` (UTUH, SIAP COPAS)**
+## ✅ **FINAL `firmware.ino` (UTUH, SIAP COPAS)**
 
 ```cpp
 #include <Arduino.h>
@@ -433,8 +433,8 @@ void loop() {
 ### 🧾 **Validasi Teknis (WAJIB LULUS)**
 
 - [ ] LED berkedip tiap 1 detik
-- [ ] Tidak ada `pinMode` di `main.ino`
-- [ ] Tidak ada `digitalWrite` di `main.ino`
+- [ ] Tidak ada `pinMode` di `firmware.ino`
+- [ ] Tidak ada `digitalWrite` di `firmware.ino`
 - [ ] Mengubah `pin` di JSON → pindah GPIO
 - [ ] Mengubah `initialState` → kondisi awal berubah
 - [ ] Class `LedController` **tidak diubah**
@@ -453,7 +453,7 @@ Keberhasilan Modul 3 dinyatakan tercapai apabila seluruh kriteria berikut terpen
   Object LED dibuat berdasarkan data hasil parsing JSON, bukan nilai hard-coded di kode.
 
 - **Perubahan konfigurasi tidak memerlukan perubahan kode**
-  Mengubah nilai `pin` atau `initialState` di JSON mengubah perilaku firmware tanpa modifikasi class maupun `main.ino`.
+  Mengubah nilai `pin` atau `initialState` di JSON mengubah perilaku firmware tanpa modifikasi class maupun `firmware.ino`.
 
 - **LED merespons sesuai parameter yang ditentukan**
   GPIO yang dikonfigurasi di JSON benar-benar digunakan, dan kondisi awal LED sesuai dengan data konfigurasi.
@@ -478,7 +478,7 @@ Pada akhir Modul 3, firmware telah mencapai kemampuan berikut:
 Namun, pada tahap ini setiap object masih:
 
 - Dibuat secara individual
-- Dikelola langsung di `main.ino`
+- Dikelola langsung di `firmware.ino`
 - Belum memiliki struktur atau kontrak umum antar komponen
 
 Keterbatasan ini **disengaja** dan menjadi alasan langsung diperkenalkannya **Modul 4**, di mana seluruh komponen firmware akan disatukan melalui class dasar **`ComponentBase`** untuk standarisasi lifecycle dan manajemen komponen.
