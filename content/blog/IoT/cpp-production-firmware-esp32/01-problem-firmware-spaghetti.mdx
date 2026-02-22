@@ -1,0 +1,1173 @@
+---
+title: Kenapa Firmware C di ESP32 Jadi Spaghetti Setelah 6 Bulan?
+date: '2026-02-22'
+tags:
+  [
+    'esp32',
+    'arduino-firmware',
+    'embedded-architecture',
+    'firmware-design',
+    'spaghetti-code',
+    'iot-production',
+    'embedded-systems',
+    'technical-debt',
+  ]
+draft: false
+summary: Artikel ini membedah kenapa firmware ESP32 berbasis Arduino yang awalnya sederhana sering berubah menjadi spaghetti setelah 6 bulan deployment. Masalah bukan pada bahasa C atau library, melainkan pada pertumbuhan fitur tanpa boundary arsitektur. Global mutable tanpa owner, callback komunikasi yang langsung mengontrol hardware, ISR yang memanggil logic berat, serta reconnect logic tersebar menjadi sumber coupling tak terlihat. Dampaknya bukan hanya kompleksitas kode, tetapi juga fragmentasi heap, jitter control, relay chatter, hingga kegagalan OTA. Artikel ini mengunci diagnosis bahwa firmware adalah sistem multi-domain internal yang membutuhkan struktur sadar sebelum kompleksitas meningkat secara eksponensial.
+---
+
+# 📘 Artikel 1: Kenapa Firmware C di ESP32 Jadi Spaghetti Setelah 6 Bulan?
+
+**Posisi:** Artikel 1 dari 8
+**Domain Keputusan:** Problem Mapping & Complexity Identification
+**Entry Context:** `IndustrialNode/IndustrialNode.ino` (Arduino-based ESP32)
+
+---
+
+- [📘 Artikel 1: Kenapa Firmware C di ESP32 Jadi Spaghetti Setelah 6 Bulan?](#-artikel-1-kenapa-firmware-c-di-esp32-jadi-spaghetti-setelah-6-bulan)
+  - [1. Problem Reality](#1-problem-reality)
+    - [Contoh Real di IndustrialNode.ino](#contoh-real-di-industrialnodeino)
+    - [Gejala Produksi](#gejala-produksi)
+      - [1️⃣ Relay Chatter](#1️⃣-relay-chatter)
+      - [2️⃣ Device Stuck Setelah Broker Restart](#2️⃣-device-stuck-setelah-broker-restart)
+      - [3️⃣ OTA Brick](#3️⃣-ota-brick)
+    - [Intinya](#intinya)
+  - [2. Root Cause Analysis](#2-root-cause-analysis)
+    - [2.1 Global Mutable State](#21-global-mutable-state)
+    - [2.2 Implicit Dependency Graph](#22-implicit-dependency-graph)
+    - [2.3 ISR Coupling](#23-isr-coupling)
+    - [2.4 Reconnect Logic Tersebar](#24-reconnect-logic-tersebar)
+    - [2.5 Lifecycle Tidak Terdefinisi](#25-lifecycle-tidak-terdefinisi)
+    - [2.6 Communication Bypass Control](#26-communication-bypass-control)
+    - [2.7 Debug-Driven Development](#27-debug-driven-development)
+  - [3. Design Principle (Rule yang Dikunci)](#3-design-principle-rule-yang-dikunci)
+    - [Rule 1 — Firmware adalah Sistem Terdistribusi Internal](#rule-1--firmware-adalah-sistem-terdistribusi-internal)
+    - [Rule 2 — Setiap State Harus Memiliki Owner](#rule-2--setiap-state-harus-memiliki-owner)
+    - [Rule 3 — Dependency Tanpa Direction Akan Menjadi Cyclic](#rule-3--dependency-tanpa-direction-akan-menjadi-cyclic)
+    - [Rule 4 — Fitur Baru Tanpa Boundary = Kompleksitas Eksponensial](#rule-4--fitur-baru-tanpa-boundary--kompleksitas-eksponensial)
+- [4. Implementation Pattern (ESP32 Context)](#4-implementation-pattern-esp32-context)
+  - [4.1 Pola “God .ino”](#41-pola-god-ino)
+  - [4.2 Pola Callback Mengontrol Hardware](#42-pola-callback-mengontrol-hardware)
+  - [4.3 Pola ISR Mengakses State Global](#43-pola-isr-mengakses-state-global)
+  - [4.4 Pola Reconnect Tersebar](#44-pola-reconnect-tersebar)
+  - [4.5 Pola Dynamic Allocation Tersembunyi](#45-pola-dynamic-allocation-tersembunyi)
+  - [4.6 Pola Logging Liar](#46-pola-logging-liar)
+  - [4.7 Pola Fail-Open](#47-pola-fail-open)
+- [5. Constraint \& Embedded Impact](#5-constraint--embedded-impact)
+  - [5.1 RAM Impact](#51-ram-impact)
+  - [5.2 Stack Impact](#52-stack-impact)
+  - [5.3 Determinism Impact](#53-determinism-impact)
+  - [5.4 Power \& Electrical Impact](#54-power--electrical-impact)
+  - [5.5 Field Maintenance Impact](#55-field-maintenance-impact)
+- [6. Failure Scenario (Detail)](#6-failure-scenario-detail)
+  - [Scenario 1 — Broker Restart di Jam Sibuk](#scenario-1--broker-restart-di-jam-sibuk)
+  - [Scenario 2 — WiFi Flapping](#scenario-2--wifi-flapping)
+  - [Scenario 3 — ISR + MQTT Race](#scenario-3--isr--mqtt-race)
+  - [Scenario 4 — Sensor Failure](#scenario-4--sensor-failure)
+- [7. Anti-Pattern (Artikel 1 Context)](#7-anti-pattern-artikel-1-context)
+- [8. Freeze Point](#8-freeze-point)
+  - [🔒 Freeze 1 — Firmware ESP32 Arduino Bukan Program Linear](#-freeze-1--firmware-esp32-arduino-bukan-program-linear)
+  - [🔒 Freeze 2 — Global Mutable Tanpa Owner Adalah Sumber Spaghetti](#-freeze-2--global-mutable-tanpa-owner-adalah-sumber-spaghetti)
+  - [🔒 Freeze 3 — Tanpa Dependency Direction, Sistem Akan Cyclic](#-freeze-3--tanpa-dependency-direction-sistem-akan-cyclic)
+  - [🔒 Freeze 4 — Fitur Baru Tanpa Boundary Akan Menghancurkan Firmware](#-freeze-4--fitur-baru-tanpa-boundary-akan-menghancurkan-firmware)
+  - [🔒 Freeze 5 — Production Problem Bukan Karena C, Tapi Karena Struktur](#-freeze-5--production-problem-bukan-karena-c-tapi-karena-struktur)
+- [9. Engineering Checklist (Self-Audit Artikel 1)](#9-engineering-checklist-self-audit-artikel-1)
+  - [Struktur](#struktur)
+  - [State](#state)
+  - [Communication](#communication)
+  - [Reliability](#reliability)
+  - [Embedded Constraint](#embedded-constraint)
+- [10. Summary (5 Bullet Maksimal)](#10-summary-5-bullet-maksimal)
+  - [Penutup Artikel 1](#penutup-artikel-1)
+
+---
+
+## 1. Problem Reality
+
+Mari kita mulai dari realitas, bukan teori.
+
+Anda punya project ESP32 berbasis Arduino.
+Struktur awal sangat sederhana:
+
+```
+IndustrialNode/
+└── IndustrialNode.ino
+```
+
+Isinya:
+
+- Setup WiFi
+- Setup MQTT
+- Baca sensor
+- Kontrol relay
+- Kirim telemetry
+
+Firmware 300–800 baris.
+Demo sukses. Client senang. Deploy 10 unit.
+
+Enam bulan kemudian:
+
+- Tambah OTA
+- Tambah reconnect WiFi
+- Tambah retry MQTT
+- Tambah mode AUTO/MANUAL
+- Tambah watchdog
+- Tambah logging
+- Tambah interlock relay
+- Tambah buffer telemetry saat offline
+- Tambah remote command
+
+Sekarang firmware menjadi 2.000–4.000 baris.
+
+Dan Anda mulai mendengar:
+
+- “Kadang device hang.”
+- “Kadang relay nyala sendiri.”
+- “Kalau broker restart, device nggak balik.”
+- “OTA gagal, unit harus dicabut listrik.”
+- “Perubahan kecil bikin bug di tempat lain.”
+
+Secara teknis firmware masih “jalan”.
+
+Tapi secara struktural, ia sudah rapuh.
+
+---
+
+### Contoh Real di IndustrialNode.ino
+
+Awalnya seperti ini:
+
+```cpp
+bool relayState = false;
+bool wifiConnected = false;
+
+void setup() {
+    pinMode(5, OUTPUT);
+    WiFi.begin(ssid, password);
+}
+
+void loop() {
+    if (!wifiConnected) {
+        reconnectWiFi();
+    }
+
+    float temp = readTemp();
+
+    if (temp > 30) {
+        relayState = true;
+        digitalWrite(5, HIGH);
+    }
+}
+```
+
+Masalah belum terlihat.
+
+Lalu MQTT ditambahkan:
+
+```cpp
+void onMqttMessage(char* topic, byte* payload, unsigned int length) {
+    if (payload[0] == '1') {
+        relayState = true;
+        digitalWrite(5, HIGH);
+    }
+}
+```
+
+Sekarang:
+
+- Relay bisa diubah dari loop.
+- Relay bisa diubah dari MQTT callback.
+
+Tidak ada boundary.
+
+Tambahkan ISR:
+
+```cpp
+void IRAM_ATTR buttonISR() {
+    relayState = !relayState;
+    digitalWrite(5, relayState);
+}
+```
+
+Sekarang relay bisa diubah dari:
+
+- Loop
+- MQTT callback
+- ISR
+
+Tidak ada ownership.
+Tidak ada guard.
+Tidak ada arbitration.
+
+---
+
+### Gejala Produksi
+
+Mari kita lihat dari sudut pandang engineer lapangan.
+
+#### 1️⃣ Relay Chatter
+
+- MQTT kirim ON.
+- Loop mendeteksi suhu turun → OFF.
+- ISR tombol ditekan → ON lagi.
+
+Relay switching cepat.
+
+Akibat:
+
+- Kontak mekanikal aus.
+- Noise listrik.
+- Potensi arcing.
+
+Masalah bukan di relay.
+
+Masalah di struktur.
+
+---
+
+#### 2️⃣ Device Stuck Setelah Broker Restart
+
+MQTT reconnect logic di satu fungsi.
+WiFi reconnect di tempat lain.
+Loop juga cek koneksi.
+
+Tiga mekanisme berbeda mencoba “memperbaiki” koneksi.
+
+Hasil:
+
+- Reconnect race.
+- Client stuck di state tidak jelas.
+- Watchdog reset.
+
+---
+
+#### 3️⃣ OTA Brick
+
+OTA dipanggil langsung dari MQTT callback.
+
+Jika WiFi drop di tengah update:
+
+- Tidak ada state machine.
+- Tidak ada guard.
+- Tidak ada recovery path.
+
+Unit harus diflash ulang manual.
+
+---
+
+### Intinya
+
+Firmware tidak gagal karena C.
+Firmware gagal karena:
+
+> Kompleksitas bertambah, tetapi struktur tidak berubah.
+
+Itu yang membuatnya menjadi spaghetti.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Readme',
+      href: '/blog/IoT/cpp-production-firmware-esp32/README',
+      description: 'Readme - C++ for Production Firmware on ESP32',
+    },
+    {
+      name: 'ARCHITECTURE_RULES',
+      href: '/blog/IoT/cpp-production-firmware-esp32/ARCHITECTURE_RULES',
+      description:
+        'ARCHITECTURE_RULES - Production Firmware Discipline — ESP32 (Arduino Core)',
+    },
+    {
+      name: 'OOP Sebagai Alat Mengontrol Dependency',
+      href: '/blog/IoT/cpp-production-firmware-esp32/02-oop-dependency-control',
+      description: 'OOP Sebagai Alat Mengontrol Dependency (Bukan Gaya-Gayaan)',
+    },
+    {
+      name: 'Object Lifecycle & Memory',
+      href: '/blog/IoT/cpp-production-firmware-esp32/03-object-lifecycle-memory-discipline',
+      description: 'Object Lifecycle & Memory Discipline di Embedded',
+    },
+    {
+      name: 'Firmware Architecture',
+      href: '/blog/IoT/cpp-production-firmware-esp32/04-layered-firmware-architecture',
+      description:
+        'Firmware Architecture Berbasis Class (Layered & Deterministic)',
+    },
+    {
+      name: 'OOP + FreeRTOS',
+      href: '/blog/IoT/cpp-production-firmware-esp32/05-freertos-deterministic-concurrency',
+      description: 'OOP + FreeRTOS Tanpa Membunuh Determinism',
+    },
+    {
+      name: 'Communication Module Design',
+      href: '/blog/IoT/cpp-production-firmware-esp32/06-decoupled-communication-architecture',
+      description:
+        'Communication Module Design (WiFi, MQTT, OTA) yang Tidak Coupled',
+    },
+    {
+      name: 'Production Reliability Design',
+      href: '/blog/IoT/cpp-production-firmware-esp32/07-production-reliability-design',
+      description: 'Production Reliability Design dengan C++',
+    },
+    {
+      name: 'Anti-Pattern',
+      href: '/blog/IoT/cpp-production-firmware-esp32/08-oop-anti-pattern-embedded',
+      description: 'Anti-Pattern: Cara OOP Menghancurkan Embedded System',
+    },
+  ]}
+/>
+
+---
+
+## 2. Root Cause Analysis
+
+Kita bedah akar masalahnya secara sistemik.
+
+### 2.1 Global Mutable State
+
+Dalam firmware Arduino, sangat mudah membuat global variable.
+
+```cpp
+bool relayState;
+int mode;
+float lastTemperature;
+bool wifiConnected;
+```
+
+Masalahnya bukan global itu sendiri.
+
+Masalahnya:
+
+- Tidak ada owner.
+- Tidak ada boundary.
+- Tidak ada policy siapa yang boleh ubah.
+
+Global mutable state adalah dependency implicit.
+
+Semakin banyak global, semakin banyak coupling tak terlihat.
+
+---
+
+### 2.2 Implicit Dependency Graph
+
+Jika kita gambarkan dependency sebenarnya:
+
+```text
+Loop → Relay
+MQTT Callback → Relay
+ISR → Relay
+WiFi Event → Mode
+Mode → Relay
+```
+
+Tidak ada direction rule.
+
+Semua boleh panggil semua.
+
+Dependency graph menjadi cyclic.
+
+Itulah spaghetti.
+
+![Image](https://cdn.prod.website-files.com/65d609edcc331dd0e4eb519b/6893f9807ec5f00ec712580c_software%20dependency%20graph.png)
+
+![Image](https://miro.medium.com/1%2A1oK4kNkoys6PlkfsWN7I-w.png)
+
+---
+
+### 2.3 ISR Coupling
+
+ISR adalah domain real-time.
+
+Ketika ISR memanggil:
+
+- digitalWrite
+- fungsi service
+- bahkan logging
+
+Anda sudah kehilangan determinism.
+
+ISR seharusnya:
+
+- Sesingkat mungkin
+- Tanpa blocking
+- Tanpa logic berat
+
+Tetapi dalam firmware spaghetti, ISR menjadi pintu belakang ke semua modul.
+
+---
+
+### 2.4 Reconnect Logic Tersebar
+
+WiFi reconnect:
+
+```cpp
+if (WiFi.status() != WL_CONNECTED) {
+    WiFi.begin(ssid, password);
+}
+```
+
+MQTT reconnect:
+
+```cpp
+if (!client.connected()) {
+    client.connect(...);
+}
+```
+
+Loop juga cek flag lain.
+
+Tidak ada state machine tunggal.
+
+Hasilnya:
+
+- Backoff tidak konsisten.
+- Retry tidak terkontrol.
+- Device bisa terus-menerus reconnect tanpa jeda.
+
+---
+
+### 2.5 Lifecycle Tidak Terdefinisi
+
+Dalam firmware kecil, init sequence jarang dipikirkan.
+
+Tapi setelah sistem kompleks:
+
+- Apakah MQTT boleh publish sebelum sensor ready?
+- Apakah relay boleh ON sebelum mode ditentukan?
+- Apakah OTA boleh jalan saat control loop aktif?
+
+Tanpa lifecycle formal:
+
+Boot sequence menjadi implicit dan fragile.
+
+---
+
+### 2.6 Communication Bypass Control
+
+MQTT callback langsung mengubah hardware.
+
+Itu berarti:
+
+Communication layer memiliki otoritas lebih tinggi daripada control loop.
+
+Ini pelanggaran domain.
+
+---
+
+### 2.7 Debug-Driven Development
+
+Ketika masalah muncul, solusi sering berupa:
+
+```cpp
+Serial.println("Debug here");
+```
+
+Logging tersebar.
+Tidak terstruktur.
+Tidak bisa diaudit.
+
+Firmware menjadi reaktif, bukan terdesain.
+
+![Image](https://www.researchgate.net/publication/341446512/figure/fig5/AS%3A892219187789825%401589733039149/ESP32-functional-block-diagram.ppm)
+
+![Image](https://www.digikey.com/maker-media/f8a37146-fb16-4815-91a4-f423251c3eda)
+
+---
+
+## 3. Design Principle (Rule yang Dikunci)
+
+Artikel 1 belum mengunci solusi teknis.
+
+Tapi kita mengunci kesadaran desain berikut:
+
+---
+
+### Rule 1 — Firmware adalah Sistem Terdistribusi Internal
+
+Walaupun hanya satu ESP32, di dalamnya ada:
+
+- Control loop
+- ISR
+- WiFi stack
+- MQTT callback
+- Timer
+- OTA handler
+
+Ini bukan “satu program linear”.
+
+Ini sistem multi-domain.
+
+Jika tidak diperlakukan seperti sistem,
+ia akan rusak seperti sistem yang tidak diarsitektur.
+
+---
+
+### Rule 2 — Setiap State Harus Memiliki Owner
+
+Jika Anda tidak bisa menjawab:
+
+“Siapa yang memiliki relay state?”
+
+Maka desain sudah salah.
+
+Ownership harus eksplisit.
+
+---
+
+### Rule 3 — Dependency Tanpa Direction Akan Menjadi Cyclic
+
+Jika semua modul boleh panggil semua,
+maka Anda tidak punya arsitektur.
+
+Anda punya jaringan liar.
+
+---
+
+### Rule 4 — Fitur Baru Tanpa Boundary = Kompleksitas Eksponensial
+
+Menambah fitur tidak linear.
+
+Jika struktur tidak disiplin,
+kompleksitas tumbuh eksponensial.
+
+Itulah kenapa firmware terlihat baik di bulan pertama,
+dan rapuh di bulan keenam.
+
+---
+
+# 4. Implementation Pattern (ESP32 Context)
+
+Di bagian ini kita tidak menawarkan solusi.
+Kita memetakan pola spaghetti yang nyata terjadi di firmware ESP32 berbasis Arduino.
+
+Kita gunakan konteks folder yang sudah kita sepakati:
+
+```text
+IndustrialNode/
+└── IndustrialNode.ino
+```
+
+Semua logika ada di satu file atau beberapa file helper tanpa boundary jelas.
+
+---
+
+## 4.1 Pola “God .ino”
+
+`IndustrialNode.ino` menjadi pusat segalanya:
+
+```cpp
+#include <WiFi.h>
+#include <PubSubClient.h>
+
+bool relayState = false;
+bool wifiConnected = false;
+bool mqttConnected = false;
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+void reconnectWiFi();
+void reconnectMqtt();
+void onMqttMessage(char*, byte*, unsigned int);
+
+void setup() {
+    pinMode(5, OUTPUT);
+
+    WiFi.begin(ssid, password);
+    client.setServer(broker, 1883);
+    client.setCallback(onMqttMessage);
+}
+
+void loop() {
+    if (WiFi.status() != WL_CONNECTED) {
+        reconnectWiFi();
+    }
+
+    if (!client.connected()) {
+        reconnectMqtt();
+    }
+
+    client.loop();
+
+    float temp = readTemp();
+
+    if (temp > 30) {
+        relayState = true;
+        digitalWrite(5, HIGH);
+    }
+}
+```
+
+Masalah struktural:
+
+- `.ino` memegang:
+
+  - WiFi
+  - MQTT
+  - Control logic
+  - Hardware control
+  - Reconnect
+
+- Tidak ada layer.
+- Tidak ada ownership.
+
+File entry Arduino menjadi “God object”.
+
+---
+
+## 4.2 Pola Callback Mengontrol Hardware
+
+```cpp
+void onMqttMessage(char* topic, byte* payload, unsigned int length) {
+    if (payload[0] == '1') {
+        relayState = true;
+        digitalWrite(5, HIGH);
+    }
+}
+```
+
+Apa yang salah secara engineering?
+
+- MQTT callback berjalan dalam konteks network loop.
+- Callback langsung ubah GPIO.
+- Tidak ada safety guard.
+- Tidak ada arbitration dengan control loop.
+
+Anda kehilangan determinism.
+
+---
+
+## 4.3 Pola ISR Mengakses State Global
+
+```cpp
+void IRAM_ATTR buttonISR() {
+    relayState = !relayState;
+    digitalWrite(5, relayState);
+}
+```
+
+Masalah embedded serius:
+
+- `digitalWrite` di ISR memperpanjang latency.
+- `relayState` bisa diubah bersamaan dengan loop.
+- Race condition tidak terlihat.
+
+Pada beban tinggi WiFi + MQTT,
+ini bisa memicu glitch.
+
+---
+
+## 4.4 Pola Reconnect Tersebar
+
+Reconnect WiFi:
+
+```cpp
+void reconnectWiFi() {
+    WiFi.begin(ssid, password);
+}
+```
+
+Reconnect MQTT:
+
+```cpp
+void reconnectMqtt() {
+    client.connect("node01");
+}
+```
+
+Loop juga cek status.
+
+Jika broker restart:
+
+- MQTT reconnect dipanggil.
+- WiFi masih OK.
+- Loop tetap memanggil `client.loop()`.
+- Callback mungkin masuk saat reconnect.
+
+State tidak eksplisit.
+Tidak ada backoff.
+Tidak ada ERROR mode.
+
+---
+
+## 4.5 Pola Dynamic Allocation Tersembunyi
+
+```cpp
+String payload = "{ \"temp\": " + String(temp) + " }";
+client.publish("node/data", payload.c_str());
+```
+
+Yang terjadi:
+
+- Allocation String
+- Reallocation saat concat
+- Fragmentation heap
+
+Pada awalnya tidak terasa.
+Setelah 2–3 minggu, heap minimum turun perlahan.
+
+TLS handshake mulai gagal.
+Device restart.
+
+Tidak ada yang sadar penyebabnya.
+
+---
+
+## 4.6 Pola Logging Liar
+
+```cpp
+Serial.println("WiFi reconnect...");
+Serial.println("MQTT fail");
+Serial.println("Temp error");
+```
+
+Tidak ada:
+
+- Log level
+- Format standar
+- Buffering
+- Integrasi telemetry
+
+Ketika device di lapangan,
+Serial tidak terlihat.
+Log hilang.
+
+---
+
+## 4.7 Pola Fail-Open
+
+Misal sensor rusak:
+
+```cpp
+if (!readTemp()) {
+    Serial.println("Sensor error");
+}
+```
+
+Relay tetap ON.
+
+Tidak ada fail-safe.
+
+Dalam sistem mekanikal:
+
+- Pompa bisa dry-run.
+- Heater bisa overheat.
+- Motor bisa overcurrent.
+
+Masalah bukan lagi software.
+Masalah menjadi fisik.
+
+---
+
+# 5. Constraint & Embedded Impact
+
+Sekarang kita lihat dari sisi constraint nyata ESP32.
+
+Firmware spaghetti bukan hanya masalah estetika.
+Ia berdampak pada resource keras.
+
+---
+
+## 5.1 RAM Impact
+
+ESP32 punya heap terbatas.
+
+WiFi + TLS + MQTT sudah memakan banyak memori.
+
+Jika kita tambahkan:
+
+- String dynamic
+- Buffer tanpa batas
+- Object dibuat di loop
+
+Heap menjadi tidak stabil.
+
+Gejala:
+
+- `ESP.getFreeHeap()` turun perlahan.
+- Setelah waktu tertentu, TLS gagal.
+- OTA gagal.
+
+Ini bukan teori.
+Ini kejadian umum di deployment jangka panjang.
+
+---
+
+## 5.2 Stack Impact
+
+Callback bertingkat:
+
+MQTT → JSON parse → Logging → Publish → Retry
+
+Call stack makin dalam.
+
+Tanpa audit stack per task,
+overflow bisa terjadi sporadis.
+
+---
+
+## 5.3 Determinism Impact
+
+Control loop harus stabil.
+
+Jika loop memanggil:
+
+- reconnect
+- publish TLS
+- logging blocking
+
+Latency control menjadi variabel.
+
+Dalam sistem kontrol nyata:
+
+- Valve bisa overshoot.
+- Relay switching tidak tepat waktu.
+- Motor delay start.
+
+---
+
+## 5.4 Power & Electrical Impact
+
+Ini sering dilupakan.
+
+Relay chatter karena race condition:
+
+- Inrush current berulang.
+- Kontaktor cepat aus.
+- EMI meningkat.
+
+Software spaghetti bisa merusak hardware.
+
+---
+
+## 5.5 Field Maintenance Impact
+
+Ketika bug muncul:
+
+- Tidak ada error code formal.
+- Tidak ada health telemetry.
+- Tidak ada state machine eksplisit.
+
+Engineer lapangan hanya bisa:
+
+- Cabut listrik.
+- Restart.
+
+Itu bukan production-grade system.
+
+---
+
+# 6. Failure Scenario (Detail)
+
+Sekarang kita konkretkan.
+
+---
+
+## Scenario 1 — Broker Restart di Jam Sibuk
+
+Kondisi:
+
+- Device aktif.
+- Relay ON.
+- Telemetry tiap 5 detik.
+- Broker restart.
+
+Yang terjadi:
+
+1. MQTT disconnect.
+2. Loop panggil reconnect.
+3. Callback error mungkin masih masuk.
+4. WiFi tetap connected.
+5. Reconnect dipanggil berkali-kali.
+
+Dampak:
+
+- Control loop delay.
+- Watchdog reset.
+- Relay mungkin glitch.
+
+Akar masalah:
+
+- Tidak ada state machine formal.
+- Reconnect logic tersebar.
+
+---
+
+## Scenario 2 — WiFi Flapping
+
+WiFi drop 2–3 detik lalu kembali.
+
+Firmware spaghetti biasanya:
+
+- Reconnect WiFi.
+- Reconnect MQTT.
+- Reset client.
+- Publish ulang.
+
+Jika terjadi 10 kali dalam 1 menit:
+
+- Heap churn.
+- TLS handshake berulang.
+- Fragmentation meningkat.
+
+Beberapa hari kemudian:
+
+- Device stuck.
+- Tidak ada root cause.
+
+---
+
+## Scenario 3 — ISR + MQTT Race
+
+- ISR toggle relay.
+- MQTT callback set relay ON.
+- Loop set relay OFF karena suhu turun.
+
+![Image](https://www.uml-diagrams.org/examples/java-7-concurrent-executors-uml-class-diagram-example.png)
+
+![Image](https://media.licdn.com/dms/image/v2/D4E22AQEutuD2pXrajw/feedshare-shrink_800/B4EZmmgClMKoAg-/0/1759435041873?e=2147483647&t=fkLJJXnmGN8KLLu8ZpESJTCrkRbH8TP5zrYwaFSb7zE&v=beta)
+
+Dalam 10 ms, relay berubah 3 kali.
+
+Efek fisik:
+
+- Contact bounce.
+- Wear mekanikal.
+
+Tidak ada arbitration layer.
+
+---
+
+## Scenario 4 — Sensor Failure
+
+Sensor I2C gagal.
+
+`readTemp()` return invalid.
+
+Loop tetap berjalan.
+Relay tetap ON.
+
+Dalam sistem heater:
+
+- Overheat.
+
+Software tidak punya model fail-safe.
+
+---
+
+# 7. Anti-Pattern (Artikel 1 Context)
+
+Artikel 1 belum bicara solusi,
+tapi kita kunci red flag berikut sebagai tanda spaghetti:
+
+- ❌ Global mutable runtime state
+- ❌ ISR memanggil logic aplikasi
+- ❌ Callback komunikasi mengontrol hardware
+- ❌ Reconnect logic tersebar
+- ❌ Tidak ada state machine eksplisit
+- ❌ Logging tidak terstruktur
+- ❌ Fail-open pada error
+- ❌ `.ino` menjadi pusat semua domain
+
+Jika ≥3 terjadi,
+firmware Anda sedang menuju kegagalan jangka panjang.
+
+---
+
+Berikutnya adalah:
+
+- Freeze Point Artikel 1
+- Engineering Checklist Artikel 1
+- Summary tajam untuk menutup artikel
+
+Saya lanjutkan ke **Bagian 3 (Section 8–10)** sekarang.
+
+---
+
+# 8. Freeze Point
+
+Artikel 1 tidak mengunci solusi.
+Artikel 1 mengunci **diagnosis**.
+
+Setelah membaca artikel ini, keputusan berikut dianggap final dan tidak boleh diperdebatkan lagi dalam seri ini:
+
+---
+
+### 🔒 Freeze 1 — Firmware ESP32 Arduino Bukan Program Linear
+
+Walaupun terlihat seperti:
+
+```cpp
+setup();
+loop();
+```
+
+Realitasnya adalah:
+
+- Ada ISR.
+- Ada WiFi task internal.
+- Ada MQTT callback.
+- Ada timer.
+- Ada OTA handler.
+- Ada reconnect event.
+
+Artinya:
+
+> Firmware adalah sistem multi-domain internal.
+
+Jika diperlakukan sebagai program linear sederhana,
+ia akan runtuh saat kompleksitas naik.
+
+---
+
+### 🔒 Freeze 2 — Global Mutable Tanpa Owner Adalah Sumber Spaghetti
+
+Jika satu state bisa diubah oleh:
+
+- Loop
+- Callback
+- ISR
+- Helper function
+
+Maka itu bukan desain.
+Itu kebetulan yang belum meledak.
+
+Setiap state harus punya owner.
+
+---
+
+### 🔒 Freeze 3 — Tanpa Dependency Direction, Sistem Akan Cyclic
+
+Jika semua modul bisa memanggil semua modul:
+
+Maka dependency graph pasti menjadi cyclic.
+
+Dan cyclic dependency adalah akar spaghetti.
+
+---
+
+### 🔒 Freeze 4 — Fitur Baru Tanpa Boundary Akan Menghancurkan Firmware
+
+Menambah fitur tanpa memperbaiki struktur bukan pertumbuhan linear.
+
+Itu pertumbuhan eksponensial kompleksitas.
+
+Firmware yang terlihat baik di 1.000 baris
+akan runtuh di 4.000 baris jika boundary tidak ada.
+
+---
+
+### 🔒 Freeze 5 — Production Problem Bukan Karena C, Tapi Karena Struktur
+
+Banyak engineer menyalahkan:
+
+- Arduino
+- C
+- Library
+- ESP32
+
+Padahal masalahnya adalah:
+
+> Struktur tidak pernah didesain untuk tumbuh.
+
+Ini penting.
+
+Karena mulai Artikel 2, kita tidak menyalahkan bahasa.
+Kita akan menggunakan C++ sebagai alat untuk mengontrol kompleksitas.
+
+---
+
+# 9. Engineering Checklist (Self-Audit Artikel 1)
+
+Gunakan checklist ini untuk menilai firmware Anda saat ini.
+
+Jawab jujur.
+
+---
+
+## Struktur
+
+- Apakah `.ino` mengontrol WiFi, MQTT, sensor, relay sekaligus?
+- Apakah callback komunikasi langsung mengubah hardware?
+- Apakah ISR memanggil logic selain set flag?
+
+Jika ya → risiko tinggi.
+
+---
+
+## State
+
+- Apakah ada global mutable tanpa owner?
+- Apakah lebih dari satu domain bisa mengubah relay?
+- Apakah mode AUTO/MANUAL tersebar di banyak tempat?
+
+Jika ya → dependency implicit.
+
+---
+
+## Communication
+
+- Apakah reconnect logic tersebar?
+- Apakah publish bisa dipanggil dari mana saja?
+- Apakah tidak ada state machine eksplisit?
+
+Jika ya → sistem rentan.
+
+---
+
+## Reliability
+
+- Jika sensor gagal, apakah relay tetap ON?
+- Apakah error hanya di-print ke Serial?
+- Apakah tidak ada health metric formal?
+
+Jika ya → bukan production-grade.
+
+---
+
+## Embedded Constraint
+
+- Apakah menggunakan `String` secara bebas?
+- Apakah tidak pernah audit heap minimum?
+- Apakah callback berat berjalan di control path?
+
+Jika ya → uptime jangka panjang berisiko.
+
+---
+
+Jika Anda menemukan 5 atau lebih “YA” di atas,
+firmware Anda kemungkinan besar akan bermasalah dalam 3–6 bulan deployment.
+
+---
+
+# 10. Summary (5 Bullet Maksimal)
+
+- Firmware ESP32 Arduino bukan program linear sederhana.
+- Global mutable tanpa owner adalah akar spaghetti.
+- Callback, ISR, dan loop tanpa boundary menciptakan chaos.
+- Reconnect logic tanpa state machine adalah bom waktu.
+- Masalah produksi muncul bukan karena bahasa, tetapi karena struktur tidak didesain untuk tumbuh.
+
+---
+
+## Penutup Artikel 1
+
+Artikel ini sengaja tidak memberi solusi.
+
+Tujuan Artikel 1 adalah:
+
+Membuat engineer sadar bahwa masalahnya bukan “bug kecil”.
+
+Masalahnya adalah:
+
+> Kompleksitas sistem meningkat, tetapi arsitektur tidak pernah dinaikkan levelnya.
+
+Mulai Artikel 2, kita tidak lagi berbicara tentang teori OOP.
+
+Kita akan menggunakan C++ sebagai alat disiplin untuk:
+
+- Mengontrol dependency.
+- Mengontrol ownership.
+- Mengontrol lifecycle.
+- Mengontrol kompleksitas sebelum ia meledak.

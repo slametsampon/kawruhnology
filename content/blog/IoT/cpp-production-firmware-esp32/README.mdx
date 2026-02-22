@@ -1,0 +1,263 @@
+---
+title: Readme - C++ for Production Firmware on ESP32
+date: '2026-02-22'
+tags:
+  [
+    'esp32',
+    'production-firmware',
+    'embedded-architecture',
+    'oop-discipline',
+    'arduino-core',
+    'firmware-guideline',
+    'long-term-maintainability',
+    'iot-embedded',
+  ]
+draft: false
+summary: README memposisikan seri C++ for Production Firmware on ESP32 sebagai panduan arsitektur firmware produksi, bukan kursus sintaks atau teori OOP umum. Dokumen ini menjelaskan filosofi inti (determinism, memory discipline, boundary control), struktur waterfall 8 artikel, serta model arsitektur yang dikunci - no global mutable, static-first allocation, 3-layer DAG, CommManager sebagai gateway komunikasi, dan fail-safe reliability model. README juga menegaskan constraint Arduino (flat structure, IndustrialNode.ino sebagai entry point) serta success criteria produksi jangka panjang. Tujuannya adalah menyatukan visi tim dan memastikan disiplin arsitektur sebelum firmware berkembang menjadi kompleks.
+---
+
+# 📘 C++ for Production Firmware on ESP32
+
+**_Architecture Discipline for 3–5 Year Firmware Stability_**
+
+---
+
+- [📘 C++ for Production Firmware on ESP32](#-c-for-production-firmware-on-esp32)
+  - [🎯 Positioning](#-positioning)
+  - [🧠 Filosofi Inti](#-filosofi-inti)
+  - [📦 Struktur Seri (Waterfall Discipline)](#-struktur-seri-waterfall-discipline)
+  - [🏗 Architecture Model yang Dikunci](#-architecture-model-yang-dikunci)
+  - [📁 Struktur Project (Arduino Constraint)](#-struktur-project-arduino-constraint)
+  - [🔒 Apa yang Tidak Dibahas](#-apa-yang-tidak-dibahas)
+  - [🧪 Success Criteria](#-success-criteria)
+  - [🛡 Guardrail Final](#-guardrail-final)
+  - [📌 Final Statement](#-final-statement)
+
+---
+
+## 🎯 Positioning
+
+Seri ini **bukan kursus C++**.
+Bukan buku OOP.
+Bukan kumpulan design pattern generik.
+
+Seri ini adalah:
+
+> Panduan arsitektur firmware produksi berbasis C++ untuk ESP32 (Arduino core) yang dirancang agar stabil 3–5 tahun tanpa menjadi spaghetti.
+
+Target pembaca:
+
+- Embedded engineer aktif
+- Firmware developer IoT produksi
+- Tim yang firmware-nya mulai membesar
+- Engineer yang sudah deploy ESP32 di lapangan
+
+Bukan untuk:
+
+- Pemula C++
+- Belajar sintaks dasar
+- Teori OOP akademis
+- Template metaprogramming
+
+---
+
+## 🧠 Filosofi Inti
+
+1. OOP adalah alat, bukan tujuan.
+2. Determinism lebih penting dari elegance.
+3. Memory discipline lebih penting dari abstraction.
+4. Simplicity > overengineering.
+5. Setiap keputusan arsitektur dikunci secara eksplisit.
+
+---
+
+## 📦 Struktur Seri (Waterfall Discipline)
+
+Semua artikel bersifat berurutan dan saling mengunci.
+
+Keputusan yang dibekukan di artikel sebelumnya **tidak boleh diubah** di artikel berikutnya.
+
+| No  | Artikel                              | Domain Keputusan                   |
+| --- | ------------------------------------ | ---------------------------------- |
+| 01  | Problem Firmware Spaghetti           | Problem Mapping                    |
+| 02  | OOP Dependency Control               | Global & Ownership Freeze          |
+| 03  | Object Lifecycle & Memory Discipline | Allocation Policy Freeze           |
+| 04  | Layered Firmware Architecture        | Dependency Direction Freeze        |
+| 05  | OOP + FreeRTOS Determinism           | Concurrency Boundary               |
+| 06  | Communication Architecture           | CommManager & State Machine Freeze |
+| 07  | Production Reliability Design        | Error Model & Fail-Safe Freeze     |
+| 08  | OOP Anti-Pattern & Audit             | Guardrail & Production Audit       |
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'ARCHITECTURE_RULES',
+      href: '/blog/IoT/cpp-production-firmware-esp32/ARCHITECTURE_RULES',
+      description:
+        'ARCHITECTURE_RULES - Production Firmware Discipline — ESP32 (Arduino Core)',
+    },
+    {
+      name: 'Firmware C di ESP32 Jadi Spaghetti',
+      href: '/blog/IoT/cpp-production-firmware-esp32/01-problem-firmware-spaghetti',
+      description: 'Kenapa Firmware C di ESP32 Jadi Spaghetti Setelah 6 Bulan?',
+    },
+    {
+      name: 'OOP Sebagai Alat Mengontrol Dependency',
+      href: '/blog/IoT/cpp-production-firmware-esp32/02-oop-dependency-control',
+      description: 'OOP Sebagai Alat Mengontrol Dependency (Bukan Gaya-Gayaan)',
+    },
+    {
+      name: 'Object Lifecycle & Memory',
+      href: '/blog/IoT/cpp-production-firmware-esp32/03-object-lifecycle-memory-discipline',
+      description: 'Object Lifecycle & Memory Discipline di Embedded',
+    },
+    {
+      name: 'Firmware Architecture',
+      href: '/blog/IoT/cpp-production-firmware-esp32/04-layered-firmware-architecture',
+      description:
+        'Firmware Architecture Berbasis Class (Layered & Deterministic)',
+    },
+    {
+      name: 'OOP + FreeRTOS',
+      href: '/blog/IoT/cpp-production-firmware-esp32/05-freertos-deterministic-concurrency',
+      description: 'OOP + FreeRTOS Tanpa Membunuh Determinism',
+    },
+    {
+      name: 'Communication Module Design',
+      href: '/blog/IoT/cpp-production-firmware-esp32/06-decoupled-communication-architecture',
+      description:
+        'Communication Module Design (WiFi, MQTT, OTA) yang Tidak Coupled',
+    },
+    {
+      name: 'Production Reliability Design',
+      href: '/blog/IoT/cpp-production-firmware-esp32/07-production-reliability-design',
+      description: 'Production Reliability Design dengan C++',
+    },
+    {
+      name: 'Anti-Pattern',
+      href: '/blog/IoT/cpp-production-firmware-esp32/08-oop-anti-pattern-embedded',
+      description: 'Anti-Pattern: Cara OOP Menghancurkan Embedded System',
+    },
+  ]}
+/>
+
+---
+
+## 🏗 Architecture Model yang Dikunci
+
+Setelah menyelesaikan seri ini, firmware Anda harus memiliki:
+
+- No global mutable state
+- No singleton
+- Static-first allocation
+- 3-layer model (`app_`, `svc_`, `drv_`, `sys_`)
+- Dependency DAG (no circular include)
+- ISR hanya notify
+- ControlTask non-blocking
+- CommManager sebagai gateway tunggal
+- State machine eksplisit
+- Fail-safe state mandatory
+- Error propagation eksplisit (no exception)
+
+Jika salah satu dilanggar, firmware kembali berisiko menjadi spaghetti.
+
+---
+
+## 📁 Struktur Project (Arduino Constraint)
+
+Seri ini diasumsikan berjalan pada:
+
+- ESP32
+- Arduino Core
+- VSCode + Arduino Community Edition
+- Flat file structure (tanpa nested folder)
+
+Contoh struktur final:
+
+```
+IndustrialNode/
+│
+├── IndustrialNode.ino
+│
+├── app_ControlApp.h
+├── app_ControlApp.cpp
+│
+├── svc_SensorService.h
+├── svc_SensorService.cpp
+├── svc_ActuatorService.h
+├── svc_ActuatorService.cpp
+├── svc_CommManager.h
+├── svc_CommManager.cpp
+├── svc_HealthService.h
+├── svc_HealthService.cpp
+│
+├── drv_TempSensorDriver.h
+├── drv_TempSensorDriver.cpp
+├── drv_RelayDriver.h
+├── drv_RelayDriver.cpp
+│
+├── sys_Config.h
+├── sys_Status.h
+├── sys_Types.h
+│
+└── ARCHITECTURE_RULES.md
+```
+
+Prefix file adalah boundary enforcement karena Arduino tidak mendukung nested folder kompleks.
+
+---
+
+## 🔒 Apa yang Tidak Dibahas
+
+Seri ini secara sengaja tidak membahas:
+
+- Advanced template metaprogramming
+- STL heavy usage
+- Modern C++ feature lengkap
+- Generic design pattern catalog
+- Desktop OOP theory
+
+Jika tidak relevan langsung ke firmware produksi ESP32 → tidak dibahas.
+
+---
+
+## 🧪 Success Criteria
+
+Seri ini dianggap berhasil jika setelah implementasi:
+
+- Firmware lebih terstruktur
+- Dependency jelas dan terarah
+- Heap usage stabil dalam jangka panjang
+- Tidak ada redesign besar setelah Artikel 4
+- Code review lebih cepat
+- Uptime meningkat signifikan
+
+---
+
+## 🛡 Guardrail Final
+
+Firmware production bukan tentang “fitur banyak”.
+
+Firmware production adalah tentang:
+
+- Predictability
+- Determinism
+- Observability
+- Boundary discipline
+- Auditability
+
+Tanpa disiplin arsitektur, firmware akan rusak bukan karena bug besar,
+tetapi karena kompleksitas yang tidak dikontrol.
+
+---
+
+## 📌 Final Statement
+
+Seri ini bukan:
+
+> “Belajar OOP untuk ESP32”
+
+Seri ini adalah:
+
+> Cara menggunakan C++ untuk membuat firmware ESP32 yang bisa hidup 3–5 tahun tanpa menjadi monster spaghetti.

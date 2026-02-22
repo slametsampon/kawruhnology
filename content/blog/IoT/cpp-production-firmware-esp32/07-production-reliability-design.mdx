@@ -1,0 +1,648 @@
+---
+title: Production Reliability Design dengan C++
+date: '2026-02-22'
+tags:
+  [
+    'esp32',
+    'embedded-reliability',
+    'error-model',
+    'fail-safe-design',
+    'watchdog-management',
+    'non-blocking-logging',
+    'health-telemetry',
+    'production-firmware',
+  ]
+draft: false
+summary: Artikel ini mengunci model reliability dan error handling untuk firmware ESP32 produksi. Setelah dependency, memory, layering, concurrency, dan communication dibekukan, sistem masih bisa gagal jika tidak memiliki model propagasi error yang eksplisit dan fail-safe state yang jelas. Silent failure, printf liar, watchdog tanpa owner, serta relay fail-open adalah penyebab utama bug lapangan yang sulit diaudit. Artikel ini menetapkan error enum eksplisit, larangan exception, encapsulation watchdog dalam HealthService, logging via interface non-blocking, serta kewajiban health telemetry minimal. Dengan reliability model formal, firmware tidak hanya rapi, tetapi juga dapat diaudit dan dipertahankan bertahun-tahun.
+---
+
+# 📘 Artikel 7: Production Reliability Design dengan C++
+
+**Posisi:** Artikel 7 dari 8
+**Domain Keputusan:** Reliability & Error Model
+**Status Lock:** 🔒 Reliability & Error Handling Freeze
+**Entry Context:** `IndustrialNode/IndustrialNode.ino`
+
+---
+
+- [📘 Artikel 7: Production Reliability Design dengan C++](#-artikel-7-production-reliability-design-dengan-c)
+  - [1. Problem Reality](#1-problem-reality)
+  - [2. Root Cause Analysis](#2-root-cause-analysis)
+    - [2.1 Silent Failure](#21-silent-failure)
+    - [2.2 Watchdog Tanpa Owner](#22-watchdog-tanpa-owner)
+    - [2.3 Fail-Open Control](#23-fail-open-control)
+    - [2.4 Logging Tidak Terstruktur](#24-logging-tidak-terstruktur)
+    - [🔎 Visualisasi Error Tanpa Propagasi](#-visualisasi-error-tanpa-propagasi)
+  - [3. Design Principle (Rule yang Dikunci)](#3-design-principle-rule-yang-dikunci)
+    - [🔒 Rule 1 — Error Propagation via Explicit Status](#-rule-1--error-propagation-via-explicit-status)
+    - [🔒 Rule 2 — No Exception](#-rule-2--no-exception)
+    - [🔒 Rule 3 — Watchdog Encapsulated](#-rule-3--watchdog-encapsulated)
+    - [🔒 Rule 4 — Fail-Safe State Mandatory](#-rule-4--fail-safe-state-mandatory)
+    - [🔒 Rule 5 — Logging via Interface Only](#-rule-5--logging-via-interface-only)
+    - [🔒 Rule 6 — Health Telemetry Mandatory](#-rule-6--health-telemetry-mandatory)
+  - [4. Implementation Pattern (ESP32 Arduino Context)](#4-implementation-pattern-esp32-arduino-context)
+    - [4.1 Error Enum Pattern](#41-error-enum-pattern)
+    - [4.2 HealthService Skeleton](#42-healthservice-skeleton)
+    - [4.3 Fail-Safe Pattern](#43-fail-safe-pattern)
+    - [4.4 Logging Abstraction](#44-logging-abstraction)
+  - [5. Constraint \& Embedded Impact](#5-constraint--embedded-impact)
+    - [5.1 RAM Impact](#51-ram-impact)
+    - [5.2 Flash Impact](#52-flash-impact)
+    - [5.3 Stack Impact](#53-stack-impact)
+    - [5.4 Determinism Impact](#54-determinism-impact)
+  - [6. Failure Scenario](#6-failure-scenario)
+    - [Scenario 1 — Sensor Gagal, Relay Tetap ON](#scenario-1--sensor-gagal-relay-tetap-on)
+    - [Scenario 2 — Heap Hampir Habis](#scenario-2--heap-hampir-habis)
+    - [Scenario 3 — Deadlock tapi Watchdog Tetap Di-Feed](#scenario-3--deadlock-tapi-watchdog-tetap-di-feed)
+    - [Scenario 4 — Logging Blocking di ControlTask](#scenario-4--logging-blocking-di-controltask)
+  - [7. Anti-Pattern](#7-anti-pattern)
+  - [8. Freeze Point](#8-freeze-point)
+  - [9. Engineering Checklist](#9-engineering-checklist)
+  - [10. Summary (5 Bullet Maksimal)](#10-summary-5-bullet-maksimal)
+
+---
+
+## 1. Problem Reality
+
+Setelah Artikel 6:
+
+- Layering terkunci.
+- Allocation disiplin.
+- Concurrency terkendali.
+- Communication terisolasi.
+
+Firmware terlihat matang.
+
+Namun di lapangan muncul gejala:
+
+- “Kadang mati sendiri.”
+- “Kadang tidak kirim data.”
+- “Kadang relay tidak sesuai status.”
+- Watchdog reset tanpa log jelas.
+- OTA gagal tanpa error code formal.
+
+Masalah paling sering:
+
+- Error hanya di-print ke Serial.
+- Fungsi gagal tapi tidak dipropagasi.
+- Relay tetap ON saat sensor error (fail-open).
+- Tidak ada status sistem global yang eksplisit.
+
+Masalahnya bukan arsitektur lagi.
+
+Masalahnya:
+
+> Tidak ada model reliability formal.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Readme',
+      href: '/blog/IoT/cpp-production-firmware-esp32/README',
+      description: 'Readme - C++ for Production Firmware on ESP32',
+    },
+    {
+      name: 'ARCHITECTURE_RULES',
+      href: '/blog/IoT/cpp-production-firmware-esp32/ARCHITECTURE_RULES',
+      description:
+        'ARCHITECTURE_RULES - Production Firmware Discipline — ESP32 (Arduino Core)',
+    },
+    {
+      name: 'Firmware C di ESP32 Jadi Spaghetti',
+      href: '/blog/IoT/cpp-production-firmware-esp32/01-problem-firmware-spaghetti',
+      description: 'Kenapa Firmware C di ESP32 Jadi Spaghetti Setelah 6 Bulan?',
+    },
+    {
+      name: 'OOP Sebagai Alat Mengontrol Dependency',
+      href: '/blog/IoT/cpp-production-firmware-esp32/02-oop-dependency-control',
+      description: 'OOP Sebagai Alat Mengontrol Dependency (Bukan Gaya-Gayaan)',
+    },
+    {
+      name: 'Object Lifecycle & Memory',
+      href: '/blog/IoT/cpp-production-firmware-esp32/03-object-lifecycle-memory-discipline',
+      description: 'Object Lifecycle & Memory Discipline di Embedded',
+    },
+    {
+      name: 'Firmware Architecture',
+      href: '/blog/IoT/cpp-production-firmware-esp32/04-layered-firmware-architecture',
+      description:
+        'Firmware Architecture Berbasis Class (Layered & Deterministic)',
+    },
+    {
+      name: 'OOP + FreeRTOS',
+      href: '/blog/IoT/cpp-production-firmware-esp32/05-freertos-deterministic-concurrency',
+      description: 'OOP + FreeRTOS Tanpa Membunuh Determinism',
+    },
+    {
+      name: 'Communication Module Design',
+      href: '/blog/IoT/cpp-production-firmware-esp32/06-decoupled-communication-architecture',
+      description:
+        'Communication Module Design (WiFi, MQTT, OTA) yang Tidak Coupled',
+    },
+    {
+      name: 'Anti-Pattern',
+      href: '/blog/IoT/cpp-production-firmware-esp32/08-oop-anti-pattern-embedded',
+      description: 'Anti-Pattern: Cara OOP Menghancurkan Embedded System',
+    },
+  ]}
+/>
+
+---
+
+## 2. Root Cause Analysis
+
+Reliability rusak bukan karena satu bug,
+tetapi karena tidak ada struktur error.
+
+---
+
+### 2.1 Silent Failure
+
+Contoh:
+
+```cpp id="m4x9zt"
+if (!sensor.read()) {
+    Serial.println("Sensor error");
+}
+```
+
+Function gagal, tetapi:
+
+- Tidak ada return status.
+- Tidak ada perubahan state.
+- Tidak ada fail-safe.
+
+System berjalan seolah-olah normal.
+
+---
+
+### 2.2 Watchdog Tanpa Owner
+
+```cpp id="n8q2pk"
+esp_task_wdt_reset();   // dipanggil di banyak tempat - ❌
+```
+
+Watchdog di-feed dari banyak domain.
+
+Jika deadlock terjadi di satu task:
+
+- Task lain masih feed watchdog.
+- Hang tidak terdeteksi.
+
+---
+
+### 2.3 Fail-Open Control
+
+Jika sensor gagal:
+
+- Relay tetap ON.
+- Heater tetap aktif.
+- Motor tetap berputar.
+
+Software terlihat “hidup”,
+hardware rusak perlahan.
+
+---
+
+### 2.4 Logging Tidak Terstruktur
+
+```cpp id="c2x7mp"
+Serial.println("WiFi error");
+Serial.println("Temp fail");
+```
+
+Tidak ada:
+
+- Severity level
+- Error code
+- Aggregation
+- Telemetry integration
+
+Ketika device di lapangan:
+
+- Tidak ada audit trail.
+
+---
+
+### 🔎 Visualisasi Error Tanpa Propagasi
+
+![Image](https://www.researchgate.net/publication/228962205/figure/fig1/AS%3A393620155846657%401470857766201/An-illustration-of-error-propagation-between-components.png)
+
+![Image](https://assets.incompliancemag.com/2025/04/2505-F1-fig12.png)
+
+Tanpa error model:
+
+- Failure tidak naik ke Application.
+- Fail-safe tidak pernah aktif.
+- System terlihat normal hingga terlambat.
+
+---
+
+## 3. Design Principle (Rule yang Dikunci)
+
+Artikel 7 mengunci reliability baseline final.
+
+---
+
+### 🔒 Rule 1 — Error Propagation via Explicit Status
+
+Semua fungsi kritikal harus:
+
+- Return `Status` enum
+  atau
+- Update error state internal
+
+Contoh:
+
+```cpp id="v7m3pt"
+enum class Status {
+    OK,
+    SENSOR_ERROR,
+    COMM_ERROR,
+    STORAGE_ERROR,
+    INTERNAL_ERROR
+};
+```
+
+Tidak boleh:
+
+- ❌ Silent failure
+- ❌ Ignore return value
+
+---
+
+### 🔒 Rule 2 — No Exception
+
+Exception dilarang.
+
+Alasan:
+
+- Stack tidak terprediksi.
+- Flow tersembunyi.
+- Tidak deterministik.
+
+Error flow harus eksplisit.
+
+---
+
+### 🔒 Rule 3 — Watchdog Encapsulated
+
+Watchdog harus dikelola oleh satu class:
+
+> `svc_HealthService`
+
+Tidak boleh di-feed sembarang tempat.
+
+---
+
+### 🔒 Rule 4 — Fail-Safe State Mandatory
+
+Jika error kritikal terjadi:
+
+- System masuk state FAILSAFE.
+- Relay ke default aman.
+- Control loop tetap berjalan dalam mode terbatas.
+
+Tidak boleh fail-open.
+
+---
+
+### 🔒 Rule 5 — Logging via Interface Only
+
+Tidak boleh:
+
+- `Serial.println` liar di semua file.
+- Logging blocking di ControlTask.
+
+Harus:
+
+- `ILogger` interface
+- Bisa redirect (Serial / MQTT / disable)
+- Non-blocking via queue
+
+---
+
+### 🔒 Rule 6 — Health Telemetry Mandatory
+
+Minimal metric:
+
+- reset_reason
+- heap_min_free
+- backlog_depth
+- wifi_state
+- error_code
+
+Harus masuk telemetry.
+
+---
+
+Setelah Artikel 7:
+
+- ❌ Tidak boleh direct printf liar
+- ❌ Tidak boleh exception
+- ❌ Tidak boleh silent failure
+- ❌ Tidak boleh fail-open control
+
+Reliability baseline final.
+
+---
+
+## 4. Implementation Pattern (ESP32 Arduino Context)
+
+---
+
+### 4.1 Error Enum Pattern
+
+```cpp id="a8p4zn"
+enum class Status {
+    OK,
+    SENSOR_ERROR,
+    COMM_ERROR,
+    STORAGE_ERROR,
+    INTERNAL_ERROR
+};
+```
+
+Service method:
+
+```cpp id="q2l6fw"
+Status SensorService::update() {
+    if (!driver_.isReady()) {
+        return Status::SENSOR_ERROR;
+    }
+    // read sensor
+    return Status::OK;
+}
+```
+
+Application layer memutuskan transisi state.
+
+---
+
+### 4.2 HealthService Skeleton
+
+```cpp id="r9x1jk"
+class HealthService {
+public:
+    void feedWatchdog();
+    void reportError(Status s);
+    Status currentError() const;
+
+private:
+    Status last_error_ = Status::OK;
+};
+```
+
+Watchdog hanya di-feed di satu domain.
+
+---
+
+### 4.3 Fail-Safe Pattern
+
+```cpp id="m6q2zx"
+if (health.currentError() != Status::OK) {
+    actuator.enterFailSafe();
+}
+```
+
+Fail-safe eksplisit, bukan implicit.
+
+---
+
+### 4.4 Logging Abstraction
+
+```cpp id="t3p8vc"
+class ILogger {
+public:
+    virtual void log(LogLevel level, const char* msg) = 0;
+};
+```
+
+ControlTask tidak boleh blocking log.
+
+---
+
+## 5. Constraint & Embedded Impact
+
+Reliability bukan sekadar “tambahan fitur”.
+Ia harus selaras dengan constraint embedded yang sudah dikunci di Artikel 3–6.
+
+---
+
+### 5.1 RAM Impact
+
+- `Status` enum sangat kecil (biasanya 4 byte).
+- Health metric disimpan dalam struktur ringkas.
+- Logging queue harus bounded (fixed-size).
+
+Jika logging menggunakan `String` atau buffer dinamis:
+
+- Heap churn.
+- Fragmentasi.
+- Deadlock saat memory rendah.
+
+Reliability model harus ringan dan deterministic.
+
+---
+
+### 5.2 Flash Impact
+
+Menambahkan:
+
+- Error enum
+- HealthService
+- Logging abstraction
+
+Menambah flash sedikit.
+
+Namun ini trade-off yang benar:
+
+Auditability > sedikit penghematan flash.
+
+---
+
+### 5.3 Stack Impact
+
+Tanpa exception:
+
+- Stack depth lebih predictable.
+- Tidak ada unwind chain tak terduga.
+
+Logging via queue:
+
+- Mengurangi call stack di ControlTask.
+- Mencegah blocking di path kritikal.
+
+---
+
+### 5.4 Determinism Impact
+
+Tanpa error model:
+
+- Fungsi bisa gagal diam-diam.
+- Control tetap berjalan dalam kondisi invalid.
+
+Dengan explicit status:
+
+- Error naik ke Application.
+- Transisi state eksplisit.
+- Fail-safe bisa aktif tepat waktu.
+
+Reliability meningkatkan determinism, bukan menguranginya.
+
+---
+
+## 6. Failure Scenario
+
+Reliability rule diuji di kondisi terburuk.
+
+---
+
+### Scenario 1 — Sensor Gagal, Relay Tetap ON
+
+Tanpa error propagation:
+
+```cpp id="f4z7mq"
+sensor.update();
+```
+
+Return value diabaikan.
+
+Relay tetap ON.
+
+Potensi:
+
+- Overheat.
+- Kerusakan mekanikal.
+
+Dengan rule:
+
+```cpp id="k8n2yr"
+Status s = sensor.update();
+if (s != Status::OK) {
+    health.reportError(s);
+}
+```
+
+Application memicu fail-safe.
+
+Relay kembali ke safe state.
+
+---
+
+### Scenario 2 — Heap Hampir Habis
+
+Tanpa health telemetry:
+
+- TLS gagal.
+- Publish gagal.
+- Tidak ada peringatan awal.
+
+Dengan health metric:
+
+- `heap_min_free` dikirim ke cloud.
+- Bisa dideteksi sebelum crash.
+
+Proaktif, bukan reaktif.
+
+---
+
+### Scenario 3 — Deadlock tapi Watchdog Tetap Di-Feed
+
+Jika watchdog di-feed di banyak tempat:
+
+```cpp id="u6t4kp"
+esp_task_wdt_reset();   // tersebar - ❌
+```
+
+Deadlock di satu task tidak terdeteksi.
+
+Dengan encapsulation:
+
+- Hanya HealthService yang feed.
+- Jika ControlTask hang → watchdog tidak di-feed.
+- Reset terjadi sesuai desain.
+
+---
+
+### Scenario 4 — Logging Blocking di ControlTask
+
+Jika log langsung:
+
+```cpp id="n3v9tx"
+Serial.println("Error");
+```
+
+Saat USB slow atau buffer penuh:
+
+- Blocking.
+- Watchdog reset.
+
+Dengan logging via queue:
+
+- ControlTask hanya enqueue.
+- Logging diproses di task lain.
+
+---
+
+## 7. Anti-Pattern
+
+Daftar merah Artikel 7:
+
+- ❌ Exception handling
+- ❌ Silent catch-all
+- ❌ Mengabaikan return status
+- ❌ Fail-open relay
+- ❌ Watchdog feed tersebar
+- ❌ Logging blocking di ControlTask
+- ❌ Tidak ada health telemetry
+
+Dampak:
+
+- Tidak bisa audit root cause
+- Uptime rendah
+- Debug mahal
+- Device gagal di lapangan tanpa jejak
+
+---
+
+## 8. Freeze Point
+
+Setelah Artikel 7, keputusan berikut dianggap final:
+
+- Error propagation eksplisit via `Status`.
+- Exception dilarang.
+- Watchdog encapsulated di `svc_HealthService`.
+- Fail-safe state mandatory.
+- Logging hanya via interface non-blocking.
+- Health telemetry minimal wajib dikirim.
+
+Reliability architecture tidak boleh berubah.
+
+Artikel 8 hanya mengaudit dan menjaga, bukan menambah rule baru.
+
+---
+
+## 9. Engineering Checklist
+
+Audit sebelum release produksi:
+
+- Apakah semua fungsi kritikal return `Status`?
+- Apakah ada return value yang diabaikan?
+- Apakah relay punya default safe state?
+- Apakah watchdog di-feed di banyak tempat?
+- Apakah logging blocking?
+- Apakah health metric masuk telemetry?
+
+Jika satu saja “ya” → melanggar Artikel 7.
+
+---
+
+## 10. Summary (5 Bullet Maksimal)
+
+- Firmware rapi belum tentu reliable.
+- Error harus eksplisit, bukan tersembunyi.
+- Fail-safe bukan opsional.
+- Watchdog harus punya owner.
+- Observability adalah bagian dari arsitektur.

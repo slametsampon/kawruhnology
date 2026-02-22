@@ -1,0 +1,643 @@
+---
+title: Object Lifecycle & Memory Discipline di Embedded
+date: '2026-02-22'
+tags:
+  [
+    'esp32',
+    'embedded-memory',
+    'object-lifecycle',
+    'heap-fragmentation',
+    'static-allocation',
+    'firmware-discipline',
+    'embedded-cpp',
+    'deterministic-design',
+  ]
+draft: false
+summary: Artikel ini mengunci disiplin lifecycle object dan kebijakan alokasi memori untuk firmware ESP32 berbasis Arduino. Masalah jangka panjang pada sistem produksi sering berasal dari dynamic allocation tersembunyi, fragmentasi heap, object yang dibuat di dalam loop, serta penggunaan `String` dan container growable tanpa kontrol. Embedded system membutuhkan determinism dan prediktabilitas, bukan fleksibilitas runtime berlebihan. Artikel ini menetapkan prinsip static-first allocation, pembatasan ketat penggunaan heap, larangan alokasi di ISR dan control loop, serta destructor yang harus trivial. Dengan lifecycle eksplisit dan memori terkendali, firmware dapat bertahan bertahun-tahun tanpa degradasi stabilitas atau reset misterius.
+---
+
+# 📘 Artikel 3: Object Lifecycle & Memory Discipline di Embedded
+
+**Posisi:** Artikel 3 dari 8
+**Domain Keputusan:** Memory & Allocation Policy
+**Status Lock:** 🔒 Allocation & Lifecycle Freeze
+**Entry Context:** `IndustrialNode/IndustrialNode.ino`
+
+---
+
+- [📘 Artikel 3: Object Lifecycle \& Memory Discipline di Embedded](#-artikel-3-object-lifecycle--memory-discipline-di-embedded)
+  - [1. Problem Reality](#1-problem-reality)
+  - [2. Root Cause Analysis](#2-root-cause-analysis)
+    - [2.1 Dynamic Allocation Tersembunyi](#21-dynamic-allocation-tersembunyi)
+    - [2.2 Object Dibuat di Dalam Loop](#22-object-dibuat-di-dalam-loop)
+    - [2.3 Growable Container Tanpa Batas](#23-growable-container-tanpa-batas)
+    - [2.4 Destructor Mengandung Logic Berat](#24-destructor-mengandung-logic-berat)
+  - [🔎 Visualisasi Fragmentasi Heap](#-visualisasi-fragmentasi-heap)
+  - [3. Design Principle (Rule yang Dikunci)](#3-design-principle-rule-yang-dikunci)
+    - [🔒 Rule 1 — Static-First Allocation](#-rule-1--static-first-allocation)
+    - [🔒 Rule 2 — Heap Restricted Zone](#-rule-2--heap-restricted-zone)
+    - [🔒 Rule 3 — No Allocation in Control Loop](#-rule-3--no-allocation-in-control-loop)
+    - [🔒 Rule 4 — No Allocation in ISR](#-rule-4--no-allocation-in-isr)
+    - [🔒 Rule 5 — Destructor Harus Trivial](#-rule-5--destructor-harus-trivial)
+  - [4. Implementation Pattern (ESP32 Arduino Context)](#4-implementation-pattern-esp32-arduino-context)
+    - [4.1 Static Composition Root](#41-static-composition-root)
+    - [4.2 Fixed-Size Buffer Pattern](#42-fixed-size-buffer-pattern)
+  - [5. Constraint \& Embedded Impact](#5-constraint--embedded-impact)
+    - [5.1 RAM Impact](#51-ram-impact)
+    - [5.2 Flash Impact](#52-flash-impact)
+    - [5.3 Stack Impact](#53-stack-impact)
+    - [5.4 Determinism Impact](#54-determinism-impact)
+    - [🔎 Visualisasi Stack vs Heap Risk](#-visualisasi-stack-vs-heap-risk)
+  - [6. Failure Scenario](#6-failure-scenario)
+    - [Scenario 1 — Fragmentasi Heap Mingguan](#scenario-1--fragmentasi-heap-mingguan)
+    - [Scenario 2 — Burst Telemetry Buffer Tanpa Batas](#scenario-2--burst-telemetry-buffer-tanpa-batas)
+    - [Scenario 3 — Object Besar di Stack](#scenario-3--object-besar-di-stack)
+    - [Scenario 4 — Destructor Logic Berat](#scenario-4--destructor-logic-berat)
+  - [7. Anti-Pattern](#7-anti-pattern)
+  - [8. Freeze Point](#8-freeze-point)
+  - [9. Engineering Checklist](#9-engineering-checklist)
+  - [10. Summary (5 Bullet Maksimal)](#10-summary-5-bullet-maksimal)
+
+---
+
+## 1. Problem Reality
+
+Setelah Artikel 2:
+
+- Tidak ada global mutable.
+- Dependency sudah eksplisit.
+- State punya owner.
+
+Firmware terlihat rapi.
+
+Namun setelah 2–4 minggu deployment, gejala mulai muncul:
+
+- Reset tanpa sebab jelas.
+- TLS handshake gagal sporadis.
+- OTA kadang gagal.
+- Heap minimum terus menurun.
+- Watchdog reset saat traffic tinggi.
+
+Kode terlihat bersih.
+
+Masalahnya bukan dependency lagi.
+
+Masalahnya:
+
+> Lifecycle object dan penggunaan heap tidak disiplin.
+
+Firmware embedded tidak boleh bergantung pada “runtime flexibility” seperti sistem desktop.
+
+ESP32 memiliki:
+
+- Heap terbatas
+- TLS yang memakan memori besar
+- WiFi stack internal
+- FreeRTOS task internal
+
+Heap bukan milik kita sepenuhnya.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Readme',
+      href: '/blog/IoT/cpp-production-firmware-esp32/README',
+      description: 'Readme - C++ for Production Firmware on ESP32',
+    },
+    {
+      name: 'ARCHITECTURE_RULES',
+      href: '/blog/IoT/cpp-production-firmware-esp32/ARCHITECTURE_RULES',
+      description:
+        'ARCHITECTURE_RULES - Production Firmware Discipline — ESP32 (Arduino Core)',
+    },
+    {
+      name: 'Firmware C di ESP32 Jadi Spaghetti',
+      href: '/blog/IoT/cpp-production-firmware-esp32/01-problem-firmware-spaghetti',
+      description: 'Kenapa Firmware C di ESP32 Jadi Spaghetti Setelah 6 Bulan?',
+    },
+    {
+      name: 'OOP Sebagai Alat Mengontrol Dependency',
+      href: '/blog/IoT/cpp-production-firmware-esp32/02-oop-dependency-control',
+      description: 'OOP Sebagai Alat Mengontrol Dependency (Bukan Gaya-Gayaan)',
+    },
+    {
+      name: 'Firmware Architecture',
+      href: '/blog/IoT/cpp-production-firmware-esp32/04-layered-firmware-architecture',
+      description:
+        'Firmware Architecture Berbasis Class (Layered & Deterministic)',
+    },
+    {
+      name: 'OOP + FreeRTOS',
+      href: '/blog/IoT/cpp-production-firmware-esp32/05-freertos-deterministic-concurrency',
+      description: 'OOP + FreeRTOS Tanpa Membunuh Determinism',
+    },
+    {
+      name: 'Communication Module Design',
+      href: '/blog/IoT/cpp-production-firmware-esp32/06-decoupled-communication-architecture',
+      description:
+        'Communication Module Design (WiFi, MQTT, OTA) yang Tidak Coupled',
+    },
+    {
+      name: 'Production Reliability Design',
+      href: '/blog/IoT/cpp-production-firmware-esp32/07-production-reliability-design',
+      description: 'Production Reliability Design dengan C++',
+    },
+    {
+      name: 'Anti-Pattern',
+      href: '/blog/IoT/cpp-production-firmware-esp32/08-oop-anti-pattern-embedded',
+      description: 'Anti-Pattern: Cara OOP Menghancurkan Embedded System',
+    },
+  ]}
+/>
+
+---
+
+## 2. Root Cause Analysis
+
+Masalah memory discipline di firmware Arduino ESP32 biasanya berasal dari 4 pola berikut.
+
+---
+
+### 2.1 Dynamic Allocation Tersembunyi
+
+Contoh klasik:
+
+```cpp id="a8d3kx"
+String payload = "{ \"temp\": " + String(temp) + " }";
+client.publish("node/data", payload.c_str());
+```
+
+Yang terjadi:
+
+- Allocation heap
+- Reallocation saat concat
+- Copy internal buffer
+
+Setiap loop publish → heap churn.
+
+Fragmentasi tidak langsung terasa.
+Tetapi setelah minggu ke-3, TLS gagal.
+
+---
+
+### 2.2 Object Dibuat di Dalam Loop
+
+```cpp id="r4n7bz"
+void loop() {
+    TelemetryPacket pkt;
+    pkt.build();
+    comm.publish(pkt);
+}
+```
+
+Jika `TelemetryPacket` memiliki buffer internal besar:
+
+- Stack pressure meningkat.
+- Lifecycle implicit.
+- Sulit diaudit.
+
+Jika ada allocation di constructor, makin berbahaya.
+
+---
+
+### 2.3 Growable Container Tanpa Batas
+
+```cpp id="m2cz9w"
+std::vector<Telemetry> buffer;
+buffer.push_back(data);
+```
+
+Tanpa `reserve()` dan tanpa batas:
+
+- Reallocation berkali-kali
+- Fragmentasi
+- Latency spike
+
+Embedded ≠ server.
+
+---
+
+### 2.4 Destructor Mengandung Logic Berat
+
+```cpp id="u6x4hj"
+~CommManager() {
+    mqtt.disconnect();
+}
+```
+
+Destructor tidak eksplisit dipanggil oleh engineer.
+
+Dalam embedded tanpa exception control yang ketat:
+
+- Destructor berat tidak deterministik.
+- Bisa memicu blocking tak terduga.
+
+---
+
+## 🔎 Visualisasi Fragmentasi Heap
+
+![Image](https://www.researchgate.net/publication/305333536/figure/fig1/AS%3A636217041383424%401528697371648/System-memory-in-different-time-instances-with-diverse-fragmentation-states-as-dynamic.png)
+
+![Image](https://www.eecis.udel.edu/~davis/cpeg222/AssemblyTutorial/Chapter-33/fragmentation.gif)
+
+Fragmentasi bukan berarti heap habis.
+Masalahnya adalah:
+
+- Free memory terpecah kecil-kecil.
+- TLS membutuhkan blok besar kontigu.
+- Allocation gagal walau free memory terlihat cukup.
+
+Ini silent killer.
+
+---
+
+## 3. Design Principle (Rule yang Dikunci)
+
+Artikel ini mengunci baseline memory final.
+
+---
+
+### 🔒 Rule 1 — Static-First Allocation
+
+Semua object utama firmware harus:
+
+- Dideklarasikan statik di `IndustrialNode.ino`
+- Lifetime = lifetime firmware
+
+Contoh:
+
+```cpp id="k9qp3m"
+RelayDriver relay(5);
+ActuatorService actuator(relay);
+ControlApp app(actuator);
+```
+
+Tidak dibuat di dalam `loop()`.
+
+---
+
+### 🔒 Rule 2 — Heap Restricted Zone
+
+Heap hanya boleh digunakan untuk:
+
+- TLS internal
+- MQTT internal buffer
+- OTA buffer terbatas
+
+Selain itu → dilarang.
+
+---
+
+### 🔒 Rule 3 — No Allocation in Control Loop
+
+Dilarang di `app.run()` atau `loop()`:
+
+- `new`
+- `delete`
+- `String`
+- container growable
+
+Control loop harus deterministic.
+
+---
+
+### 🔒 Rule 4 — No Allocation in ISR
+
+ISR hanya boleh:
+
+- Set flag
+- Notify task
+- Push ke queue fixed-size
+
+Tidak boleh allocate.
+
+---
+
+### 🔒 Rule 5 — Destructor Harus Trivial
+
+Destructor tidak boleh:
+
+- Blocking
+- Publish
+- Logging berat
+- Free resource kompleks
+
+Lifecycle harus eksplisit.
+
+---
+
+Setelah Artikel 3:
+
+- ❌ Tidak boleh introduce dynamic allocation runtime
+- ❌ Tidak boleh `String` di hot path
+- ❌ Tidak boleh container growable tanpa batas
+
+Memory baseline terkunci.
+
+---
+
+## 4. Implementation Pattern (ESP32 Arduino Context)
+
+---
+
+### 4.1 Static Composition Root
+
+Di `IndustrialNode.ino`:
+
+```cpp id="g7nh2z"
+#include "drv_RelayDriver.h"
+#include "svc_ActuatorService.h"
+#include "app_ControlApp.h"
+
+RelayDriver relay(5);
+ActuatorService actuator(relay);
+ControlApp app(actuator);
+
+void setup() {
+    app.init();
+}
+
+void loop() {
+    app.run();
+}
+```
+
+Semua object utama:
+
+- Dibuat sekali
+- Tidak pernah dihancurkan
+- Lifetime eksplisit
+
+---
+
+### 4.2 Fixed-Size Buffer Pattern
+
+Daripada:
+
+```cpp id="p9r3zs"
+std::vector<Telemetry> buffer;
+```
+
+Gunakan:
+
+```cpp id="t8f6jm"
+#define TELEMETRY_BUFFER_SIZE 10
+
+Telemetry telemetryBuffer[TELEMETRY_BUFFER_SIZE];
+uint8_t head = 0;
+uint8_t count = 0;
+```
+
+Bounded.
+Predictable.
+Audit-able.
+
+---
+
+## 5. Constraint & Embedded Impact
+
+Disiplin memory bukan soal “gaya C++ lama”.
+Ini soal survival di lingkungan dengan batas keras.
+
+---
+
+### 5.1 RAM Impact
+
+ESP32 (Arduino core) berbagi RAM untuk:
+
+- WiFi stack
+- TCP/IP
+- TLS (mbedTLS)
+- MQTT client
+- FreeRTOS task
+- Heap user
+
+Jika firmware menggunakan dynamic allocation liar:
+
+- Heap minimum turun perlahan.
+- Fragmentasi meningkat.
+- Allocation besar (TLS handshake) gagal.
+
+Static-first allocation:
+
+- Menghilangkan churn heap.
+- Mengurangi fragmentasi.
+- Membuat penggunaan RAM predictable.
+
+---
+
+### 5.2 Flash Impact
+
+Menghindari template berat dan container kompleks:
+
+- Mengurangi instantiation code.
+- Mengurangi binary size.
+- Mengurangi risiko OTA gagal karena ukuran firmware terlalu besar.
+
+Flash bukan infinite resource.
+
+---
+
+### 5.3 Stack Impact
+
+Object besar di stack:
+
+```cpp id="h3md9p"
+void run() {
+    LargePacket pkt;
+}
+```
+
+Jika `LargePacket` memiliki buffer 512 byte:
+
+- Stack task bisa overflow.
+- Crash sporadis sulit dideteksi.
+
+Solusi:
+
+- Gunakan static buffer.
+- Hindari object besar di stack lokal.
+
+---
+
+### 5.4 Determinism Impact
+
+Dynamic allocation:
+
+- Waktu eksekusi tidak konstan.
+- Reallocation latency tidak terprediksi.
+- TLS handshake bisa memicu spike.
+
+Control loop harus:
+
+- Konstan
+- Ringan
+- Tidak tergantung heap
+
+Memory discipline = determinism.
+
+---
+
+### 🔎 Visualisasi Stack vs Heap Risk
+
+![Image](https://embeddedwala.com/uploads/images/202307/img_temp_64adb4df98f352-39966501-57144235.png)
+
+![Image](https://www.researchgate.net/publication/262206053/figure/fig2/AS%3A296740163997697%401447759776210/System-memory-layout.png)
+
+![Image](https://www.pomad.fr/sites/default/files/pictures/tutorials/freertos/13/image_013.png)
+
+![Image](https://www.digikey.com/maker-media/b9d52446-ebca-4ae5-9e8d-9a4a035d1e4d)
+
+Jika stack overflow atau heap terfragmentasi,
+hasilnya bukan warning — tapi reset.
+
+---
+
+## 6. Failure Scenario
+
+Memory problem jarang langsung meledak.
+Ia perlahan merusak stabilitas.
+
+---
+
+### Scenario 1 — Fragmentasi Heap Mingguan
+
+Kondisi:
+
+- Publish tiap 5 detik.
+- Gunakan `String`.
+- TLS aktif.
+
+Minggu 1: Stabil.
+Minggu 2: Heap minimum turun.
+Minggu 3: TLS handshake gagal.
+Minggu 4: Device reset.
+
+Root cause:
+
+- Reallocation berulang.
+- Fragmentasi kontigu hilang.
+
+Dengan static-first policy:
+
+- Tidak ada churn.
+- Heap stabil.
+
+---
+
+### Scenario 2 — Burst Telemetry Buffer Tanpa Batas
+
+WiFi down 30 menit.
+
+Firmware menggunakan:
+
+```cpp id="j7y2nx"
+std::vector<Telemetry> backlog;
+```
+
+Backlog tumbuh terus.
+
+Saat reconnect:
+
+- Publish burst.
+- Allocation besar.
+- Crash.
+
+Dengan fixed-size ring buffer:
+
+- Data lama di-drop terkontrol.
+- Tidak ada spike allocation.
+
+---
+
+### Scenario 3 — Object Besar di Stack
+
+Callback parsing JSON membuat object lokal besar.
+
+Stack default task tidak cukup.
+
+Hasil:
+
+- Crash sporadis.
+- Sulit reproduksi.
+
+Dengan static buffer:
+
+- Stack stabil.
+- Predictable.
+
+---
+
+### Scenario 4 — Destructor Logic Berat
+
+Object lokal memiliki destructor yang memanggil `disconnect()`.
+
+Ketika keluar scope:
+
+- Blocking terjadi.
+- Latency spike.
+- Watchdog reset.
+
+Destructor harus trivial.
+
+---
+
+## 7. Anti-Pattern
+
+Daftar merah Artikel 3:
+
+- ❌ `new` / `delete` di runtime loop
+- ❌ `String` di hot path
+- ❌ `std::vector` tanpa batas
+- ❌ Object besar di stack
+- ❌ Allocation di ISR
+- ❌ Destructor memanggil network
+- ❌ Library pihak ketiga tanpa audit allocation
+
+Dampak:
+
+- Fragmentasi
+- Latency spike
+- Reset misterius
+- OTA gagal
+
+---
+
+## 8. Freeze Point
+
+Setelah Artikel 3, keputusan berikut dianggap final:
+
+- Static-first allocation policy.
+- Heap hanya untuk zona terbatas (TLS/MQTT/OTA).
+- Tidak ada dynamic allocation di control loop.
+- Tidak ada `String` di path kritikal.
+- Tidak ada allocation di ISR.
+- Destructor harus trivial.
+
+Memory baseline tidak boleh berubah di artikel berikutnya.
+
+---
+
+## 9. Engineering Checklist
+
+Audit sebelum release:
+
+- Apakah ada `new` atau `delete`?
+- Apakah ada `String` di loop?
+- Apakah ada container growable tanpa batas?
+- Apakah heap minimum dimonitor?
+- Apakah ada object besar di stack?
+- Apakah ISR allocate?
+
+Jika satu saja “ya” → melanggar Artikel 3.
+
+---
+
+## 10. Summary (5 Bullet Maksimal)
+
+- Fragmentasi heap adalah silent killer firmware.
+- Static-first allocation membuat sistem predictable.
+- Dynamic allocation merusak determinism.
+- Destructor berat tidak cocok untuk embedded.
+- Memory discipline menentukan uptime jangka panjang.

@@ -1,0 +1,609 @@
+---
+title: OOP + FreeRTOS Tanpa Membunuh Determinism
+date: '2026-02-22'
+tags:
+  [
+    'esp32',
+    'freertos',
+    'embedded-concurrency',
+    'deterministic-control',
+    'isr-boundary',
+    'task-architecture',
+    'non-blocking-design',
+    'firmware-reliability',
+  ]
+draft: false
+summary: Artikel ini mengunci batas concurrency dalam firmware ESP32 berbasis Arduino yang berjalan di atas FreeRTOS internal. Setelah layering dan memory discipline dikendalikan, risiko berikutnya adalah eksekusi paralel tanpa boundary yang jelas. ISR, WiFi stack, MQTT callback, dan control loop berjalan dalam konteks berbeda yang dapat memicu race condition dan jitter. Artikel ini menetapkan aturan - task-per-domain, ISR hanya sebagai notifier, komunikasi antar task menggunakan queue fixed-size, serta larangan blocking di ControlTask. Dengan batas eksekusi eksplisit dan alur satu arah, firmware tetap deterministik meskipun berjalan pada sistem multitasking.
+---
+
+# 📘 Artikel 5: OOP + FreeRTOS Tanpa Membunuh Determinism
+
+**Posisi:** Artikel 5 dari 8
+**Domain Keputusan:** Concurrency & Execution Boundary
+**Status Lock:** 🔒 Task Boundary & ISR Interaction Freeze
+**Entry Context:** `IndustrialNode/IndustrialNode.ino`
+
+---
+
+- [📘 Artikel 5: OOP + FreeRTOS Tanpa Membunuh Determinism](#-artikel-5-oop--freertos-tanpa-membunuh-determinism)
+  - [1. Problem Reality](#1-problem-reality)
+  - [2. Root Cause Analysis](#2-root-cause-analysis)
+    - [2.1 ISR Melakukan Logic](#21-isr-melakukan-logic)
+    - [2.2 Callback Komunikasi Mengontrol Hardware](#22-callback-komunikasi-mengontrol-hardware)
+    - [2.3 Blocking Call di Control Loop](#23-blocking-call-di-control-loop)
+    - [2.4 Shared Mutable State Tanpa Guard](#24-shared-mutable-state-tanpa-guard)
+    - [🔎 Visualisasi Concurrency Tanpa Boundary](#-visualisasi-concurrency-tanpa-boundary)
+  - [3. Design Principle (Rule yang Dikunci)](#3-design-principle-rule-yang-dikunci)
+    - [🔒 Rule 1 — Task per Domain (Minimal)](#-rule-1--task-per-domain-minimal)
+    - [🔒 Rule 2 — ISR Only Notify](#-rule-2--isr-only-notify)
+    - [🔒 Rule 3 — No Blocking in ControlTask](#-rule-3--no-blocking-in-controltask)
+    - [🔒 Rule 4 — Queue Bounded \& Fixed Size](#-rule-4--queue-bounded--fixed-size)
+    - [🔒 Rule 5 — No Shared Mutable Without Ownership](#-rule-5--no-shared-mutable-without-ownership)
+  - [4. Implementation Pattern (ESP32 Arduino Context)](#4-implementation-pattern-esp32-arduino-context)
+    - [4.1 Task Wrapper Class](#41-task-wrapper-class)
+    - [4.2 ISR → Queue Pattern](#42-isr--queue-pattern)
+    - [4.3 Queue Communication Pattern](#43-queue-communication-pattern)
+  - [5. Constraint \& Embedded Impact](#5-constraint--embedded-impact)
+    - [5.1 RAM Impact](#51-ram-impact)
+    - [5.2 Stack Impact](#52-stack-impact)
+    - [5.3 Determinism Impact](#53-determinism-impact)
+    - [5.4 Watchdog Impact](#54-watchdog-impact)
+  - [6. Failure Scenario](#6-failure-scenario)
+    - [Scenario 1 — MQTT Callback Mengubah Relay](#scenario-1--mqtt-callback-mengubah-relay)
+    - [Scenario 2 — ControlTask Publish Blocking](#scenario-2--controltask-publish-blocking)
+    - [Scenario 3 — Queue Tak Terbatas Saat WAN Down](#scenario-3--queue-tak-terbatas-saat-wan-down)
+    - [Scenario 4 — ISR Logic Berat](#scenario-4--isr-logic-berat)
+  - [7. Anti-Pattern](#7-anti-pattern)
+  - [8. Freeze Point](#8-freeze-point)
+  - [9. Engineering Checklist](#9-engineering-checklist)
+  - [10. Summary (5 Bullet Maksimal)](#10-summary-5-bullet-maksimal)
+
+---
+
+## 1. Problem Reality
+
+ESP32 (Arduino core) berjalan di atas FreeRTOS.
+
+Artinya:
+
+- Ada WiFi task internal.
+- Ada TCP/IP task.
+- Ada callback MQTT.
+- Ada timer interrupt.
+- Ada ISR eksternal.
+- Ada `loop()` task utama.
+
+Firmware bukan single-thread.
+
+Masalah umum yang muncul:
+
+- ISR langsung mengubah state service.
+- MQTT callback memanggil actuator.
+- Control loop memanggil publish blocking.
+- Logging blocking di task utama.
+- Queue tanpa batas menyebabkan memory spike.
+
+Gejala produksi:
+
+- Relay chatter.
+- Watchdog reset.
+- Latency tidak konsisten.
+- Bug hanya muncul saat traffic tinggi.
+
+Masalahnya bukan FreeRTOS.
+
+Masalahnya:
+
+> Tidak ada boundary eksekusi yang dikunci.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Readme',
+      href: '/blog/IoT/cpp-production-firmware-esp32/README',
+      description: 'Readme - C++ for Production Firmware on ESP32',
+    },
+    {
+      name: 'ARCHITECTURE_RULES',
+      href: '/blog/IoT/cpp-production-firmware-esp32/ARCHITECTURE_RULES',
+      description:
+        'ARCHITECTURE_RULES - Production Firmware Discipline — ESP32 (Arduino Core)',
+    },
+    {
+      name: 'Firmware C di ESP32 Jadi Spaghetti',
+      href: '/blog/IoT/cpp-production-firmware-esp32/01-problem-firmware-spaghetti',
+      description: 'Kenapa Firmware C di ESP32 Jadi Spaghetti Setelah 6 Bulan?',
+    },
+    {
+      name: 'OOP Sebagai Alat Mengontrol Dependency',
+      href: '/blog/IoT/cpp-production-firmware-esp32/02-oop-dependency-control',
+      description: 'OOP Sebagai Alat Mengontrol Dependency (Bukan Gaya-Gayaan)',
+    },
+    {
+      name: 'Object Lifecycle & Memory',
+      href: '/blog/IoT/cpp-production-firmware-esp32/03-object-lifecycle-memory-discipline',
+      description: 'Object Lifecycle & Memory Discipline di Embedded',
+    },
+    {
+      name: 'Firmware Architecture',
+      href: '/blog/IoT/cpp-production-firmware-esp32/04-layered-firmware-architecture',
+      description:
+        'Firmware Architecture Berbasis Class (Layered & Deterministic)',
+    },
+    {
+      name: 'Communication Module Design',
+      href: '/blog/IoT/cpp-production-firmware-esp32/06-decoupled-communication-architecture',
+      description:
+        'Communication Module Design (WiFi, MQTT, OTA) yang Tidak Coupled',
+    },
+    {
+      name: 'Production Reliability Design',
+      href: '/blog/IoT/cpp-production-firmware-esp32/07-production-reliability-design',
+      description: 'Production Reliability Design dengan C++',
+    },
+    {
+      name: 'Anti-Pattern',
+      href: '/blog/IoT/cpp-production-firmware-esp32/08-oop-anti-pattern-embedded',
+      description: 'Anti-Pattern: Cara OOP Menghancurkan Embedded System',
+    },
+  ]}
+/>
+
+---
+
+## 2. Root Cause Analysis
+
+Concurrency chaos muncul dari 4 sumber utama.
+
+---
+
+### 2.1 ISR Melakukan Logic
+
+```cpp
+void IRAM_ATTR buttonISR() {
+    actuator.setRelay(true);   // ❌
+}
+```
+
+Masalah:
+
+- ISR preempt task lain.
+- Bisa race dengan ControlTask.
+- Bisa blocking jika tidak hati-hati.
+
+ISR bukan tempat logic.
+
+---
+
+### 2.2 Callback Komunikasi Mengontrol Hardware
+
+```cpp
+void onMqttMessage(...) {
+    actuator.setRelay(true);   // ❌
+}
+```
+
+Callback berjalan dalam konteks network loop.
+
+Jika ia mengontrol hardware langsung:
+
+- Tidak ada arbitration.
+- Tidak ada guard.
+
+---
+
+### 2.3 Blocking Call di Control Loop
+
+```cpp
+void ControlApp::run() {
+    comm.publish(data);  // bisa blocking ❌
+}
+```
+
+Jika TLS handshake terjadi:
+
+- Latency spike.
+- Watchdog reset.
+
+Control loop harus deterministic.
+
+---
+
+### 2.4 Shared Mutable State Tanpa Guard
+
+Dua task mengakses state sama tanpa mekanisme sinkronisasi.
+
+Race condition muncul sporadis.
+
+---
+
+### 🔎 Visualisasi Concurrency Tanpa Boundary
+
+![Image](https://www.allaboutcircuits.com/uploads/articles/introduction-to-concurrency-in-microcontrollers_PA_AAC_image1.jpg)
+
+![Image](https://www.digikey.com/maker-media/27ec7765-9631-44f2-b70c-34fb0d8881ef)
+
+Tanpa boundary:
+
+- ISR
+- WiFi task
+- MQTT callback
+- ControlTask
+
+Semua bisa menyentuh service.
+
+---
+
+## 3. Design Principle (Rule yang Dikunci)
+
+Artikel ini mengunci model concurrency final.
+
+---
+
+### 🔒 Rule 1 — Task per Domain (Minimal)
+
+Minimal harus ada:
+
+- ControlTask (Application)
+- CommTask (Communication)
+
+Tidak semua logic dicampur di `loop()`.
+
+---
+
+### 🔒 Rule 2 — ISR Only Notify
+
+ISR hanya boleh:
+
+- Set flag volatile
+- Push event ke queue fixed-size
+- Notify task
+
+Tidak boleh:
+
+- Allocate
+- Call service langsung
+- Publish
+
+---
+
+### 🔒 Rule 3 — No Blocking in ControlTask
+
+ControlTask tidak boleh:
+
+- Publish network blocking
+- Logging blocking
+- Delay panjang
+
+ControlTask harus ringan dan periodik.
+
+---
+
+### 🔒 Rule 4 — Queue Bounded & Fixed Size
+
+Semua komunikasi antar task harus:
+
+- Fixed-size queue
+- Tidak growable
+- Tidak dynamic allocation
+
+---
+
+### 🔒 Rule 5 — No Shared Mutable Without Ownership
+
+Jika state shared antar task:
+
+- Harus dimiliki satu task
+- Task lain hanya kirim request
+
+Tidak boleh dua task modify state langsung.
+
+---
+
+Setelah Artikel 5:
+
+- ❌ ISR tidak boleh panggil service langsung
+- ❌ Callback tidak boleh ubah hardware langsung
+- ❌ ControlTask tidak boleh blocking
+- ❌ Tidak boleh queue tak terbatas
+
+Concurrency boundary terkunci.
+
+---
+
+## 4. Implementation Pattern (ESP32 Arduino Context)
+
+---
+
+### 4.1 Task Wrapper Class
+
+```cpp
+class ControlTask {
+public:
+    void run();
+
+private:
+    ControlApp& app_;
+};
+```
+
+`ControlTask` memanggil `app.run()` secara periodik.
+
+---
+
+### 4.2 ISR → Queue Pattern
+
+```cpp
+volatile bool buttonPressed = false;
+
+void IRAM_ATTR buttonISR() {
+    buttonPressed = true;
+}
+```
+
+Di ControlTask:
+
+```cpp
+if (buttonPressed) {
+    buttonPressed = false;
+    actuator.setRelay(true);
+}
+```
+
+ISR hanya notify.
+
+---
+
+### 4.3 Queue Communication Pattern
+
+```cpp
+struct Command {
+    bool relayOn;
+};
+
+QueueHandle_t commandQueue;
+```
+
+CommTask:
+
+```cpp
+xQueueSend(commandQueue, &cmd, 0);
+```
+
+ControlTask:
+
+```cpp
+xQueueReceive(commandQueue, &cmd, 0);
+```
+
+Fixed size.
+Bounded.
+Deterministic.
+
+---
+
+## 5. Constraint & Embedded Impact
+
+Concurrency discipline tidak boleh mengorbankan resource terbatas.
+
+---
+
+### 5.1 RAM Impact
+
+FreeRTOS queue:
+
+- Menggunakan buffer internal.
+- Ukuran = item_size × length.
+
+Jika queue tidak dibatasi:
+
+- RAM cepat habis.
+- Backlog tak terkendali saat WiFi down.
+
+Dengan fixed-size queue:
+
+- Penggunaan RAM predictable.
+- Backpressure eksplisit.
+
+---
+
+### 5.2 Stack Impact
+
+Setiap task memiliki stack sendiri.
+
+Jika satu task:
+
+- Parsing JSON
+- Logging berat
+- TLS handshake
+
+Stack bisa overflow.
+
+Dengan task separation:
+
+- ControlTask stack kecil & stabil.
+- CommTask stack lebih besar.
+- Risiko terisolasi.
+
+---
+
+### 5.3 Determinism Impact
+
+Tanpa boundary:
+
+- Callback bisa preempt control.
+- Blocking call menghentikan loop.
+- Latency spike tak terduga.
+
+Dengan rule:
+
+- ControlTask hanya mengontrol.
+- CommTask menangani network.
+- ISR hanya notify.
+
+Execution menjadi terstruktur.
+
+---
+
+### 5.4 Watchdog Impact
+
+Jika ControlTask blocking:
+
+- Watchdog reset.
+- Device restart misterius.
+
+Dengan non-blocking rule:
+
+- Feed watchdog predictable.
+- Hang lebih mudah dideteksi.
+
+---
+
+## 6. Failure Scenario
+
+Concurrency bug jarang langsung terlihat.
+
+Ia muncul di kondisi ekstrem.
+
+---
+
+### Scenario 1 — MQTT Callback Mengubah Relay
+
+Tanpa boundary:
+
+```cpp id="k9tx8r"
+void onMqttMessage(...) {
+    actuator.setRelay(true);
+}
+```
+
+Jika ControlTask juga mengubah relay:
+
+- Race condition.
+- Relay chatter.
+- Contact wear.
+
+Dengan queue:
+
+- Callback kirim command.
+- ControlTask memutuskan.
+- Tidak ada konflik langsung.
+
+---
+
+### Scenario 2 — ControlTask Publish Blocking
+
+```cpp id="z4kqtp"
+app.run() {
+    comm.publish(data);   // TLS blocking
+}
+```
+
+Jika broker lambat:
+
+- Control loop delay.
+- Watchdog reset.
+
+Dengan task separation:
+
+- ControlTask hanya push data ke queue.
+- CommTask publish asynchronous.
+
+---
+
+### Scenario 3 — Queue Tak Terbatas Saat WAN Down
+
+WiFi down 20 menit.
+
+Jika queue growable:
+
+- RAM habis.
+- Crash.
+
+Dengan bounded queue:
+
+- Data lama di-drop.
+- Sistem tetap hidup.
+
+---
+
+### Scenario 4 — ISR Logic Berat
+
+ISR melakukan:
+
+- digitalWrite
+- logging
+- publish
+
+Akibat:
+
+- Latency tinggi.
+- Preemption panjang.
+- Instabilitas sistem.
+
+Dengan rule:
+
+ISR hanya set flag / notify.
+
+---
+
+## 7. Anti-Pattern
+
+Daftar merah Artikel 5:
+
+- ❌ ISR memanggil Service
+- ❌ MQTT callback mengubah hardware langsung
+- ❌ Blocking publish di ControlTask
+- ❌ Shared mutable tanpa owner
+- ❌ Queue tanpa batas
+- ❌ Mutex digunakan tanpa desain ownership jelas
+- ❌ Task tidak memiliki domain jelas
+
+Dampak:
+
+- Race condition
+- Deadlock
+- Watchdog reset
+- Latency tidak deterministik
+
+---
+
+## 8. Freeze Point
+
+Setelah Artikel 5, keputusan berikut dianggap final:
+
+- Task minimal dipisah domain (Control & Communication).
+- ISR hanya notify.
+- Semua komunikasi antar task via queue fixed-size.
+- ControlTask tidak boleh blocking.
+- Tidak ada shared mutable tanpa owner.
+
+Concurrency model tidak boleh berubah di artikel berikutnya.
+
+Artikel 6–8 harus patuh pada boundary ini.
+
+---
+
+## 9. Engineering Checklist
+
+Audit sebelum release:
+
+- Apakah ISR memanggil service langsung?
+- Apakah callback network mengubah hardware?
+- Apakah ControlTask melakukan publish blocking?
+- Apakah queue dibatasi ukuran?
+- Apakah ada shared state tanpa owner task?
+- Apakah stack tiap task sudah diaudit?
+
+Jika satu saja “ya” → melanggar Artikel 5.
+
+---
+
+## 10. Summary (5 Bullet Maksimal)
+
+- FreeRTOS bukan masalah; boundary yang salah adalah masalah.
+- ISR hanya boleh notify.
+- ControlTask tidak boleh blocking.
+- Queue harus bounded dan fixed-size.
+- Concurrency discipline menentukan determinism jangka panjang.

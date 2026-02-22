@@ -1,0 +1,449 @@
+---
+title: ARCHITECTURE_RULES - Production Firmware Discipline — ESP32 (Arduino Core)
+date: '2026-02-22'
+tags:
+  [
+    'esp32',
+    'firmware-architecture-rules',
+    'embedded-standards',
+    'production-guardrail',
+    'dependency-freeze',
+    'memory-discipline',
+    'concurrency-boundary',
+    'reliability-model',
+  ]
+draft: false
+summary: ARCHITECTURE_RULES adalah dokumen normatif yang merangkum seluruh freeze arsitektur dari Artikel 2 hingga 7 menjadi 27 aturan eksplisit yang wajib dipatuhi. Dokumen ini mengunci disiplin dependency (tanpa global mutable dan singleton), memory (static-first, tanpa alokasi di control path), layering (3-layer DAG dengan composition root tunggal), concurrency (ISR hanya notify, queue bounded), communication (CommManager + state machine eksplisit), serta reliability (error enum, fail-safe, watchdog encapsulated, logging non-blocking). Tujuannya bukan edukasi, tetapi enforcement. Dokumen ini berfungsi sebagai guardrail produksi agar firmware ESP32 berbasis Arduino tetap deterministik, audit-able, dan stabil dalam jangka panjang.
+---
+
+# 📜 ARCHITECTURE_RULES: Production Firmware Discipline — ESP32 (Arduino Core)
+
+---
+
+- [📜 ARCHITECTURE_RULES: Production Firmware Discipline — ESP32 (Arduino Core)](#-architecture_rules-production-firmware-discipline--esp32-arduino-core)
+  - [⚠️ Status Dokumen](#️-status-dokumen)
+- [1️⃣ Dependency Discipline (Artikel 2 Freeze)](#1️⃣-dependency-discipline-artikel-2-freeze)
+  - [🔒 R1 — No Global Mutable State](#-r1--no-global-mutable-state)
+  - [🔒 R2 — No Singleton](#-r2--no-singleton)
+  - [🔒 R3 — Explicit Dependency Injection](#-r3--explicit-dependency-injection)
+  - [🔒 R4 — Composition \> Inheritance](#-r4--composition--inheritance)
+- [2️⃣ Memory Discipline (Artikel 3 Freeze)](#2️⃣-memory-discipline-artikel-3-freeze)
+  - [🔒 R5 — Static-First Allocation](#-r5--static-first-allocation)
+  - [🔒 R6 — Heap Restricted Zone](#-r6--heap-restricted-zone)
+  - [🔒 R7 — No Allocation in Control Loop](#-r7--no-allocation-in-control-loop)
+  - [🔒 R8 — No Allocation in ISR](#-r8--no-allocation-in-isr)
+  - [🔒 R9 — Destructor Must Be Trivial](#-r9--destructor-must-be-trivial)
+- [3️⃣ Layering \& Architecture Freeze (Artikel 4)](#3️⃣-layering--architecture-freeze-artikel-4)
+  - [🔒 R10 — 3-Layer Model Final](#-r10--3-layer-model-final)
+  - [🔒 R11 — Dependency Direction Strict (DAG)](#-r11--dependency-direction-strict-dag)
+  - [🔒 R12 — Composition Root Only One](#-r12--composition-root-only-one)
+- [4️⃣ Concurrency Boundary (Artikel 5)](#4️⃣-concurrency-boundary-artikel-5)
+  - [🔒 R13 — ISR Only Notify](#-r13--isr-only-notify)
+  - [🔒 R14 — ControlTask Non-Blocking](#-r14--controltask-non-blocking)
+  - [🔒 R15 — Queue Must Be Bounded](#-r15--queue-must-be-bounded)
+  - [🔒 R16 — No Shared Mutable Without Owner](#-r16--no-shared-mutable-without-owner)
+- [5️⃣ Communication Freeze (Artikel 6)](#5️⃣-communication-freeze-artikel-6)
+  - [🔒 R17 — CommManager Mandatory](#-r17--commmanager-mandatory)
+  - [🔒 R18 — Explicit State Machine Required](#-r18--explicit-state-machine-required)
+  - [🔒 R19 — Offline-Safe Policy](#-r19--offline-safe-policy)
+  - [🔒 R20 — Credential Encapsulation](#-r20--credential-encapsulation)
+  - [🔒 R21 — OTA Guarded](#-r21--ota-guarded)
+- [6️⃣ Reliability \& Error Model (Artikel 7)](#6️⃣-reliability--error-model-artikel-7)
+  - [🔒 R22 — Explicit Error Propagation](#-r22--explicit-error-propagation)
+  - [🔒 R23 — No Exception](#-r23--no-exception)
+  - [🔒 R24 — Watchdog Encapsulated](#-r24--watchdog-encapsulated)
+  - [🔒 R25 — Fail-Safe Mandatory](#-r25--fail-safe-mandatory)
+  - [🔒 R26 — Logging via Interface](#-r26--logging-via-interface)
+  - [🔒 R27 — Health Telemetry Mandatory](#-r27--health-telemetry-mandatory)
+- [🛡 Final Enforcement](#-final-enforcement)
+
+---
+
+## ⚠️ Status Dokumen
+
+Dokumen ini adalah ringkasan aturan arsitektur yang **dikunci** pada Artikel 2–7.
+
+Aturan di bawah ini **tidak boleh dilanggar** tanpa redesign formal.
+
+Jika satu saja dilanggar, firmware berisiko kembali menjadi spaghetti.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Readme',
+      href: '/blog/IoT/cpp-production-firmware-esp32/README',
+      description: 'Readme - C++ for Production Firmware on ESP32',
+    },
+    {
+      name: 'Firmware C di ESP32 Jadi Spaghetti',
+      href: '/blog/IoT/cpp-production-firmware-esp32/01-problem-firmware-spaghetti',
+      description: 'Kenapa Firmware C di ESP32 Jadi Spaghetti Setelah 6 Bulan?',
+    },
+    {
+      name: 'OOP Sebagai Alat Mengontrol Dependency',
+      href: '/blog/IoT/cpp-production-firmware-esp32/02-oop-dependency-control',
+      description: 'OOP Sebagai Alat Mengontrol Dependency (Bukan Gaya-Gayaan)',
+    },
+    {
+      name: 'Object Lifecycle & Memory',
+      href: '/blog/IoT/cpp-production-firmware-esp32/03-object-lifecycle-memory-discipline',
+      description: 'Object Lifecycle & Memory Discipline di Embedded',
+    },
+    {
+      name: 'Firmware Architecture',
+      href: '/blog/IoT/cpp-production-firmware-esp32/04-layered-firmware-architecture',
+      description:
+        'Firmware Architecture Berbasis Class (Layered & Deterministic)',
+    },
+    {
+      name: 'OOP + FreeRTOS',
+      href: '/blog/IoT/cpp-production-firmware-esp32/05-freertos-deterministic-concurrency',
+      description: 'OOP + FreeRTOS Tanpa Membunuh Determinism',
+    },
+    {
+      name: 'Communication Module Design',
+      href: '/blog/IoT/cpp-production-firmware-esp32/06-decoupled-communication-architecture',
+      description:
+        'Communication Module Design (WiFi, MQTT, OTA) yang Tidak Coupled',
+    },
+    {
+      name: 'Production Reliability Design',
+      href: '/blog/IoT/cpp-production-firmware-esp32/07-production-reliability-design',
+      description: 'Production Reliability Design dengan C++',
+    },
+    {
+      name: 'Anti-Pattern',
+      href: '/blog/IoT/cpp-production-firmware-esp32/08-oop-anti-pattern-embedded',
+      description: 'Anti-Pattern: Cara OOP Menghancurkan Embedded System',
+    },
+  ]}
+/>
+
+---
+
+# 1️⃣ Dependency Discipline (Artikel 2 Freeze)
+
+### 🔒 R1 — No Global Mutable State
+
+Dilarang:
+
+```cpp
+bool globalMode;
+int relayState;
+```
+
+Diperbolehkan:
+
+- `constexpr`
+- compile-time config
+- immutable constant
+
+Semua state runtime harus berada di dalam class.
+
+---
+
+### 🔒 R2 — No Singleton
+
+Dilarang:
+
+```cpp
+Logger::instance();
+WiFiManager::getInstance();
+```
+
+Instance dibuat hanya di:
+
+> `IndustrialNode.ino`
+
+---
+
+### 🔒 R3 — Explicit Dependency Injection
+
+Semua dependency diberikan melalui constructor.
+
+Tidak boleh mengambil dependency dari global.
+
+---
+
+### 🔒 R4 — Composition > Inheritance
+
+Inheritance hanya jika benar-benar diperlukan.
+Default approach adalah composition.
+
+---
+
+# 2️⃣ Memory Discipline (Artikel 3 Freeze)
+
+### 🔒 R5 — Static-First Allocation
+
+Semua object utama firmware harus:
+
+- Dideklarasikan statik di `IndustrialNode.ino`
+- Lifetime = lifetime firmware
+
+Dilarang membuat object besar di dalam `loop()`.
+
+---
+
+### 🔒 R6 — Heap Restricted Zone
+
+Heap hanya boleh digunakan untuk:
+
+- TLS internal
+- MQTT internal buffer
+- OTA buffer
+
+Selain itu dilarang.
+
+---
+
+### 🔒 R7 — No Allocation in Control Loop
+
+Dilarang:
+
+- `new`
+- `delete`
+- `String`
+- container growable
+
+di path kontrol utama.
+
+---
+
+### 🔒 R8 — No Allocation in ISR
+
+ISR hanya boleh:
+
+- Set flag
+- Notify task
+- Push ke queue fixed-size
+
+---
+
+### 🔒 R9 — Destructor Must Be Trivial
+
+Destructor tidak boleh:
+
+- Blocking
+- Publish
+- Logging berat
+- Network operation
+
+---
+
+# 3️⃣ Layering & Architecture Freeze (Artikel 4)
+
+### 🔒 R10 — 3-Layer Model Final
+
+Prefix wajib:
+
+- `app_` → Application
+- `svc_` → Service
+- `drv_` → Driver
+- `sys_` → System
+
+Arduino flat structure → prefix adalah boundary enforcement.
+
+---
+
+### 🔒 R11 — Dependency Direction Strict (DAG)
+
+Allowed:
+
+```
+app_ → svc_ → drv_ → sys_
+```
+
+Forbidden:
+
+- drv* include svc*
+- svc* include app*
+- circular include
+
+---
+
+### 🔒 R12 — Composition Root Only One
+
+Semua instance dibuat di:
+
+> `IndustrialNode.ino`
+
+Tidak boleh instansiasi tersebar.
+
+---
+
+# 4️⃣ Concurrency Boundary (Artikel 5)
+
+### 🔒 R13 — ISR Only Notify
+
+ISR tidak boleh:
+
+- Call service
+- Allocate
+- Publish
+- Logging berat
+
+---
+
+### 🔒 R14 — ControlTask Non-Blocking
+
+ControlTask tidak boleh:
+
+- Publish network blocking
+- Logging blocking
+- Delay panjang
+
+---
+
+### 🔒 R15 — Queue Must Be Bounded
+
+Semua komunikasi antar task:
+
+- Fixed-size
+- Tidak growable
+- Tidak dynamic
+
+---
+
+### 🔒 R16 — No Shared Mutable Without Owner
+
+Jika state digunakan lintas task:
+
+- Harus punya owner tunggal
+- Task lain hanya kirim request
+
+---
+
+# 5️⃣ Communication Freeze (Artikel 6)
+
+### 🔒 R17 — CommManager Mandatory
+
+Semua komunikasi harus melalui:
+
+> `svc_CommManager`
+
+Tidak boleh publish langsung dari App/Service.
+
+---
+
+### 🔒 R18 — Explicit State Machine Required
+
+State minimal:
+
+```
+INIT
+WIFI_CONNECTING
+WIFI_CONNECTED
+MQTT_CONNECTING
+MQTT_CONNECTED
+ERROR_BACKOFF
+```
+
+Reconnect tidak boleh implicit.
+
+---
+
+### 🔒 R19 — Offline-Safe Policy
+
+Jika WAN down:
+
+- Control tetap jalan
+- Telemetry dibuffer bounded
+- Tidak blocking ControlTask
+
+---
+
+### 🔒 R20 — Credential Encapsulation
+
+Credential hanya di satu tempat (`sys_Config.h` atau secure storage).
+Tidak literal tersebar.
+
+---
+
+### 🔒 R21 — OTA Guarded
+
+OTA hanya:
+
+- Via CommManager
+- Diverifikasi
+- Tidak dieksekusi langsung dari callback
+
+---
+
+# 6️⃣ Reliability & Error Model (Artikel 7)
+
+### 🔒 R22 — Explicit Error Propagation
+
+Semua fungsi kritikal harus return:
+
+```cpp
+enum class Status { ... };
+```
+
+Tidak boleh silent failure.
+
+---
+
+### 🔒 R23 — No Exception
+
+Exception dilarang.
+
+---
+
+### 🔒 R24 — Watchdog Encapsulated
+
+Watchdog hanya di-manage oleh:
+
+> `svc_HealthService`
+
+Tidak boleh di-feed sembarang tempat.
+
+---
+
+### 🔒 R25 — Fail-Safe Mandatory
+
+Jika error kritikal:
+
+- System masuk state FAILSAFE
+- Relay ke safe state
+- Tidak fail-open
+
+---
+
+### 🔒 R26 — Logging via Interface
+
+Tidak boleh `Serial.println` liar.
+
+Logging harus:
+
+- Via interface
+- Non-blocking
+- Bounded queue
+
+---
+
+### 🔒 R27 — Health Telemetry Mandatory
+
+Minimal harus ada:
+
+- reset_reason
+- heap_min_free
+- backlog_depth
+- wifi_state
+- error_code
+
+---
+
+# 🛡 Final Enforcement
+
+Jika salah satu aturan di atas dilanggar:
+
+- Firmware berisiko kehilangan determinism.
+- Refactor menjadi mahal.
+- Debug menjadi sulit.
+- Uptime jangka panjang menurun.
+
+Aturan ini dibuat untuk menjaga firmware:
+
+> Stabil, deterministik, audit-able, dan maintainable selama 3–5 tahun.

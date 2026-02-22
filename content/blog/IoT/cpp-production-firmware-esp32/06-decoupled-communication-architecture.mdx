@@ -1,0 +1,667 @@
+---
+title: Communication Module Design (WiFi, MQTT, OTA) yang Tidak Coupled
+date: '2026-02-22'
+tags:
+  [
+    'esp32',
+    'mqtt-architecture',
+    'wifi-state-machine',
+    'embedded-communication',
+    'offline-buffering',
+    'comm-manager',
+    'iot-firmware',
+    'deterministic-design',
+  ]
+draft: false
+summary: Artikel ini mengunci arsitektur komunikasi firmware ESP32 berbasis Arduino agar terisolasi dan deterministik. Tanpa boundary yang jelas, WiFi event, MQTT callback, dan OTA handler sering langsung memengaruhi logic aplikasi dan hardware, menciptakan coupling baru setelah layering dan concurrency sudah rapi. Artikel ini menetapkan CommManager sebagai satu-satunya gateway komunikasi, memisahkan transport dari business logic, serta mewajibkan state machine eksplisit untuk koneksi dan reconnect. Telemetry harus offline-safe dengan buffer terbatas, dan credential tidak boleh tersebar. Dengan freeze ini, komunikasi tidak lagi menjadi pusat coupling atau sumber jitter pada control loop.
+---
+
+# 📘 Artikel 6: Communication Module Design (WiFi, MQTT, OTA) yang Tidak Coupled
+
+#
+
+**Posisi:** Artikel 6 dari 8
+**Domain Keputusan:** Communication Architecture
+**Status Lock:** 🔒 Communication Boundary & State Machine Freeze
+**Entry Context:** `IndustrialNode/IndustrialNode.ino`
+
+---
+
+- [📘 Artikel 6: Communication Module Design (WiFi, MQTT, OTA) yang Tidak Coupled](#-artikel-6-communication-module-design-wifi-mqtt-ota-yang-tidak-coupled)
+- [](#)
+  - [1. Problem Reality](#1-problem-reality)
+  - [2. Root Cause Analysis](#2-root-cause-analysis)
+    - [2.1 Transport Bercampur Business Logic](#21-transport-bercampur-business-logic)
+    - [2.2 Tidak Ada State Machine Formal](#22-tidak-ada-state-machine-formal)
+    - [2.3 Credential Tersebar](#23-credential-tersebar)
+    - [2.4 Callback Mengontrol Hardware](#24-callback-mengontrol-hardware)
+    - [🔎 Visualisasi Coupling Tanpa Comm Boundary](#-visualisasi-coupling-tanpa-comm-boundary)
+  - [3. Design Principle (Rule yang Dikunci)](#3-design-principle-rule-yang-dikunci)
+    - [🔒 Rule 1 — CommManager Mandatory](#-rule-1--commmanager-mandatory)
+    - [🔒 Rule 2 — Transport ≠ Business Logic](#-rule-2--transport--business-logic)
+    - [🔒 Rule 3 — State Machine Wajib](#-rule-3--state-machine-wajib)
+    - [🔒 Rule 4 — Offline-Safe Policy](#-rule-4--offline-safe-policy)
+    - [🔒 Rule 5 — Credential Encapsulation](#-rule-5--credential-encapsulation)
+    - [🔒 Rule 6 — OTA Guarded Execution](#-rule-6--ota-guarded-execution)
+  - [4. Implementation Pattern (ESP32 Arduino Context)](#4-implementation-pattern-esp32-arduino-context)
+    - [4.1 CommManager Skeleton](#41-commmanager-skeleton)
+    - [4.2 Command Handling Interface](#42-command-handling-interface)
+    - [4.3 Offline Buffer (Fixed Size)](#43-offline-buffer-fixed-size)
+  - [5. Constraint \& Embedded Impact](#5-constraint--embedded-impact)
+    - [5.1 RAM Impact](#51-ram-impact)
+    - [5.2 Stack Impact](#52-stack-impact)
+    - [5.3 Determinism Impact](#53-determinism-impact)
+    - [5.4 Network Instability Impact](#54-network-instability-impact)
+    - [🔎 Visualisasi State Machine Connection](#-visualisasi-state-machine-connection)
+  - [6. Failure Scenario](#6-failure-scenario)
+    - [Scenario 1 — Broker Restart](#scenario-1--broker-restart)
+    - [Scenario 2 — MQTT Callback Mengubah Relay](#scenario-2--mqtt-callback-mengubah-relay)
+    - [Scenario 3 — WAN Down Lama](#scenario-3--wan-down-lama)
+    - [Scenario 4 — OTA Tanpa Guard](#scenario-4--ota-tanpa-guard)
+  - [7. Anti-Pattern](#7-anti-pattern)
+  - [8. Freeze Point](#8-freeze-point)
+  - [9. Engineering Checklist](#9-engineering-checklist)
+  - [10. Summary (5 Bullet Maksimal)](#10-summary-5-bullet-maksimal)
+
+---
+
+## 1. Problem Reality
+
+Setelah Artikel 5:
+
+- Dependency sudah terkendali.
+- Memory sudah disiplin.
+- Concurrency sudah dibatasi.
+- Layering sudah terkunci.
+
+Masalah baru muncul saat komunikasi ditambahkan.
+
+Gejala yang sering terjadi:
+
+- WiFi event handler mengubah state aplikasi langsung.
+- MQTT callback memanggil `ActuatorService`.
+- OTA logic tersebar di beberapa file.
+- Reconnect logic copy-paste.
+- Credential literal tersebar di banyak file.
+
+Contoh klasik:
+
+```cpp id="p3k7nx"
+void onMqttMessage(...) {
+    actuator.setRelay(true);   // - ❌ bypass boundary
+}
+```
+
+Atau:
+
+```cpp id="x7mz2q"
+if (!client.connected()) {
+    client.connect("node01");  // reconnect logic tersebar - ❌
+}
+```
+
+Akibat produksi:
+
+- Device stuck di reconnect loop.
+- Control terganggu saat TLS handshake.
+- OTA gagal → device brick.
+- Bug hanya muncul saat broker restart.
+
+Masalahnya bukan MQTT.
+
+Masalahnya:
+
+> Communication tidak diperlakukan sebagai domain terisolasi.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Readme',
+      href: '/blog/IoT/cpp-production-firmware-esp32/README',
+      description: 'Readme - C++ for Production Firmware on ESP32',
+    },
+    {
+      name: 'ARCHITECTURE_RULES',
+      href: '/blog/IoT/cpp-production-firmware-esp32/ARCHITECTURE_RULES',
+      description:
+        'ARCHITECTURE_RULES - Production Firmware Discipline — ESP32 (Arduino Core)',
+    },
+    {
+      name: 'Firmware C di ESP32 Jadi Spaghetti',
+      href: '/blog/IoT/cpp-production-firmware-esp32/01-problem-firmware-spaghetti',
+      description: 'Kenapa Firmware C di ESP32 Jadi Spaghetti Setelah 6 Bulan?',
+    },
+    {
+      name: 'OOP Sebagai Alat Mengontrol Dependency',
+      href: '/blog/IoT/cpp-production-firmware-esp32/02-oop-dependency-control',
+      description: 'OOP Sebagai Alat Mengontrol Dependency (Bukan Gaya-Gayaan)',
+    },
+    {
+      name: 'Object Lifecycle & Memory',
+      href: '/blog/IoT/cpp-production-firmware-esp32/03-object-lifecycle-memory-discipline',
+      description: 'Object Lifecycle & Memory Discipline di Embedded',
+    },
+    {
+      name: 'Firmware Architecture',
+      href: '/blog/IoT/cpp-production-firmware-esp32/04-layered-firmware-architecture',
+      description:
+        'Firmware Architecture Berbasis Class (Layered & Deterministic)',
+    },
+    {
+      name: 'OOP + FreeRTOS',
+      href: '/blog/IoT/cpp-production-firmware-esp32/05-freertos-deterministic-concurrency',
+      description: 'OOP + FreeRTOS Tanpa Membunuh Determinism',
+    },
+    {
+      name: 'Production Reliability Design',
+      href: '/blog/IoT/cpp-production-firmware-esp32/07-production-reliability-design',
+      description: 'Production Reliability Design dengan C++',
+    },
+    {
+      name: 'Anti-Pattern',
+      href: '/blog/IoT/cpp-production-firmware-esp32/08-oop-anti-pattern-embedded',
+      description: 'Anti-Pattern: Cara OOP Menghancurkan Embedded System',
+    },
+  ]}
+/>
+
+---
+
+## 2. Root Cause Analysis
+
+Akar masalah komunikasi spaghetti biasanya:
+
+---
+
+### 2.1 Transport Bercampur Business Logic
+
+MQTT callback langsung memanggil service.
+
+Transport layer tahu detail aplikasi.
+
+Boundary hilang.
+
+---
+
+### 2.2 Tidak Ada State Machine Formal
+
+Reconnect dilakukan dengan:
+
+```cpp id="h9v2yt"
+if (!client.connected()) {
+    reconnect();
+}
+```
+
+State implicit.
+
+Tidak ada mode eksplisit seperti:
+
+- WIFI_CONNECTING
+- MQTT_CONNECTING
+- ERROR_BACKOFF
+
+Akibatnya:
+
+- Reconnect loop liar.
+- Hard to debug.
+
+---
+
+### 2.3 Credential Tersebar
+
+```cpp id="j4z6ra"
+WiFi.begin("myssid", "mypassword");
+client.connect("node01", "user", "pass");
+```
+
+Credential ada di banyak tempat.
+
+Security risk.
+Hard to rotate.
+
+---
+
+### 2.4 Callback Mengontrol Hardware
+
+Dependency menjadi:
+
+```text id="v3xq2n"
+MQTT callback → ActuatorService
+WiFi event → ControlApp
+OTA event → global flag
+```
+
+Communication menjadi pusat coupling baru.
+
+---
+
+### 🔎 Visualisasi Coupling Tanpa Comm Boundary
+
+![Image](https://www.researchgate.net/publication/382962640/figure/fig3/AS%3A11431281397540138%401745518681966/Schematic-of-IoT-device-communication.tif)
+
+![Image](https://www.researchgate.net/publication/333880142/figure/fig9/AS%3A11431281229513374%401710476464776/Activity-diagram-of-the-MQTT-callback-function.tif)
+
+Tanpa CommManager:
+
+- Callback bisa menyentuh semua layer.
+- Dependency kembali cyclic.
+
+---
+
+## 3. Design Principle (Rule yang Dikunci)
+
+Artikel 6 mengunci arsitektur komunikasi final.
+
+---
+
+### 🔒 Rule 1 — CommManager Mandatory
+
+Semua komunikasi harus melalui:
+
+> `svc_CommManager`
+
+Tidak boleh:
+
+- Application publish langsung.
+- Service subscribe langsung.
+
+CommManager adalah satu-satunya gateway.
+
+---
+
+### 🔒 Rule 2 — Transport ≠ Business Logic
+
+Pisahkan:
+
+- Transport (WiFi, MQTT client)
+- Protocol parsing
+- Business command handling
+
+CommManager expose interface netral:
+
+```cpp id="m3n8xa"
+void publishTelemetry(const TelemetryData& data);
+void registerCommandHandler(ICommandHandler& handler);
+```
+
+App tidak tahu topic detail.
+
+---
+
+### 🔒 Rule 3 — State Machine Wajib
+
+State minimal:
+
+```text id="u7p4zb"
+INIT
+→ WIFI_CONNECTING
+→ WIFI_CONNECTED
+→ MQTT_CONNECTING
+→ MQTT_CONNECTED
+→ ERROR_BACKOFF
+```
+
+Tidak boleh implicit state.
+
+Reconnect harus berbasis state machine eksplisit.
+
+---
+
+### 🔒 Rule 4 — Offline-Safe Policy
+
+Jika WAN down:
+
+- Control loop tetap berjalan.
+- Telemetry dibuffer (fixed-size).
+- Tidak blocking ControlTask.
+
+---
+
+### 🔒 Rule 5 — Credential Encapsulation
+
+Credential hanya di satu tempat:
+
+- `sys_Config.h` atau secure storage.
+- Tidak literal tersebar.
+- Tidak bisa diakses sembarang layer.
+
+---
+
+### 🔒 Rule 6 — OTA Guarded Execution
+
+OTA hanya boleh:
+
+- Di-trigger via CommManager.
+- Diverifikasi.
+- Tidak langsung apply tanpa guard.
+
+---
+
+Setelah Artikel 6:
+
+- ❌ Tidak boleh reconnect tersebar
+- ❌ Tidak boleh business logic tahu MQTT detail
+- ❌ Tidak boleh bypass CommManager
+- ❌ Tidak boleh credential tersebar
+
+Communication boundary final.
+
+---
+
+## 4. Implementation Pattern (ESP32 Arduino Context)
+
+---
+
+### 4.1 CommManager Skeleton
+
+```cpp id="n6g8rx"
+class CommManager {
+public:
+    void init();
+    void run();
+    void publishTelemetry(const TelemetryData& data);
+    void registerCommandHandler(ICommandHandler& handler);
+
+private:
+    void handleStateMachine();
+    void handleMqttMessage(char* topic, byte* payload, unsigned int length);
+
+    ConnectionState state_;
+};
+```
+
+State machine dikelola internal.
+
+---
+
+### 4.2 Command Handling Interface
+
+```cpp id="q9t3ve"
+class ICommandHandler {
+public:
+    virtual void onCommand(const Command& cmd) = 0;
+};
+```
+
+Flow:
+
+MQTT payload
+→ CommManager parse
+→ Handler di Application layer
+
+Callback tidak menyentuh service langsung.
+
+---
+
+### 4.3 Offline Buffer (Fixed Size)
+
+```cpp id="x5md8z"
+#define TELEMETRY_BACKLOG_SIZE 10
+
+TelemetryData backlog[TELEMETRY_BACKLOG_SIZE];
+uint8_t backlogHead;
+uint8_t backlogCount;
+```
+
+Bounded.
+No dynamic allocation.
+
+---
+
+## 5. Constraint & Embedded Impact
+
+Communication adalah domain paling “rakus resource” di ESP32.
+
+Jika tidak dikontrol, ia merusak determinism dan memory discipline.
+
+---
+
+### 5.1 RAM Impact
+
+Komponen yang memakan RAM besar:
+
+- WiFi stack internal
+- TCP/IP buffer
+- TLS (mbedTLS)
+- MQTT buffer
+
+Jika CommManager:
+
+- Tidak membatasi backlog
+- Menggunakan `String`
+- Menggunakan buffer dinamis
+
+Maka:
+
+- Heap minimum turun.
+- TLS handshake gagal.
+- OTA gagal.
+
+Dengan:
+
+- Fixed-size telemetry backlog
+- Static buffer parsing
+- Tidak ada dynamic allocation
+
+RAM menjadi predictable.
+
+---
+
+### 5.2 Stack Impact
+
+Callback MQTT bisa membawa payload besar.
+
+Jika parsing JSON dilakukan di callback dan object lokal besar dibuat:
+
+- Stack overflow.
+- Crash sporadis.
+
+Dengan design:
+
+- Callback hanya enqueue raw payload (bounded).
+- Parsing dilakukan di CommTask context.
+
+Stack terisolasi.
+
+---
+
+### 5.3 Determinism Impact
+
+Jika reconnect dilakukan di ControlTask:
+
+- Control jitter.
+- Watchdog reset.
+
+Dengan separation:
+
+- CommTask handle reconnect.
+- ControlTask tetap periodik.
+
+Determinism tetap terjaga.
+
+---
+
+### 5.4 Network Instability Impact
+
+WAN tidak stabil adalah kondisi normal, bukan exception.
+
+Comm architecture harus mengasumsikan:
+
+- Broker restart
+- WiFi flapping
+- ISP latency spike
+
+Tanpa state machine eksplisit:
+
+- Reconnect loop liar.
+- Device stuck.
+
+Dengan state machine:
+
+Transisi eksplisit → audit-able.
+
+---
+
+### 🔎 Visualisasi State Machine Connection
+
+![Image](https://www.researchgate.net/publication/265645605/figure/fig1/AS%3A668942922153990%401536499829696/UML-state-machine-of-a-wireless-station.png)
+
+![Image](https://developer.electricimp.com/sites/default/files/2019-02/roe_5.jpeg)
+
+State harus eksplisit.
+Bukan implicit if-else tersebar.
+
+---
+
+## 6. Failure Scenario
+
+Communication failure sering muncul hanya di lapangan.
+
+---
+
+### Scenario 1 — Broker Restart
+
+Tanpa state machine:
+
+```cpp id="f7k2zr"
+if (!client.connected()) {
+    client.connect(...);
+}
+```
+
+Reconnect dipanggil terus-menerus.
+
+Akibat:
+
+- CPU spike
+- Heap churn
+- Device stuck
+
+Dengan state machine:
+
+- Transisi ke ERROR_BACKOFF
+- Delay exponential
+- Retry terkontrol
+
+---
+
+### Scenario 2 — MQTT Callback Mengubah Relay
+
+Callback langsung:
+
+```cpp id="n3m8qp"
+actuator.setRelay(true);
+```
+
+Jika ControlTask juga mengubah relay:
+
+- Conflict
+- Relay chatter
+
+Dengan architecture freeze:
+
+Callback → CommandHandler → ControlTask
+Single decision point.
+
+---
+
+### Scenario 3 — WAN Down Lama
+
+WiFi down 30 menit.
+
+Jika telemetry publish blocking:
+
+- ControlTask delay
+- Watchdog reset
+
+Jika backlog growable:
+
+- RAM habis
+
+Dengan offline-safe policy:
+
+- Telemetry masuk ring buffer bounded
+- Data lama drop terkontrol
+- Control tetap jalan
+
+---
+
+### Scenario 4 — OTA Tanpa Guard
+
+OTA dipanggil langsung dari callback.
+
+Jika firmware corrupt:
+
+- Device brick
+- Tidak ada rollback
+
+Dengan rule:
+
+- OTA hanya via CommManager
+- Verify checksum
+- Trigger reboot terkendali
+
+---
+
+## 7. Anti-Pattern
+
+Daftar merah Artikel 6:
+
+- ❌ App publish langsung MQTT client
+- ❌ Service subscribe topic langsung
+- ❌ Reconnect logic copy-paste
+- ❌ Credential literal tersebar
+- ❌ OTA dipanggil dari callback
+- ❌ Callback memodifikasi hardware langsung
+- ❌ Tidak ada state machine eksplisit
+
+Dampak:
+
+- Coupling tinggi
+- Security risk
+- Redesign mahal
+- Device stuck di lapangan
+
+---
+
+## 8. Freeze Point
+
+Setelah Artikel 6, keputusan berikut dianggap final:
+
+- Semua komunikasi lewat `svc_CommManager`.
+- State machine eksplisit wajib.
+- Offline buffering bounded dan fixed-size.
+- Credential encapsulated di satu tempat.
+- OTA guarded via CommManager.
+- Tidak ada business logic di transport callback.
+
+Communication architecture tidak boleh berubah.
+
+Artikel 7–8 harus patuh pada boundary ini.
+
+---
+
+## 9. Engineering Checklist
+
+Audit sebelum release:
+
+- Apakah ada publish langsung tanpa CommManager?
+- Apakah reconnect tersebar di banyak file?
+- Apakah credential tersebar literal?
+- Apakah callback menyentuh hardware?
+- Apakah state machine eksplisit?
+- Apakah backlog bounded?
+
+Jika satu saja “ya” → melanggar Artikel 6.
+
+---
+
+## 10. Summary (5 Bullet Maksimal)
+
+- Communication harus domain terisolasi.
+- CommManager adalah gateway tunggal.
+- State machine eksplisit mencegah reconnect chaos.
+- Offline-safe policy wajib untuk produksi.
+- Communication tidak boleh mengganggu control determinism.

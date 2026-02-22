@@ -1,0 +1,573 @@
+---
+title: OOP Sebagai Alat Mengontrol Dependency (Bukan Gaya-Gayaan)
+date: '2026-02-22'
+tags:
+  [
+    'esp32',
+    'arduino-firmware',
+    'oop-embedded',
+    'dependency-control',
+    'encapsulation-design',
+    'constructor-injection',
+    'composition-over-inheritance',
+    'firmware-architecture',
+  ]
+draft: false
+summary: Artikel ini mengunci fondasi pengendalian dependency dalam firmware ESP32 berbasis Arduino. Masalah utama spaghetti firmware bukan pada bahasa, melainkan global mutable state tanpa owner dan dependency implicit lintas domain. OOP digunakan bukan untuk gaya, tetapi untuk mengenkapsulasi state, menetapkan ownership yang jelas, dan memaksa dependency eksplisit melalui constructor injection. Setiap peripheral dan domain logic harus dibungkus dalam class dengan state private. Singleton dan inheritance berlebihan dilarang; composition menjadi pendekatan default. Dengan struktur ini, dependency menjadi terarah, blast radius perubahan mengecil, dan race condition lebih mudah dianalisis sebelum sistem berkembang semakin kompleks.
+---
+
+# 📘 Artikel 2: OOP Sebagai Alat Mengontrol Dependency (Bukan Gaya-Gayaan)
+
+**Posisi:** Artikel 2 dari 8
+**Domain Keputusan:** Dependency Control
+**Status Lock:** 🔒 Mengunci aturan dependency & global state
+**Entry Context:** `IndustrialNode/IndustrialNode.ino`
+
+---
+
+- [📘 Artikel 2: OOP Sebagai Alat Mengontrol Dependency (Bukan Gaya-Gayaan)](#-artikel-2-oop-sebagai-alat-mengontrol-dependency-bukan-gaya-gayaan)
+  - [1. Problem Reality](#1-problem-reality)
+  - [2. Root Cause Analysis](#2-root-cause-analysis)
+    - [2.1 State Tidak Memiliki Owner](#21-state-tidak-memiliki-owner)
+    - [2.2 Dependency Tanpa Direction](#22-dependency-tanpa-direction)
+    - [🔎 Visualisasi Dependency Chaos](#-visualisasi-dependency-chaos)
+    - [2.3 Modul Bukan Unit Independen](#23-modul-bukan-unit-independen)
+  - [3. Design Principle (Rule yang Dikunci)](#3-design-principle-rule-yang-dikunci)
+    - [🔒 Rule 1 — No Global Mutable State](#-rule-1--no-global-mutable-state)
+    - [🔒 Rule 2 — Encapsulation Mandatory](#-rule-2--encapsulation-mandatory)
+    - [🔒 Rule 3 — Composition \> Inheritance](#-rule-3--composition--inheritance)
+    - [🔒 Rule 4 — No Singleton](#-rule-4--no-singleton)
+    - [🔒 Rule 5 — Explicit Dependency Injection](#-rule-5--explicit-dependency-injection)
+  - [4. Implementation Pattern (ESP32 Arduino Context)](#4-implementation-pattern-esp32-arduino-context)
+    - [4.1 Driver Layer (Hardware Boundary)](#41-driver-layer-hardware-boundary)
+    - [4.2 Service Layer (Logic Boundary)](#42-service-layer-logic-boundary)
+    - [4.3 IndustrialNode.ino (Composition Root)](#43-industrialnodeino-composition-root)
+    - [🔎 Visualisasi Ownership Model](#-visualisasi-ownership-model)
+  - [5. Constraint \& Embedded Impact](#5-constraint--embedded-impact)
+    - [RAM Impact](#ram-impact)
+    - [Flash Impact](#flash-impact)
+    - [Stack Impact](#stack-impact)
+    - [Determinism Impact](#determinism-impact)
+  - [6. Failure Scenario](#6-failure-scenario)
+    - [Scenario 1 — ISR Mengubah Relay](#scenario-1--isr-mengubah-relay)
+    - [Scenario 2 — MQTT Callback Mengubah Mode Global](#scenario-2--mqtt-callback-mengubah-mode-global)
+  - [7. Anti-Pattern](#7-anti-pattern)
+  - [8. Freeze Point](#8-freeze-point)
+  - [9. Engineering Checklist](#9-engineering-checklist)
+  - [10. Summary (5 Bullet Maksimal)](#10-summary-5-bullet-maksimal)
+
+---
+
+## 1. Problem Reality
+
+Melanjutkan Artikel 1:
+
+Firmware menjadi spaghetti bukan karena C atau Arduino.
+Masalah paling merusak adalah:
+
+- Global state lintas modul
+- Fungsi saling panggil tanpa boundary
+- ISR memanggil logic langsung
+- Callback komunikasi mengontrol hardware
+- Tidak ada ownership state
+
+Contoh klasik di firmware Arduino:
+
+```cpp
+bool relayState = false;
+
+void onMqttMessage(...) {
+    relayState = true;
+    digitalWrite(5, HIGH);
+}
+
+void IRAM_ATTR buttonISR() {
+    relayState = !relayState;
+}
+
+void loop() {
+    if (temperature > 30) {
+        relayState = true;
+    }
+}
+```
+
+Relay bisa diubah dari:
+
+- Loop
+- ISR
+- MQTT callback
+
+Tidak ada pemilik.
+
+Akibat produksi:
+
+- Perubahan kecil → efek domino
+- Refactor sulit tanpa risiko
+- Race sulit dianalisis
+- Bug menyebar lintas domain
+
+Masalahnya bukan bahasa.
+
+Masalahnya:
+
+> Tidak ada kontrol dependency.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Readme',
+      href: '/blog/IoT/cpp-production-firmware-esp32/README',
+      description: 'Readme - C++ for Production Firmware on ESP32',
+    },
+    {
+      name: 'ARCHITECTURE_RULES',
+      href: '/blog/IoT/cpp-production-firmware-esp32/ARCHITECTURE_RULES',
+      description:
+        'ARCHITECTURE_RULES - Production Firmware Discipline — ESP32 (Arduino Core)',
+    },
+    {
+      name: 'Firmware C di ESP32 Jadi Spaghetti',
+      href: '/blog/IoT/cpp-production-firmware-esp32/01-problem-firmware-spaghetti',
+      description: 'Kenapa Firmware C di ESP32 Jadi Spaghetti Setelah 6 Bulan?',
+    },
+    {
+      name: 'Object Lifecycle & Memory',
+      href: '/blog/IoT/cpp-production-firmware-esp32/03-object-lifecycle-memory-discipline',
+      description: 'Object Lifecycle & Memory Discipline di Embedded',
+    },
+    {
+      name: 'Firmware Architecture',
+      href: '/blog/IoT/cpp-production-firmware-esp32/04-layered-firmware-architecture',
+      description:
+        'Firmware Architecture Berbasis Class (Layered & Deterministic)',
+    },
+    {
+      name: 'OOP + FreeRTOS',
+      href: '/blog/IoT/cpp-production-firmware-esp32/05-freertos-deterministic-concurrency',
+      description: 'OOP + FreeRTOS Tanpa Membunuh Determinism',
+    },
+    {
+      name: 'Communication Module Design',
+      href: '/blog/IoT/cpp-production-firmware-esp32/06-decoupled-communication-architecture',
+      description:
+        'Communication Module Design (WiFi, MQTT, OTA) yang Tidak Coupled',
+    },
+    {
+      name: 'Production Reliability Design',
+      href: '/blog/IoT/cpp-production-firmware-esp32/07-production-reliability-design',
+      description: 'Production Reliability Design dengan C++',
+    },
+    {
+      name: 'Anti-Pattern',
+      href: '/blog/IoT/cpp-production-firmware-esp32/08-oop-anti-pattern-embedded',
+      description: 'Anti-Pattern: Cara OOP Menghancurkan Embedded System',
+    },
+  ]}
+/>
+
+---
+
+## 2. Root Cause Analysis
+
+Akar strukturalnya sederhana.
+
+### 2.1 State Tidak Memiliki Owner
+
+Global mutable adalah dependency implicit.
+
+Semua modul bisa membaca dan menulis.
+
+Tidak ada batas.
+
+---
+
+### 2.2 Dependency Tanpa Direction
+
+Dependency aktual sering terlihat seperti ini:
+
+```text
+MQTT callback → relay_set()
+ISR → relay_set()
+Main loop → relay_set()
+```
+
+Atau lebih buruk:
+
+```text
+WiFi event → mode
+Mode → relay
+Relay → publish telemetry
+Telemetry → MQTT
+MQTT callback → mode
+```
+
+Dependency menjadi cyclic.
+
+---
+
+### 🔎 Visualisasi Dependency Chaos
+
+![Image](https://miro.medium.com/v2/resize%3Afit%3A1200/1%2APwrgtLzpJS8PBVSzbhMVXA.png)
+
+![Image](https://i.sstatic.net/ZlnUi.jpg)
+
+Tanpa ownership dan direction rule,
+setiap modul menjadi pusat dari modul lain.
+
+Inilah sumber efek domino.
+
+---
+
+### 2.3 Modul Bukan Unit Independen
+
+Jika satu modul membutuhkan modul lain melalui global:
+
+- Ia tidak bisa diuji terpisah.
+- Ia tidak bisa direfactor aman.
+- Ia tidak punya kontrak eksplisit.
+
+Dependency harus terlihat di constructor, bukan tersembunyi.
+
+---
+
+## 3. Design Principle (Rule yang Dikunci)
+
+Artikel ini mengunci fondasi dependency discipline.
+
+---
+
+### 🔒 Rule 1 — No Global Mutable State
+
+Semua state runtime harus berada di dalam class.
+
+Diperbolehkan:
+
+- `constexpr`
+- compile-time config
+- macro config
+
+Dilarang:
+
+- `bool globalState;`
+- `int mode;`
+- object global mutable
+
+---
+
+### 🔒 Rule 2 — Encapsulation Mandatory
+
+Setiap peripheral dan domain logic:
+
+- Dibungkus dalam class
+- State private
+- Akses melalui method
+
+State tidak boleh public.
+
+---
+
+### 🔒 Rule 3 — Composition > Inheritance
+
+Firmware dibangun dengan composition.
+
+Contoh:
+
+- ActuatorService memiliki RelayDriver
+- SensorService memiliki TempSensorDriver
+
+Inheritance hanya jika benar-benar perlu.
+Default approach: composition.
+
+---
+
+### 🔒 Rule 4 — No Singleton
+
+Tidak boleh:
+
+```cpp
+Logger::instance()
+WiFiManager::getInstance()
+```
+
+Instance dibuat di:
+
+> `IndustrialNode.ino`
+
+Dan dependency diberikan via constructor.
+
+---
+
+### 🔒 Rule 5 — Explicit Dependency Injection
+
+Jika A membutuhkan B:
+
+- B diberikan melalui constructor
+- Tidak diambil dari global
+
+Contoh:
+
+```cpp
+class ActuatorService {
+public:
+    explicit ActuatorService(RelayDriver& relay)
+        : relay_(relay) {}
+private:
+    RelayDriver& relay_;
+};
+```
+
+Dependency terlihat jelas.
+
+---
+
+Setelah Artikel 2:
+
+- ❌ Tidak boleh kembali ke global mutable
+- ❌ Tidak boleh introduce singleton
+- ❌ Tidak boleh ambil dependency implicit
+
+Ini tidak boleh berubah di artikel berikutnya.
+
+---
+
+## 4. Implementation Pattern (ESP32 Arduino Context)
+
+Kita refactor contoh spaghetti menjadi terstruktur.
+
+---
+
+### 4.1 Driver Layer (Hardware Boundary)
+
+```cpp
+class RelayDriver {
+public:
+    explicit RelayDriver(int pin)
+        : pin_(pin), state_(false) {}
+
+    void init() {
+        pinMode(pin_, OUTPUT);
+        digitalWrite(pin_, LOW);
+    }
+
+    void set(bool on) {
+        state_ = on;
+        digitalWrite(pin_, on ? HIGH : LOW);
+    }
+
+    bool state() const {
+        return state_;
+    }
+
+private:
+    int pin_;
+    bool state_;
+};
+```
+
+State relay sekarang:
+
+- Private
+- Tidak bisa diubah sembarang tempat
+- Hanya melalui API
+
+---
+
+### 4.2 Service Layer (Logic Boundary)
+
+```cpp
+class ActuatorService {
+public:
+    explicit ActuatorService(RelayDriver& relay)
+        : relay_(relay) {}
+
+    void setRelay(bool on) {
+        relay_.set(on);
+    }
+
+private:
+    RelayDriver& relay_;
+};
+```
+
+Service:
+
+- Tidak tahu GPIO
+- Tidak tahu MQTT
+- Tidak tahu ISR
+
+Ia hanya mengontrol domain actuator.
+
+---
+
+### 4.3 IndustrialNode.ino (Composition Root)
+
+```cpp
+#include "drv_RelayDriver.h"
+#include "svc_ActuatorService.h"
+
+RelayDriver relay(5);
+ActuatorService actuator(relay);
+
+void setup() {
+    relay.init();
+}
+
+void loop() {
+    // nanti akan didelegasikan ke App layer (Artikel 4)
+}
+```
+
+Semua instance dibuat di satu tempat.
+
+Tidak ada singleton.
+Tidak ada global mutable state lintas domain.
+
+---
+
+### 🔎 Visualisasi Ownership Model
+
+![Image](https://www.conceptdraw.com/How-To-Guide/picture/Block-diagram-Types-of-individual-behavior-in-organization.png)
+
+![Image](https://www.researchgate.net/publication/242499985/figure/fig7/AS%3A652231678377987%401532515558063/Forbidden-and-Allowed-Object-Diagrams-for-Aggregation-and-Composition.png)
+
+![Image](https://i.sstatic.net/p0fNn.png)
+
+Ownership sekarang:
+
+- RelayDriver memiliki state relay
+- ActuatorService memiliki referensi ke RelayDriver
+- IndustrialNode.ino memiliki semua instance
+
+Dependency menjadi directional, bukan cyclic.
+
+---
+
+## 5. Constraint & Embedded Impact
+
+### RAM Impact
+
+- Class menambah metadata kecil.
+- Overhead sangat minimal dibanding risiko global chaos.
+- State lebih terkonsolidasi.
+
+---
+
+### Flash Impact
+
+- Sedikit naik karena struktur class.
+- Diterima demi clarity & maintainability.
+
+---
+
+### Stack Impact
+
+- Tidak ada perubahan signifikan.
+- Constructor injection tidak mahal.
+
+---
+
+### Determinism Impact
+
+- State owner jelas.
+- Race lebih mudah dianalisis.
+- Blast radius perubahan mengecil.
+
+OOP yang disiplin bukan mahal.
+Yang mahal adalah chaos.
+
+---
+
+## 6. Failure Scenario
+
+### Scenario 1 — ISR Mengubah Relay
+
+Sebelumnya:
+
+```cpp
+relayState = !relayState;
+```
+
+Sekarang:
+
+ISR tidak punya akses ke state private.
+
+Ia harus melalui service atau event mechanism (dibahas di Artikel 5).
+
+Blast radius dibatasi.
+
+---
+
+### Scenario 2 — MQTT Callback Mengubah Mode Global
+
+Sebelumnya:
+
+```cpp
+mode = AUTO;
+```
+
+Sekarang:
+
+Tidak ada global mode.
+
+Callback harus berinteraksi melalui layer yang jelas.
+
+Guard bisa ditambahkan di satu tempat.
+
+---
+
+Encapsulation membatasi kerusakan.
+
+---
+
+## 7. Anti-Pattern
+
+- ❌ Global object mutable dengan external linkage
+- ❌ Singleton logger / WiFi manager
+- ❌ Class hanya kumpulan static function
+- ❌ Inheritance untuk “future extensibility”
+- ❌ Public member variable
+
+Dampak:
+
+- Hidden dependency
+- Race condition
+- Refactor sulit
+- Testing mustahil
+
+---
+
+## 8. Freeze Point
+
+Setelah Artikel 2, keputusan berikut dianggap final:
+
+- Tidak ada global mutable state.
+- Tidak ada singleton.
+- Semua dependency explicit via constructor.
+- State hanya di dalam class.
+- Composition adalah default approach.
+
+Artikel berikutnya tidak boleh melanggar ini.
+
+---
+
+## 9. Engineering Checklist
+
+- Apakah ada global bool/int runtime?
+- Apakah ada static object global yang mutable?
+- Apakah dependency diambil tanpa constructor?
+- Apakah class expose state public?
+- Apakah ada singleton?
+
+Jika satu saja “ya”, melanggar Artikel 2.
+
+---
+
+## 10. Summary (5 Bullet Maksimal)
+
+- Dependency chaos berasal dari global state.
+- OOP dipakai untuk mengontrol ownership.
+- Encapsulation adalah boundary, bukan gaya.
+- Composition lebih aman untuk embedded.
+- Setelah ini, global mutable state dilarang.
