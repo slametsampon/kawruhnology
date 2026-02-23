@@ -1,0 +1,1082 @@
+---
+title: FreeRTOS Execution Model on ESP32 (Arduino Context)
+date: '2026-02-23'
+tags:
+  [
+    'esp32',
+    'freertos-execution',
+    'arduino-core-internals',
+    'dual-core-model',
+    'task-stack',
+    'watchdog-awareness',
+  ]
+draft: false
+summary: ESP32 menjalankan Arduino core di atas FreeRTOS, tetapi banyak engineer belum memahami bagaimana scheduler, task stack, dual-core mapping, dan watchdog berinteraksi dalam praktik. Artikel ini membahas execution model secara spesifik untuk ESP32 - bagaimana `loopTask` dibuat, bagaimana core 0 dan core 1 berbagi beban, bagaimana stack dialokasikan per task, serta bagaimana blocking network atau operasi berat dapat memicu watchdog reset. Fokusnya bukan pada API detail, tetapi pada pemahaman mekanisme internal yang memengaruhi stabilitas firmware sensor–relay saat fitur komunikasi dan logging ditambahkan.
+---
+
+# 📘 **Foundation Article 3: FreeRTOS Execution Model on ESP32 (Arduino Context)**
+
+**Track:** C++ Firmware Engineering Foundations for ESP32
+**Environment:** ESP32 + VSCode + Arduino Community Edition
+**Project Base:** `IndustrialNode/IndustrialNode.ino`
+**Use Case:** Generic Sensor + Relay Node
+
+---
+
+- [📘 **Foundation Article 3: FreeRTOS Execution Model on ESP32 (Arduino Context)**](#-foundation-article-3-freertos-execution-model-on-esp32-arduino-context)
+- [1️⃣ Dari RTOS Teori ke Realitas ESP32](#1️⃣-dari-rtos-teori-ke-realitas-esp32)
+- [2️⃣ Bagaimana Arduino Core Membuat `loopTask`](#2️⃣-bagaimana-arduino-core-membuat-looptask)
+  - [Implikasi Arsitektural](#implikasi-arsitektural)
+- [3️⃣ Dual Core Awareness](#3️⃣-dual-core-awareness)
+  - [Ilustrasi Dual Core](#ilustrasi-dual-core)
+  - [Kenapa Dual Core Penting?](#kenapa-dual-core-penting)
+  - [Kesalahan Umum Engineer](#kesalahan-umum-engineer)
+- [4️⃣ Stack per Task (Hal yang Sering Diabaikan)](#4️⃣-stack-per-task-hal-yang-sering-diabaikan)
+  - [Apa Itu Stack Task?](#apa-itu-stack-task)
+  - [Ilustrasi Konseptual](#ilustrasi-konseptual)
+  - [Contoh Nyata Stack Overflow](#contoh-nyata-stack-overflow)
+  - [Kenapa Stack Overflow Sulit Dideteksi?](#kenapa-stack-overflow-sulit-dideteksi)
+  - [Rule Mental di Foundation](#rule-mental-di-foundation)
+- [5️⃣ Heap Global vs Stack Task](#5️⃣-heap-global-vs-stack-task)
+  - [Stack](#stack)
+  - [Heap](#heap)
+  - [Diagram Konseptual](#diagram-konseptual)
+  - [Kasus 1 — Heap Exhaustion](#kasus-1--heap-exhaustion)
+  - [Kasus 2 — Stack Overflow](#kasus-2--stack-overflow)
+  - [Kenapa Ini Penting untuk Artikel Berikutnya?](#kenapa-ini-penting-untuk-artikel-berikutnya)
+- [6️⃣ Watchdog Interaction](#6️⃣-watchdog-interaction)
+  - [Contoh Berbahaya](#contoh-berbahaya)
+  - [Watchdog + Dual Core](#watchdog--dual-core)
+  - [Skenario Nyata](#skenario-nyata)
+  - [Rule Mental](#rule-mental)
+- [7️⃣ Blocking Network \& Dampaknya](#7️⃣-blocking-network--dampaknya)
+  - [Ilustrasi Dampak Scheduling](#ilustrasi-dampak-scheduling)
+  - [Kasus Fatal](#kasus-fatal)
+- [8️⃣ Context Switch Cost](#8️⃣-context-switch-cost)
+  - [Ilustrasi Konseptual](#ilustrasi-konseptual-1)
+  - [Kesalahan Umum](#kesalahan-umum)
+  - [Embedded ≠ Desktop](#embedded--desktop)
+- [9️⃣ Sensor + Relay Node dalam Execution Model Ini](#9️⃣-sensor--relay-node-dalam-execution-model-ini)
+  - [Skenario Tanpa Pemahaman Execution Model](#skenario-tanpa-pemahaman-execution-model)
+  - [Skenario Dengan Pemahaman Execution Model](#skenario-dengan-pemahaman-execution-model)
+- [🔬 Execution Model Lab — Stack, Core, dan Context](#-execution-model-lab--stack-core-dan-context)
+  - [🧪 Step 1 — Menampilkan Core Tempat Task Berjalan](#-step-1--menampilkan-core-tempat-task-berjalan)
+    - [🔎 Apa yang Akan Terlihat?](#-apa-yang-akan-terlihat)
+  - [🧪 Step 2 — Mengukur Stack Usage per Task](#-step-2--mengukur-stack-usage-per-task)
+  - [🧪 Step 3 — Simulasi Stack Overflow](#-step-3--simulasi-stack-overflow)
+  - [🧪 Step 4 — Simulasi Blocking dan Watchdog Risk](#-step-4--simulasi-blocking-dan-watchdog-risk)
+  - [🔁 Integrasi dengan Use Case Sensor + Relay](#-integrasi-dengan-use-case-sensor--relay)
+  - [🔐 Engineering Implication (Pre-Memory Article)](#-engineering-implication-pre-memory-article)
+- [🔟 Mental Model yang Harus Dipegang](#-mental-model-yang-harus-dipegang)
+- [Penutup](#penutup)
+
+---
+
+# 1️⃣ Dari RTOS Teori ke Realitas ESP32
+
+Pada artikel sebelumnya kita membahas:
+
+- Task
+- Scheduler
+- Preemption
+- Shared state
+- Queue
+- Mutex
+
+Itu adalah teori RTOS generik.
+
+Sekarang kita masuk ke:
+
+> Bagaimana semua itu benar-benar bekerja pada ESP32 + Arduino Core.
+
+ESP32 bukan hanya mikrokontroler dengan RTOS.
+
+Ia memiliki:
+
+- Dual core (Core 0 dan Core 1)
+- FreeRTOS preemptive scheduler
+- Internal WiFi task
+- TCP/IP stack
+- Timer service task
+- Watchdog per core
+- IDLE task
+- Memory terpisah (heap & stack per task)
+
+Artinya:
+
+> Firmware Anda berjalan di atas sistem yang jauh lebih kompleks dibanding Arduino AVR.
+
+Dan jika mental model tidak diupdate, engineer akan terus berpikir seperti superloop.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Readme',
+      href: '/blog/IoT/firmware-foundations-esp32/README',
+      description: 'README - C++ Firmware Engineering Foundations for ESP32',
+    },
+    {
+      name: 'Dual-Track Course Syllabus',
+      href: '/blog/IoT/firmware-foundations-esp32/syllabus-12-16-week-dual-track-esp32-firmware',
+      description:
+        'Dual-Track Course Syllabus - ESP32 Firmware Engineering (Foundation → Production)',
+    },
+    {
+      name: 'ESP32 Execution',
+      href: '/blog/IoT/firmware-foundations-esp32/01-esp32-execution-reality',
+      description: 'ESP32 Execution Reality Under Arduino Core',
+    },
+    {
+      name: 'Concurrency & RTOS',
+      href: '/blog/IoT/firmware-foundations-esp32/02-rtos-concurrency-fundamentals-esp32',
+      description: 'Concurrency & RTOS Fundamentals (ESP32 Context)',
+    },
+    {
+      name: 'Memory Model & Object Lifetime',
+      href: '/blog/IoT/firmware-foundations-esp32/04-memory-model-object-lifetime-esp32',
+      description: 'Memory Model & Object Lifetime on ESP32',
+    },
+    {
+      name: 'OOP for Embedded Firmware',
+      href: '/blog/IoT/firmware-foundations-esp32/05-oop-embedded-firmware-esp32',
+      description: 'OOP for Embedded Firmware on ESP32',
+    },
+    {
+      name: '3-Layer Firmware Architecture',
+      href: '/blog/IoT/cpp-production-firmware-esp32/06-decoupled-communication-architecture',
+      description: '3-Layer Firmware Architecture on ESP32',
+    },
+    {
+      name: 'Communication & State Thinking',
+      href: '/blog/IoT/firmware-foundations-esp32/07-communication-state-thinking-esp32',
+      description: 'Communication & State Thinking on ESP32',
+    },
+    {
+      name: 'Reliability Thinking',
+      href: '/blog/IoT/firmware-foundations-esp32/08-reliability-transition-to-production-esp32',
+      description: 'Reliability Thinking & Transition to Production Discipline',
+    },
+  ]}
+/>
+
+---
+
+# 2️⃣ Bagaimana Arduino Core Membuat `loopTask`
+
+Saat ESP32 boot:
+
+```text id="bootflow1"
+Bootloader
+   ↓
+Hardware Init
+   ↓
+FreeRTOS Init
+   ↓
+Create system tasks
+   ↓
+Create loopTask (Arduino)
+   ↓
+Call setup()
+   ↓
+while(true) loop();
+```
+
+Perhatikan:
+
+`loop()` bukan dipanggil langsung dari main().
+
+Ia dibungkus dalam sebuah task FreeRTOS bernama `loopTask`.
+
+Secara konseptual:
+
+```cpp id="looptaskpseudo"
+void loopTask(void* arg) {
+    setup();
+    while(true) {
+        loop();
+    }
+}
+```
+
+Artinya:
+
+- loopTask memiliki stack sendiri.
+- loopTask memiliki prioritas tertentu.
+- loopTask bisa di-preempt.
+- loopTask bisa di-block.
+- loopTask bukan pusat sistem.
+
+---
+
+## Implikasi Arsitektural
+
+Jika Anda berpikir:
+
+> “loop adalah pusat sistem”
+
+Maka Anda akan:
+
+- Menaruh semua logic di loop.
+- Menganggap blocking tidak masalah.
+- Menganggap memory lokal aman.
+- Menganggap scheduler tidak relevan.
+
+Semua asumsi ini akan rusak ketika:
+
+- WiFi aktif
+- MQTT aktif
+- TLS aktif
+- Logging aktif
+
+---
+
+# 3️⃣ Dual Core Awareness
+
+ESP32 memiliki dua core CPU.
+
+Ini bukan marketing gimmick.
+Ini memiliki dampak nyata.
+
+## Ilustrasi Dual Core
+
+![Image](https://www.researchgate.net/publication/316173015/figure/fig4/AS%3A484275100360707%401492471589153/ESP32-dual-core-IoT-ready-MCU-arhitecture-6.png)
+
+![Image](https://www.digikey.com/maker-media/09e69c3a-0bfb-431a-ba0c-28cfbfe6f876)
+
+![Image](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/_images/api-guides-WiFi-driver-how-to-improve-WiFi-performance.png)
+
+Konseptual:
+
+```text id="dualcoremodel1"
+Core 0:
+  - WiFi
+  - TCP/IP
+  - System Task
+  - IDLE
+
+Core 1:
+  - loopTask
+  - User-created task
+  - IDLE
+```
+
+Ini bukan aturan mutlak,
+tetapi cukup akurat sebagai mental model.
+
+---
+
+## Kenapa Dual Core Penting?
+
+Karena:
+
+- Network bisa berjalan paralel dengan loop.
+- Context switch bisa terjadi antar core.
+- Watchdog dipantau per core.
+- Task bisa pinned ke core tertentu.
+
+Artinya:
+
+> Timing sistem tidak lagi linear.
+
+---
+
+## Kesalahan Umum Engineer
+
+Engineer sering berpikir:
+
+> “Saya tidak pakai multicore, jadi tidak masalah.”
+
+Salah.
+
+Anda tidak memilih multicore.
+
+Arduino core sudah menggunakan multicore untuk Anda.
+
+---
+
+# 4️⃣ Stack per Task (Hal yang Sering Diabaikan)
+
+Dalam sistem FreeRTOS:
+
+> Setiap task memiliki stack sendiri.
+
+Ini berbeda dari model superloop klasik yang hanya memiliki satu stack global.
+
+---
+
+## Apa Itu Stack Task?
+
+Stack digunakan untuk:
+
+- Local variable
+- Function call frame
+- Return address
+- Context register saat context switch
+
+Setiap task memiliki:
+
+- Stack pointer sendiri
+- Ukuran stack tetap
+- Area memory terpisah
+
+---
+
+## Ilustrasi Konseptual
+
+```text id="stacklayout1"
+Memory Layout (Simplified)
+
+[ Heap - Shared Global Memory ]
+--------------------------------
+[ loopTask Stack             ]
+--------------------------------
+[ WiFi Task Stack            ]
+--------------------------------
+[ TCP/IP Task Stack          ]
+--------------------------------
+[ IDLE Stack                 ]
+```
+
+Setiap stack tidak saling berbagi.
+
+Jika loopTask kehabisan stack,
+WiFi tidak langsung crash.
+Tetapi loopTask bisa gagal total.
+
+---
+
+## Contoh Nyata Stack Overflow
+
+Contoh kode berbahaya:
+
+```cpp id="stackdanger1"
+void loop() {
+    char largeBuffer[4096];
+}
+```
+
+Jika default stack loopTask misalnya 8192 bytes,
+dan ada beberapa local variable lain,
+Anda sudah mendekati batas.
+
+Tambahkan:
+
+- Fungsi lain dipanggil
+- Object dengan member array besar
+- Recursion (sangat berbahaya)
+
+Stack overflow bisa terjadi.
+
+Dan yang terjadi bukan:
+
+- Error message jelas
+- Compile error
+
+Yang terjadi bisa:
+
+- Crash sporadis
+- Watchdog reset
+- Perilaku aneh
+
+---
+
+## Kenapa Stack Overflow Sulit Dideteksi?
+
+Karena:
+
+- Tidak selalu crash langsung.
+- Bisa overwrite memory tetangga.
+- Bisa mengubah pointer internal RTOS.
+- Bisa terlihat seperti bug random.
+
+Engineer sering menyalahkan:
+
+- Noise
+- Power supply
+- Hardware
+
+Padahal stack task yang habis.
+
+---
+
+## Rule Mental di Foundation
+
+- 1️⃣ Jangan membuat buffer besar di stack tanpa sadar.
+- 2️⃣ Hindari recursion di firmware embedded.
+- 3️⃣ Pahami bahwa setiap task punya batas stack sendiri.
+- 4️⃣ Jangan menganggap heap dan stack sama.
+
+Artikel berikutnya (Memory Model) akan membedah ini lebih dalam.
+
+---
+
+# 5️⃣ Heap Global vs Stack Task
+
+Sekarang kita bedakan dua konsep penting:
+
+## Stack
+
+- Per task
+- Ukuran tetap
+- Untuk local variable
+- Sangat cepat
+- Tidak shared
+
+## Heap
+
+- Global
+- Shared antar task
+- Untuk dynamic allocation
+- Bisa fragmentasi
+- Bisa habis
+
+---
+
+## Diagram Konseptual
+
+```text id="heapstack1"
+             +-------------------+
+             |       Heap        |  ← shared by all tasks
+             +-------------------+
+             |   loopTask Stack  |
+             +-------------------+
+             |   WiFi Task Stack |
+             +-------------------+
+             |  TCP/IP Stack     |
+             +-------------------+
+             |    IDLE Stack     |
+             +-------------------+
+```
+
+---
+
+## Kasus 1 — Heap Exhaustion
+
+Misalnya:
+
+- TLS handshake
+- MQTT buffer besar
+- String dynamic
+
+Heap bisa habis.
+
+Dampaknya:
+
+- malloc gagal
+- new gagal
+- Library gagal silently
+- Network drop
+
+Stack tetap aman.
+Tetapi sistem tetap gagal.
+
+---
+
+## Kasus 2 — Stack Overflow
+
+Local object besar:
+
+```cpp id="stackdanger2"
+void loop() {
+    int largeArray[2000];
+}
+```
+
+Heap tidak terpengaruh.
+Tetapi loopTask bisa crash.
+
+Dua jenis kegagalan ini berbeda total.
+
+Jika engineer tidak memahami perbedaan ini:
+
+- Diagnosis akan salah arah.
+- Solusi akan salah.
+
+---
+
+## Kenapa Ini Penting untuk Artikel Berikutnya?
+
+Karena di Artikel 04 kita akan membahas:
+
+- Object lifetime
+- Static vs dynamic allocation
+- Fragmentation
+
+Tanpa memahami stack vs heap,
+memory discipline akan terasa abstrak.
+
+---
+
+# 6️⃣ Watchdog Interaction
+
+ESP32 memiliki watchdog per core.
+
+Watchdog bertugas memastikan:
+
+> Sistem tidak hang.
+
+Jika suatu task:
+
+- Tidak memberi kesempatan scheduler berjalan
+- Tidak yield
+- Loop berat terlalu lama
+- Deadlock
+
+Watchdog bisa memicu reset.
+
+---
+
+## Contoh Berbahaya
+
+```cpp
+void loop() {
+    while(true) {
+        // heavy calculation
+    }
+}
+```
+
+Tanpa:
+
+- delay()
+- yield()
+- vTaskDelay()
+
+Task ini bisa dianggap tidak responsif.
+
+---
+
+## Watchdog + Dual Core
+
+Karena ada dua core:
+
+- Core 0 memiliki watchdog.
+- Core 1 memiliki watchdog.
+
+Jika loopTask di Core 1 hang,
+Core 1 watchdog bisa reset sistem.
+
+Jika WiFi task di Core 0 bermasalah,
+Core 0 watchdog bisa reset sistem.
+
+Reset terlihat sama.
+Akar masalah berbeda.
+
+---
+
+## Skenario Nyata
+
+Firmware sensor + relay sederhana → stabil.
+
+Tambahkan:
+
+- WiFi
+- MQTT
+- TLS
+
+Lalu:
+
+- Publish blocking
+- Heap spike
+- Stack besar
+- Deadlock mutex
+
+Watchdog mulai reset.
+
+Engineer berkata:
+
+> “Firmware tidak stabil.”
+
+Padahal execution model tidak dipahami.
+
+---
+
+## Rule Mental
+
+- 1️⃣ Watchdog bukan musuh.
+- 2️⃣ Watchdog adalah indikator desain buruk.
+- 3️⃣ Blocking berat = risiko reset.
+- 4️⃣ Deadlock = watchdog reset.
+- 5️⃣ Stack overflow bisa memicu watchdog.
+
+---
+
+# 7️⃣ Blocking Network & Dampaknya
+
+Pada ESP32 + Arduino, banyak library network bersifat:
+
+- Synchronous
+- Blocking pada kondisi tertentu
+- Bergantung pada heap
+- Bergantung pada state TCP/IP
+
+Contoh umum:
+
+```cpp
+client.publish(topic, payload);
+```
+
+Kelihatannya ringan.
+
+Namun secara internal bisa terjadi:
+
+- Copy payload
+- Serialize data
+- TLS encryption
+- TCP send
+- Retry logic
+- ACK wait
+
+Jika koneksi buruk atau broker lambat:
+
+- Fungsi ini bisa blocking ratusan milidetik.
+- Bahkan bisa detik.
+
+---
+
+## Ilustrasi Dampak Scheduling
+
+```text
+Time →
+[loopTask publish()]
+         (blocking 300ms)
+WiFi Task tetap berjalan
+TCP/IP Task tetap berjalan
+ISR tetap bisa masuk
+Control logic tertunda
+```
+
+Jika kontrol sensor Anda mengandalkan loop cepat:
+
+- Sampling jadi terlambat.
+- Relay bisa terlambat update.
+- Jitter meningkat.
+
+Dan jitter adalah musuh sistem kontrol.
+
+---
+
+## Kasus Fatal
+
+Blocking network dilakukan di:
+
+- ISR → fatal (undefined behavior).
+- Task prioritas tinggi → sistem lain terganggu.
+- Dalam critical section → deadlock.
+
+Masalah ini bukan soal MQTT.
+Masalah ini adalah:
+
+> Execution model + blocking behavior.
+
+---
+
+# 8️⃣ Context Switch Cost
+
+Setiap kali scheduler berpindah task:
+
+1. Register disimpan.
+2. Stack pointer diganti.
+3. Context dipulihkan.
+4. Eksekusi lanjut.
+
+Ini tidak gratis.
+
+---
+
+## Ilustrasi Konseptual
+
+```text
+Task A running
+   ↓ (tick interrupt)
+Scheduler
+   ↓
+Save A context
+Load B context
+   ↓
+Task B running
+```
+
+Semakin sering context switch:
+
+- Overhead meningkat.
+- Cache behavior berubah.
+- Timing menjadi kurang stabil.
+
+---
+
+## Kesalahan Umum
+
+Engineer membuat:
+
+- Banyak task kecil.
+- Task yang terlalu sering yield.
+- Task dengan prioritas tidak jelas.
+- ISR yang terlalu sering memicu event.
+
+Hasilnya:
+
+- Context switch tinggi.
+- Determinism turun.
+- Sistem terasa “random”.
+
+---
+
+## Embedded ≠ Desktop
+
+Di desktop:
+
+- CPU cepat.
+- RAM besar.
+- Scheduler kompleks.
+- Overhead tidak terasa.
+
+Di ESP32:
+
+- Resource terbatas.
+- Stack kecil.
+- Heap terbatas.
+- Network stack berat.
+
+Setiap context switch punya harga.
+
+---
+
+# 9️⃣ Sensor + Relay Node dalam Execution Model Ini
+
+Mari kita gabungkan semua konsep.
+
+Use case:
+
+- Sensor read tiap 100 ms.
+- Relay kontrol threshold.
+- MQTT publish tiap 5 detik.
+- Remote command via MQTT.
+- Button ISR.
+
+---
+
+## Skenario Tanpa Pemahaman Execution Model
+
+- loop() baca sensor.
+- ISR langsung ubah relay.
+- MQTT callback langsung ubah relay.
+- publish blocking.
+- Buffer besar di stack.
+- Tidak sadar dual core.
+
+Hasil:
+
+- Relay chatter.
+- Miss sampling.
+- Watchdog reset.
+- Bug sporadis.
+- Sulit direproduksi.
+
+Engineer menyalahkan:
+
+- Noise
+- Kabel
+- PSU
+- Hardware
+
+---
+
+## Skenario Dengan Pemahaman Execution Model
+
+- ISR hanya kirim event.
+- MQTT callback kirim command via queue.
+- Hanya ControlTask yang menyentuh relay.
+- Stack diperhitungkan.
+- Blocking network tidak di hot path kontrol.
+- Heap dipantau.
+- Watchdog dipahami sebagai indikator desain.
+
+Sekarang sistem:
+
+- Lebih deterministik.
+- Lebih dapat diprediksi.
+- Lebih mudah diaudit.
+
+Inilah foundation sebelum kita masuk memory discipline.
+
+---
+
+# 🔬 Execution Model Lab — Stack, Core, dan Context
+
+Kita akan:
+
+1. Menampilkan core ID tiap task
+2. Mengukur stack usage
+3. Mengamati blocking effect
+4. Menguji watchdog risk
+
+---
+
+## 🧪 Step 1 — Menampilkan Core Tempat Task Berjalan
+
+Tambahkan ke `IndustrialNode.ino`:
+
+```cpp
+#include <Arduino.h>
+
+void sensorTask(void* param)
+{
+    while (true)
+    {
+        Serial.print("SensorTask running on core: ");
+        Serial.println(xPortGetCoreID());
+        vTaskDelay(pdMS_TO_TICKS(2000));
+    }
+}
+
+void setup()
+{
+    Serial.begin(115200);
+    delay(1000);
+
+    Serial.print("loopTask running on core: ");
+    Serial.println(xPortGetCoreID());
+
+    xTaskCreatePinnedToCore(
+        sensorTask,
+        "SensorTask",
+        4096,
+        nullptr,
+        1,
+        nullptr,
+        0  // pin to Core 0
+    );
+}
+
+void loop()
+{
+    Serial.print("loop() running on core: ");
+    Serial.println(xPortGetCoreID());
+    delay(3000);
+}
+```
+
+### 🔎 Apa yang Akan Terlihat?
+
+Serial monitor akan menunjukkan:
+
+- loopTask di satu core
+- sensorTask di core lain
+
+Ini membuktikan:
+
+> Dual core bukan teori. Ia berjalan.
+
+---
+
+## 🧪 Step 2 — Mengukur Stack Usage per Task
+
+Tambahkan dalam task:
+
+```cpp
+Serial.print("Stack High Water Mark: ");
+Serial.println(uxTaskGetStackHighWaterMark(nullptr));
+```
+
+Letakkan di dalam `loop()` dan `sensorTask`.
+
+Interpretasi:
+
+- Nilai besar → stack masih aman.
+- Nilai mendekati 0 → hampir overflow.
+
+Ini sangat penting sebelum masuk Artikel 4.
+
+---
+
+## 🧪 Step 3 — Simulasi Stack Overflow
+
+Tambahkan di loop:
+
+```cpp
+void loop()
+{
+    char dangerousBuffer[6000];
+    memset(dangerousBuffer, 0, sizeof(dangerousBuffer));
+    delay(1000);
+}
+```
+
+Jika stack loopTask kecil:
+
+- Bisa crash
+- Bisa reset
+- Bisa undefined behavior
+
+Ini bukan heap problem.
+Ini stack per task.
+
+---
+
+## 🧪 Step 4 — Simulasi Blocking dan Watchdog Risk
+
+Ganti loop dengan:
+
+```cpp
+void loop()
+{
+    while (true)
+    {
+        // intentional blocking
+    }
+}
+```
+
+Perhatikan:
+
+- Setelah beberapa detik
+- Watchdog reset
+
+Ini membuktikan:
+
+> Watchdog adalah konsekuensi scheduling.
+
+---
+
+## 🔁 Integrasi dengan Use Case Sensor + Relay
+
+Sekarang kita hubungkan ke use case nyata:
+
+IndustrialNode memiliki:
+
+- Sensor read
+- Relay control
+- Network publish
+- ISR button
+
+Jika:
+
+- Stack sensorTask terlalu kecil
+- publish blocking terlalu lama
+- mutex deadlock
+- infinite loop di control
+
+Maka:
+
+- Watchdog reset
+- Crash sporadis
+- Relay tidak stabil
+
+Tanpa memahami execution model,
+engineer akan salah diagnosis.
+
+---
+
+## 🔐 Engineering Implication (Pre-Memory Article)
+
+Setelah Artikel 3, engineer harus bisa menjawab:
+
+1. Di core mana loop berjalan?
+2. Berapa sisa stack loopTask?
+3. Apa beda stack overflow dan heap exhaustion?
+4. Bagaimana watchdog bekerja?
+5. Apa efek publish blocking terhadap control?
+6. Apa biaya context switch?
+7. Mengapa dual core membuat timing non-linear?
+
+Jika tidak bisa menjawab ini,
+masuk ke memory discipline akan berbahaya.
+
+---
+
+# 🔟 Mental Model yang Harus Dipegang
+
+Setelah artikel ini, engineer harus benar-benar memahami:
+
+---
+
+> 1️⃣ `loop()` adalah task FreeRTOS
+
+Bukan main thread.
+
+---
+
+> 2️⃣ Setiap task punya stack sendiri
+
+Stack overflow ≠ heap exhaustion.
+
+---
+
+> 3️⃣ Heap adalah shared resource
+
+TLS, MQTT, dynamic object semua berbagi heap.
+
+---
+
+> 4️⃣ Dual core menambah kompleksitas scheduling
+
+Timing tidak lagi linear.
+
+---
+
+> 5️⃣ Watchdog terhubung langsung dengan scheduling
+
+Deadlock, blocking berat, infinite loop → reset.
+
+---
+
+> 6️⃣ Blocking network memengaruhi kontrol
+
+Jangan letakkan di jalur kontrol kritis.
+
+---
+
+> 7️⃣ Context switch punya biaya
+
+Banyak task ≠ selalu lebih baik.
+
+---
+
+Jika ini tidak dipahami:
+
+- Memory model akan terasa abstrak.
+- OOP discipline terasa terlalu kaku.
+- Layering terasa membatasi.
+- Reliability terlihat paranoid.
+
+Padahal semua itu adalah respons terhadap execution model ini.
+
+---
+
+# Penutup
+
+ESP32 + Arduino bukan sekadar:
+
+> “Arduino yang lebih cepat.”
+
+Ia adalah:
+
+- RTOS dual core system
+- Dengan stack terpisah
+- Heap shared
+- Network task paralel
+- Watchdog aktif
+- Preemptive scheduler
+
+Firmware sensor + relay yang tampak sederhana
+hidup dalam lingkungan ini.
+
+Memahami execution model ini adalah syarat mutlak
+sebelum membahas:
+
+📘 **Memory Model & Object Lifetime**
+
+Karena memory discipline tanpa pemahaman task stack,
+heap global, dan scheduling
+akan menjadi teori tanpa konteks.
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

@@ -1,0 +1,738 @@
+---
+title: 3-Layer Firmware Architecture on ESP32
+date: '2026-02-23'
+tags:
+  [
+    'esp32',
+    'firmware-architecture',
+    '3-layer-model',
+    'embedded-layering',
+    'dependency-direction',
+    'sensor-relay-node',
+  ]
+draft: false
+summary: Layering dalam firmware embedded bukan sekadar pemisahan file, tetapi cara mengendalikan dependency dan kompleksitas sistem. Tanpa struktur yang jelas, callback komunikasi, ISR, dan logic kontrol dapat saling terhubung secara liar sehingga firmware sulit dipelihara. Artikel ini membangun model 3-layer yang digunakan dalam seluruh seri -  Application, Service, dan Driver, dengan dukungan modul System. Kita membahas arah dependency, alasan pemisahan domain, serta bagaimana struktur ini diterapkan dalam project flat-folder Arduino ESP32. Tujuannya adalah membentuk mental model arsitektur sebelum masuk ke disiplin freeze pada tahap produksi.
+---
+
+# 📘 **_Foundation Article 6: 3-Layer Firmware Architecture on ESP32_**
+
+**Track:** C++ Firmware Engineering Foundations for ESP32
+**Environment:** ESP32 + VSCode + Arduino Community Edition
+**Project Base:** `IndustrialNode/IndustrialNode.ino`
+**Use Case:** Generic Sensor + Relay Node
+
+---
+
+- [📘 **_Foundation Article 6: 3-Layer Firmware Architecture on ESP32_**](#-foundation-article-6-3-layer-firmware-architecture-on-esp32)
+- [1️⃣ Kenapa Firmware Butuh Layer?](#1️⃣-kenapa-firmware-butuh-layer)
+- [2️⃣ Model 3-Layer yang Digunakan](#2️⃣-model-3-layer-yang-digunakan)
+- [3️⃣ Visual Model Arsitektur](#3️⃣-visual-model-arsitektur)
+- [4️⃣ Driver Layer (drv\_)](#4️⃣-driver-layer-drv_)
+  - [Failure Model — Driver Tahu Terlalu Banyak](#failure-model--driver-tahu-terlalu-banyak)
+  - [Rule Driver Layer](#rule-driver-layer)
+- [5️⃣ Service Layer (svc\_)](#5️⃣-service-layer-svc_)
+  - [Failure Model — Service Tahu Terlalu Banyak](#failure-model--service-tahu-terlalu-banyak)
+- [6️⃣ Application Layer (app\_)](#6️⃣-application-layer-app_)
+- [7️⃣ System Module (sys\_)](#7️⃣-system-module-sys_)
+  - [Kenapa sys\_ Diperlukan?](#kenapa-sys_-diperlukan)
+- [8️⃣ Struktur Folder (Flat \& Konsisten)](#8️⃣-struktur-folder-flat--konsisten)
+- [9️⃣ Arah Dependency (Sangat Penting)](#9️⃣-arah-dependency-sangat-penting)
+  - [Visual Dependency Direction](#visual-dependency-direction)
+  - [Anti-Pattern — Upward Dependency](#anti-pattern--upward-dependency)
+  - [Kenapa Dependency Direction Kritis?](#kenapa-dependency-direction-kritis)
+- [🔟 Sensor + Relay Node dalam Model Ini](#-sensor--relay-node-dalam-model-ini)
+  - [Flow Eksekusi](#flow-eksekusi)
+  - [Contoh Implementasi Minimal (Ringkas \& Konsisten)](#contoh-implementasi-minimal-ringkas--konsisten)
+- [11️⃣ Kenapa Layering Penting Sebelum Production](#11️⃣-kenapa-layering-penting-sebelum-production)
+  - [Tanpa Layering](#tanpa-layering)
+  - [Dengan Layering](#dengan-layering)
+- [12️⃣ Mental Model yang Harus Dikunci](#12️⃣-mental-model-yang-harus-dikunci)
+
+---
+
+# 1️⃣ Kenapa Firmware Butuh Layer?
+
+Firmware kecil sering dimulai dengan satu file `.ino`.
+
+Awalnya sederhana:
+
+```cpp
+void loop() {
+    int value = analogRead(34);
+
+    if (value > 500) {
+        digitalWrite(5, HIGH);
+    } else {
+        digitalWrite(5, LOW);
+    }
+}
+```
+
+Masalah muncul saat sistem bertambah:
+
+- MQTT
+- WiFi reconnect
+- OTA
+- Logging
+- ISR button
+- Timer task
+- Error handling
+
+`loop()` berubah menjadi:
+
+```text
+loop()
+ ├─ read sensor
+ ├─ control relay
+ ├─ check WiFi
+ ├─ reconnect MQTT
+ ├─ handle OTA
+ ├─ print debug
+ ├─ process ISR flag
+ └─ handle timeout
+```
+
+Sekarang:
+
+- State tersebar.
+- Dependency silang.
+- Refactor berisiko.
+- Debug sulit.
+
+Layering bukan soal “rapi”.
+
+Layering adalah:
+
+> Membatasi siapa boleh tahu siapa.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Readme',
+      href: '/blog/IoT/firmware-foundations-esp32/README',
+      description: 'README - C++ Firmware Engineering Foundations for ESP32',
+    },
+    {
+      name: 'Dual-Track Course Syllabus',
+      href: '/blog/IoT/firmware-foundations-esp32/syllabus-12-16-week-dual-track-esp32-firmware',
+      description:
+        'Dual-Track Course Syllabus - ESP32 Firmware Engineering (Foundation → Production)',
+    },
+    {
+      name: 'ESP32 Execution',
+      href: '/blog/IoT/firmware-foundations-esp32/01-esp32-execution-reality',
+      description: 'ESP32 Execution Reality Under Arduino Core',
+    },
+    {
+      name: 'Concurrency & RTOS',
+      href: '/blog/IoT/firmware-foundations-esp32/02-rtos-concurrency-fundamentals-esp32',
+      description: 'Concurrency & RTOS Fundamentals (ESP32 Context)',
+    },
+    {
+      name: 'FreeRTOS Execution Model',
+      href: '/blog/IoT/firmware-foundations-esp32/03-freertos-execution-model-esp32',
+      description: 'FreeRTOS Execution Model on ESP32 (Arduino Context)',
+    },
+    {
+      name: 'Memory Model & Object Lifetime',
+      href: '/blog/IoT/firmware-foundations-esp32/04-memory-model-object-lifetime-esp32',
+      description: 'Memory Model & Object Lifetime on ESP32',
+    },
+    {
+      name: 'OOP for Embedded Firmware',
+      href: '/blog/IoT/firmware-foundations-esp32/05-oop-embedded-firmware-esp32',
+      description: 'OOP for Embedded Firmware on ESP32',
+    },
+    {
+      name: 'Communication & State Thinking',
+      href: '/blog/IoT/firmware-foundations-esp32/07-communication-state-thinking-esp32',
+      description: 'Communication & State Thinking on ESP32',
+    },
+    {
+      name: 'Reliability Thinking',
+      href: '/blog/IoT/firmware-foundations-esp32/08-reliability-transition-to-production-esp32',
+      description: 'Reliability Thinking & Transition to Production Discipline',
+    },
+  ]}
+/>
+
+---
+
+# 2️⃣ Model 3-Layer yang Digunakan
+
+Model yang kita pakai sepanjang seri:
+
+```text
+Application Layer
+        ↓
+Service Layer
+        ↓
+Driver Layer
+```
+
+Dengan modul pendukung:
+
+```text
+System (sys_)
+```
+
+Ini bukan Clean Architecture penuh.
+Ini model minimal yang cukup untuk:
+
+- Determinism
+- Dependency control
+- Evolusi ke Production
+
+---
+
+# 3️⃣ Visual Model Arsitektur
+
+![Image](https://www.researchgate.net/publication/269125196/figure/fig6/AS%3A668229219414031%401536329669730/Firmware-architecture-diagram-A-layered-modular-architecture-is-used-to-facilitate.png)
+
+Konseptual yang kita pakai:
+
+```text
+app_   → orchestration
+svc_   → domain logic
+drv_   → hardware boundary
+sys_   → config & shared definition
+```
+
+Arah dependency selalu turun.
+
+Tidak ada upward dependency.
+
+---
+
+# 4️⃣ Driver Layer (drv\_)
+
+Driver adalah:
+
+> Boundary terhadap hardware.
+
+Contoh:
+
+```cpp
+// drv_RelayDriver.h
+class RelayDriver {
+public:
+    explicit RelayDriver(int pin);
+    void set(bool on);
+    bool state() const;
+
+private:
+    int  pin_;
+    bool state_;
+};
+```
+
+Driver:
+
+- Tidak tahu MQTT.
+- Tidak tahu sensor threshold.
+- Tidak tahu WiFi.
+- Tidak tahu app flow.
+- Tidak tahu ISR.
+
+Ia hanya tahu:
+
+- Pin
+- Register
+- Hardware state
+
+---
+
+## Failure Model — Driver Tahu Terlalu Banyak
+
+Jika driver seperti ini:
+
+```cpp
+void RelayDriver::set(bool on) {
+    if (WiFi.isConnected()) {
+        digitalWrite(pin_, on);
+    }
+}
+```
+
+Driver sekarang tahu network.
+
+Boundary rusak.
+
+Refactor menjadi sulit.
+
+---
+
+## Rule Driver Layer
+
+1. Tidak boleh include app\_.
+2. Tidak boleh include svc\_.
+3. Tidak boleh include MQTT/WiFi.
+4. Tidak boleh tahu business rule.
+
+Driver hanya hardware boundary.
+
+---
+
+# 5️⃣ Service Layer (svc\_)
+
+Service adalah domain owner.
+
+Ia:
+
+- Menggabungkan beberapa driver.
+- Mengimplementasikan business rule.
+- Tidak tahu orchestration besar.
+- Tidak tahu ISR detail.
+
+Contoh:
+
+```cpp
+class ControlService {
+public:
+    ControlService(SensorService& sensor,
+                   RelayDriver& relay);
+
+    void update();
+
+private:
+    SensorService& sensor_;
+    RelayDriver&   relay_;
+};
+```
+
+ControlService:
+
+- Membaca sensor.
+- Menentukan threshold.
+- Memanggil relay.set().
+
+Ia tidak tahu MQTT.
+Ia tidak tahu reconnect.
+Ia tidak tahu loop.
+
+---
+
+## Failure Model — Service Tahu Terlalu Banyak
+
+Jika Service seperti ini:
+
+```cpp
+void ControlService::update() {
+    if (!WiFi.isConnected()) {
+        reconnect();
+    }
+
+    int v = sensor_.read();
+    relay_.set(v > 500);
+}
+```
+
+Service sekarang tahu network.
+
+Domain tercampur dengan infrastructure.
+
+Layer rusak.
+
+---
+
+# 6️⃣ Application Layer (app\_)
+
+Application adalah orchestrator.
+
+Ia:
+
+- Dipanggil dari loop().
+- Mengatur flow.
+- Mengatur state machine.
+- Mengatur kapan service dipanggil.
+- Mengatur komunikasi antar domain.
+
+Contoh:
+
+```cpp
+class ControlApp {
+public:
+    explicit ControlApp(ControlService& service);
+
+    void run();
+
+private:
+    ControlService& service_;
+};
+```
+
+`ControlApp::run()` dipanggil dari loop().
+
+Application:
+
+- Tidak tahu pin.
+- Tidak tahu analogRead.
+- Tidak tahu register.
+
+Ia hanya tahu service API.
+
+---
+
+# 7️⃣ System Module (sys\_)
+
+`sys_` bukan layer aktif.
+
+Ia bukan domain.
+Ia bukan orchestrator.
+Ia bukan driver.
+
+Ia adalah:
+
+> Modul pendukung untuk shared definition & configuration.
+
+Contoh:
+
+```cpp
+// sys_Config.h
+#pragma once
+
+constexpr int RELAY_PIN  = 5;
+constexpr int SENSOR_PIN = 34;
+
+constexpr int SENSOR_THRESHOLD = 500;
+```
+
+Hal yang boleh di sys\_:
+
+- constexpr
+- enum class
+- typedef
+- shared struct
+- error code
+- compile-time config
+
+Hal yang tidak boleh:
+
+- Logic
+- WiFi code
+- Business rule
+- Hardware control
+
+---
+
+## Kenapa sys\_ Diperlukan?
+
+Tanpa sys\_:
+
+- Magic number tersebar.
+- Constant duplikat.
+- Include silang antar layer.
+- Refactor sulit.
+
+sys\_ membantu dependency tetap bersih.
+
+---
+
+# 8️⃣ Struktur Folder (Flat & Konsisten)
+
+Sejak awal Foundation kita pakai struktur ini:
+
+```text
+IndustrialNode/
+├── IndustrialNode.ino
+├── app_ControlApp.h
+├── app_ControlApp.cpp
+├── svc_ControlService.h
+├── svc_ControlService.cpp
+├── svc_SensorService.h
+├── svc_SensorService.cpp
+├── drv_RelayDriver.h
+├── drv_RelayDriver.cpp
+├── sys_Config.h
+```
+
+Tidak ada nested folder.
+
+Kenapa flat?
+
+Karena:
+
+> Discipline harus muncul dari dependency, bukan dari folder hierarchy.
+
+Prefix adalah boundary visual:
+
+- `app_`
+- `svc_`
+- `drv_`
+- `sys_`
+
+Flat folder memaksa engineer sadar dependency.
+
+Nested folder sering memberi ilusi aman,
+padahal include bisa tetap silang.
+
+---
+
+# 9️⃣ Arah Dependency (Sangat Penting)
+
+Aturan keras:
+
+```text
+app_ → svc_ → drv_
+```
+
+Dan hanya turun.
+
+Tidak ada:
+
+```text
+drv_ → svc_
+drv_ → app_
+svc_ → app_
+```
+
+---
+
+## Visual Dependency Direction
+
+```text
+          +------------------+
+          |   app_ControlApp |
+          +------------------+
+                    ↓
+          +------------------+
+          | svc_ControlService|
+          +------------------+
+                    ↓
+          +------------------+
+          |  drv_RelayDriver |
+          +------------------+
+```
+
+Semua panah ke bawah.
+
+---
+
+## Anti-Pattern — Upward Dependency
+
+Contoh salah:
+
+```cpp
+// drv_RelayDriver.cpp
+#include "app_ControlApp.h"
+```
+
+Layer hancur.
+
+Atau:
+
+```cpp
+// svc_ControlService.cpp
+#include "app_ControlApp.h"
+```
+
+Service tahu application.
+Boundary rusak.
+
+---
+
+## Kenapa Dependency Direction Kritis?
+
+Karena:
+
+- Mengurangi coupling.
+- Mencegah circular include.
+- Mencegah blast radius perubahan.
+- Meningkatkan testability.
+
+Layering tanpa dependency discipline = kosmetik.
+
+---
+
+# 🔟 Sensor + Relay Node dalam Model Ini
+
+Sekarang kita lihat full flow.
+
+---
+
+## Flow Eksekusi
+
+```text
+loop()
+   ↓
+app_ControlApp::run()
+   ↓
+svc_ControlService::update()
+   ↓
+svc_SensorService::read()
+   ↓
+drv_RelayDriver::set()
+```
+
+Hardware hanya disentuh di driver.
+
+Business rule hanya di service.
+
+Orchestration hanya di app.
+
+---
+
+## Contoh Implementasi Minimal (Ringkas & Konsisten)
+
+```cpp
+// IndustrialNode.ino
+
+#include "sys_Config.h"
+#include "drv_RelayDriver.h"
+#include "svc_SensorService.h"
+#include "svc_ControlService.h"
+#include "app_ControlApp.h"
+
+RelayDriver relay(RELAY_PIN);
+SensorService sensor(SENSOR_PIN);
+ControlService control(sensor, relay);
+ControlApp app(control);
+
+void setup() {
+    app.init();
+}
+
+void loop() {
+    app.run();
+}
+```
+
+Layer separation jelas.
+
+Tidak ada cross-layer shortcut.
+
+---
+
+# 11️⃣ Kenapa Layering Penting Sebelum Production
+
+Di Production nanti:
+
+- Dependency akan di-freeze.
+- Cross-layer call akan dianggap violation.
+- Include direction akan diaudit.
+- Prefix akan enforce boundary.
+
+Jika Foundation tidak paham layering:
+
+Production rule akan terasa “keras”.
+
+Padahal:
+
+Production hanya mengunci apa yang sudah dibentuk di Foundation.
+
+---
+
+## Tanpa Layering
+
+Tambahkan fitur:
+
+- MQTT
+- OTA
+- WebServer
+- Logging
+- Error retry
+
+Semua masuk ke loop.
+
+Hasil:
+
+- 1000+ line file.
+- Dependency silang.
+- Refactor berisiko.
+- Bug sulit dilacak.
+
+---
+
+## Dengan Layering
+
+Tambahkan MQTT:
+
+- Tambah svc_MqttService.
+- App mengatur flow.
+- Driver tetap tidak tahu MQTT.
+- Sensor tetap tidak tahu network.
+
+Blast radius kecil.
+
+---
+
+# 12️⃣ Mental Model yang Harus Dikunci
+
+Setelah Article 6, engineer harus memahami:
+
+---
+
+> 1️⃣ Layer bukan soal folder
+
+Ia soal dependency direction.
+
+---
+
+> 2️⃣ Driver hanya hardware boundary
+
+Tidak tahu domain.
+Tidak tahu network.
+
+---
+
+> 3️⃣ Service adalah domain owner
+
+Business rule hidup di sini.
+
+---
+
+> 4️⃣ Application adalah orchestrator
+
+Flow control hidup di sini.
+
+---
+
+> 5️⃣ Dependency harus satu arah
+
+Tidak ada upward call.
+
+---
+
+> 6️⃣ Prefix membantu disiplin dalam flat folder
+
+Nama file = boundary visual.
+
+---
+
+> 7️⃣ Layering mengurangi blast radius perubahan
+
+Fitur baru tidak merusak seluruh sistem.
+
+---
+
+> Penutup
+
+3-layer architecture yang kita gunakan bukan kompleks.
+
+Ia minimal.
+
+Tetapi cukup untuk:
+
+- Mengendalikan dependency
+- Mengisolasi hardware
+- Mengontrol domain logic
+- Menjaga determinism
+- Mempersiapkan freeze di Production
+
+Tanpa layering:
+
+Firmware kecil akan runtuh ketika fitur bertambah.
+
+Dengan layering:
+
+Foundation → Production adalah evolusi natural.
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

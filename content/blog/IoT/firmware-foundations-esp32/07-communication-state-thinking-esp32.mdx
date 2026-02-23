@@ -1,0 +1,717 @@
+---
+title: Communication & State Thinking on ESP32
+date: '2026-02-23'
+tags:
+  [
+    'esp32',
+    'communication-architecture',
+    'state-machine-thinking',
+    'mqtt-callback-risk',
+    'event-driven-firmware',
+    'iot-node',
+  ]
+draft: false
+summary: Komunikasi (WiFi, MQTT, OTA) sering menjadi sumber coupling dan ketidakstabilan pada firmware ESP32. Callback yang langsung mengubah relay, reconnect logic yang tersebar, serta state implisit yang tidak terdokumentasi membuat sistem sulit diprediksi. Artikel ini membahas komunikasi sebagai domain terpisah yang memiliki state machine eksplisit. Kita membangun mental model event-driven, memisahkan transport dari business logic, dan memahami bagaimana reconnect serta network latency dapat memengaruhi kontrol sensor–relay. Tujuannya adalah membentuk pola pikir stateful sebelum masuk ke disiplin komunikasi yang lebih ketat pada tahap produksi.
+---
+
+# 📘 **_Foundation Article 7: Communication & State Thinking on ESP32_**
+
+**Track:** C++ Firmware Engineering Foundations for ESP32
+**Environment:** ESP32 + VSCode + Arduino Community Edition
+**Project Base:** `IndustrialNode/IndustrialNode.ino`
+**Use Case:** Generic Sensor + Relay Node
+
+---
+
+- [📘 **_Foundation Article 7: Communication \& State Thinking on ESP32_**](#-foundation-article-7-communication--state-thinking-on-esp32)
+- [1️⃣ Komunikasi: Sumber Coupling Paling Sering](#1️⃣-komunikasi-sumber-coupling-paling-sering)
+  - [Failure Model — Callback Menjadi God Function](#failure-model--callback-menjadi-god-function)
+- [2️⃣ Communication Bukan Sekadar Publish/Subscribe](#2️⃣-communication-bukan-sekadar-publishsubscribe)
+  - [Lifecycle Nyata (ESP32 + WiFi + MQTT)](#lifecycle-nyata-esp32--wifi--mqtt)
+- [3️⃣ Visual: State Machine Konseptual](#3️⃣-visual-state-machine-konseptual)
+- [4️⃣ Event-Driven Thinking](#4️⃣-event-driven-thinking)
+  - [Pattern Sehat](#pattern-sehat)
+- [5️⃣ Sensor + Relay Node dengan Komunikasi](#5️⃣-sensor--relay-node-dengan-komunikasi)
+  - [Kenapa Ini Penting?](#kenapa-ini-penting)
+- [6️⃣ Reconnect Chaos Tanpa Struktur](#6️⃣-reconnect-chaos-tanpa-struktur)
+  - [Dampak Nyata](#dampak-nyata)
+- [7️⃣ Transport ≠ Business Logic](#7️⃣-transport--business-logic)
+  - [Model yang Sehat](#model-yang-sehat)
+- [8️⃣ Implicit State vs Explicit State](#8️⃣-implicit-state-vs-explicit-state)
+  - [Explicit State](#explicit-state)
+  - [Contoh Transisi Terkontrol](#contoh-transisi-terkontrol)
+- [9️⃣ Network Latency \& Control Stability](#9️⃣-network-latency--control-stability)
+  - [Separation of Critical Path](#separation-of-critical-path)
+  - [Prinsip Penting](#prinsip-penting)
+- [🔟 Communication sebagai Layer Terpisah](#-communication-sebagai-layer-terpisah)
+  - [Alur Sehat Final](#alur-sehat-final)
+- [11️⃣ Mental Model yang Harus Dikunci](#11️⃣-mental-model-yang-harus-dikunci)
+
+---
+
+# 1️⃣ Komunikasi: Sumber Coupling Paling Sering
+
+Firmware kecil stabil tanpa komunikasi.
+
+Masalah mulai muncul saat:
+
+- WiFi ditambahkan
+- MQTT ditambahkan
+- OTA ditambahkan
+- Remote config ditambahkan
+
+Contoh klasik:
+
+```cpp
+void callback(char* topic, byte* payload, unsigned int length) {
+    if (payload[0] == '1') {
+        digitalWrite(5, HIGH);
+    } else {
+        digitalWrite(5, LOW);
+    }
+}
+```
+
+Masalah fundamental:
+
+- Callback menyentuh hardware langsung.
+- Tidak ada service boundary.
+- Tidak ada domain guard.
+- Tidak ada state awareness.
+- Tidak ada arbitration dengan control loop.
+
+Sekarang komunikasi menjadi:
+
+> Jalur pintas melanggar seluruh arsitektur.
+
+Layering runtuh di satu callback.
+
+---
+
+## Failure Model — Callback Menjadi God Function
+
+Ketika fitur bertambah, callback berubah menjadi:
+
+```text
+callback()
+ ├─ parse payload
+ ├─ set relay
+ ├─ update threshold
+ ├─ save config
+ ├─ publish ack
+ ├─ trigger OTA
+ └─ reset device
+```
+
+Sekarang:
+
+- Business logic bercampur.
+- Transport bercampur.
+- Hardware bercampur.
+- State tidak eksplisit.
+- Debug menjadi sulit.
+
+Komunikasi adalah sumber coupling paling sering karena ia menyentuh banyak domain sekaligus.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Readme',
+      href: '/blog/IoT/firmware-foundations-esp32/README',
+      description: 'README - C++ Firmware Engineering Foundations for ESP32',
+    },
+    {
+      name: 'Dual-Track Course Syllabus',
+      href: '/blog/IoT/firmware-foundations-esp32/syllabus-12-16-week-dual-track-esp32-firmware',
+      description:
+        'Dual-Track Course Syllabus - ESP32 Firmware Engineering (Foundation → Production)',
+    },
+    {
+      name: 'ESP32 Execution',
+      href: '/blog/IoT/firmware-foundations-esp32/01-esp32-execution-reality',
+      description: 'ESP32 Execution Reality Under Arduino Core',
+    },
+    {
+      name: 'Concurrency & RTOS',
+      href: '/blog/IoT/firmware-foundations-esp32/02-rtos-concurrency-fundamentals-esp32',
+      description: 'Concurrency & RTOS Fundamentals (ESP32 Context)',
+    },
+    {
+      name: 'FreeRTOS Execution Model',
+      href: '/blog/IoT/firmware-foundations-esp32/03-freertos-execution-model-esp32',
+      description: 'FreeRTOS Execution Model on ESP32 (Arduino Context)',
+    },
+    {
+      name: 'Memory Model & Object Lifetime',
+      href: '/blog/IoT/firmware-foundations-esp32/04-memory-model-object-lifetime-esp32',
+      description: 'Memory Model & Object Lifetime on ESP32',
+    },
+    {
+      name: 'OOP for Embedded Firmware',
+      href: '/blog/IoT/firmware-foundations-esp32/05-oop-embedded-firmware-esp32',
+      description: 'OOP for Embedded Firmware on ESP32',
+    },
+    {
+      name: '3-Layer Firmware Architecture',
+      href: '/blog/IoT/cpp-production-firmware-esp32/06-decoupled-communication-architecture',
+      description: '3-Layer Firmware Architecture on ESP32',
+    },
+    {
+      name: 'Reliability Thinking',
+      href: '/blog/IoT/firmware-foundations-esp32/08-reliability-transition-to-production-esp32',
+      description: 'Reliability Thinking & Transition to Production Discipline',
+    },
+  ]}
+/>
+
+---
+
+# 2️⃣ Communication Bukan Sekadar Publish/Subscribe
+
+Engineer sering melihat komunikasi sebagai:
+
+```text
+subscribe → callback → selesai
+```
+
+Padahal komunikasi memiliki lifecycle kompleks.
+
+---
+
+## Lifecycle Nyata (ESP32 + WiFi + MQTT)
+
+```text
+INIT
+↓
+WIFI_CONNECTING
+↓
+WIFI_CONNECTED
+↓
+MQTT_CONNECTING
+↓
+MQTT_CONNECTED
+↓
+ERROR
+↓
+BACKOFF
+↓
+RETRY
+```
+
+Ini bukan teori.
+Ini realitas runtime.
+
+Jika lifecycle tidak eksplisit:
+
+- Reconnect tersebar.
+- Flag global bermunculan.
+- Behavior tidak deterministik.
+- Race dengan control loop muncul.
+
+---
+
+# 3️⃣ Visual: State Machine Konseptual
+
+![Image](https://www.researchgate.net/publication/334029743/figure/fig4/AS%3A773931057295364%401561530951553/State-machine-of-the-embedded-system.png)
+
+![Image](https://microchip-mplab-harmony.github.io/wireless_system_pic32mzw1_wfi32e01/GUID-9C789DB1-E2FB-4440-AB9F-8BD124732BFB-low.png)
+
+![Image](https://blog.house-of-code.com/content/images/2016/01/state-machine-title.jpg)
+
+![Image](https://blog.house-of-code.com/content/images/2016/01/state-machine-1.jpg)
+
+Model konseptual yang sehat:
+
+```text
+[INIT]
+   ↓
+[WIFI_CONNECTING]
+   ↓
+[WIFI_CONNECTED]
+   ↓
+[MQTT_CONNECTING]
+   ↓
+[MQTT_CONNECTED]
+   ↓
+[ERROR_BACKOFF]
+   ↺
+```
+
+Tanpa state machine eksplisit, developer sering menulis:
+
+```cpp
+if (!wifiConnected) ...
+if (!mqttConnected) ...
+if (retryCount > 5) ...
+```
+
+Ini bukan state machine.
+Ini kondisi implisit yang saling tumpang tindih.
+
+---
+
+# 4️⃣ Event-Driven Thinking
+
+Komunikasi menghasilkan **event**, bukan aksi langsung.
+
+Daripada:
+
+```cpp
+callback() → relay.set()
+```
+
+Lebih aman:
+
+```text
+MQTT Callback → Event → Service → Driver
+```
+
+---
+
+## Pattern Sehat
+
+```cpp
+void mqttCallback(...) {
+    commManager.handleIncoming(payload);
+}
+```
+
+Lalu:
+
+```cpp
+// di svc_CommManager
+void CommManager::handleIncoming(...) {
+    eventQueue.push(Command::RelayOn);
+}
+```
+
+Kemudian:
+
+```cpp
+// di ControlService
+void ControlService::processEvent(Command cmd) {
+    if (cmd == Command::RelayOn) {
+        relay_.set(true);
+    }
+}
+```
+
+Sekarang:
+
+- Transport tidak menyentuh hardware.
+- Domain memutuskan aksi.
+- Layering tetap utuh.
+
+---
+
+# 5️⃣ Sensor + Relay Node dengan Komunikasi
+
+Mari kita lihat sistem kita.
+
+Tanpa komunikasi:
+
+```text
+loop()
+  ↓
+app_ControlApp
+  ↓
+svc_ControlService
+  ↓
+drv_RelayDriver
+```
+
+Dengan komunikasi yang benar:
+
+```text
+MQTT Task
+   ↓
+svc_CommManager (state owner)
+   ↓
+Event Queue
+   ↓
+svc_ControlService
+   ↓
+drv_RelayDriver
+```
+
+Komunikasi tidak boleh memotong langsung ke driver.
+
+---
+
+## Kenapa Ini Penting?
+
+Karena komunikasi:
+
+- Asynchronous.
+- Bisa delay.
+- Bisa retry.
+- Bisa duplicate (retain).
+- Bisa reconnect.
+- Bisa timeout.
+
+Jika callback langsung menyentuh hardware:
+
+Determinism kontrol rusak.
+
+---
+
+# 6️⃣ Reconnect Chaos Tanpa Struktur
+
+Reconnect sering ditulis seperti ini:
+
+```cpp
+if (WiFi.status() != WL_CONNECTED) {
+    WiFi.begin(ssid, password);
+}
+
+if (!client.connected()) {
+    reconnectMqtt();
+}
+```
+
+Dan di tempat lain:
+
+```cpp
+retryCount++;
+if (retryCount > 5) ESP.restart();
+```
+
+Masalah:
+
+- Logic tersebar.
+- Tidak ada single state owner.
+- Tidak ada transisi formal.
+- Tidak ada guard antar state.
+
+Ini bukan reconnect strategy.
+Ini reconnect reaksi spontan.
+
+---
+
+## Dampak Nyata
+
+Kasus nyata di lapangan:
+
+- Broker restart → reconnect spam.
+- WiFi drop → MQTT reconnect tetap jalan.
+- TLS fail → retry tanpa backoff.
+- Backoff tidak konsisten.
+
+Hasilnya:
+
+- Heap spike.
+- Fragmentasi meningkat.
+- Watchdog reset.
+- Sistem tidak deterministik.
+
+Reconnect tanpa struktur = chaos sistemik.
+
+---
+
+# 7️⃣ Transport ≠ Business Logic
+
+Transport layer adalah:
+
+- WiFi.begin()
+- WiFi.status()
+- client.connect()
+- client.publish()
+- client.subscribe()
+
+Business logic adalah:
+
+- Threshold sensor.
+- Mode manual / auto.
+- Safety guard.
+- Fail-safe behavior.
+
+Jika business logic tahu:
+
+```cpp
+if (topic == "node/relay")
+```
+
+Maka domain Anda sudah tergantung pada MQTT topic.
+
+Itu coupling.
+
+---
+
+## Model yang Sehat
+
+Transport menerima payload → ubah menjadi Command domain.
+
+Contoh:
+
+```cpp
+Command cmd = parser.parse(payload);
+controlService.processCommand(cmd);
+```
+
+ControlService tidak tahu MQTT.
+Ia hanya tahu Command.
+
+Transport adalah adapter.
+
+Bukan decision maker.
+
+---
+
+# 8️⃣ Implicit State vs Explicit State
+
+Implicit state:
+
+```cpp
+bool wifiConnected;
+bool mqttConnected;
+bool reconnecting;
+bool updating;
+```
+
+Masalah:
+
+- Kombinasi flag bisa tidak valid.
+- Tidak jelas state aktif sebenarnya.
+- Debug sulit.
+
+---
+
+## Explicit State
+
+```cpp
+enum class CommState {
+    INIT,
+    WIFI_CONNECTING,
+    WIFI_CONNECTED,
+    MQTT_CONNECTING,
+    MQTT_CONNECTED,
+    ERROR_BACKOFF
+};
+```
+
+Sekarang:
+
+- Hanya satu state aktif.
+- Transisi jelas.
+- Logging jelas.
+- Telemetry jelas.
+- Reconnect terstruktur.
+
+---
+
+## Contoh Transisi Terkontrol
+
+```cpp
+void CommManager::update() {
+    switch (state_) {
+        case CommState::INIT:
+            startWifi();
+            state_ = CommState::WIFI_CONNECTING;
+            break;
+
+        case CommState::WIFI_CONNECTED:
+            startMqtt();
+            state_ = CommState::MQTT_CONNECTING;
+            break;
+
+        case CommState::ERROR_BACKOFF:
+            if (backoffExpired()) {
+                state_ = CommState::WIFI_CONNECTING;
+            }
+            break;
+
+        default:
+            break;
+    }
+}
+```
+
+Sekarang reconnect bukan reaksi.
+Ia transisi formal.
+
+---
+
+# 9️⃣ Network Latency & Control Stability
+
+Kita kembali ke sistem sensor + relay.
+
+Loop kontrol 100ms.
+
+Jika MQTT publish blocking 300ms:
+
+- Loop tertunda.
+- Relay update terlambat.
+- Sampling tidak stabil.
+- Jitter meningkat.
+
+Masalah bukan MQTT.
+
+Masalahnya:
+
+Komunikasi masuk ke jalur kontrol.
+
+---
+
+## Separation of Critical Path
+
+Critical path:
+
+```text
+Sensor → Control → Relay
+```
+
+Non-critical path:
+
+```text
+Telemetry → MQTT publish
+```
+
+Jika kedua path bercampur,
+determinism hilang.
+
+---
+
+## Prinsip Penting
+
+Kontrol tidak boleh tergantung network.
+
+Jika broker mati:
+
+- Kontrol tetap stabil.
+- Relay tetap bekerja.
+- Sensor tetap sampling.
+
+Network adalah fitur tambahan,
+bukan pusat sistem.
+
+---
+
+# 🔟 Communication sebagai Layer Terpisah
+
+Dalam struktur kita:
+
+```text
+IndustrialNode/
+├── app_ControlApp
+├── svc_ControlService
+├── svc_CommManager
+├── drv_RelayDriver
+```
+
+`svc_CommManager` bertanggung jawab atas:
+
+- WiFi lifecycle
+- MQTT lifecycle
+- State komunikasi
+- Event publish
+- Command parsing
+
+Ia tidak:
+
+- Mengontrol relay.
+- Mengubah threshold.
+- Menentukan rule.
+
+Ia hanya:
+
+> Communication state owner + adapter.
+
+---
+
+## Alur Sehat Final
+
+```text
+MQTT Callback
+   ↓
+svc_CommManager (parse + validate)
+   ↓
+Command
+   ↓
+svc_ControlService
+   ↓
+drv_RelayDriver
+```
+
+Semua rule tetap di domain.
+
+---
+
+# 11️⃣ Mental Model yang Harus Dikunci
+
+Setelah artikel ini, engineer harus memahami:
+
+---
+
+> 1️⃣ Komunikasi memiliki lifecycle
+
+Ia bukan sekadar publish/subscribe.
+
+---
+
+> 2️⃣ Callback bukan tempat business logic
+
+Callback hanya entry point.
+
+---
+
+> 3️⃣ State harus eksplisit
+
+Flag tersebar = chaos.
+
+---
+
+> 4️⃣ Reconnect harus terpusat
+
+Satu state owner.
+Satu mekanisme transisi.
+
+---
+
+> 5️⃣ Transport harus dipisahkan dari domain
+
+Topic MQTT ≠ business rule.
+
+---
+
+> 6️⃣ Network latency memengaruhi determinism
+
+Critical path harus terisolasi.
+
+---
+
+> 7️⃣ Event-driven lebih aman daripada shared mutable
+
+Message passing > global flag.
+
+---
+
+> Penutup
+
+Komunikasi adalah titik di mana firmware sederhana mulai runtuh.
+
+Bukan karena WiFi buruk.
+Bukan karena MQTT salah.
+
+Tetapi karena:
+
+- State implisit.
+- Callback menyentuh hardware.
+- Reconnect logic tersebar.
+- Transport bercampur domain.
+
+Communication discipline adalah jembatan antara:
+
+- RTOS model
+- Memory discipline
+- OOP boundary
+- Layering architecture
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

@@ -1,0 +1,968 @@
+---
+title: OOP for Embedded Firmware on ESP32
+date: '2026-02-23'
+tags:
+  [
+    'esp32',
+    'embedded-oop',
+    'object-lifetime',
+    'encapsulation-boundary',
+    'composition-over-inheritance',
+    'firmware-structure',
+  ]
+draft: false
+summary: OOP pada embedded bukan tentang membuat kode “modern”, tetapi tentang mengontrol ownership, lifetime, dan dependency secara eksplisit. Banyak engineer yang memahami class, constructor, dan inheritance, namun belum memetakan konsep tersebut ke realitas firmware - stack terbatas, heap global, ISR preemption, dan sistem yang tidak pernah exit. Artikel ini membahas OOP dari perspektif embedded - encapsulation sebagai boundary hardware, constructor sebagai lifecycle binding, composition sebagai struktur aman, serta risiko inheritance, virtual table, dan hidden allocation. Tujuannya membentuk pola pikir struktural sebelum masuk ke disiplin dependency freeze pada tahap produksi.
+---
+
+# 📘 **_Foundation Article 5: OOOP for Embedded Firmware on ESP32_**
+
+**Track:** C++ Firmware Engineering Foundations for ESP32
+**Environment:** ESP32 + VSCode + Arduino Community Edition
+**Project Base:** `IndustrialNode/IndustrialNode.ino`
+**Use Case:** Generic Sensor + Relay Node
+
+---
+
+- [📘 **_Foundation Article 5: OOOP for Embedded Firmware on ESP32_**](#-foundation-article-5-ooop-for-embedded-firmware-on-esp32)
+- [1️⃣ OOP di Embedded Bukan Soal Gaya](#1️⃣-oop-di-embedded-bukan-soal-gaya)
+  - [Failure Model — Global Mutable + Concurrency](#failure-model--global-mutable--concurrency)
+  - [OOP sebagai Solusi Ownership](#oop-sebagai-solusi-ownership)
+- [2️⃣ Encapsulation sebagai Boundary Hardware](#2️⃣-encapsulation-sebagai-boundary-hardware)
+  - [Pattern Tanpa Boundary](#pattern-tanpa-boundary)
+  - [Pattern Dengan Boundary](#pattern-dengan-boundary)
+  - [IndustrialNode Context](#industrialnode-context)
+- [3️⃣ Visual: Dari Global Chaos ke Ownership Model](#3️⃣-visual-dari-global-chaos-ke-ownership-model)
+- [4️⃣ Constructor \& Lifecycle](#4️⃣-constructor--lifecycle)
+  - [Failure Model — Constructor di Loop](#failure-model--constructor-di-loop)
+  - [Correct Pattern — System Lifetime Object](#correct-pattern--system-lifetime-object)
+  - [Lifecycle Rule Foundation](#lifecycle-rule-foundation)
+- [5️⃣ Composition Lebih Aman daripada Inheritance](#5️⃣-composition-lebih-aman-daripada-inheritance)
+  - [Apa yang Terjadi Saat Anda Gunakan `virtual`?](#apa-yang-terjadi-saat-anda-gunakan-virtual)
+  - [Embedded Reality Check](#embedded-reality-check)
+  - [Composition — Lebih Eksplisit \& Deterministik](#composition--lebih-eksplisit--deterministik)
+  - [Foundation Rule](#foundation-rule)
+- [6️⃣ Object Size, Memory Footprint \& Stack Impact](#6️⃣-object-size-memory-footprint--stack-impact)
+  - [Audit Object Size](#audit-object-size)
+- [7️⃣ OOP vs Stack Usage](#7️⃣-oop-vs-stack-usage)
+  - [Pattern Stabil](#pattern-stabil)
+- [8️⃣ Hidden Allocation \& OOP](#8️⃣-hidden-allocation--oop)
+  - [OOP Trap dalam Embedded](#oop-trap-dalam-embedded)
+  - [Foundation Discipline](#foundation-discipline)
+- [8️⃣ Global Variable vs Object State](#8️⃣-global-variable-vs-object-state)
+  - [Failure Model — Global + RTOS](#failure-model--global--rtos)
+  - [Object State = Ownership Boundary](#object-state--ownership-boundary)
+- [9️⃣ OOP dalam Konteks ISR \& RTOS](#9️⃣-oop-dalam-konteks-isr--rtos)
+  - [Pattern Salah — ISR Memanggil Object Langsung](#pattern-salah--isr-memanggil-object-langsung)
+  - [Pattern Benar — ISR Kirim Event](#pattern-benar--isr-kirim-event)
+  - [OOP + Queue Model](#oop--queue-model)
+- [🔬 IndustrialNode Pattern (Stabil)](#-industrialnode-pattern-stabil)
+- [OOP Bisa Menghancurkan Determinism](#oop-bisa-menghancurkan-determinism)
+- [🔟 Mental Model yang Harus Dibentuk](#-mental-model-yang-harus-dibentuk)
+
+---
+
+# 1️⃣ OOP di Embedded Bukan Soal Gaya
+
+Masalah firmware Arduino klasik bukan karena C.
+
+Masalahnya adalah **ownership chaos**.
+
+Contoh klasik:
+
+```cpp
+int relayPin = 5;
+bool relayState = false;
+
+void setRelay(bool on) {
+    relayState = on;
+    digitalWrite(relayPin, on);
+}
+```
+
+Masalah fundamental:
+
+- `relayState` global mutable.
+- Tidak ada owner.
+- ISR bisa ubah.
+- MQTT callback bisa ubah.
+- loop() bisa ubah.
+- Tidak ada boundary.
+
+Ini bukan masalah bahasa.
+Ini masalah **architecture discipline**.
+
+---
+
+## Failure Model — Global Mutable + Concurrency
+
+```text
+ISR        → relayState
+MQTT       → relayState
+loop       → relayState
+Timer      → relayState
+```
+
+Race condition bukan kemungkinan.
+
+Ia hanya soal waktu.
+
+---
+
+## OOP sebagai Solusi Ownership
+
+Ubah menjadi:
+
+```cpp
+class RelayDriver {
+public:
+    explicit RelayDriver(int pin)
+        : pin_(pin), state_(false) {}
+
+    void set(bool on) {
+        state_ = on;
+        digitalWrite(pin_, on);
+    }
+
+    bool state() const {
+        return state_;
+    }
+
+private:
+    int pin_;
+    bool state_;
+};
+```
+
+Sekarang:
+
+- State private.
+- Hanya bisa dimodifikasi lewat method.
+- Ownership jelas.
+- Boundary terbentuk.
+
+Encapsulation di embedded = boundary control.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Readme',
+      href: '/blog/IoT/firmware-foundations-esp32/README',
+      description: 'README - C++ Firmware Engineering Foundations for ESP32',
+    },
+    {
+      name: 'Dual-Track Course Syllabus',
+      href: '/blog/IoT/firmware-foundations-esp32/syllabus-12-16-week-dual-track-esp32-firmware',
+      description:
+        'Dual-Track Course Syllabus - ESP32 Firmware Engineering (Foundation → Production)',
+    },
+    {
+      name: 'ESP32 Execution',
+      href: '/blog/IoT/firmware-foundations-esp32/01-esp32-execution-reality',
+      description: 'ESP32 Execution Reality Under Arduino Core',
+    },
+    {
+      name: 'Concurrency & RTOS',
+      href: '/blog/IoT/firmware-foundations-esp32/02-rtos-concurrency-fundamentals-esp32',
+      description: 'Concurrency & RTOS Fundamentals (ESP32 Context)',
+    },
+    {
+      name: 'FreeRTOS Execution Model',
+      href: '/blog/IoT/firmware-foundations-esp32/03-freertos-execution-model-esp32',
+      description: 'FreeRTOS Execution Model on ESP32 (Arduino Context)',
+    },
+    {
+      name: 'Memory Model & Object Lifetime',
+      href: '/blog/IoT/firmware-foundations-esp32/04-memory-model-object-lifetime-esp32',
+      description: 'Memory Model & Object Lifetime on ESP32',
+    },
+    {
+      name: '3-Layer Firmware Architecture',
+      href: '/blog/IoT/cpp-production-firmware-esp32/06-decoupled-communication-architecture',
+      description: '3-Layer Firmware Architecture on ESP32',
+    },
+    {
+      name: 'Communication & State Thinking',
+      href: '/blog/IoT/firmware-foundations-esp32/07-communication-state-thinking-esp32',
+      description: 'Communication & State Thinking on ESP32',
+    },
+    {
+      name: 'Reliability Thinking',
+      href: '/blog/IoT/firmware-foundations-esp32/08-reliability-transition-to-production-esp32',
+      description: 'Reliability Thinking & Transition to Production Discipline',
+    },
+  ]}
+/>
+
+---
+
+# 2️⃣ Encapsulation sebagai Boundary Hardware
+
+Hardware adalah resource terbatas.
+
+Jika Anda expose pin langsung:
+
+```cpp
+digitalWrite(5, HIGH);
+```
+
+Siapa pun bisa mengakses.
+
+Tidak ada policy.
+
+---
+
+## Pattern Tanpa Boundary
+
+```text
+loop()
+ISR()
+MQTT callback()
+Timer callback()
+```
+
+Semua langsung ke `digitalWrite()`.
+
+Tidak ada arbitration.
+
+---
+
+## Pattern Dengan Boundary
+
+```text
+ISR         → Event
+MQTT        → Event
+loopTask    → RelayDriver::set()
+```
+
+RelayDriver menjadi satu-satunya pemilik pin.
+
+---
+
+## IndustrialNode Context
+
+Struktur kita:
+
+```text
+IndustrialNode/
+├── drv_RelayDriver.cpp
+├── svc_SensorService.cpp
+├── app_ControlApp.cpp
+```
+
+Boundary:
+
+- Driver hanya tahu hardware.
+- Service tahu logic sensor.
+- App tahu orchestration.
+
+Ini bukan style.
+Ini dependency control.
+
+---
+
+# 3️⃣ Visual: Dari Global Chaos ke Ownership Model
+
+![Image](https://www.researchgate.net/publication/221920954/figure/fig4/AS%3A305109914406912%401449755280020/Embedded-software-architecture-The-whole-software-structure-is-divided-in-4-layers-as.png)
+
+![Image](https://www.researchgate.net/publication/349758819/figure/fig1/AS%3A997475196346392%401614828027991/openMHA-software-architecture-visualization-Black-arrows-object-ownership-Green.png)
+
+![Image](https://www.researchgate.net/publication/269125196/figure/fig6/AS%3A668229219414031%401536329669730/Firmware-architecture-diagram-A-layered-modular-architecture-is-used-to-facilitate.png)
+
+![Image](https://www.researchgate.net/publication/288856870/figure/fig3/AS%3A339299758297153%401457906774879/Block-diagram-of-the-firmware-architecture.png)
+
+> Model Lama (Chaos)
+
+```text
++----------------+
+|  ISR           |
++----------------+
+        ↓
++----------------+
+| relayPin (global)
++----------------+
+        ↑
++----------------+
+|  MQTT callback |
++----------------+
+        ↑
++----------------+
+|  loop()        |
++----------------+
+```
+
+Tidak ada ownership.
+Tidak ada boundary.
+Tidak ada arbitration.
+
+---
+
+> Model OOP (Ownership)
+
+```text
+ISR        → Queue
+MQTT       → Queue
+                 ↓
+            ControlApp
+                 ↓
+            RelayDriver
+                 ↓
+             Hardware Pin
+```
+
+Sekarang:
+
+- Satu owner hardware.
+- Event masuk melalui channel.
+- State dikelola dalam domain.
+
+---
+
+# 4️⃣ Constructor & Lifecycle
+
+Constructor di embedded bukan sekadar inisialisasi variable.
+
+Ia adalah:
+
+> Resource binding moment.
+
+Contoh:
+
+```cpp
+RelayDriver relay(5);
+```
+
+Artinya:
+
+- Pin 5 milik relay.
+- State awal terdefinisi.
+- Resource terikat sejak startup.
+
+---
+
+## Failure Model — Constructor di Loop
+
+```cpp
+void loop() {
+    RelayDriver relay(5);
+    relay.set(true);
+}
+```
+
+Setiap loop:
+
+- Constructor dipanggil.
+- State reset.
+- Tidak align dengan system lifetime.
+- Stack churn.
+- Potential hidden cost.
+
+---
+
+## Correct Pattern — System Lifetime Object
+
+```cpp
+RelayDriver relay(5);
+
+void setup() {
+    relay.set(false);
+}
+
+void loop() {
+    relay.set(true);
+}
+```
+
+Object hidup sepanjang sistem.
+
+---
+
+## Lifecycle Rule Foundation
+
+Object domain utama:
+
+- Harus hidup sepanjang sistem.
+- Tidak dibuat/dihancurkan berulang.
+- Tidak bergantung pada heap runtime.
+
+Jika lifetime tidak align,
+memory discipline (Article 4) hancur.
+
+---
+
+# 5️⃣ Composition Lebih Aman daripada Inheritance
+
+Inheritance terlihat profesional.
+
+Contoh:
+
+```cpp
+class Device {
+public:
+    virtual void update() = 0;
+};
+
+class RelayDriver : public Device {
+public:
+    void update() override {
+        // ...
+    }
+};
+```
+
+Secara akademik benar.
+
+Tetapi dalam embedded, kita harus bertanya:
+
+- Apakah polymorphism benar-benar diperlukan?
+- Apakah ada lebih dari satu implementasi?
+- Apakah kita butuh runtime dispatch?
+- Apakah vtable cost bisa diterima?
+
+---
+
+## Apa yang Terjadi Saat Anda Gunakan `virtual`?
+
+Compiler membuat:
+
+- vtable
+- pointer ke vtable
+- dynamic dispatch
+- tambahan indirection
+
+Ilustrasi sederhana:
+
+```text
+Object:
++------------------+
+| vptr ----------+ |
+| member1         | |
+| member2         | |
++------------------+ |
+                     ↓
+                  vtable
+                  +----------------+
+                  | &Relay::update |
+                  +----------------+
+```
+
+Setiap object dengan virtual function:
+
+- Memiliki pointer tambahan.
+- Tidak bisa dioptimalkan secara statik sepenuhnya.
+- Lebih sulit dianalisis ukuran finalnya.
+
+---
+
+## Embedded Reality Check
+
+Jika hanya ada satu implementasi:
+
+- Inheritance tidak memberikan value.
+- Tetapi tetap menambah complexity.
+
+---
+
+## Composition — Lebih Eksplisit & Deterministik
+
+```cpp
+class ActuatorService {
+public:
+    explicit ActuatorService(RelayDriver& relay)
+        : relay_(relay) {}
+
+    void update(bool on) {
+        relay_.set(on);
+    }
+
+private:
+    RelayDriver& relay_;
+};
+```
+
+Keuntungan:
+
+- Tidak ada vtable.
+- Tidak ada dynamic dispatch.
+- Tidak ada runtime polymorphism.
+- Dependency eksplisit.
+- Ownership jelas.
+
+---
+
+## Foundation Rule
+
+Gunakan inheritance hanya jika:
+
+- Benar-benar butuh polymorphism.
+- Ada lebih dari satu implementasi.
+- Lifetime dan ownership jelas.
+
+Default di embedded:
+
+> Composition first. Polymorphism last.
+
+---
+
+# 6️⃣ Object Size, Memory Footprint & Stack Impact
+
+Engineer sering lupa:
+
+Class mempengaruhi memory layout.
+
+Contoh sederhana:
+
+```cpp
+class A {
+    int x;
+    bool flag;
+};
+```
+
+Ukuran bukan 5 byte.
+Alignment bisa membuatnya 8 byte.
+
+Sekarang tambahkan:
+
+```cpp
+virtual void foo();
+```
+
+Ukuran bertambah lagi (vptr).
+
+Dalam sistem kecil:
+
+- Banyak object kecil.
+- Stack per task terbatas.
+- Alignment cost signifikan.
+
+---
+
+## Audit Object Size
+
+Tambahkan saat development:
+
+```cpp
+Serial.print("Size of RelayDriver: ");
+Serial.println(sizeof(RelayDriver));
+```
+
+Lakukan untuk semua class utama.
+
+Jika object besar dan diletakkan di stack:
+
+> Stack pressure meningkat.
+
+Ini menghubungkan langsung ke Article 4.
+
+---
+
+# 7️⃣ OOP vs Stack Usage
+
+Failure model klasik:
+
+```cpp
+void loop() {
+    ControlApp app(sensor, relay);
+    app.update();
+}
+```
+
+Object dibuat di stack tiap loop.
+
+Jika ControlApp memiliki:
+
+- Array internal.
+- Buffer.
+- Vector.
+- State besar.
+
+Stack consumption melonjak.
+
+---
+
+## Pattern Stabil
+
+```cpp
+ControlApp app(sensor, relay);
+
+void loop() {
+    app.update();
+}
+```
+
+Object global static.
+
+Stack loopTask hanya menyimpan:
+
+- Return address
+- Frame kecil
+
+Deterministik.
+
+---
+
+# 8️⃣ Hidden Allocation & OOP
+
+Beberapa pola OOP modern yang berisiko:
+
+- std::function
+- std::bind
+- std::vector
+- std::map
+- std::string
+- Polymorphic container
+
+Contoh yang tampak sederhana:
+
+```cpp
+std::function<void()> callback;
+```
+
+Bisa:
+
+- Allocate heap.
+- Copy lambda capture.
+- Reallocate.
+
+Anda tidak melihatnya.
+Tetapi heap melihatnya.
+
+---
+
+## OOP Trap dalam Embedded
+
+Desain seperti ini terlihat elegan:
+
+```cpp
+class EventBus {
+public:
+    void subscribe(std::function<void()> handler);
+};
+```
+
+Tetapi:
+
+- std::function → allocation.
+- Handler capture → allocation.
+- Subscriber list → vector → reallocation.
+
+Dalam sistem uptime panjang:
+
+> Fragmentation generator.
+
+---
+
+## Foundation Discipline
+
+Jika butuh callback:
+
+Gunakan pointer function sederhana:
+
+```cpp
+typedef void (*Handler)();
+```
+
+Atau referensi statik.
+
+Minimalkan abstraction cost.
+
+---
+
+# 8️⃣ Global Variable vs Object State
+
+Masalah global mutable bukan hanya style.
+
+Masalahnya adalah:
+
+> Tidak ada owner.
+
+Contoh klasik:
+
+```cpp
+bool relayState = false;
+```
+
+Siapa boleh ubah?
+
+- loop()
+- ISR
+- MQTT callback
+- Timer callback
+- Future feature
+
+Semua bisa.
+
+Dan saat concurrency masuk,
+global mutable menjadi race magnet.
+
+---
+
+## Failure Model — Global + RTOS
+
+```text
+loopTask       → relayState = true
+MQTT Task      → relayState = false
+ISR            → relayState = toggle
+Timer Task     → relayState = true
+```
+
+Tidak ada arbitration.
+Tidak ada ordering guarantee.
+Tidak ada ownership.
+
+---
+
+## Object State = Ownership Boundary
+
+```cpp
+class RelayDriver {
+public:
+    void set(bool on) {
+        state_ = on;
+        digitalWrite(pin_, on);
+    }
+
+private:
+    bool state_;
+    int  pin_;
+};
+```
+
+Sekarang:
+
+- Hanya RelayDriver yang punya state.
+- Tidak ada akses langsung ke state\_.
+- Tidak ada shared mutable global.
+
+Ini bukan “OOP cantik”.
+
+Ini concurrency discipline.
+
+---
+
+# 9️⃣ OOP dalam Konteks ISR & RTOS
+
+Sekarang kita gabungkan Article 2 + 3 + 4 + 5.
+
+ISR tidak boleh:
+
+- Blocking
+- Allocation
+- Heavy logic
+- Menyentuh shared object sembarangan
+
+---
+
+## Pattern Salah — ISR Memanggil Object Langsung
+
+```cpp
+void IRAM_ATTR buttonISR() {
+    relay.set(true);
+}
+```
+
+Masalah:
+
+- relay mungkin bukan thread-safe.
+- relay mungkin dipakai task lain.
+- Tidak ada arbitration.
+- Potensi race.
+- Potensi deadlock jika internal pakai mutex.
+
+---
+
+## Pattern Benar — ISR Kirim Event
+
+```cpp
+volatile bool buttonPressed = false;
+
+void IRAM_ATTR buttonISR() {
+    buttonPressed = true;
+}
+```
+
+Atau lebih baik:
+
+```text
+ISR → Queue → ControlTask → RelayDriver
+```
+
+---
+
+## OOP + Queue Model
+
+```text
+ISR
+ ↓
+Queue<Event>
+ ↓
+ControlApp::process()
+ ↓
+RelayDriver::set()
+```
+
+Sekarang:
+
+- ISR tidak menyentuh hardware driver langsung.
+- ControlApp memiliki ownership logic.
+- RelayDriver hanya menerima command.
+
+OOP membantu enforce boundary ini.
+
+---
+
+# 🔬 IndustrialNode Pattern (Stabil)
+
+```cpp
+RelayDriver relay(5);
+SensorService sensor;
+ControlApp app(sensor, relay);
+
+void setup() {
+    app.init();
+}
+
+void loop() {
+    app.update();
+}
+```
+
+ControlApp adalah:
+
+- Orchestrator
+- Single owner of system state
+- Single place for decision logic
+
+RelayDriver tidak tahu tentang MQTT.
+SensorService tidak tahu tentang ISR.
+Layer separation jelas.
+
+---
+
+# OOP Bisa Menghancurkan Determinism
+
+Sekarang sisi gelapnya.
+
+Jika OOP digunakan tanpa discipline:
+
+- Dynamic allocation dalam constructor.
+- std::function callback.
+- vector dynamic.
+- new/delete di hot path.
+- Polymorphic container.
+
+Maka:
+
+- Fragmentation meningkat.
+- Heap spike sulit diprediksi.
+- Stack usage tidak terkontrol.
+- Debugging menjadi kompleks.
+
+OOP tidak otomatis aman.
+
+Ia aman hanya jika:
+
+> Selaras dengan memory & concurrency discipline.
+
+---
+
+# 🔟 Mental Model yang Harus Dibentuk
+
+Setelah Article 5, engineer harus memahami:
+
+---
+
+> 1️⃣ OOP bukan gaya
+
+Ia adalah tool untuk:
+
+- Ownership clarity
+- Boundary enforcement
+- State isolation
+
+---
+
+> 2️⃣ Encapsulation = concurrency shield
+
+Private state mencegah chaos global.
+
+---
+
+> 3️⃣ Constructor = resource binding
+
+Object harus align dengan system lifetime.
+
+---
+
+> 4️⃣ Composition lebih aman daripada inheritance
+
+Default embedded = explicit dependency.
+
+---
+
+> 5️⃣ Object size memengaruhi stack
+
+Audit sizeof().
+
+---
+
+> 6️⃣ Hidden allocation harus dicurigai
+
+std::function, vector, string bukan gratis.
+
+---
+
+> 7️⃣ ISR tidak boleh melanggar boundary object
+
+ISR hanya signal.
+Task yang memiliki object yang memproses.
+
+---
+
+> 8️⃣ OOP harus selaras dengan memory discipline
+
+Jika tidak:
+
+- Fragmentation
+- Heap exhaustion
+- Stack overflow
+- Watchdog reset
+
+---
+
+> Penutup — OOP sebagai Structural Control
+
+Dalam firmware ESP32:
+
+OOP bukan tentang:
+
+> Membuat sistem terlihat modern.
+
+OOP adalah tentang:
+
+- Mengontrol siapa memiliki state.
+- Mengontrol siapa boleh mengubah.
+- Mengontrol lifetime.
+- Mengontrol dependency.
+- Mengurangi blast radius concurrency.
+- Menjaga determinism.
+
+Tanpa OOP discipline:
+
+- Layering di Article 6 akan runtuh.
+- Communication architecture akan chaos.
+- Reliability discipline akan terasa “terlalu keras”.
+
+Dengan OOP discipline:
+
+Foundation → Production menjadi natural evolution.
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

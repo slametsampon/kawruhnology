@@ -1,0 +1,1031 @@
+---
+title: ESP32 Execution Reality Under Arduino Core
+date: '2026-02-23'
+tags:
+  [
+    'esp32',
+    'arduino-core',
+    'freertos-basics',
+    'embedded-execution-model',
+    'firmware-foundation',
+    'sensor-relay-node',
+  ]
+draft: false
+summary: Banyak engineer menggunakan ESP32 dengan Arduino core seolah-olah sistem berjalan secara single-thread melalui `setup()` dan `loop()`. Kenyataannya, ESP32 berjalan di atas FreeRTOS dengan beberapa task internal seperti WiFi, TCP/IP stack, dan idle task. Tanpa memahami execution model ini, firmware mudah menjadi blocking, race-prone, dan tidak deterministik. Artikel ini membongkar bagaimana `loop()` sebenarnya adalah task FreeRTOS, bagaimana ISR mem-preempt eksekusi, dan bagaimana aktivitas jaringan memengaruhi kontrol hardware. Tujuannya membentuk mental model eksekusi sistem sebelum masuk ke disiplin arsitektur produksi.
+---
+
+# 📘 **_Foundation Artikel 01: ESP32 Execution Reality Under Arduino Core_**
+
+**Track:** C++ Firmware Engineering Foundations for ESP32
+**Environment:** ESP32 + VSCode + Arduino Community Edition
+**Project Base:** `IndustrialNode/IndustrialNode.ino`
+**Use Case:** Generic Sensor + Relay Node
+
+---
+
+- [📘 **_Foundation Artikel 01: ESP32 Execution Reality Under Arduino Core_**](#-foundation-artikel-01-esp32-execution-reality-under-arduino-core)
+- [1️⃣ Ilusi “Single Thread Arduino”](#1️⃣-ilusi-single-thread-arduino)
+  - [Mengapa Ilusi Ini Berbahaya?](#mengapa-ilusi-ini-berbahaya)
+- [🔬 Execution Lab 01 — Membuktikan Realitas Eksekusi](#-execution-lab-01--membuktikan-realitas-eksekusi)
+  - [📂 Struktur Project (Flat Arduino Structure)](#-struktur-project-flat-arduino-structure)
+  - [🧪 IndustrialNode.ino (Full Runnable Code)](#-industrialnodeino-full-runnable-code)
+- [🔎 Apa yang Harus Diamati?](#-apa-yang-harus-diamati)
+- [2️⃣ Arsitektur Eksekusi Sebenarnya di ESP32](#2️⃣-arsitektur-eksekusi-sebenarnya-di-esp32)
+  - [Diagram Konseptual Eksekusi](#diagram-konseptual-eksekusi)
+  - [Dual Core Awareness](#dual-core-awareness)
+  - [Kenapa Ini Penting?](#kenapa-ini-penting)
+- [3️⃣ `loop()` Bukan Main Thread](#3️⃣-loop-bukan-main-thread)
+  - [Stack Sendiri Itu Apa Artinya?](#stack-sendiri-itu-apa-artinya)
+  - [Blocking di `loop()`](#blocking-di-loop)
+- [4️⃣ ISR Bukan Callback Biasa](#4️⃣-isr-bukan-callback-biasa)
+  - [Ilustrasi Preemption](#ilustrasi-preemption)
+  - [Eksperimen: ISR Berat (Jangan Dipakai di Produksi)](#eksperimen-isr-berat-jangan-dipakai-di-produksi)
+  - [Mengapa Engineer Sering Salah di ISR?](#mengapa-engineer-sering-salah-di-isr)
+- [5️⃣ WiFi \& Network Bukan “Background Magic”](#5️⃣-wifi--network-bukan-background-magic)
+  - [Eksperimen: Monitoring Heap Saat WiFi Aktif](#eksperimen-monitoring-heap-saat-wifi-aktif)
+  - [Apa Dampaknya ke Firmware Sensor + Relay?](#apa-dampaknya-ke-firmware-sensor--relay)
+  - [Network Itu Stateful](#network-itu-stateful)
+- [6️⃣ Blocking Itu Bukan Sekadar Delay](#6️⃣-blocking-itu-bukan-sekadar-delay)
+  - [delay() vs Busy Loop](#delay-vs-busy-loop)
+    - [Cooperative Blocking](#cooperative-blocking)
+    - [Non-Cooperative Blocking](#non-cooperative-blocking)
+  - [Eksperimen: Blocking + ISR](#eksperimen-blocking--isr)
+  - [Blocking + Network = Kombinasi Berbahaya](#blocking--network--kombinasi-berbahaya)
+- [7️⃣ Struktur Project yang Digunakan Sejak Awal](#7️⃣-struktur-project-yang-digunakan-sejak-awal)
+- [8️⃣ Mental Model yang Harus Dibentuk](#8️⃣-mental-model-yang-harus-dibentuk)
+  - [1️⃣ ESP32 bukan single-thread.](#1️⃣-esp32-bukan-single-thread)
+  - [2️⃣ loop() adalah task.](#2️⃣-loop-adalah-task)
+  - [3️⃣ ISR bisa mem-preempt kapan saja.](#3️⃣-isr-bisa-mem-preempt-kapan-saja)
+  - [4️⃣ WiFi \& network berjalan paralel.](#4️⃣-wifi--network-berjalan-paralel)
+  - [5️⃣ Blocking mengubah timing sistem.](#5️⃣-blocking-mengubah-timing-sistem)
+  - [6️⃣ Shared state harus dicurigai.](#6️⃣-shared-state-harus-dicurigai)
+- [🔒 Konsolidasi: Apa yang Sebenarnya Anda Pelajari?](#-konsolidasi-apa-yang-sebenarnya-anda-pelajari)
+- [📌 Transisi ke Artikel 02](#-transisi-ke-artikel-02)
+- [Penutup](#penutup)
+
+---
+
+# 1️⃣ Ilusi “Single Thread Arduino”
+
+Banyak engineer yang datang dari:
+
+- Arduino AVR
+- ATmega328
+- Superloop firmware klasik
+
+Memiliki mental model seperti ini:
+
+```cpp
+void setup() {
+  pinMode(5, OUTPUT);
+}
+
+void loop() {
+  digitalWrite(5, HIGH);
+  delay(1000);
+  digitalWrite(5, LOW);
+  delay(1000);
+}
+```
+
+Visual mentalnya:
+
+```text
+setup()
+  ↓
+loop()
+  ↓
+loop()
+  ↓
+loop()
+```
+
+Terlihat:
+
+- Linear
+- Deterministik
+- Single-thread
+- Mudah diprediksi
+
+Model ini **cukup valid di Arduino UNO klasik.**
+
+Tetapi pada ESP32:
+
+> Model ini tidak lagi mencerminkan realitas eksekusi sistem.
+
+---
+
+## Mengapa Ilusi Ini Berbahaya?
+
+Karena jika engineer berpikir single-thread:
+
+- Ia menganggap `loop()` pusat sistem.
+- Ia menganggap delay hanya menghentikan loop.
+- Ia menganggap interrupt jarang terjadi.
+- Ia menganggap network pasif.
+
+Padahal:
+
+> Pada ESP32, Anda tidak pernah benar-benar sendirian di CPU.
+
+Dan inilah akar kesalahan desain firmware modern.
+
+---
+
+# 🔬 Execution Lab 01 — Membuktikan Realitas Eksekusi
+
+Sekarang kita tidak bicara teori.
+Kita buktikan langsung.
+
+---
+
+## 📂 Struktur Project (Flat Arduino Structure)
+
+```text
+IndustrialNode/
+└── IndustrialNode.ino
+```
+
+Tidak ada nested folder.
+Nama folder = nama file `.ino`.
+Sesuai aturan Arduino.
+
+---
+
+## 🧪 IndustrialNode.ino (Full Runnable Code)
+
+Copy–paste langsung:
+
+```cpp
+#include <Arduino.h>
+#include <WiFi.h>
+
+// ===============================
+// Configuration
+// ===============================
+
+constexpr int LED_PIN = 5;
+constexpr int BUTTON_PIN = 18;
+
+constexpr unsigned long LOOP_PRINT_INTERVAL_MS = 1000;
+constexpr unsigned long CONTROL_PERIOD_MS      = 200;
+
+// ===============================
+// Shared State
+// ===============================
+
+volatile bool isrFlag = false;
+volatile unsigned long isrCount = 0;
+
+unsigned long lastPrint = 0;
+unsigned long lastControl = 0;
+
+// ===============================
+// ISR
+// ===============================
+
+void IRAM_ATTR buttonISR()
+{
+    isrFlag = true;
+    isrCount++;
+}
+
+// ===============================
+// Setup
+// ===============================
+
+void setup()
+{
+    Serial.begin(115200);
+    delay(1000);
+
+    pinMode(LED_PIN, OUTPUT);
+    pinMode(BUTTON_PIN, INPUT_PULLUP);
+
+    attachInterrupt(digitalPinToInterrupt(BUTTON_PIN), buttonISR, FALLING);
+
+    Serial.println("=======================================");
+    Serial.println("ESP32 Execution Reality Test");
+    Serial.print("Running on Core: ");
+    Serial.println(xPortGetCoreID());
+    Serial.println("=======================================");
+
+    // Optional: activate WiFi to show multitasking effect
+    WiFi.mode(WIFI_STA);
+}
+
+// ===============================
+// Loop
+// ===============================
+
+void loop()
+{
+    unsigned long now = millis();
+
+    // Periodic print
+    if (now - lastPrint >= LOOP_PRINT_INTERVAL_MS)
+    {
+        lastPrint = now;
+
+        Serial.println("---- LOOP STATUS ----");
+        Serial.print("Core ID: ");
+        Serial.println(xPortGetCoreID());
+
+        Serial.print("Free Heap: ");
+        Serial.println(ESP.getFreeHeap());
+
+        Serial.print("ISR Count: ");
+        Serial.println(isrCount);
+
+        Serial.print("Stack High Watermark (words): ");
+        Serial.println(uxTaskGetStackHighWaterMark(NULL));
+
+        Serial.println("----------------------");
+    }
+
+    // Simple control period
+    if (now - lastControl >= CONTROL_PERIOD_MS)
+    {
+        lastControl = now;
+        digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+    }
+
+    // ISR event handling
+    if (isrFlag)
+    {
+        isrFlag = false;
+        Serial.println("Button ISR detected!");
+    }
+
+    // Simulate small cooperative delay
+    delay(1);
+}
+```
+
+---
+
+# 🔎 Apa yang Harus Diamati?
+
+1. Serial menunjukkan Core ID.
+2. ISR bisa masuk kapan saja.
+3. Free heap berubah jika WiFi aktif.
+4. Stack watermark terlihat.
+5. LED tetap stabil.
+
+Ini bukan teori.
+
+Ini observasi langsung.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Readme',
+      href: '/blog/IoT/firmware-foundations-esp32/README',
+      description: 'README - C++ Firmware Engineering Foundations for ESP32',
+    },
+    {
+      name: 'Dual-Track Course Syllabus',
+      href: '/blog/IoT/firmware-foundations-esp32/syllabus-12-16-week-dual-track-esp32-firmware',
+      description:
+        'Dual-Track Course Syllabus - ESP32 Firmware Engineering (Foundation → Production)',
+    },
+    {
+      name: 'Concurrency & RTOS',
+      href: '/blog/IoT/firmware-foundations-esp32/02-rtos-concurrency-fundamentals-esp32',
+      description: 'Concurrency & RTOS Fundamentals (ESP32 Context)',
+    },
+    {
+      name: 'FreeRTOS Execution Model',
+      href: '/blog/IoT/firmware-foundations-esp32/03-freertos-execution-model-esp32',
+      description: 'FreeRTOS Execution Model on ESP32 (Arduino Context)',
+    },
+    {
+      name: 'Memory Model & Object Lifetime',
+      href: '/blog/IoT/firmware-foundations-esp32/04-memory-model-object-lifetime-esp32',
+      description: 'Memory Model & Object Lifetime on ESP32',
+    },
+    {
+      name: 'OOP for Embedded Firmware',
+      href: '/blog/IoT/firmware-foundations-esp32/05-oop-embedded-firmware-esp32',
+      description: 'OOP for Embedded Firmware on ESP32',
+    },
+    {
+      name: '3-Layer Firmware Architecture',
+      href: '/blog/IoT/cpp-production-firmware-esp32/06-decoupled-communication-architecture',
+      description: '3-Layer Firmware Architecture on ESP32',
+    },
+    {
+      name: 'Communication & State Thinking',
+      href: '/blog/IoT/firmware-foundations-esp32/07-communication-state-thinking-esp32',
+      description: 'Communication & State Thinking on ESP32',
+    },
+    {
+      name: 'Reliability Thinking',
+      href: '/blog/IoT/firmware-foundations-esp32/08-reliability-transition-to-production-esp32',
+      description: 'Reliability Thinking & Transition to Production Discipline',
+    },
+  ]}
+/>
+
+---
+
+# 2️⃣ Arsitektur Eksekusi Sebenarnya di ESP32
+
+ESP32 Arduino Core berjalan di atas **FreeRTOS preemptive scheduler.**
+
+Artinya:
+
+```text
+FreeRTOS Scheduler
+  ├─ loopTask
+  ├─ WiFi Task
+  ├─ TCP/IP Task
+  ├─ Timer Task
+  ├─ IDLE Task
+  └─ ISR Context
+```
+
+Sistem sudah multitasking bahkan sebelum Anda membuat task sendiri.
+
+---
+
+## Diagram Konseptual Eksekusi
+
+Superloop klasik:
+
+```text
+while(true) {
+   do_something();
+}
+```
+
+RTOS model:
+
+```text
+Scheduler
+   ↓
+Task A
+Task B
+Task C
+ISR
+```
+
+Preemption:
+
+```text
+Time →
+[loopTask]
+       ↑
+       Interrupt
+       ↓
+[ISR]
+       ↓
+[loopTask resume]
+```
+
+---
+
+## Dual Core Awareness
+
+ESP32 memiliki 2 core.
+
+Model mental praktis:
+
+```text
+Core 0:
+  - WiFi
+  - TCP/IP
+  - System Task
+
+Core 1:
+  - loopTask
+  - User Task
+```
+
+Ini bukan aturan absolut, tetapi cukup untuk membangun intuisi.
+
+---
+
+## Kenapa Ini Penting?
+
+Karena ketika Anda menambahkan:
+
+- MQTT
+- TLS
+- OTA
+- Logging
+- WebServer
+
+Anda tidak lagi menjalankan satu loop sederhana.
+
+Anda menjalankan sistem multitasking dengan resource terbatas.
+
+---
+
+# 3️⃣ `loop()` Bukan Main Thread
+
+Di ESP32, `loop()` adalah task.
+
+Artinya:
+
+- Punya stack sendiri.
+- Bisa di-preempt.
+- Bisa diblokir.
+- Bisa di-reset watchdog.
+
+---
+
+## Stack Sendiri Itu Apa Artinya?
+
+Ubah kode di loop:
+
+Tambahkan ini (untuk eksperimen):
+
+```cpp
+char bigBuffer[4096];
+```
+
+Compile dan upload.
+
+Perhatikan:
+
+- Stack watermark turun drastis.
+- Jika terlalu besar → crash.
+
+Ini bukan heap.
+
+Ini stack loopTask.
+
+Stack overflow berbeda dari heap exhaustion.
+
+---
+
+## Blocking di `loop()`
+
+Ganti isi loop sementara dengan ini:
+
+```cpp
+void loop()
+{
+    Serial.println("Entering busy loop...");
+
+    unsigned long start = millis();
+    while (millis() - start < 5000)
+    {
+        // busy wait
+    }
+
+    Serial.println("Exiting busy loop...");
+}
+```
+
+Apa yang terjadi?
+
+- LED berhenti stabil.
+- ISR tetap bisa masuk.
+- Jika terlalu lama → watchdog reset.
+
+Sekarang ubah menjadi:
+
+```cpp
+while (millis() - start < 5000)
+{
+    delay(1);
+}
+```
+
+Sistem lebih stabil.
+
+Pelajaran:
+
+> Blocking non-cooperative berbahaya di RTOS.
+
+---
+
+🔴 Sampai di sini, Artikel 01 sudah:
+
+- Tidak konseptual.
+- Runnable.
+- Menguji ISR.
+- Menguji stack.
+- Menguji blocking.
+- Menguji heap.
+- Menguji dual core.
+
+---
+
+# 4️⃣ ISR Bukan Callback Biasa
+
+Interrupt Service Routine (ISR) adalah **context eksekusi berbeda** dari task biasa.
+
+Contoh ISR yang sudah kita pakai:
+
+```cpp
+void IRAM_ATTR buttonISR()
+{
+    isrFlag = true;
+    isrCount++;
+}
+```
+
+Hal penting:
+
+- ISR **tidak berjalan di loopTask**.
+- ISR **tidak menggunakan stack loopTask**.
+- ISR bisa mem-preempt task kapan saja.
+- ISR tidak boleh blocking.
+- ISR harus sangat cepat.
+
+---
+
+## Ilustrasi Preemption
+
+```text
+Time →
+[loopTask running]
+        ↑
+        Interrupt occurs
+        ↓
+[ISR running]
+        ↓
+[loopTask resumes]
+```
+
+Preemption bukan teori.
+Anda sudah melihatnya saat menekan tombol di Execution Lab.
+
+---
+
+## Eksperimen: ISR Berat (Jangan Dipakai di Produksi)
+
+Ubah ISR menjadi:
+
+```cpp
+void IRAM_ATTR buttonISR()
+{
+    digitalWrite(LED_PIN, HIGH);
+    delay(10);  // salah besar (tidak boleh di ISR)
+}
+```
+
+Apa yang bisa terjadi:
+
+- Sistem hang.
+- Watchdog reset.
+- Behavior aneh.
+- Serial glitch.
+
+Kenapa?
+
+Karena `delay()`:
+
+- Membutuhkan scheduler.
+- ISR tidak boleh yield.
+- ISR tidak boleh blocking.
+
+---
+
+## Mengapa Engineer Sering Salah di ISR?
+
+Karena:
+
+- attachInterrupt terlihat seperti callback biasa.
+- MQTT callback terlihat seperti function normal.
+- Arduino menyederhanakan API.
+
+Tetapi secara sistem:
+
+> ISR adalah interrupt context, bukan callback biasa.
+
+---
+
+# 5️⃣ WiFi & Network Bukan “Background Magic”
+
+Sekarang kita aktifkan WiFi di setup (sudah ada di lab):
+
+```cpp
+WiFi.mode(WIFI_STA);
+```
+
+Walaupun belum connect ke AP, WiFi subsystem aktif.
+
+Yang terjadi di belakang layar:
+
+- WiFi driver task dibuat.
+- Event loop dibuat.
+- Buffer dialokasikan.
+- Timer internal aktif.
+
+---
+
+## Eksperimen: Monitoring Heap Saat WiFi Aktif
+
+Tambahkan ke `setup()`:
+
+```cpp
+Serial.print("Free Heap Before WiFi: ");
+Serial.println(ESP.getFreeHeap());
+
+WiFi.mode(WIFI_STA);
+
+Serial.print("Free Heap After WiFi: ");
+Serial.println(ESP.getFreeHeap());
+```
+
+Upload dan lihat hasilnya.
+
+Anda akan melihat:
+
+- Heap berkurang.
+- Tanpa Anda menulis satu baris logic network pun.
+
+Artinya:
+
+> Network adalah domain aktif dengan biaya resource nyata.
+
+---
+
+## Apa Dampaknya ke Firmware Sensor + Relay?
+
+Bayangkan sistem:
+
+- Sensor sampling tiap 100 ms.
+- Relay kontrol threshold.
+- MQTT publish tiap 5 detik.
+
+Sekarang:
+
+- TLS handshake terjadi.
+- Broker restart.
+- WiFi reconnect.
+
+Jika TLS memakan 300–500 ms CPU:
+
+- Loop kontrol bisa terlambat.
+- Sampling jitter meningkat.
+- Relay update tidak presisi.
+
+Dan sering disalahartikan sebagai:
+
+- Sensor noise.
+- Power drop.
+- Hardware glitch.
+
+Padahal akarnya adalah:
+
+> Scheduling + Network Load.
+
+---
+
+## Network Itu Stateful
+
+Network bukan sekadar kirim data.
+
+Ia punya lifecycle:
+
+```text
+INIT
+→ WIFI_CONNECTING
+→ WIFI_CONNECTED
+→ MQTT_CONNECTING
+→ MQTT_CONNECTED
+→ ERROR
+→ RECONNECT
+```
+
+Jika engineer tidak memahami ini:
+
+- Mereka membuat reconnect tersebar.
+- Mereka memanggil WiFi.begin() sembarang.
+- Mereka blocking sampai connect.
+- Mereka membuat global flag liar.
+
+Ini awal chaos komunikasi.
+
+Di Foundation kita hanya tanam mental model.
+
+Di Production nanti akan dibekukan boundary-nya.
+
+---
+
+# 6️⃣ Blocking Itu Bukan Sekadar Delay
+
+Sekarang kita bedah lebih dalam.
+
+## delay() vs Busy Loop
+
+### Cooperative Blocking
+
+```cpp
+delay(500);
+```
+
+Artinya:
+
+- Task masuk state Blocked.
+- Scheduler menjalankan task lain.
+- Sistem tetap hidup.
+
+### Non-Cooperative Blocking
+
+```cpp
+while (millis() - start < 500) {
+}
+```
+
+Artinya:
+
+- Tidak yield.
+- Tidak memberi kesempatan scheduler.
+- Bisa memicu watchdog.
+- Bisa mengganggu task lain.
+
+---
+
+## Eksperimen: Blocking + ISR
+
+Gunakan versi busy loop selama 5 detik.
+
+Tekan tombol saat busy loop berjalan.
+
+Perhatikan:
+
+- ISR tetap masuk.
+- Tetapi sistem terasa tidak responsif.
+- Stack watermark mungkin turun.
+
+Ini bukti:
+
+> ISR dan loop tidak berada dalam satu dunia yang sama.
+
+---
+
+## Blocking + Network = Kombinasi Berbahaya
+
+Sekarang tambahkan simulasi network blocking:
+
+Tambahkan di loop:
+
+```cpp
+if (now - lastControl >= 5000)
+{
+    lastControl = now;
+
+    Serial.println("Simulate network blocking...");
+    delay(1000);
+}
+```
+
+Apa yang terjadi?
+
+- LED timing berubah.
+- ISR tetap masuk.
+- Sistem masih hidup.
+- Tetapi kontrol tidak deterministik lagi.
+
+Tambahkan WiFi + real MQTT,
+blocking bisa lebih kompleks.
+
+Masalahnya bukan publish.
+
+Masalahnya adalah:
+
+> Anda berada dalam sistem multitasking, bukan superloop.
+
+---
+
+🔴 Sampai sini kita sudah membuktikan:
+
+- ISR real.
+- Network punya biaya.
+- Blocking punya konsekuensi.
+- Heap dan stack berbeda.
+- loop bukan main thread.
+
+---
+
+# 7️⃣ Struktur Project yang Digunakan Sejak Awal
+
+Sejak Foundation, kita **tidak mulai dengan satu file besar**.
+
+Kita langsung gunakan struktur final yang akan sama persis dengan Production.
+
+```text id="1s0yhb"
+IndustrialNode/
+├── IndustrialNode.ino
+├── app_ControlApp.h
+├── app_ControlApp.cpp
+├── svc_SensorService.h
+├── svc_SensorService.cpp
+├── drv_RelayDriver.h
+├── drv_RelayDriver.cpp
+├── sys_Config.h
+```
+
+Kenapa dari Artikel 01 sudah diperkenalkan?
+
+Karena struktur membentuk cara berpikir.
+
+Jika sejak awal engineer terbiasa:
+
+- Semua logic di `.ino`
+- Global variable bebas
+- ISR langsung ubah state
+- Network dipanggil dari mana saja
+
+Maka disiplin Production akan terasa dipaksakan.
+
+Foundation bukan sekadar teori.
+
+Foundation adalah:
+
+> Menanamkan boundary sejak hari pertama.
+
+Walaupun Artikel 01 masih 1 file runnable,
+Anda sudah melihat:
+
+- Shared state (isrFlag)
+- Stack watermark
+- Heap monitoring
+- Core ID
+- Blocking behavior
+
+Ini adalah “raw execution sandbox”.
+
+Di Artikel 02 dan seterusnya,
+kita akan mulai memindahkan behavior ini ke struktur berlapis.
+
+---
+
+# 8️⃣ Mental Model yang Harus Dibentuk
+
+Sebelum Anda lanjut ke Artikel 02,
+pastikan mental model berikut benar-benar jelas dan sudah diuji sendiri di board.
+
+---
+
+## 1️⃣ ESP32 bukan single-thread.
+
+Buktinya:
+
+- ISR bisa masuk saat delay.
+- WiFi aktif tanpa Anda panggil.
+- Scheduler berjalan di belakang layar.
+
+---
+
+## 2️⃣ loop() adalah task.
+
+Buktinya:
+
+- Ada stack watermark.
+- Bisa overflow stack.
+- Bisa diblokir.
+- Bisa di-preempt.
+
+---
+
+## 3️⃣ ISR bisa mem-preempt kapan saja.
+
+Buktinya:
+
+- Tombol ditekan saat busy loop tetap terdeteksi.
+- ISR tidak menunggu loop selesai.
+
+---
+
+## 4️⃣ WiFi & network berjalan paralel.
+
+Buktinya:
+
+- Heap berubah saat WiFi.mode() dipanggil.
+- Sistem tetap multitasking walau Anda tidak membuat task sendiri.
+
+---
+
+## 5️⃣ Blocking mengubah timing sistem.
+
+Buktinya:
+
+- Busy loop membuat sistem tidak responsif.
+- delay() cooperative lebih stabil.
+- Network + blocking meningkatkan jitter.
+
+---
+
+## 6️⃣ Shared state harus dicurigai.
+
+Pada Execution Lab kita sudah punya:
+
+```cpp
+volatile bool isrFlag;
+volatile unsigned long isrCount;
+```
+
+Sekarang bayangkan:
+
+- MQTT callback juga mengubah flag.
+- Task lain membaca flag.
+- ISR mengubah counter.
+
+Tanpa proteksi:
+
+- Race condition sangat mungkin.
+
+Ini bukan teori.
+Ini akan kita buktikan di Artikel 02.
+
+---
+
+# 🔒 Konsolidasi: Apa yang Sebenarnya Anda Pelajari?
+
+Artikel 01 bukan tentang API FreeRTOS.
+
+Artikel 01 adalah tentang:
+
+> Execution Reality.
+
+Firmware Anda hidup dalam sistem:
+
+- Dual core
+- Preemptive scheduler
+- Interrupt-driven
+- Heap shared
+- Stack per task
+- Watchdog aktif
+- Network task paralel
+
+Dan Anda sudah:
+
+- Menguji ISR nyata.
+- Menguji blocking nyata.
+- Menguji stack usage nyata.
+- Menguji heap usage nyata.
+- Menguji scheduling secara empiris.
+
+Ini bukan melamun.
+
+Ini baseline observability.
+
+---
+
+# 📌 Transisi ke Artikel 02
+
+Sekarang pertanyaan berikutnya:
+
+Jika sistem sudah multitasking secara default,
+
+- Bagaimana race condition terjadi?
+- Apa itu shared mutable state dalam konteks nyata?
+- Bagaimana task state berubah?
+- Mengapa queue lebih aman daripada global variable?
+- Mengapa mutex bisa berbahaya jika salah desain?
+
+Artikel 02 akan menjawab itu.
+
+Di sana kita akan:
+
+- Membuat race condition nyata.
+- Membuat task tambahan eksplisit.
+- Menggunakan queue sungguhan.
+- Menguji shared state hazard.
+- Menguji deadlock sederhana.
+
+Execution reality sudah jelas.
+
+Sekarang kita masuk ke:
+
+📘 **Concurrency & RTOS Fundamentals (ESP32 Context)**
+
+---
+
+# Penutup
+
+Firmware sensor + relay sederhana
+yang tampak stabil di bench test,
+
+bisa berubah menjadi tidak deterministik
+ketika:
+
+- Network ditambahkan,
+- ISR diperbanyak,
+- Logging ditambahkan,
+- TLS diaktifkan.
+
+Tanpa memahami execution reality,
+engineer akan menyalahkan hardware.
+
+Dengan memahami execution reality,
+engineer mulai menyalahkan desain.
+
+Dan itulah awal dari engineering yang matang.
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

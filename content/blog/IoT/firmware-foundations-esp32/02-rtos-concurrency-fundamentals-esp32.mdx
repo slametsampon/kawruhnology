@@ -1,0 +1,1109 @@
+---
+title: Concurrency & RTOS Fundamentals (ESP32 Context)
+date: '2026-02-23'
+tags:
+  [
+    'esp32',
+    'freertos',
+    'rtos-fundamentals',
+    'concurrency-model',
+    'embedded-systems',
+    'firmware-foundation',
+  ]
+draft: false
+summary: Concurrency pada ESP32 bukan fitur tambahan, tetapi kondisi default karena Arduino core berjalan di atas FreeRTOS. Banyak engineer memahami task dan interrupt secara terpisah, namun belum memiliki mental model utuh tentang scheduler, preemption, race condition, dan shared state. Artikel ini membangun pemahaman dari dasar - apa itu task, bagaimana scheduler bekerja, bagaimana ISR memengaruhi task aktif, serta bagaimana queue dan mutex berperan dalam menjaga integritas data. Fokusnya bukan pada API detail, tetapi pada model eksekusi yang memengaruhi desain firmware sensor–relay yang deterministik dan stabil.
+---
+
+# 📘 **_Foundation Article 2: Concurrency & RTOS Fundamentals (ESP32 Context)_**
+
+**Track:** C++ Firmware Engineering Foundations for ESP32
+**Environment:** ESP32 + VSCode + Arduino Community Edition
+**Project Base:** `IndustrialNode/IndustrialNode.ino`
+**Use Case:** Generic Sensor + Relay Node
+
+---
+
+- [📘 **_Foundation Article 2: Concurrency \& RTOS Fundamentals (ESP32 Context)_**](#-foundation-article-2-concurrency--rtos-fundamentals-esp32-context)
+- [1. Mengapa Concurrency Itu Default di ESP32](#1-mengapa-concurrency-itu-default-di-esp32)
+  - [Diagram Model Eksekusi Dasar (IndustrialNode Context)](#diagram-model-eksekusi-dasar-industrialnode-context)
+  - [Kenapa Ini Penting Secara Arsitektural?](#kenapa-ini-penting-secara-arsitektural)
+- [2. Apa Itu Task (Dalam Konteks Firmware)](#2-apa-itu-task-dalam-konteks-firmware)
+  - [Setiap Task Memiliki:](#setiap-task-memiliki)
+  - [Contoh Kasus Nyata (Stack Awareness)](#contoh-kasus-nyata-stack-awareness)
+- [🔬 Concurrency Practical Lab — Membuat Task Tambahan](#-concurrency-practical-lab--membuat-task-tambahan)
+  - [📂 Struktur Tetap Flat](#-struktur-tetap-flat)
+  - [🧪 IndustrialNode.ino (Full Runnable Concurrency Lab)](#-industrialnodeino-full-runnable-concurrency-lab)
+- [Apa yang Kita Lakukan?](#apa-yang-kita-lakukan)
+- [3. Scheduler \& Preemption](#3-scheduler--preemption)
+  - [Ilustrasi Preemption dalam Node Ini](#ilustrasi-preemption-dalam-node-ini)
+- [4. Shared State \& Race Condition](#4-shared-state--race-condition)
+  - [Apa Itu Race Condition?](#apa-itu-race-condition)
+  - [🔬 Race Lab — Versi Salah (Tanpa Queue)](#-race-lab--versi-salah-tanpa-queue)
+  - [Apa yang Terjadi?](#apa-yang-terjadi)
+  - [Kenapa `volatile` Tidak Cukup?](#kenapa-volatile-tidak-cukup)
+  - [Ilustrasi Race dalam Sensor + Relay Node](#ilustrasi-race-dalam-sensor--relay-node)
+- [5. Queue sebagai Mekanisme Aman](#5-queue-sebagai-mekanisme-aman)
+  - [Diagram Model Aman (IndustrialNode)](#diagram-model-aman-industrialnode)
+  - [Mengapa Queue Lebih Aman?](#mengapa-queue-lebih-aman)
+  - [🔬 Validasi: Perhatikan Behavior](#-validasi-perhatikan-behavior)
+  - [Kapan Queue Tidak Cukup?](#kapan-queue-tidak-cukup)
+- [6. Mutex \& Deadlock (Konsep Dasar)](#6-mutex--deadlock-konsep-dasar)
+  - [🔬 Deadlock Lab Sederhana](#-deadlock-lab-sederhana)
+  - [Kenapa Deadlock Sering Tidak Disadari?](#kenapa-deadlock-sering-tidak-disadari)
+  - [Rule Mental di Foundation](#rule-mental-di-foundation)
+- [7. Sensor + Relay Node dalam Konteks Concurrency](#7-sensor--relay-node-dalam-konteks-concurrency)
+  - [Arsitektur Tanpa Model Concurrency (Yang Sering Terjadi)](#arsitektur-tanpa-model-concurrency-yang-sering-terjadi)
+  - [Arsitektur Dengan Model Concurrency Benar](#arsitektur-dengan-model-concurrency-benar)
+  - [🔬 Practical Validation — Tambahkan MQTT Simulation Task](#-practical-validation--tambahkan-mqtt-simulation-task)
+  - [Kenapa Ini Penting Sebelum OOP?](#kenapa-ini-penting-sebelum-oop)
+  - [Contoh Praktis: Event Flag vs Queue (Perbandingan Nyata)](#contoh-praktis-event-flag-vs-queue-perbandingan-nyata)
+    - [Model Flag (Riskan)](#model-flag-riskan)
+    - [Model Queue (Deterministik)](#model-queue-deterministik)
+- [8. Mental Model yang Harus Dikunci di Tahap Foundation](#8-mental-model-yang-harus-dikunci-di-tahap-foundation)
+  - [1️⃣ Concurrency adalah default](#1️⃣-concurrency-adalah-default)
+  - [2️⃣ ISR bukan bagian dari loop](#2️⃣-isr-bukan-bagian-dari-loop)
+  - [3️⃣ Shared mutable state adalah risiko](#3️⃣-shared-mutable-state-adalah-risiko)
+  - [4️⃣ Queue lebih aman daripada global](#4️⃣-queue-lebih-aman-daripada-global)
+  - [5️⃣ Mutex bukan solusi utama](#5️⃣-mutex-bukan-solusi-utama)
+  - [6️⃣ Scheduling memengaruhi determinism](#6️⃣-scheduling-memengaruhi-determinism)
+- [🔒 Konsolidasi Final Artikel 2](#-konsolidasi-final-artikel-2)
+
+---
+
+# 1. Mengapa Concurrency Itu Default di ESP32
+
+Pada mikrokontroler klasik:
+
+```text
+main()
+  ↓
+while(true)
+```
+
+Satu stack.
+Satu eksekusi.
+Satu flow.
+
+Pada ESP32:
+
+- loop() = FreeRTOS task
+- WiFi = task
+- TCP/IP = task
+- Timer service = task
+- IDLE task = selalu ada
+- ISR = interrupt context
+
+Artinya:
+
+> Bahkan sebelum Anda membuat arsitektur, sistem sudah concurrent.
+
+Ini bukan pilihan desain Anda.
+
+Ini adalah kondisi dasar sistem.
+
+---
+
+## Diagram Model Eksekusi Dasar (IndustrialNode Context)
+
+```text
+Core 1:
+  ├─ loopTask (control + sensor read)
+  ├─ user task (jika dibuat)
+  └─ IDLE
+
+Core 0:
+  ├─ WiFi task
+  ├─ TCP/IP task
+  ├─ Timer task
+  └─ IDLE
+
+Interrupt:
+  └─ ISR button / peripheral
+```
+
+Tidak ada bagian firmware yang benar-benar sendirian.
+
+---
+
+## Kenapa Ini Penting Secara Arsitektural?
+
+Karena tanpa sadar concurrency:
+
+- Anda akan memakai global mutable state.
+- ISR akan mengubah state langsung.
+- MQTT callback akan menyentuh driver langsung.
+- Anda akan menyalahkan hardware saat race muncul.
+
+Concurrency awareness bukan teori.
+
+Itu fondasi untuk:
+
+- Dependency discipline
+- Memory discipline
+- Layering discipline
+- Reliability model
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Readme',
+      href: '/blog/IoT/firmware-foundations-esp32/README',
+      description: 'README - C++ Firmware Engineering Foundations for ESP32',
+    },
+    {
+      name: 'Dual-Track Course Syllabus',
+      href: '/blog/IoT/firmware-foundations-esp32/syllabus-12-16-week-dual-track-esp32-firmware',
+      description:
+        'Dual-Track Course Syllabus - ESP32 Firmware Engineering (Foundation → Production)',
+    },
+    {
+      name: 'ESP32 Execution',
+      href: '/blog/IoT/firmware-foundations-esp32/01-esp32-execution-reality',
+      description: 'ESP32 Execution Reality Under Arduino Core',
+    },
+    {
+      name: 'FreeRTOS Execution Model',
+      href: '/blog/IoT/firmware-foundations-esp32/03-freertos-execution-model-esp32',
+      description: 'FreeRTOS Execution Model on ESP32 (Arduino Context)',
+    },
+    {
+      name: 'Memory Model & Object Lifetime',
+      href: '/blog/IoT/firmware-foundations-esp32/04-memory-model-object-lifetime-esp32',
+      description: 'Memory Model & Object Lifetime on ESP32',
+    },
+    {
+      name: 'OOP for Embedded Firmware',
+      href: '/blog/IoT/firmware-foundations-esp32/05-oop-embedded-firmware-esp32',
+      description: 'OOP for Embedded Firmware on ESP32',
+    },
+    {
+      name: '3-Layer Firmware Architecture',
+      href: '/blog/IoT/cpp-production-firmware-esp32/06-decoupled-communication-architecture',
+      description: '3-Layer Firmware Architecture on ESP32',
+    },
+    {
+      name: 'Communication & State Thinking',
+      href: '/blog/IoT/firmware-foundations-esp32/07-communication-state-thinking-esp32',
+      description: 'Communication & State Thinking on ESP32',
+    },
+    {
+      name: 'Reliability Thinking',
+      href: '/blog/IoT/firmware-foundations-esp32/08-reliability-transition-to-production-esp32',
+      description: 'Reliability Thinking & Transition to Production Discipline',
+    },
+  ]}
+/>
+
+---
+
+# 2. Apa Itu Task (Dalam Konteks Firmware)
+
+Task adalah:
+
+- Fungsi dengan stack sendiri
+- Memiliki prioritas
+- Dijadwalkan oleh scheduler
+- Bisa Running / Ready / Blocked
+
+Dalam Arduino ESP32:
+
+```cpp
+void loop()
+```
+
+Adalah task bernama `loopTask`.
+
+---
+
+## Setiap Task Memiliki:
+
+1️⃣ Stack sendiri
+2️⃣ Context register sendiri
+3️⃣ Prioritas relatif
+4️⃣ Scheduling slot
+
+Implikasi nyata:
+
+- Stack overflow tidak terlihat seperti crash biasa.
+- Blocking satu task tidak menghentikan sistem.
+- Prioritas salah bisa menyebabkan starvation.
+
+---
+
+## Contoh Kasus Nyata (Stack Awareness)
+
+Tambahkan ke loop:
+
+```cpp
+char largeBuffer[4096];
+```
+
+Perhatikan:
+
+- uxTaskGetStackHighWaterMark(NULL) turun drastis.
+- Jika terlalu besar → reset.
+
+Engineer sering mengira ini heap.
+
+Padahal ini stack loopTask.
+
+Concurrency + memory model mulai bertemu di sini.
+
+---
+
+# 🔬 Concurrency Practical Lab — Membuat Task Tambahan
+
+Sekarang kita masuk praktikal.
+
+Kita akan:
+
+- Membuat task sensor terpisah
+- Membuat queue
+- Mengirim event ke loopTask
+- Mengamati behavior
+
+---
+
+## 📂 Struktur Tetap Flat
+
+```text
+IndustrialNode/
+└── IndustrialNode.ino
+```
+
+Belum masuk layering.
+Fokus concurrency.
+
+---
+
+## 🧪 IndustrialNode.ino (Full Runnable Concurrency Lab)
+
+Copy–paste utuh:
+
+```cpp
+#include <Arduino.h>
+
+// =============================
+// Configuration
+// =============================
+
+constexpr int LED_PIN = 5;
+constexpr int BUTTON_PIN = 18;
+
+constexpr uint32_t SENSOR_TASK_STACK = 4096;
+constexpr uint32_t CONTROL_PERIOD_MS = 200;
+
+// =============================
+// Queue Definition
+// =============================
+
+QueueHandle_t eventQueue;
+
+enum class EventType : uint8_t {
+    BUTTON,
+    SENSOR
+};
+
+struct Event {
+    EventType type;
+    int value;
+};
+
+// =============================
+// ISR
+// =============================
+
+void IRAM_ATTR buttonISR()
+{
+    Event ev;
+    ev.type = EventType::BUTTON;
+    ev.value = 1;
+
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xQueueSendFromISR(eventQueue, &ev, &xHigherPriorityTaskWoken);
+
+    if (xHigherPriorityTaskWoken)
+        portYIELD_FROM_ISR();
+}
+
+// =============================
+// Sensor Task
+// =============================
+
+void sensorTask(void* param)
+{
+    while (true)
+    {
+        Event ev;
+        ev.type = EventType::SENSOR;
+        ev.value = analogRead(34);
+
+        xQueueSend(eventQueue, &ev, portMAX_DELAY);
+
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
+}
+
+// =============================
+// Setup
+// =============================
+
+void setup()
+{
+    Serial.begin(115200);
+    delay(1000);
+
+    pinMode(LED_PIN, OUTPUT);
+    pinMode(BUTTON_PIN, INPUT_PULLUP);
+
+    eventQueue = xQueueCreate(10, sizeof(Event));
+
+    attachInterrupt(digitalPinToInterrupt(BUTTON_PIN),
+                    buttonISR,
+                    FALLING);
+
+    xTaskCreatePinnedToCore(
+        sensorTask,
+        "SensorTask",
+        SENSOR_TASK_STACK,
+        nullptr,
+        1,
+        nullptr,
+        1
+    );
+
+    Serial.println("Concurrency Lab Started");
+}
+
+// =============================
+// Loop (Control Task)
+// =============================
+
+void loop()
+{
+    Event ev;
+
+    if (xQueueReceive(eventQueue, &ev, pdMS_TO_TICKS(CONTROL_PERIOD_MS)))
+    {
+        if (ev.type == EventType::BUTTON)
+        {
+            Serial.println("Button Event");
+            digitalWrite(LED_PIN, HIGH);
+        }
+        else if (ev.type == EventType::SENSOR)
+        {
+            Serial.print("Sensor Value: ");
+            Serial.println(ev.value);
+
+            if (ev.value > 2000)
+                digitalWrite(LED_PIN, HIGH);
+            else
+                digitalWrite(LED_PIN, LOW);
+        }
+    }
+}
+```
+
+---
+
+# Apa yang Kita Lakukan?
+
+1. Membuat task tambahan (`sensorTask`).
+2. Membuat queue sebagai boundary.
+3. ISR tidak menyentuh LED.
+4. sensorTask tidak menyentuh LED.
+5. Hanya loop (control) yang menyentuh actuator.
+
+Ini sudah:
+
+- Ownership model awal.
+- Concurrency boundary awal.
+- Determinism meningkat.
+
+Tanpa OOP.
+Tanpa layering.
+Murni concurrency model.
+
+---
+
+# 3. Scheduler & Preemption
+
+Sekarang kita analisis apa yang benar-benar terjadi.
+
+Saat sensorTask delay:
+
+```cpp
+vTaskDelay(...)
+```
+
+Ia masuk state Blocked.
+
+Scheduler menjalankan task lain.
+
+Jika ISR masuk:
+
+- ISR kirim event.
+- Jika controlTask blocked → bisa langsung wake.
+
+Inilah preemption nyata.
+
+---
+
+## Ilustrasi Preemption dalam Node Ini
+
+```text
+SensorTask Running
+        ↓
+vTaskDelay
+        ↓
+ControlTask Running
+        ↑
+        Button Interrupt
+        ↓
+ISR
+        ↓
+ControlTask Wake
+```
+
+Ini bukan ilustrasi textbook.
+
+Ini yang terjadi di board Anda sekarang.
+
+---
+
+# 4. Shared State & Race Condition
+
+Sampai titik ini kita sudah:
+
+- Punya `sensorTask`
+- Punya ISR
+- Punya `loop()` sebagai control task
+- Punya queue
+
+Sekarang kita sengaja buat versi salah untuk melihat race.
+
+---
+
+## Apa Itu Race Condition?
+
+Race terjadi ketika:
+
+- Dua context berbeda
+- Mengakses resource yang sama
+- Tanpa koordinasi
+- Hasil bergantung timing scheduler
+
+Race bukan error sintaks.
+
+Race adalah error model eksekusi.
+
+---
+
+## 🔬 Race Lab — Versi Salah (Tanpa Queue)
+
+Ganti seluruh program dengan ini:
+
+```cpp
+#include <Arduino.h>
+
+constexpr int LED_PIN = 5;
+constexpr int BUTTON_PIN = 18;
+
+volatile int sharedValue = 0;
+
+void IRAM_ATTR buttonISR()
+{
+    sharedValue++;
+}
+
+void sensorTask(void* param)
+{
+    while (true)
+    {
+        sharedValue += 10;
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}
+
+void setup()
+{
+    Serial.begin(115200);
+    delay(1000);
+
+    pinMode(LED_PIN, OUTPUT);
+    pinMode(BUTTON_PIN, INPUT_PULLUP);
+
+    attachInterrupt(digitalPinToInterrupt(BUTTON_PIN),
+                    buttonISR,
+                    FALLING);
+
+    xTaskCreatePinnedToCore(
+        sensorTask,
+        "SensorTask",
+        4096,
+        nullptr,
+        1,
+        nullptr,
+        1
+    );
+}
+
+void loop()
+{
+    if (sharedValue > 50)
+    {
+        digitalWrite(LED_PIN, HIGH);
+    }
+    else
+    {
+        digitalWrite(LED_PIN, LOW);
+    }
+
+    Serial.println(sharedValue);
+    delay(200);
+}
+```
+
+---
+
+## Apa yang Terjadi?
+
+- ISR menambah `sharedValue`
+- sensorTask menambah `sharedValue`
+- loop membaca `sharedValue`
+
+Tidak ada proteksi.
+
+`sharedValue++` bukan atomik.
+
+Secara internal:
+
+```
+Load
+Add
+Store
+```
+
+Jika interleave:
+
+```
+Task load
+ISR load
+Task store
+ISR store
+```
+
+Nilai bisa hilang.
+
+Ini race nyata.
+
+---
+
+## Kenapa `volatile` Tidak Cukup?
+
+`volatile` hanya memastikan:
+
+- Compiler tidak menyimpan nilai di register.
+- Setiap akses benar-benar baca memory.
+
+`volatile` tidak membuat:
+
+- Operasi atomik.
+- Lock.
+- Critical section.
+
+Ini salah kaprah umum.
+
+---
+
+## Ilustrasi Race dalam Sensor + Relay Node
+
+```
+ISR Button → relayState = true
+MQTT Callback → relayState = false
+Control loop → relayState = sensorDecision
+```
+
+Tanpa ownership:
+
+- Relay bisa berkedip.
+- State tidak konsisten.
+- Bug sporadis.
+
+Race tidak terlihat saat code review cepat.
+
+Race muncul di runtime.
+
+---
+
+# 5. Queue sebagai Mekanisme Aman
+
+Kita kembali ke versi benar (queue-based).
+
+Konsep inti:
+
+> Jangan berbagi state. Kirim pesan.
+
+ISR tidak boleh ubah actuator.
+
+ISR hanya kirim event.
+
+---
+
+## Diagram Model Aman (IndustrialNode)
+
+```
+ISR
+  ↓
+Queue
+  ↓
+Control Task
+  ↓
+RelayDriver
+```
+
+Satu owner.
+
+Satu domain yang menyentuh hardware.
+
+---
+
+## Mengapa Queue Lebih Aman?
+
+- 1️⃣ Tidak ada shared mutable state lintas context
+- 2️⃣ ISR tidak menyentuh business logic
+- 3️⃣ Task tunggal mengontrol actuator
+- 4️⃣ Event ordering bisa dianalisis
+
+Queue memindahkan problem dari:
+
+- Memory interleaving
+  menjadi
+- Message ordering
+
+Dan message ordering lebih deterministik.
+
+---
+
+## 🔬 Validasi: Perhatikan Behavior
+
+Kembali ke Concurrency Lab sebelumnya.
+
+Perhatikan:
+
+- ISR kirim event.
+- sensorTask kirim event.
+- loop yang memutuskan relay.
+
+Tidak ada race.
+
+Tidak ada sharedValue global.
+
+Ownership jelas.
+
+---
+
+## Kapan Queue Tidak Cukup?
+
+Queue cocok untuk:
+
+- Event
+- Command
+- Signal
+
+Queue tidak cukup untuk:
+
+- Shared SPI bus
+- Shared I2C bus
+- Shared file system
+- Shared large buffer
+
+Di sinilah mutex masuk.
+
+---
+
+# 6. Mutex & Deadlock (Konsep Dasar)
+
+Mutex adalah mekanisme locking.
+
+Tujuan:
+
+- Mengamankan resource bersama.
+
+---
+
+## 🔬 Deadlock Lab Sederhana
+
+Tambahkan dua mutex:
+
+```cpp
+SemaphoreHandle_t mutexA;
+SemaphoreHandle_t mutexB;
+```
+
+Buat dua task:
+
+Task 1:
+
+```cpp
+xSemaphoreTake(mutexA, portMAX_DELAY);
+delay(10);
+xSemaphoreTake(mutexB, portMAX_DELAY);
+```
+
+Task 2:
+
+```cpp
+xSemaphoreTake(mutexB, portMAX_DELAY);
+delay(10);
+xSemaphoreTake(mutexA, portMAX_DELAY);
+```
+
+Jika timing tepat:
+
+- Task 1 pegang A.
+- Task 2 pegang B.
+- Task 1 tunggu B.
+- Task 2 tunggu A.
+
+Deadlock.
+
+Tidak crash.
+
+Tidak error log.
+
+Watchdog reset.
+
+Engineer bingung.
+
+---
+
+## Kenapa Deadlock Sering Tidak Disadari?
+
+Karena:
+
+- Resource ownership tidak digambar.
+- Urutan lock tidak distandarkan.
+- Tidak ada rule sistemik.
+
+Deadlock bukan bug kecil.
+
+Deadlock adalah kegagalan desain.
+
+---
+
+## Rule Mental di Foundation
+
+Di tahap Foundation:
+
+- Hindari mutex jika bisa pakai queue.
+- Jangan lock lebih dari satu resource tanpa urutan tetap.
+- ISR tidak boleh mengambil mutex biasa.
+- Prioritaskan message passing.
+
+Kita belum membekukan rule.
+
+Kita membentuk mental model.
+
+---
+
+Sampai di sini kita sudah:
+
+- Membuktikan race.
+- Membuktikan volatile tidak cukup.
+- Membuktikan queue lebih aman.
+- Memahami deadlock secara praktis.
+
+---
+
+# 7. Sensor + Relay Node dalam Konteks Concurrency
+
+Sekarang kita satukan semua yang sudah diuji:
+
+- ISR
+- sensorTask
+- loop sebagai control
+- Queue
+- Race scenario
+- Deadlock awareness
+
+Kita tarik ke sistem nyata:
+
+> Generic Sensor + Relay Node
+
+---
+
+## Arsitektur Tanpa Model Concurrency (Yang Sering Terjadi)
+
+```text
+ISR Button        → relay.set()
+MQTT Callback     → relay.set()
+loop() sensor     → relay.set()
+```
+
+Semua context menyentuh actuator.
+
+Dampak:
+
+- Relay chatter
+- State tidak konsisten
+- Sulit debug
+- Tidak deterministik
+- Scaling impossible
+
+Masalahnya bukan relay.
+Masalahnya adalah:
+
+> Tidak ada ownership domain.
+
+---
+
+## Arsitektur Dengan Model Concurrency Benar
+
+```text
+ISR Button
+      ↓
+   Queue
+      ↓
+MQTT Callback
+      ↓
+   Queue
+      ↓
+Control Task (loop)
+      ↓
+Relay Driver
+```
+
+Satu owner untuk actuator.
+
+ISR tidak menyentuh hardware.
+MQTT callback tidak menyentuh hardware.
+Hanya ControlTask yang boleh.
+
+Ini bukan OOP.
+Ini concurrency discipline.
+
+---
+
+## 🔬 Practical Validation — Tambahkan MQTT Simulation Task
+
+Kita modifikasi program sebelumnya untuk mensimulasikan “network task”.
+
+Tambahkan task berikut:
+
+```cpp
+void networkSimTask(void* param)
+{
+    while (true)
+    {
+        Event ev;
+        ev.type = EventType::BUTTON;
+        ev.value = 999;  // simulate remote command
+
+        xQueueSend(eventQueue, &ev, portMAX_DELAY);
+
+        vTaskDelay(pdMS_TO_TICKS(3000));
+    }
+}
+```
+
+Tambahkan di setup:
+
+```cpp
+xTaskCreatePinnedToCore(
+    networkSimTask,
+    "NetSim",
+    4096,
+    nullptr,
+    1,
+    nullptr,
+    0
+);
+```
+
+Sekarang sistem punya:
+
+- ISR → Queue
+- sensorTask → Queue
+- networkSimTask → Queue
+- loop → single control owner
+
+Perhatikan behavior:
+
+- Tidak ada race.
+- Tidak ada direct actuator write.
+- Tidak ada shared mutable state global.
+
+---
+
+## Kenapa Ini Penting Sebelum OOP?
+
+Karena banyak engineer berpikir:
+
+> “Saya buat class saja, selesai.”
+
+Salah.
+
+Class tidak menyelesaikan race.
+
+Encapsulation tidak mencegah deadlock.
+
+Dependency injection tidak menyelesaikan interleaving.
+
+Concurrency discipline harus lebih dulu.
+
+OOP hanya alat untuk mengontrol dependency,
+bukan untuk memperbaiki race.
+
+---
+
+## Contoh Praktis: Event Flag vs Queue (Perbandingan Nyata)
+
+### Model Flag (Riskan)
+
+```cpp
+volatile bool buttonPressed = false;
+
+void IRAM_ATTR buttonISR() {
+    buttonPressed = true;
+}
+```
+
+Masalah:
+
+- Masih shared state.
+- Scaling sulit.
+- Multiple event type sulit.
+- Hard to audit.
+
+---
+
+### Model Queue (Deterministik)
+
+```cpp
+Event ev;
+ev.type = EventType::BUTTON;
+xQueueSendFromISR(eventQueue, &ev, ...);
+```
+
+Keunggulan:
+
+- Event typed.
+- Extensible.
+- Tidak berbagi state.
+- Ordering bisa ditelusuri.
+
+Message-based system adalah fondasi sistem scalable.
+
+---
+
+# 8. Mental Model yang Harus Dikunci di Tahap Foundation
+
+Sekarang kita kunci mental model ini secara eksplisit.
+
+---
+
+## 1️⃣ Concurrency adalah default
+
+Anda tidak mengaktifkan concurrency.
+Anda hidup di dalamnya.
+
+---
+
+## 2️⃣ ISR bukan bagian dari loop
+
+ISR adalah interrupt context.
+Bukan function biasa.
+
+---
+
+## 3️⃣ Shared mutable state adalah risiko
+
+Semakin banyak global mutable,
+semakin tinggi probabilitas race.
+
+---
+
+## 4️⃣ Queue lebih aman daripada global
+
+Message passing lebih deterministik daripada shared memory.
+
+---
+
+## 5️⃣ Mutex bukan solusi utama
+
+Mutex bisa:
+
+- Menyembunyikan desain buruk.
+- Menyebabkan deadlock.
+- Mengurangi determinism.
+
+Gunakan hanya jika domain resource memang shared.
+
+---
+
+## 6️⃣ Scheduling memengaruhi determinism
+
+Delay kecil + network spike
+= jitter kontrol.
+
+Ini akan sangat relevan ketika kita masuk ke memory discipline dan communication state machine.
+
+---
+
+# 🔒 Konsolidasi Final Artikel 2
+
+Setelah Artikel 2, engineer harus:
+
+- Mengerti bahwa concurrency bukan tambahan.
+- Mampu membuat task tambahan.
+- Mampu membuat queue.
+- Mampu menghindari race sederhana.
+- Mampu menjelaskan kenapa volatile tidak cukup.
+- Mengerti kenapa mutex bisa berbahaya.
+- Memahami ownership actuator.
+
+Artikel ini bukan tentang API FreeRTOS.
+
+Artikel ini tentang:
+
+> Model berpikir sistem concurrent.
+
+Tanpa model ini:
+
+- Artikel Memory akan terasa teoretis.
+- Artikel OOP akan terasa kaku.
+- Artikel Layering akan terasa dipaksakan.
+- Artikel Reliability akan terasa paranoid.
+
+Dengan model ini:
+
+Semua artikel berikutnya menjadi logis.
+
+---
+
+Artikel berikutnya:
+
+📘 **FreeRTOS Execution Model (ESP32 Context)**
+
+Kita akan masuk ke:
+
+- Stack per task secara mendalam
+- Heap global vs stack
+- Context switching cost
+- Core pinning
+- Watchdog interaction
+- Determinism impact
+
+Karena concurrency tanpa memory awareness
+akan menjadi sumber kegagalan berikutnya.
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

@@ -1,0 +1,338 @@
+---
+title: README - C++ Firmware Engineering Foundations for ESP32
+date: '2026-02-23'
+tags:
+  [
+    'esp32',
+    'firmware-foundation',
+    'embedded-systems',
+    'freertos-model',
+    'memory-discipline',
+    'layered-architecture',
+    'communication-state',
+    'reliability-thinking',
+  ]
+draft: false
+summary: Foundation Track membangun mental model sistemik sebelum masuk disiplin firmware produksi pada ESP32 berbasis Arduino. Seri ini tidak mengajarkan sintaks C++, tetapi membedah realitas eksekusi FreeRTOS, stack per task, heap global, object lifetime, layering 3-level, state machine komunikasi, serta reliability thinking. Tujuannya adalah membentuk pola pikir engineer agar memahami interaksi concurrency, memory, dan komunikasi sebelum aturan produksi dikunci. Foundation menjawab “mengapa” di balik setiap keputusan arsitektur. Dengan pemahaman ini, transisi ke seri Production menjadi logis, terstruktur, dan tidak terasa sebagai pembatasan tanpa alasan teknis.
+---
+
+# 📘 **_README: C++ Firmware Engineering Foundations for ESP32_**
+
+**Environment:** ESP32 + VSCode + Arduino Community Edition
+**Project Model:** Flat Folder (No Nested)
+**Entry Point:** `IndustrialNode.ino`
+**Use Case:** Generic Sensor + Relay Node
+
+---
+
+- [📘 **_README: C++ Firmware Engineering Foundations for ESP32_**](#-readme-c-firmware-engineering-foundations-for-esp32)
+  - [🎯 Positioning](#-positioning)
+  - [📌 Mengapa Foundation Diperlukan?](#-mengapa-foundation-diperlukan)
+  - [🧠 Filosofi Dasar Foundation](#-filosofi-dasar-foundation)
+  - [🏗 Struktur Materi Foundation](#-struktur-materi-foundation)
+    - [01 — ESP32 Execution Reality](#01--esp32-execution-reality)
+    - [02 — Concurrency \& RTOS Fundamentals](#02--concurrency--rtos-fundamentals)
+    - [03 — FreeRTOS Execution Model (ESP32 Specific)](#03--freertos-execution-model-esp32-specific)
+    - [04 — Memory Model \& Object Lifetime](#04--memory-model--object-lifetime)
+    - [05 — OOP for Embedded Firmware](#05--oop-for-embedded-firmware)
+    - [06 — 3-Layer Firmware Architecture](#06--3-layer-firmware-architecture)
+    - [07 — Communication \& State Thinking](#07--communication--state-thinking)
+    - [08 — Reliability \& Transition to Production](#08--reliability--transition-to-production)
+  - [🗂 Project Structure (Sejak Foundation)](#-project-structure-sejak-foundation)
+  - [🔬 Apa yang TIDAK Dibahas di Foundation](#-apa-yang-tidak-dibahas-di-foundation)
+  - [🔄 Foundation vs Production](#-foundation-vs-production)
+  - [📈 Target Outcome Foundation](#-target-outcome-foundation)
+  - [🚀 Next Step](#-next-step)
+  - [🔒 Final Positioning](#-final-positioning)
+
+---
+
+## 🎯 Positioning
+
+Foundation Track bukan kursus Arduino dasar.
+Foundation Track bukan tutorial sintaks C++.
+
+Foundation Track adalah:
+
+> Mental model dan kerangka berpikir sistemik sebelum masuk disiplin Production Firmware.
+
+Seri ini dirancang untuk engineer yang:
+
+- Sudah memahami dasar C++
+- Sudah pernah menggunakan ESP32
+- Sudah pernah deploy firmware kecil
+- Ingin firmware yang stabil dan scalable
+- Ingin masuk ke pola produksi tanpa trial-error mahal
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Dual-Track Course Syllabus',
+      href: '/blog/IoT/firmware-foundations-esp32/syllabus-12-16-week-dual-track-esp32-firmware',
+      description:
+        'Dual-Track Course Syllabus - ESP32 Firmware Engineering (Foundation → Production)',
+    },
+    {
+      name: 'ESP32 Execution',
+      href: '/blog/IoT/firmware-foundations-esp32/01-esp32-execution-reality',
+      description: 'ESP32 Execution Reality Under Arduino Core',
+    },
+    {
+      name: 'Concurrency & RTOS',
+      href: '/blog/IoT/firmware-foundations-esp32/02-rtos-concurrency-fundamentals-esp32',
+      description: 'Concurrency & RTOS Fundamentals (ESP32 Context)',
+    },
+    {
+      name: 'FreeRTOS Execution Model',
+      href: '/blog/IoT/firmware-foundations-esp32/03-freertos-execution-model-esp32',
+      description: 'FreeRTOS Execution Model on ESP32 (Arduino Context)',
+    },
+    {
+      name: 'Memory Model & Object Lifetime',
+      href: '/blog/IoT/firmware-foundations-esp32/04-memory-model-object-lifetime-esp32',
+      description: 'Memory Model & Object Lifetime on ESP32',
+    },
+    {
+      name: 'OOP for Embedded Firmware',
+      href: '/blog/IoT/firmware-foundations-esp32/05-oop-embedded-firmware-esp32',
+      description: 'OOP for Embedded Firmware on ESP32',
+    },
+    {
+      name: '3-Layer Firmware Architecture',
+      href: '/blog/IoT/cpp-production-firmware-esp32/06-decoupled-communication-architecture',
+      description: '3-Layer Firmware Architecture on ESP32',
+    },
+    {
+      name: 'Communication & State Thinking',
+      href: '/blog/IoT/firmware-foundations-esp32/07-communication-state-thinking-esp32',
+      description: 'Communication & State Thinking on ESP32',
+    },
+    {
+      name: 'Reliability Thinking',
+      href: '/blog/IoT/firmware-foundations-esp32/08-reliability-transition-to-production-esp32',
+      description: 'Reliability Thinking & Transition to Production Discipline',
+    },
+  ]}
+/>
+
+---
+
+## 📌 Mengapa Foundation Diperlukan?
+
+Banyak firmware ESP32 gagal di lapangan bukan karena:
+
+- Library salah
+- Hardware rusak
+- Broker bermasalah
+
+Tetapi karena:
+
+- Tidak memahami execution model
+- Tidak memahami memory behavior
+- Tidak memahami concurrency
+- Tidak memahami state
+- Tidak memiliki model reliability
+
+Foundation Track membangun pemahaman tersebut sebelum aturan dikunci di Production.
+
+---
+
+## 🧠 Filosofi Dasar Foundation
+
+1. Execution reality harus dipahami sebelum arsitektur.
+2. Memory behavior harus dipahami sebelum OOP.
+3. OOP adalah alat kontrol ownership.
+4. Layering adalah alat kontrol dependency.
+5. Communication adalah domain stateful.
+6. Reliability adalah hasil desain, bukan kebetulan.
+7. Production discipline harus didahului pemahaman sistemik.
+
+---
+
+## 🏗 Struktur Materi Foundation
+
+### 01 — ESP32 Execution Reality
+
+- Arduino core berjalan di atas FreeRTOS
+- loop() adalah task
+- Dual-core awareness
+- ISR preemption
+- Watchdog interaction
+
+---
+
+### 02 — Concurrency & RTOS Fundamentals
+
+- Scheduler
+- Task state
+- Shared state risk
+- Queue vs global
+- Race condition awareness
+
+---
+
+### 03 — FreeRTOS Execution Model (ESP32 Specific)
+
+- loopTask
+- Core mapping
+- Stack per task
+- Heap vs stack
+- Context switch cost
+
+---
+
+### 04 — Memory Model & Object Lifetime
+
+- Heap fragmentation
+- Stack overflow
+- Object lifetime alignment
+- Hidden allocation
+- TLS memory spike
+
+---
+
+### 05 — OOP for Embedded Firmware
+
+- Encapsulation as boundary
+- Constructor & lifecycle
+- Composition vs inheritance
+- Ownership clarity
+- Dynamic allocation awareness
+
+---
+
+### 06 — 3-Layer Firmware Architecture
+
+- Application
+- Service
+- Driver
+- System module
+- Dependency direction
+
+---
+
+### 07 — Communication & State Thinking
+
+- Callback hazard
+- State machine thinking
+- Transport vs business logic
+- Reconnect behavior
+- Event-driven model
+
+---
+
+### 08 — Reliability & Transition to Production
+
+- Fail-safe thinking
+- Observability
+- Watchdog perspective
+- Error containment
+- Transition to production discipline
+
+---
+
+## 🗂 Project Structure (Sejak Foundation)
+
+Struktur ini **identik** dengan Production:
+
+```text
+IndustrialNode/
+├── IndustrialNode.ino
+├── app_ControlApp.h
+├── app_ControlApp.cpp
+├── svc_SensorService.h
+├── svc_SensorService.cpp
+├── drv_RelayDriver.h
+├── drv_RelayDriver.cpp
+├── sys_Config.h
+```
+
+Tidak ada nested folder.
+Prefix digunakan sebagai boundary visual.
+
+---
+
+## 🔬 Apa yang TIDAK Dibahas di Foundation
+
+- Advanced template metaprogramming
+- STL heavy usage
+- Clean Architecture kompleks
+- Design pattern katalog
+- Desktop-oriented OOP
+
+Foundation tetap embedded-oriented dan pragmatis.
+
+---
+
+## 🔄 Foundation vs Production
+
+Foundation menjawab:
+
+> Mengapa?
+
+Production menjawab:
+
+> Bagaimana secara disiplin dan terkunci?
+
+Foundation membentuk mental model.
+Production mengunci aturan.
+
+Foundation membuat Production terasa logis, bukan keras.
+
+---
+
+## 📈 Target Outcome Foundation
+
+Setelah menyelesaikan seri ini, engineer harus:
+
+- Memahami execution reality ESP32
+- Membedakan heap vs stack vs lifetime
+- Mengerti risiko shared state
+- Mengerti arah dependency
+- Mengerti state machine thinking
+- Mengerti reliability sebagai desain
+
+Jika ini belum dipahami,
+Production akan terasa restriktif dan berat.
+
+---
+
+## 🚀 Next Step
+
+Jika Foundation sudah dipahami dengan benar:
+
+Lanjut ke:
+
+📘 **C++ for Production Firmware on ESP32**
+
+Di sana:
+
+- Dependency akan dikunci
+- Memory discipline diformalisasi
+- Communication dibatasi
+- Reliability dijadikan baseline
+- Anti-pattern diaudit
+
+Foundation adalah pemahaman.
+Production adalah standar.
+
+---
+
+## 🔒 Final Positioning
+
+Foundation bukan untuk pemula absolut.
+Foundation bukan untuk eksperimen cepat.
+
+Foundation adalah:
+
+> Jalur berpikir sistemik menuju firmware ESP32 yang stabil dan berumur panjang.
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>
