@@ -1,0 +1,793 @@
+---
+title: TEST PLAN & VALIDATION MATRIX (Outline v0.1)
+date: '2026-02-24'
+tags:
+  [
+    'test-plan',
+    'validation-matrix',
+    'qa-gate',
+    'failure-injection',
+    'soak-test',
+    'production-acceptance',
+  ]
+draft: false
+summary: HTL-09 mendefinisikan rencana pengujian komprehensif untuk sistem HortiLink per-site sebelum dinyatakan Production Ready. Dokumen ini mencakup unit test (Node, Gateway, Server), integration test end-to-end, electrical validation, failure injection, stress test, soak test, OTA validation, security validation, serta commissioning checklist. Setiap kategori pengujian memiliki kriteria lulus/gagal yang terukur. HTL-09 menjadi acceptance gate formal untuk memastikan seluruh desain HTL-00 hingga HTL-08 tervalidasi secara teknis, operasional, dan keselamatan sebelum deployment produksi.
+---
+
+# **_HTL-09 – TEST PLAN & VALIDATION MATRIX (Outline v0.1)_**
+
+---
+
+- [**_HTL-09 – TEST PLAN \& VALIDATION MATRIX (Outline v0.1)_**](#htl-09--test-plan--validation-matrix-outline-v01)
+- [1. Purpose](#1-purpose)
+  - [1.1 Document Objective](#11-document-objective)
+  - [1.2 Authority](#12-authority)
+  - [1.3 Acceptance Authority](#13-acceptance-authority)
+- [2. Scope](#2-scope)
+  - [2.1 In-Scope](#21-in-scope)
+  - [2.2 Out-of-Scope](#22-out-of-scope)
+- [3. Definitions](#3-definitions)
+  - [3.1 Unit Test](#31-unit-test)
+  - [3.2 Integration Test](#32-integration-test)
+  - [3.3 Stress Test](#33-stress-test)
+  - [3.4 Soak Test](#34-soak-test)
+  - [3.5 Failure Injection](#35-failure-injection)
+  - [3.6 Acceptance Test](#36-acceptance-test)
+  - [3.7 Test Environment](#37-test-environment)
+  - [3.8 Pass/Fail Criteria](#38-passfail-criteria)
+- [4. Assumptions](#4-assumptions)
+  - [4.1 Baseline Deployment](#41-baseline-deployment)
+  - [4.2 Test Environment](#42-test-environment)
+  - [4.3 Tools Assumption](#43-tools-assumption)
+- [5. Test Architecture Overview](#5-test-architecture-overview)
+  - [5.1 Test Topology Diagram](#51-test-topology-diagram)
+  - [5.2 Test Data Flow Diagram](#52-test-data-flow-diagram)
+- [6. Technical Specification – Test Categories](#6-technical-specification--test-categories)
+  - [6.1 Unit Testing](#61-unit-testing)
+  - [6.2 Integration Testing](#62-integration-testing)
+  - [6.3 Electrical Validation](#63-electrical-validation)
+  - [6.4 Failure Injection Testing](#64-failure-injection-testing)
+  - [6.5 Stress Testing](#65-stress-testing)
+  - [6.6 Soak Testing](#66-soak-testing)
+  - [6.7 OTA Validation](#67-ota-validation)
+  - [6.8 Security Validation](#68-security-validation)
+  - [6.9 Commissioning Validation](#69-commissioning-validation)
+- [7. Constraints](#7-constraints)
+  - [7.1 Hardware Availability Constraint](#71-hardware-availability-constraint)
+  - [7.2 Test Equipment Limitation](#72-test-equipment-limitation)
+  - [7.3 Time Constraint](#73-time-constraint)
+  - [7.4 Field Access Constraint](#74-field-access-constraint)
+  - [7.5 Budget Constraint](#75-budget-constraint)
+- [8. Failure Handling During Testing](#8-failure-handling-during-testing)
+  - [8.1 Test Abort Criteria](#81-test-abort-criteria)
+  - [8.2 Escalation Rule](#82-escalation-rule)
+  - [8.3 Log Capture Requirement](#83-log-capture-requirement)
+  - [8.4 Retest Policy](#84-retest-policy)
+  - [8.5 Defect Classification](#85-defect-classification)
+- [9. Validation Matrix](#9-validation-matrix)
+  - [Sample Validation Matrix (Baseline)](#sample-validation-matrix-baseline)
+- [10. Open Issues](#10-open-issues)
+- [11. Revision History](#11-revision-history)
+
+---
+
+# 1. Purpose
+
+---
+
+## 1.1 Document Objective
+
+HTL-09 menjadi:
+
+- Referensi formal QA
+- Gate sebelum produksi
+- Checklist commissioning
+- Validasi failure containment
+- Validasi degradasi sistem
+
+Tidak ada site yang boleh dinyatakan Production Ready tanpa lulus HTL-09.
+
+---
+
+## 1.2 Authority
+
+HTL-09 mengikat:
+
+- QA Team
+- Node Team
+- Gateway Team
+- Server Team
+- Electrical Team
+- Field Team
+
+Semua defect harus dicatat sebelum sign-off.
+
+---
+
+## 1.3 Acceptance Authority
+
+Production Ready hanya dapat dinyatakan oleh:
+
+- QA Lead (validasi teknis)
+- Electrical Lead (validasi panel & safety)
+- System Architect (validasi arsitektur menyeluruh)
+
+Tanpa 3 approval tersebut → site tidak boleh aktif produksi.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'README',
+      href: '/blog/IoT/htl/README',
+      description: 'README - First',
+    },
+    {
+      name: 'SYSTEM ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-00-system-architecture-master-document',
+      description: 'SYSTEM ARCHITECTURE MASTER DOCUMENT',
+    },
+    {
+      name: 'INTERFACE SPECIFICATION',
+      href: '/blog/IoT/htl/htl-01-interface-specification',
+      description: 'INTERFACE SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'NODE TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-02-node-technical-specification',
+      description: 'NODE TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'GATEWAY TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-03-gateway-technical-specification',
+      description: 'GATEWAY TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'SERVER RASPBERRY-PI',
+      href: '/blog/IoT/htl/htl-04-server-raspberry-pi-specification',
+      description: 'SERVER RASPBERRY-PI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'HMI SPECIFICATION',
+      href: '/blog/IoT/htl/htl-05-hmi-specification',
+      description: 'HMI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'ELECTRICAL & POWER',
+      href: '/blog/IoT/htl/htl-06-electrical-panel-design-specification',
+      description: 'ELECTRICAL & POWER INTEGRATION SPECIFICATION',
+    },
+    {
+      name: 'SECURITY ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-07-security-architecture',
+      description: 'SECURITY ARCHITECTURE (Outline v0.1)',
+    },
+    {
+      name: 'FAILURE MODE & RECOVERY',
+      href: '/blog/IoT/htl/htl-08-failure-mode-recovery-matrix',
+      description: 'FAILURE MODE & RECOVERY MATRIX (Outline v0.1)',
+    },
+  ]}
+/>
+
+---
+
+# 2. Scope
+
+---
+
+## 2.1 In-Scope
+
+Kategori pengujian:
+
+- Unit Test
+- Integration Test
+- Electrical Validation
+- Failure Injection Test
+- Stress Test
+- Soak Test
+- OTA Validation
+- Security Validation
+- Commissioning Validation
+
+Semua domain HTL-00 s/d HTL-08 harus tervalidasi.
+
+---
+
+## 2.2 Out-of-Scope
+
+Tidak termasuk:
+
+- Cloud scalability
+- Multi-site federation
+- Studi agronomi jangka panjang
+
+---
+
+# 3. Definitions
+
+---
+
+## 3.1 Unit Test
+
+Pengujian komponen terisolasi tanpa dependensi layer lain.
+
+---
+
+## 3.2 Integration Test
+
+Pengujian end-to-end antar layer (Node → Gateway → Server).
+
+---
+
+## 3.3 Stress Test
+
+Pengujian beban maksimum sistem dalam waktu singkat.
+
+---
+
+## 3.4 Soak Test
+
+Pengujian jangka panjang (48–72 jam) untuk stabilitas.
+
+---
+
+## 3.5 Failure Injection
+
+Simulasi kegagalan untuk menguji containment dan recovery.
+
+---
+
+## 3.6 Acceptance Test
+
+Pengujian final sebelum site dinyatakan produksi.
+
+---
+
+## 3.7 Test Environment
+
+Lingkungan pengujian:
+
+- Lab mode
+- Field mode
+- Simulasi relay chain
+
+---
+
+## 3.8 Pass/Fail Criteria
+
+Setiap test harus memiliki:
+
+- Expected behavior
+- Measured behavior
+- Numeric threshold
+- Clear PASS/FAIL
+
+---
+
+# 4. Assumptions
+
+---
+
+## 4.1 Baseline Deployment
+
+Per-site:
+
+- 1 Gateway
+- 10–15 Node
+- 1 Raspberry Pi
+
+---
+
+## 4.2 Test Environment
+
+Dua mode:
+
+1. Lab mode
+
+   - Simulated relay chain
+   - Controlled power
+
+2. Field mode
+
+   - Real wiring
+   - Real actuator load
+
+---
+
+## 4.3 Tools Assumption
+
+Minimal alat:
+
+- MQTT monitoring tool
+- Serial log capture
+- Power analyzer
+- Multimeter
+- Network analyzer
+- Log export tool
+
+Tanpa alat ini, validasi tidak sah.
+
+---
+
+# 5. Test Architecture Overview
+
+Tujuan section ini adalah memastikan pengujian dilakukan pada topologi yang merepresentasikan kondisi produksi sebenarnya.
+
+Pengujian tidak boleh dilakukan pada konfigurasi yang tidak mencerminkan baseline deployment.
+
+---
+
+## 5.1 Test Topology Diagram
+
+![Image](https://static.wixstatic.com/media/e736ee_d128be51535c4119a226ee91a439542e~mv2.jpg/v1/fill/w_556%2Ch_312%2Cal_c%2Cq_80%2Cusm_0.66_1.00_0.01%2Cenc_avif%2Cquality_auto/e736ee_d128be51535c4119a226ee91a439542e~mv2.jpg)
+
+---
+
+✔ Komponen Wajib dalam Test Setup
+
+1. Node Cluster (10–15 unit)
+
+   - Minimal 3 node untuk relay-chain test
+   - Minimal 1 node dengan actuator real
+
+2. Relay Chain Simulation
+
+   - Parent-child routing aktif
+   - Hop limit aktif
+
+3. Gateway
+
+   - ESP-NOW coordinator aktif
+   - MQTT bridge aktif
+
+4. Raspberry Pi
+
+   - MQTT broker
+   - DB
+   - Dashboard
+
+5. Test Client
+
+   - MQTT monitor
+   - Log collector
+   - Command generator
+
+6. Power Disturbance Injector (simulasi)
+
+   - Manual power cut
+   - Brownout simulation
+   - Surge simulation (terkontrol)
+
+---
+
+✔ Test Mode
+
+Mode A – Lab Mode
+
+- Beban dummy (resistive load)
+- Relay switching tanpa pompa real
+
+Mode B – Field Mode
+
+- Pompa real
+- Panel real
+- Grounding real
+
+Semua release firmware harus lulus Lab Mode sebelum Field Mode.
+
+---
+
+## 5.2 Test Data Flow Diagram
+
+![Image](https://www.researchgate.net/publication/374143113/figure/fig1/AS%3A11431281190867952%401695520044863/MQTT-publish-subscribe-architecture.png)
+
+---
+
+✔ Jalur Data yang Harus Diuji
+
+1. Telemetry Path
+   Node → Relay → Gateway → MQTT → DB
+
+2. Command Path
+   HMI → Server → MQTT → Gateway → Node
+
+3. ACK Path
+   Node → Gateway → MQTT → Server → HMI
+
+4. Config Path
+   Server → MQTT → Gateway → Node
+
+5. OTA Path
+   Server → Metadata → Node → Hash Verify → Apply
+
+6. Failure Injection Path
+   Injected Fault → Detection → Containment → Recovery
+
+---
+
+✔ Validasi Flow
+
+Setiap jalur harus:
+
+- Diverifikasi latency
+- Diverifikasi reliability
+- Diverifikasi idempotency
+- Diverifikasi TTL enforcement
+
+---
+
+# 6. Technical Specification – Test Categories
+
+---
+
+## 6.1 Unit Testing
+
+---
+
+✔ 6.1.1 Node Unit Tests
+
+| Test                   | Expected Result                         | Pass Criteria                           |
+| ---------------------- | --------------------------------------- | --------------------------------------- |
+| Sensor read validation | Nilai stabil dalam toleransi            | Deviasi < threshold                     |
+| Interlock logic        | Tidak bypass hardware limit             | Actuator tetap OFF saat interlock aktif |
+| Command idempotency    | Duplicate cmd_id tidak dieksekusi ulang | Hanya 1 execution                       |
+| TTL expiry             | Command expired ditolak                 | No execution                            |
+| Brownout detection     | Node reset & safe state                 | Relay OFF                               |
+| Watchdog reset         | Recovery < threshold waktu              | Node reconnect normal                   |
+| Flash integrity        | CRC valid                               | Boot normal                             |
+
+Semua test harus dilakukan dengan log capture aktif.
+
+---
+
+✔ 6.1.2 Gateway Unit Tests
+
+| Test                     | Expected Result               | Pass Criteria               |
+| ------------------------ | ----------------------------- | --------------------------- |
+| Routing validation       | Parent-child konsisten        | No routing conflict         |
+| Dedup logic              | Duplicate drop                | Tidak ada duplicate publish |
+| Buffer overflow handling | Drop policy sesuai desain     | Tidak crash                 |
+| MQTT reconnect logic     | Auto reconnect dengan backoff | Reconnect < threshold       |
+| Time drift detection     | Drift terdeteksi              | Alert log                   |
+
+---
+
+✔ 6.1.3 Server Unit Tests
+
+| Test                  | Expected Result        | Pass Criteria           |
+| --------------------- | ---------------------- | ----------------------- |
+| Broker ACL validation | Unauthorized reject    | No publish accepted     |
+| DB write integrity    | Telemetry tersimpan    | No data loss            |
+| Command state machine | State transition valid | Lifecycle lengkap       |
+| RBAC enforcement      | Role dibatasi          | Operator tidak bisa OTA |
+
+---
+
+## 6.2 Integration Testing
+
+---
+
+| Scenario              | Expected Behavior     | Pass Criteria      |
+| --------------------- | --------------------- | ------------------ |
+| Node → Gateway → MQTT | Telemetry lengkap     | Loss < threshold   |
+| End-to-end command    | Execute & ACK kembali | Latency < baseline |
+| Config rollout        | Semua node update     | Version sync       |
+| OTA deployment        | Upgrade sukses        | No brick           |
+| Relay chain full path | Data sampai           | Hop valid          |
+
+Semua integration test harus dilakukan dengan minimal 10 node aktif.
+
+---
+
+## 6.3 Electrical Validation
+
+---
+
+| Test                       | Expected Result  | Pass Criteria    |
+| -------------------------- | ---------------- | ---------------- |
+| Inrush test (pump start)   | No reset MCU     | No brownout      |
+| Relay switching under load | No weld          | Switching normal |
+| Brownout simulation        | Node reset safe  | Actuator OFF     |
+| Surge simulation           | No device damage | System recover   |
+| Thermal panel test         | Temp < limit     | No shutdown      |
+
+Electrical validation wajib dilakukan di Field Mode.
+
+---
+
+## 6.4 Failure Injection Testing
+
+Setiap skenario wajib memiliki:
+
+- Expected behavior
+- Measured behavior
+- Pass/Fail criteria
+
+| Scenario                   | Expected Behavior | Pass Criteria       |
+| -------------------------- | ----------------- | ------------------- |
+| Gateway power off          | Node autonomous   | Control tetap jalan |
+| Pi power off               | No dashboard      | Node tetap kontrol  |
+| Node reboot mid-operation  | Safe state        | No unsafe ON        |
+| Relay parent removal       | Re-route          | Child reachable     |
+| MQTT broker stop           | Buffer store      | No crash            |
+| Disk full simulation       | Alert             | No data corruption  |
+| Buffer overflow simulation | Drop oldest       | System stable       |
+
+---
+
+## 6.5 Stress Testing
+
+---
+
+| Test                    | Expected Result     | Pass Criteria  |
+| ----------------------- | ------------------- | -------------- |
+| Burst telemetry 15 node | No broker overload  | No crash       |
+| Simultaneous command    | All ACK valid       | No duplicate   |
+| Relay chain full load   | Stable routing      | No loop        |
+| Max publish rate        | Within broker limit | No memory leak |
+
+Stress test dilakukan minimal 30 menit per skenario.
+
+---
+
+## 6.6 Soak Testing
+
+Durasi: 48–72 jam continuous.
+
+Monitoring:
+
+- Memory usage
+- MQTT reconnect count
+- DB write stability
+- Watchdog event
+
+Pass criteria:
+
+- No memory leak
+- No unexpected reset
+- No routing collapse
+- Stable CPU usage
+
+---
+
+## 6.7 OTA Validation
+
+---
+
+| Test                   | Expected Result  | Pass Criteria |
+| ---------------------- | ---------------- | ------------- |
+| Valid firmware upgrade | Upgrade sukses   | Node online   |
+| Invalid signature      | Reject OTA       | No flash      |
+| Power loss mid-update  | Rollback         | Boot stable   |
+| Version mismatch       | Reject downgrade | Version tetap |
+| Rollback test          | Restore previous | Stable        |
+
+---
+
+## 6.8 Security Validation
+
+---
+
+| Test                      | Expected Result | Pass Criteria          |
+| ------------------------- | --------------- | ---------------------- |
+| Unauthorized MQTT publish | Rejected        | No execution           |
+| Replay attempt            | Drop            | No duplicate action    |
+| Invalid login             | Reject          | Account lock threshold |
+| Role violation            | Reject command  | No execution           |
+| Brute force               | Rate limit      | Log recorded           |
+
+---
+
+## 6.9 Commissioning Validation
+
+Checklist wajib sebelum go-live:
+
+- Wiring inspection OK
+- Grounding verified
+- Node pairing valid
+- Gateway online
+- Pi services healthy
+- Initial config loaded
+- Alarm test pass
+- Manual override test pass
+- Brownout simulation pass
+
+Tanpa checklist lengkap → site tidak boleh aktif.
+
+---
+
+# 7. Constraints
+
+---
+
+## 7.1 Hardware Availability Constraint
+
+- Minimal 10 Node untuk integration & stress test
+- Minimal 1 panel real untuk electrical validation
+- Spare relay & actuator wajib tersedia untuk uji destruktif ringan
+
+Tanpa hardware representatif → hasil test tidak valid.
+
+---
+
+## 7.2 Test Equipment Limitation
+
+Jika alat berikut tidak tersedia:
+
+- Power analyzer
+- Network analyzer
+- Log capture tool
+
+Maka:
+
+- Electrical validation terbatas
+- Stress & latency measurement tidak presisi
+- QA harus mencatat keterbatasan
+
+---
+
+## 7.3 Time Constraint
+
+Minimum testing window:
+
+- Unit test: per commit
+- Integration test: per release candidate
+- Soak test: 48–72 jam
+- Electrical test: minimal 1 hari penuh
+
+Testing dipercepat → risiko produksi meningkat.
+
+---
+
+## 7.4 Field Access Constraint
+
+Jika field access terbatas:
+
+- Electrical validation harus dijadwalkan
+- Surge simulation hanya dilakukan di lab
+- Field commissioning tidak boleh dilewati
+
+---
+
+## 7.5 Budget Constraint
+
+Jika keterbatasan anggaran:
+
+- Prioritaskan failure injection & soak test
+- Electrical validation tidak boleh dihilangkan
+- Security validation minimal tetap wajib
+
+---
+
+# 8. Failure Handling During Testing
+
+---
+
+## 8.1 Test Abort Criteria
+
+Test harus dihentikan jika:
+
+- Hardware rusak permanen
+- Electrical unsafe condition
+- Panel overheat
+- Surge simulation di luar batas aman
+
+Keselamatan lebih tinggi dari validasi.
+
+---
+
+## 8.2 Escalation Rule
+
+Level 1 – QA Engineer
+
+- Catat defect
+- Ulang test
+
+Level 2 – Component Owner
+
+- Debug & fix
+- Release patch
+
+Level 3 – Architect
+
+- Review desain
+- Update HTL document jika perlu
+
+---
+
+## 8.3 Log Capture Requirement
+
+Setiap test wajib memiliki:
+
+- Timestamp
+- Firmware version
+- Hardware version
+- Config version
+- Log file attachment
+
+Tanpa log → test dianggap tidak valid.
+
+---
+
+## 8.4 Retest Policy
+
+Jika FAIL:
+
+1. Fix implemented
+2. Unit test ulang
+3. Integration test ulang
+4. Soak test ulang (jika defect kritikal)
+
+No bypass allowed.
+
+---
+
+## 8.5 Defect Classification
+
+Severity:
+
+- Critical → Unsafe actuator behavior
+- Major → Loss of control
+- Minor → UI/Logging issue
+- Cosmetic → Tidak mempengaruhi fungsi
+
+Critical & Major wajib ditutup sebelum production.
+
+---
+
+# 9. Validation Matrix
+
+Format wajib:
+
+| Test ID | Category | Scenario | Expected Result | Pass/Fail | Owner |
+
+---
+
+## Sample Validation Matrix (Baseline)
+
+| Test ID   | Category    | Scenario           | Expected Result       | Pass/Fail | Owner        |
+| --------- | ----------- | ------------------ | --------------------- | --------- | ------------ |
+| T-N-01    | Node        | TTL expiry         | Command rejected      |           | Node Team    |
+| T-G-01    | Gateway     | MQTT reconnect     | Reconnect < threshold |           | Gateway Team |
+| T-S-01    | Server      | ACL reject         | Unauthorized blocked  |           | Backend      |
+| T-E-01    | Electrical  | Brownout test      | Safe state            |           | Electrical   |
+| T-SEC-01  | Security    | Replay attempt     | Drop duplicate        |           | Firmware     |
+| T-OTA-01  | OTA         | Valid upgrade      | Upgrade success       |           | Node Team    |
+| T-INT-01  | Integration | End-to-end command | ACK returned          |           | QA           |
+| T-SOAK-01 | Soak        | 72h continuous     | No reset              |           | QA           |
+
+Matrix lengkap harus diisi sebelum go-live.
+
+---
+
+# 10. Open Issues
+
+Harus dikunci sebelum production freeze:
+
+1. Minimum soak duration final?
+2. UPS mandatory selama test?
+3. Field trial duration minimum?
+4. Spare hardware policy?
+5. Automated CI pipeline untuk firmware?
+6. Regression test baseline per release?
+7. Numeric latency threshold final?
+
+Tanpa angka final → acceptance ambigu.
+
+---
+
+# 11. Revision History
+
+| Version | Date       | Author    | Description              |
+| ------- | ---------- | --------- | ------------------------ |
+| v0.1    | 2026-02-24 | Architect | Initial structured draft |
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

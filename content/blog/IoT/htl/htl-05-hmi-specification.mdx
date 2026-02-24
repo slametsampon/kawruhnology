@@ -1,0 +1,1087 @@
+---
+title: HTL-05 – HMI SPECIFICATION (Outline v0.1)
+date: '2026-02-24'
+tags:
+  [
+    'dual-mode-hmi',
+    'lan-only-dashboard',
+    'rbac-control',
+    'manual-override-policy',
+    'alarm-model',
+    'mqtt-websocket',
+  ]
+draft: false
+summary: HMI HortiLink adalah antarmuka web berbasis LAN yang menyediakan monitoring, command, konfigurasi, OTA, dan alarm untuk satu site. HMI mendukung dua mode - (A) direct-to-node via HTTP untuk commissioning dan diagnostik lokal, serta (B) via server untuk monitoring terpusat, command terkontrol, dan manajemen konfigurasi. HMI menerapkan Role-Based Access Control (Operator, Engineer, Admin) dan tidak memiliki otoritas untuk mengabaikan interlock keselamatan pada Node. Semua command mengikuti state machine HTL-01. Dokumen ini mengunci arsitektur HMI, model role, manual override policy, alarm model, serta mekanisme real-time update dalam batas LAN-only operation.
+---
+
+# **_HTL-05 – HMI SPECIFICATION (Outline v0.1)_**
+
+---
+
+- [**_HTL-05 – HMI SPECIFICATION (Outline v0.1)_**](#htl-05--hmi-specification-outline-v01)
+- [1. Purpose](#1-purpose)
+  - [1.1 Document Objective](#11-document-objective)
+  - [1.2 Authority](#12-authority)
+  - [1.3 Change Governance](#13-change-governance)
+- [2. Scope](#2-scope)
+  - [2.1 In-Scope](#21-in-scope)
+  - [2.2 Out-of-Scope](#22-out-of-scope)
+- [3. Definitions](#3-definitions)
+  - [3.1 HMI](#31-hmi)
+  - [3.2 Operator Role](#32-operator-role)
+  - [3.3 Engineer Role](#33-engineer-role)
+  - [3.4 Admin Role](#34-admin-role)
+  - [3.5 Manual Override](#35-manual-override)
+  - [3.6 Safe Mode](#36-safe-mode)
+  - [3.7 Alarm](#37-alarm)
+  - [3.8 Command Panel](#38-command-panel)
+  - [3.9 Monitoring Panel](#39-monitoring-panel)
+- [4. Assumptions](#4-assumptions)
+  - [4.1 Operational Assumptions](#41-operational-assumptions)
+  - [4.2 Technical Assumptions](#42-technical-assumptions)
+  - [4.3 Capacity Assumptions](#43-capacity-assumptions)
+- [5. System Description](#5-system-description)
+  - [5.1 HMI Architecture Overview](#51-hmi-architecture-overview)
+  - [5.2 Mode Comparison](#52-mode-comparison)
+  - [5.3 User Role Model](#53-user-role-model)
+  - [5.4 Manual Override Model](#54-manual-override-model)
+  - [5.5 Alarm Model](#55-alarm-model)
+  - [5.6 Real-Time Update Model](#56-real-time-update-model)
+  - [5.7 HMI Operational Modes](#57-hmi-operational-modes)
+- [6. Technical Specification](#6-technical-specification)
+  - [6.1 UI Functional Requirements](#61-ui-functional-requirements)
+  - [6.2 Manual Override Policy](#62-manual-override-policy)
+  - [6.3 Alarm \& Notification](#63-alarm--notification)
+  - [6.4 Real-Time Update Mechanism](#64-real-time-update-mechanism)
+  - [6.5 Configuration Interface](#65-configuration-interface)
+  - [6.6 OTA Management Interface](#66-ota-management-interface)
+  - [6.7 Direct-to-Node Interface](#67-direct-to-node-interface)
+  - [6.8 Logging \& Audit Trail](#68-logging--audit-trail)
+- [7. Constraints](#7-constraints)
+  - [7.1 LAN-Only Operation](#71-lan-only-operation)
+  - [7.2 Browser Compatibility Constraint](#72-browser-compatibility-constraint)
+  - [7.3 MQTT WebSocket Performance](#73-mqtt-websocket-performance)
+  - [7.4 Server CPU Limitation](#74-server-cpu-limitation)
+  - [7.5 User Error Risk](#75-user-error-risk)
+- [8. Failure Handling](#8-failure-handling)
+  - [8.1 Node Unreachable](#81-node-unreachable)
+  - [8.2 Gateway Offline](#82-gateway-offline)
+  - [8.3 Pi Service Down](#83-pi-service-down)
+  - [8.4 Lost WebSocket](#84-lost-websocket)
+  - [8.5 Unauthorized Login Attempt](#85-unauthorized-login-attempt)
+  - [8.6 Command Timeout](#86-command-timeout)
+- [9. Interfaces](#9-interfaces)
+  - [9.1 MQTT Topics Used](#91-mqtt-topics-used)
+  - [9.2 HTTP Direct Node Endpoints](#92-http-direct-node-endpoints)
+  - [9.3 Server API Endpoints](#93-server-api-endpoints)
+  - [9.4 Auth Interface](#94-auth-interface)
+  - [9.5 Alarm Interface](#95-alarm-interface)
+- [10. Open Issues](#10-open-issues)
+- [11. Revision History](#11-revision-history)
+
+---
+
+# 1. Purpose
+
+## 1.1 Document Objective
+
+HTL-05 mendefinisikan spesifikasi teknis HMI untuk:
+
+- Monitoring telemetry
+- Issuing command
+- Managing configuration
+- Managing OTA
+- Viewing alarm
+- Performing maintenance
+
+HMI adalah supervisory interface, bukan control authority.
+
+Kontrol kritikal tetap berada di Node (HTL-02).
+
+---
+
+## 1.2 Authority
+
+HTL-05 mengikat:
+
+- Tim Backend (API & command flow)
+- Tim UI/Frontend
+- QA untuk user-flow validation
+
+HMI tidak boleh:
+
+- Bypass interlock
+- Mengubah state machine command HTL-01
+- Mengirim command tanpa TTL
+
+---
+
+## 1.3 Change Governance
+
+Perubahan berikut wajib review lintas tim:
+
+- Command issue flow
+- Manual override logic
+- Alarm severity mapping
+- Role permission model
+- MQTT real-time update mechanism
+
+Jika perubahan mempengaruhi:
+
+- HTL-01 (command contract)
+- HTL-02 (interlock enforcement)
+- HTL-04 (command manager)
+
+Maka revisi lintas dokumen wajib dilakukan.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'README',
+      href: '/blog/IoT/htl/README',
+      description: 'README - First',
+    },
+    {
+      name: 'SYSTEM ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-00-system-architecture-master-document',
+      description: 'SYSTEM ARCHITECTURE MASTER DOCUMENT',
+    },
+    {
+      name: 'INTERFACE SPECIFICATION',
+      href: '/blog/IoT/htl/htl-01-interface-specification',
+      description: 'INTERFACE SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'NODE TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-02-node-technical-specification',
+      description: 'NODE TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'GATEWAY TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-03-gateway-technical-specification',
+      description: 'GATEWAY TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'SERVER RASPBERRY-PI',
+      href: '/blog/IoT/htl/htl-04-server-raspberry-pi-specification',
+      description: 'SERVER RASPBERRY-PI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'ELECTRICAL & POWER',
+      href: '/blog/IoT/htl/htl-06-electrical-panel-design-specification',
+      description: 'ELECTRICAL & POWER INTEGRATION SPECIFICATION',
+    },
+    {
+      name: 'SECURITY ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-07-security-architecture',
+      description: 'SECURITY ARCHITECTURE (Outline v0.1)',
+    },
+    {
+      name: 'FAILURE MODE & RECOVERY',
+      href: '/blog/IoT/htl/htl-08-failure-mode-recovery-matrix',
+      description: 'FAILURE MODE & RECOVERY MATRIX (Outline v0.1)',
+    },
+    {
+      name: 'TEST PLAN & VALIDATION',
+      href: '/blog/IoT/htl/htl-09-test-plan-validation-matrix',
+      description: 'TEST PLAN & VALIDATION MATRIX (Outline v0.1)',
+    },
+  ]}
+/>
+
+---
+
+# 2. Scope
+
+## 2.1 In-Scope
+
+HTL-05 mencakup:
+
+✔ Dashboard (Server Mode)
+
+- Real-time monitoring
+- Node status overview
+- Gateway status
+- Server health
+
+✔ Command Interface
+
+- Start/stop actuator
+- Reset node
+- Apply configuration
+- OTA trigger
+
+✔ Configuration Interface
+
+- Edit parameter
+- Version view
+- Rollback
+
+✔ OTA Management
+
+- Upload firmware
+- Select target
+- Track progress
+
+✔ Alarm & Notification
+
+- Local alarm panel
+- Severity classification
+
+✔ Dual Mode Operation
+
+Mode A – Direct-to-Node:
+
+- Commissioning
+- Diagnostics
+- Emergency manual override
+
+Mode B – Via Server:
+
+- Site-wide monitoring
+- Controlled command
+- Config & OTA
+
+---
+
+## 2.2 Out-of-Scope
+
+HMI tidak mencakup:
+
+- Cloud multi-site dashboard
+- AI visualization
+- Native mobile app (kecuali diputuskan)
+- External SMS/email alert (baseline)
+
+Internet tidak wajib.
+
+---
+
+# 3. Definitions
+
+## 3.1 HMI
+
+Web-based interface diakses via browser dalam LAN site.
+
+---
+
+## 3.2 Operator Role
+
+- View dashboard
+- Issue basic command (non-config)
+- Cannot modify config
+- Cannot upload firmware
+
+---
+
+## 3.3 Engineer Role
+
+- Modify config
+- Trigger OTA
+- Issue manual override (with restriction)
+
+---
+
+## 3.4 Admin Role
+
+- User management
+- Firmware upload
+- System configuration
+- All engineer privileges
+
+---
+
+## 3.5 Manual Override
+
+Command yang:
+
+- Mengubah state aktuator secara langsung
+- Memiliki timeout
+- Tidak boleh bypass interlock
+- Dicatat dalam audit log
+
+---
+
+## 3.6 Safe Mode
+
+Indikasi bahwa Node dalam kondisi fault atau fallback.
+HMI hanya menampilkan, tidak mengubah safe mode tanpa command valid.
+
+---
+
+## 3.7 Alarm
+
+Notifikasi lokal berdasarkan:
+
+- Telemetry threshold
+- Offline detection
+- Resource critical
+
+---
+
+## 3.8 Command Panel
+
+UI komponen untuk:
+
+- Mengirim command
+- Melihat status ACK
+- Melihat TTL
+- Melihat state lifecycle
+
+---
+
+## 3.9 Monitoring Panel
+
+UI komponen untuk:
+
+- Menampilkan sensor
+- Menampilkan actuator state
+- Menampilkan health metrics
+- Menampilkan routing info
+
+---
+
+# 4. Assumptions
+
+## 4.1 Operational Assumptions
+
+- HMI diakses via LAN
+- Smartphone browser cukup
+- Operator bisa non-technical
+- Tidak ada dependency internet
+- Maks 3–5 concurrent user lokal
+
+---
+
+## 4.2 Technical Assumptions
+
+- Server-hosted web app
+- Real-time via MQTT WebSocket
+- Polling fallback jika WebSocket gagal
+- Direct-to-node via HTTP endpoint lokal
+- RBAC dikelola oleh server
+
+---
+
+## 4.3 Capacity Assumptions
+
+Baseline:
+
+- 10–15 node per-site
+- Telemetry interval baseline
+- Real-time update tidak boleh overload server
+- Command volume rendah (non-burst)
+
+HMI tidak dirancang untuk high-frequency data stream.
+
+---
+
+# 5. System Description
+
+HMI adalah supervisory interface yang berjalan di atas arsitektur HTL-00.
+HMI memiliki dua mode operasional dan tiga level role.
+
+---
+
+## 5.1 HMI Architecture Overview
+
+![Image](https://www.researchgate.net/publication/370922347/figure/fig2/AS%3A11431281429555276%401746713394987/IoT-system-architecture-diagram-for-the-stormwater-monitoring-application.tif)
+
+![Image](https://www.mdpi.com/futureinternet/futureinternet-14-00057/article_deploy/html/images/futureinternet-14-00057-g001.png)
+
+![Image](https://learn.microsoft.com/en-us/windows-server/remote/media/step-1-plan-the-directaccess-infrastructure/da_plan_advanced_step1_gpos.png)
+
+![Image](https://www.researchgate.net/publication/221571186/figure/fig4/AS%3A702220865638402%401544433909509/Direct-access-devices.png)
+
+✔ Mode A – Direct-to-Node (HTTP Lokal)
+
+User Device (Browser)
+→ Node HTTP Endpoint
+→ Local Diagnostics / Manual Test
+
+Karakteristik:
+
+- Tidak melalui MQTT
+- Tidak melalui server
+- Hanya untuk commissioning & emergency
+- Fitur terbatas
+
+---
+
+✔ Mode B – Via Server (Supervisory Mode)
+
+User Device (Browser)
+→ Server Web App
+→ MQTT Broker
+→ Gateway
+→ Node
+
+Karakteristik:
+
+- Command tracked
+- TTL enforced
+- ACK monitored
+- Audit logged
+- Config & OTA tersedia
+
+Mode B adalah mode default operasional.
+
+---
+
+## 5.2 Mode Comparison
+
+![Image](https://www.researchgate.net/publication/335007411/figure/fig3/AS%3A789070389211136%401565140449125/Operation-mode-transition.ppm)
+
+![Image](https://www.researchgate.net/publication/336960564/figure/fig2/AS%3A885276398342155%401588077749486/Centralized-vs-decentralized-control-from-a-central-EMS-that-has-perfect-knowledge-of.png)
+
+![Image](https://media.springernature.com/lw685/springer-static/image/art%3A10.1038%2Fs41598-025-13465-7/MediaObjects/41598_2025_13465_Fig6_HTML.png)
+
+![Image](https://media.springernature.com/full/springer-static/image/art%3A10.1038%2Fs41598-025-13465-7/MediaObjects/41598_2025_13465_Fig1_HTML.png)
+
+| Feature                 | Mode A (Direct)    | Mode B (Server) |
+| ----------------------- | ------------------ | --------------- |
+| Monitoring seluruh site | ✖                  | ✔               |
+| Command tracking        | ✖                  | ✔               |
+| TTL enforcement         | ✖ (node-side only) | ✔               |
+| Config management       | ✖                  | ✔               |
+| OTA management          | ✖                  | ✔               |
+| Audit logging           | Minimal            | Full            |
+| Commissioning           | ✔                  | ✔               |
+| Emergency override      | ✔                  | ✔ (role-based)  |
+
+Mode A tidak boleh digunakan sebagai operational default.
+
+---
+
+## 5.3 User Role Model
+
+✔ 5.3.1 Operator
+
+Akses:
+
+- Monitoring dashboard
+- Issue basic actuator command
+- View alarm
+- Tidak boleh ubah config
+
+Tidak boleh:
+
+- OTA upload
+- User management
+- Manual override extended
+
+---
+
+✔ 5.3.2 Engineer
+
+Akses:
+
+- Semua operator privilege
+- Edit config
+- Trigger OTA
+- Manual override dengan timeout
+
+Tidak boleh:
+
+- User management
+
+---
+
+✔ 5.3.3 Admin
+
+Akses penuh:
+
+- User management
+- Firmware upload
+- Config global
+- System maintenance
+- Role assignment
+
+---
+
+## 5.4 Manual Override Model
+
+Manual override hanya tersedia untuk:
+
+- Engineer
+- Admin
+
+Karakteristik:
+
+- Wajib konfirmasi dialog
+- TTL mandatory
+- Timeout auto-expire
+- Tidak boleh bypass interlock
+- Event dicatat dalam audit log
+
+Manual override tidak boleh persistent tanpa explicit reapply.
+
+---
+
+## 5.5 Alarm Model
+
+Alarm bersumber dari:
+
+- Telemetry threshold
+- Node offline detection
+- Gateway offline
+- Server resource critical
+- Buffer overflow
+- Relay chain anomaly
+
+Severity:
+
+- INFO
+- WARNING
+- CRITICAL
+
+Alarm tidak boleh langsung men-trigger actuator tanpa command formal.
+
+---
+
+## 5.6 Real-Time Update Model
+
+Default:
+
+- MQTT WebSocket
+
+Fallback:
+
+- Periodic polling
+
+Throttling rule:
+
+- Update UI tidak boleh melebihi server capability
+- Aggregation diperbolehkan di sisi UI
+
+---
+
+## 5.7 HMI Operational Modes
+
+HMI memiliki mode visual:
+
+- NORMAL
+- DEGRADED (Gateway offline)
+- SAFE NODE
+- SERVER WARNING
+
+Mode visual tidak mempengaruhi Node control.
+
+---
+
+# 6. Technical Specification
+
+---
+
+## 6.1 UI Functional Requirements
+
+---
+
+✔ 6.1.1 Dashboard Monitoring
+
+Dashboard utama wajib menampilkan:
+
+- Ringkasan seluruh node (10–15 max)
+- Status node (ONLINE / OFFLINE / SAFE)
+- Sensor utama per node
+- Actuator state
+- Gateway status
+- Server health summary
+
+Karakteristik:
+
+- Real-time update via MQTT WebSocket
+- Highlight node abnormal
+- Tidak boleh polling berat per-node secara terpisah
+
+---
+
+✔ 6.1.2 Node Detail View
+
+Setiap node memiliki halaman detail yang menampilkan:
+
+- Sensor readings (raw & filtered jika tersedia)
+- Actuator state
+- Health metrics (uptime, RSSI, buffer depth)
+- Routing info (parent, hop)
+- Last command status
+
+Node detail tidak boleh mengirim command otomatis.
+
+---
+
+✔ 6.1.3 Command Interface
+
+Command panel wajib:
+
+- Menampilkan target node
+- Menampilkan TTL
+- Menampilkan cmd_id
+- Menampilkan state lifecycle:
+
+  - ISSUED
+  - EXECUTED
+  - REJECTED
+  - EXPIRED
+
+Semua command harus melalui server (Mode B) kecuali commissioning.
+
+Command UI wajib:
+
+- Konfirmasi dialog
+- TTL mandatory
+- Tidak boleh kirim tanpa target jelas
+- Tidak boleh kirim tanpa role valid
+
+---
+
+## 6.2 Manual Override Policy
+
+Manual override adalah command khusus.
+
+Aturan:
+
+- Hanya Engineer/Admin
+- TTL maksimal dibatasi
+- Timeout auto revert
+- Tidak boleh bypass interlock
+- Wajib audit log
+
+UI harus:
+
+- Menampilkan countdown TTL
+- Menampilkan state override aktif
+- Disable override jika node SAFE mode
+
+---
+
+## 6.3 Alarm & Notification
+
+Alarm panel wajib:
+
+- List alarm aktif
+- Severity indicator (color-coded)
+- Timestamp
+- Node reference
+- Acknowledge button (UI only, tidak menghapus root cause)
+
+Alarm kategori:
+
+INFO
+WARNING
+CRITICAL
+
+CRITICAL tidak boleh auto-trigger command tanpa persetujuan user.
+
+---
+
+## 6.4 Real-Time Update Mechanism
+
+Default:
+
+- MQTT over WebSocket
+- Subscribe telemetry & health
+
+Fallback:
+
+- Polling interval baseline (misal beberapa detik)
+
+Throttle rule:
+
+- UI update tidak boleh melebihi X update/sec
+- Burst telemetry harus di-aggregate
+
+WebSocket failure:
+
+- Auto reconnect
+- Indicator status
+
+---
+
+## 6.5 Configuration Interface
+
+UI wajib menyediakan:
+
+- View config version aktif
+- Edit parameter
+- Validation sebelum publish
+- Preview diff
+- Version history
+- Rollback button
+
+Validation rule:
+
+- Numeric range validation
+- Required field check
+- Prevent invalid publish
+
+Publish config mengikuti HTL-01.
+
+---
+
+## 6.6 OTA Management Interface
+
+Fitur wajib:
+
+- List firmware tersedia
+- Tampilkan compatibility
+- Pilih target node
+- Publish OTA metadata
+- Tampilkan progress status:
+
+  - Pending
+  - Downloading
+  - Verifying
+  - Rebooting
+  - Completed
+  - Failed
+
+Rollback status harus terlihat.
+
+OTA upload hanya Admin.
+
+---
+
+## 6.7 Direct-to-Node Interface
+
+Minimal feature (Mode A):
+
+- Live sensor read
+- Actuator test ON/OFF
+- Firmware version
+- Network test
+- Reset node
+
+Security rule:
+
+- Local-only access
+- PIN minimal
+- Session timeout
+- Tidak menyimpan credential
+
+Mode A tidak memiliki RBAC kompleks.
+
+---
+
+## 6.8 Logging & Audit Trail
+
+HMI wajib mencatat:
+
+- Login success/failure
+- Command issued
+- Command result
+- Config change
+- OTA trigger
+- Manual override
+- User management change
+
+Retention baseline harus dikunci sebelum production.
+
+Log tidak boleh editable dari UI.
+
+---
+
+# 7. Constraints
+
+---
+
+## 7.1 LAN-Only Operation
+
+- HMI hanya tersedia di jaringan lokal
+- Tidak boleh bergantung pada layanan internet
+- Tidak boleh memerlukan CDN eksternal
+- Semua asset harus tersedia lokal
+
+---
+
+## 7.2 Browser Compatibility Constraint
+
+Target minimal:
+
+- Chrome (modern)
+- Edge (modern)
+- Firefox (modern)
+- Safari mobile
+
+Tidak diwajibkan mendukung browser legacy.
+
+UI harus responsive untuk smartphone.
+
+---
+
+## 7.3 MQTT WebSocket Performance
+
+- Tidak boleh subscribe topic berlebihan
+- Wildcard harus terkendali
+- Update UI harus dibatasi (throttled)
+- Tidak boleh menyebabkan broker overload
+
+---
+
+## 7.4 Server CPU Limitation
+
+HMI tidak boleh:
+
+- Query DB full-scan
+- Poll terlalu sering
+- Generate report berat real-time
+
+Server adalah Raspberry Pi, bukan enterprise server.
+
+---
+
+## 7.5 User Error Risk
+
+UI harus:
+
+- Gunakan confirmation dialog
+- Gunakan disable state untuk command invalid
+- Validasi parameter sebelum publish
+- Tampilkan warning pada manual override
+
+Desain UI harus mengurangi risiko salah tekan.
+
+---
+
+# 8. Failure Handling
+
+Format: Detection → Impact → Recovery → Owner
+
+---
+
+## 8.1 Node Unreachable
+
+Detection:
+
+- Node health timeout
+- Gateway status offline
+
+Impact:
+
+- Command tidak bisa dijalankan
+- Monitoring berhenti
+
+Recovery:
+
+- Tampilkan offline indicator
+- Disable command button
+- Alert operator
+
+Owner:
+
+- Gateway (connectivity)
+- Node (control)
+
+---
+
+## 8.2 Gateway Offline
+
+Detection:
+
+- MQTT connection lost
+- Gateway health missing
+
+Impact:
+
+- Tidak ada telemetry
+- Command tidak bisa dikirim
+
+Recovery:
+
+- Display degraded mode
+- Auto reconnect WebSocket
+- Disable command panel
+
+Owner:
+
+- Gateway
+
+---
+
+## 8.3 Pi Service Down
+
+Detection:
+
+- API unreachable
+- WebSocket disconnect permanen
+
+Impact:
+
+- Dashboard tidak update
+- Command tidak tersedia
+
+Recovery:
+
+- Tampilkan server offline message
+- Retry reconnect
+- Operator check server
+
+Owner:
+
+- Server
+
+---
+
+## 8.4 Lost WebSocket
+
+Detection:
+
+- WebSocket close event
+
+Impact:
+
+- Real-time update berhenti
+
+Recovery:
+
+- Auto reconnect
+- Fallback polling
+
+Owner:
+
+- HMI frontend
+
+---
+
+## 8.5 Unauthorized Login Attempt
+
+Detection:
+
+- Failed login threshold
+
+Impact:
+
+- Security risk
+
+Recovery:
+
+- Account lock
+- Log event
+- Alert admin
+
+Owner:
+
+- Server auth layer
+
+---
+
+## 8.6 Command Timeout
+
+Detection:
+
+- No ACK within TTL window
+
+Impact:
+
+- Command state uncertain
+
+Recovery:
+
+- Update UI status = EXPIRED
+- Suggest manual reissue
+- Log event
+
+Owner:
+
+- Server command manager
+
+---
+
+# 9. Interfaces
+
+---
+
+## 9.1 MQTT Topics Used
+
+Mengacu HTL-01:
+
+- Telemetry topic
+- Health topic
+- Command topic
+- ACK topic
+- Config topic
+- OTA metadata topic
+
+HMI tidak publish langsung ke broker kecuali via server logic.
+
+---
+
+## 9.2 HTTP Direct Node Endpoints
+
+Mode A:
+
+- GET /status
+- GET /sensor
+- POST /actuator-test
+- POST /reset
+- GET /version
+
+Endpoint harus sesuai HTL-02.
+
+---
+
+## 9.3 Server API Endpoints
+
+- GET /telemetry
+- POST /command
+- GET /config
+- POST /config
+- POST /ota-upload
+- GET /alarm
+- GET /health
+
+Semua API membutuhkan session auth.
+
+---
+
+## 9.4 Auth Interface
+
+- POST /login
+- POST /logout
+- POST /user-create (admin)
+- POST /role-assign (admin)
+
+Password tidak pernah dikirim plaintext setelah login.
+
+---
+
+## 9.5 Alarm Interface
+
+Alarm endpoint:
+
+- GET /alarm-active
+- POST /alarm-ack
+
+Ack hanya menandai UI acknowledgment, bukan resolve root cause.
+
+---
+
+# 10. Open Issues
+
+Harus dikunci sebelum production:
+
+1. Native mobile app diperlukan?
+2. Offline caching di browser?
+3. Dark mode / simplified UI?
+4. SMS/email alert diperlukan?
+5. Multilingual support?
+6. Alarm retention duration?
+7. Manual override TTL default?
+
+---
+
+# 11. Revision History
+
+| Version | Date       | Author    | Description              |
+| ------- | ---------- | --------- | ------------------------ |
+| v0.1    | 2026-02-24 | Architect | Initial structured draft |
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

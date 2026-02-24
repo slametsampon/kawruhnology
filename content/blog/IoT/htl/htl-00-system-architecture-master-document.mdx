@@ -1,0 +1,1024 @@
+---
+title: SYSTEM ARCHITECTURE MASTER DOCUMENT
+date: '2026-02-24'
+tags:
+  [
+    'local-first-control',
+    'multi-node-site',
+    'relay-aware-topology',
+    'raspberry-pi-server',
+    'mqtt-lan',
+    'distributed-agriculture-control',
+  ]
+draft: false
+summary: HortiLink adalah sistem kontrol pertanian terdistribusi berbasis site otonom dengan arsitektur local-first. Setiap site memiliki Node (ESP sensor/actuator), relay-aware intra-site network, Gateway ESP, dan Server Raspberry Pi sebagai supervisory layer lokal. Kontrol kritikal berada di Node dan tetap berjalan walaupun gateway atau server gagal. Server menyediakan MQTT broker, database, dashboard, dan OTA repository tanpa ketergantungan internet. Dokumen ini mengunci boundary sistem, hierarchy kontrol, topologi komunikasi, asumsi kapasitas (10–15 node/site), serta model degradasi sistem sebagai dasar seluruh spesifikasi teknis berikutnya.
+---
+
+# **_HTL-00 – SYSTEM ARCHITECTURE MASTER DOCUMENT_**
+
+---
+
+- [**_HTL-00 – SYSTEM ARCHITECTURE MASTER DOCUMENT_**](#htl-00--system-architecture-master-document)
+- [1. Purpose](#1-purpose)
+  - [1.1 Document Objective](#11-document-objective)
+  - [1.2 Architectural Authority](#12-architectural-authority)
+  - [1.3 Governance \& Change Control](#13-governance--change-control)
+- [2. Scope](#2-scope)
+  - [2.1 In-Scope Components (Baseline Per-Site)](#21-in-scope-components-baseline-per-site)
+  - [2.2 Out-of-Scope (Fase Berikutnya)](#22-out-of-scope-fase-berikutnya)
+  - [2.3 Deployment Model](#23-deployment-model)
+- [3. Definitions](#3-definitions)
+  - [3.1 Site](#31-site)
+  - [3.2 Node](#32-node)
+  - [3.3 Relay-Aware Node](#33-relay-aware-node)
+  - [3.4 Gateway](#34-gateway)
+  - [3.5 Site Server (Raspberry Pi)](#35-site-server-raspberry-pi)
+  - [3.6 Control Plane](#36-control-plane)
+  - [3.7 Data Plane](#37-data-plane)
+  - [3.8 Local-First Control](#38-local-first-control)
+- [4. Assumptions](#4-assumptions)
+  - [4.1 Operational Assumptions](#41-operational-assumptions)
+  - [4.2 Technical Assumptions](#42-technical-assumptions)
+  - [4.3 Capacity Assumptions (Baseline)](#43-capacity-assumptions-baseline)
+- [5. System Description](#5-system-description)
+  - [5.1 High-Level Architecture Overview](#51-high-level-architecture-overview)
+  - [5.2 Site Boundary Architecture](#52-site-boundary-architecture)
+  - [5.3 Control Hierarchy Model](#53-control-hierarchy-model)
+  - [5.4 Communication Topology](#54-communication-topology)
+  - [5.5 Data Flow Description](#55-data-flow-description)
+  - [5.6 Degradation Mode Overview](#56-degradation-mode-overview)
+- [6. Technical Specification](#6-technical-specification)
+  - [6.1 Node Architectural Role](#61-node-architectural-role)
+  - [6.2 Relay-Aware Topology Model](#62-relay-aware-topology-model)
+  - [6.3 Gateway Architectural Role](#63-gateway-architectural-role)
+  - [6.4 Raspberry Pi Architectural Role](#64-raspberry-pi-architectural-role)
+  - [6.5 Time Authority Model](#65-time-authority-model)
+  - [6.6 Store-and-Forward Strategy](#66-store-and-forward-strategy)
+  - [6.7 Configuration Management Model](#67-configuration-management-model)
+  - [6.8 Observability Architecture](#68-observability-architecture)
+  - [6.9 Command Authority Model](#69-command-authority-model)
+  - [6.10 Resource Baseline](#610-resource-baseline)
+- [7. Constraints](#7-constraints)
+  - [7.1 Hardware Constraints](#71-hardware-constraints)
+  - [7.2 Network Constraints](#72-network-constraints)
+  - [7.3 Power Constraints](#73-power-constraints)
+  - [7.4 Scaling Constraints](#74-scaling-constraints)
+- [8. Failure Handling](#8-failure-handling)
+  - [8.1 Containment Principle](#81-containment-principle)
+  - [8.2 Failure Domain Summary](#82-failure-domain-summary)
+  - [8.3 Degradation Modes](#83-degradation-modes)
+- [9. Interfaces (High-Level Overview)](#9-interfaces-high-level-overview)
+  - [9.1 Data Plane](#91-data-plane)
+  - [9.2 Control Plane](#92-control-plane)
+  - [9.3 Provisioning Interface](#93-provisioning-interface)
+  - [9.4 OTA Interface](#94-ota-interface)
+  - [9.5 Diagnostic Interface](#95-diagnostic-interface)
+- [10. Open Issues](#10-open-issues)
+- [11. Revision History](#11-revision-history)
+
+---
+
+# 1. Purpose
+
+## 1.1 Document Objective
+
+HTL-00 adalah dokumen arsitektur tertinggi HortiLink per-site.
+Dokumen ini:
+
+- Mengunci boundary sistem
+- Mengunci kontrol hierarchy
+- Mengunci topologi komunikasi
+- Mengunci domain tanggung jawab Node, Gateway, dan Server
+- Menjadi referensi seluruh dokumen HTL-01 s/d HTL-09
+
+Tidak ada dokumen lain yang boleh bertentangan dengan HTL-00.
+
+---
+
+## 1.2 Architectural Authority
+
+HTL-00 memiliki otoritas untuk:
+
+- Menentukan siapa authority kontrol
+- Menentukan dependensi eksternal
+- Menentukan model degradasi
+- Menentukan asumsi kapasitas
+- Menentukan domain trust
+
+Perubahan pada:
+
+- Topologi jaringan
+- Authority kontrol
+- Deployment model
+- Kapasitas baseline
+
+wajib revisi HTL-00.
+
+---
+
+## 1.3 Governance & Change Control
+
+Perubahan HTL-00 harus melalui:
+
+1. Architecture review meeting
+2. Impact analysis terhadap HTL-01 s/d HTL-09
+3. Version increment MAJOR/MINOR sesuai dampak
+4. Approval architect + backend lead
+
+HTL-01 tidak boleh dibekukan sebelum HTL-00 final.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'README',
+      href: '/blog/IoT/htl/README',
+      description: 'README - First',
+    },
+    {
+      name: 'INTERFACE SPECIFICATION',
+      href: '/blog/IoT/htl/htl-01-interface-specification',
+      description: 'INTERFACE SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'NODE TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-02-node-technical-specification',
+      description: 'NODE TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'GATEWAY TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-03-gateway-technical-specification',
+      description: 'GATEWAY TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'SERVER RASPBERRY-PI',
+      href: '/blog/IoT/htl/htl-04-server-raspberry-pi-specification',
+      description: 'SERVER RASPBERRY-PI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'HMI SPECIFICATION',
+      href: '/blog/IoT/htl/htl-05-hmi-specification',
+      description: 'HMI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'ELECTRICAL & POWER',
+      href: '/blog/IoT/htl/htl-06-electrical-panel-design-specification',
+      description: 'ELECTRICAL & POWER INTEGRATION SPECIFICATION',
+    },
+    {
+      name: 'SECURITY ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-07-security-architecture',
+      description: 'SECURITY ARCHITECTURE (Outline v0.1)',
+    },
+    {
+      name: 'FAILURE MODE & RECOVERY',
+      href: '/blog/IoT/htl/htl-08-failure-mode-recovery-matrix',
+      description: 'FAILURE MODE & RECOVERY MATRIX (Outline v0.1)',
+    },
+    {
+      name: 'TEST PLAN & VALIDATION',
+      href: '/blog/IoT/htl/htl-09-test-plan-validation-matrix',
+      description: 'TEST PLAN & VALIDATION MATRIX (Outline v0.1)',
+    },
+  ]}
+/>
+
+---
+
+# 2. Scope
+
+## 2.1 In-Scope Components (Baseline Per-Site)
+
+Komponen wajib dalam satu site:
+
+- 10–15 Node ESP (sensor & actuator)
+- Relay-aware intra-site topology
+- 1 Gateway ESP terpisah
+- 1 Raspberry Pi sebagai Site Server
+- HMI berbasis web (LAN)
+- MQTT broker lokal
+- Time-series database lokal
+- OTA repository lokal
+- Role-based access control lokal
+
+Tidak ada dependency cloud dalam baseline.
+
+---
+
+## 2.2 Out-of-Scope (Fase Berikutnya)
+
+- Multi-site aggregation
+- Cloud synchronization
+- AI analytics
+- Enterprise IAM
+- Remote internet monitoring
+
+Cloud adalah fase ekspansi, bukan baseline.
+
+---
+
+## 2.3 Deployment Model
+
+✔ 2.3.1 Single Site Baseline
+
+Setiap site berdiri sendiri dan mampu beroperasi tanpa internet.
+
+✔ 2.3.2 Multi-Site (Future Phase)
+
+Site-site independen yang dapat disinkronisasi ke layer cloud.
+
+Saat ini tidak termasuk dalam baseline HTL-00.
+
+---
+
+# 3. Definitions
+
+## 3.1 Site
+
+Unit fisik operasional (greenhouse/lahan) yang memiliki:
+
+- Node cluster
+- Gateway
+- Raspberry Pi server
+- LAN lokal
+
+Site adalah domain otonom.
+
+---
+
+## 3.2 Node
+
+Perangkat berbasis ESP yang:
+
+- Membaca sensor
+- Mengontrol aktuator
+- Menjalankan kontrol lokal
+- Mengirim telemetry
+- Menerima command non-kritis
+
+Node adalah authority kontrol kritikal.
+
+---
+
+## 3.3 Relay-Aware Node
+
+Node yang mengetahui:
+
+- Parent (sebelum)
+- Child (sesudah)
+
+Node tidak blind forward.
+Node memelihara routing metadata dan hop limit.
+
+---
+
+## 3.4 Gateway
+
+ESP terpisah yang:
+
+- Koordinator ESP-NOW
+- Validasi routing
+- Deduplication
+- Bridge ke MQTT broker (Pi)
+- Distribusi timestamp
+- Store-and-forward terbatas
+
+Gateway bukan control authority.
+
+---
+
+## 3.5 Site Server (Raspberry Pi)
+
+Server lokal yang menyediakan:
+
+- MQTT broker
+- Time-series DB
+- Dashboard
+- Command manager
+- Config registry
+- OTA repository
+- RBAC
+
+Server adalah supervisory layer, bukan kontrol kritikal.
+
+---
+
+## 3.6 Control Plane
+
+Aliran perintah dan konfigurasi dari Server → Gateway → Node.
+
+---
+
+## 3.7 Data Plane
+
+Aliran telemetry dari Node → Gateway → Server.
+
+---
+
+## 3.8 Local-First Control
+
+Prinsip bahwa:
+
+Kontrol kritikal (pompa, valve, dosing)
+tidak bergantung pada gateway, server, atau internet.
+
+---
+
+# 4. Assumptions
+
+## 4.1 Operational Assumptions
+
+1. Site dapat mengalami:
+
+   - Listrik tidak stabil
+   - Gangguan jaringan LAN
+   - Reboot perangkat
+
+2. Internet tidak tersedia atau tidak stabil.
+3. Operator onsite tersedia untuk commissioning.
+4. Lingkungan outdoor dengan kelembaban tinggi.
+
+---
+
+## 4.2 Technical Assumptions
+
+1. MQTT hanya berjalan di LAN site.
+2. ESP-NOW digunakan intra-site.
+3. HTTP digunakan untuk provisioning & diagnostics lokal.
+4. Raspberry Pi wajib per-site.
+5. Node maksimal 10–15 unit per-site.
+6. Relay topology dengan hop limit terbatas.
+
+---
+
+## 4.3 Capacity Assumptions (Baseline)
+
+- Node per-site: 10–15
+- 1 Gateway per-site
+- 1 Pi per-site
+- Telemetry interval baseline akan dikunci di section teknis
+- Broker dan DB berjalan pada resource Pi kelas menengah
+
+Kapasitas ini adalah baseline desain, bukan batas absolut.
+
+---
+
+# 5. System Description
+
+## 5.1 High-Level Architecture Overview
+
+![Image](https://www.researchgate.net/publication/358557116/figure/fig2/AS%3A11431281097663747%401668656925817/Gateway-centric-IoT-architecture-for-intelligent-edge-computing.png)
+
+![Image](https://www.researchgate.net/publication/346576000/figure/fig1/AS%3A964429172719619%401606949241745/Smart-Farming-Conceptual-Architecture-10.jpg)
+
+![Image](https://aggregate.digital/v3_images/diagrams/iot-platform-high-level-design.svg)
+
+✔ Deskripsi Arsitektur Baseline Per-Site
+
+Satu site HortiLink terdiri dari:
+
+- 10–15 Node (ESP sensor + actuator)
+- Relay-aware intra-site topology
+- 1 Gateway ESP
+- 1 Raspberry Pi (Site Server)
+- HMI via LAN
+
+✔ Alur Data (Data Plane)
+
+Node
+→ Relay (jika ada)
+→ Gateway
+→ MQTT Broker (Pi)
+→ Time-Series Database
+→ Dashboard
+
+✔ Alur Kontrol (Control Plane)
+
+Dashboard (Pi)
+→ MQTT
+→ Gateway
+→ Node
+→ ACK kembali ke Pi
+
+Kontrol kritikal tetap berada di Node.
+Server hanya supervisory.
+
+---
+
+## 5.2 Site Boundary Architecture
+
+![Image](https://www.researchgate.net/publication/325031048/figure/fig1/AS%3A1163961537953797%401654521464764/Block-Diagram-of-IoT-framework.png)
+
+![Image](https://www.researchgate.net/publication/346886281/figure/fig1/AS%3A1006576320118786%401616997904528/A-typical-IoT-application-setting-The-IoT-gateway-eg-Raspberry-Pi-aggregates-data.png)
+
+![Image](https://www.researchgate.net/publication/304918738/figure/fig1/AS%3A381355008512000%401467933527354/Raspberry-Pi-2-B-based-platform-in-IoT-environment-Platform-is-based-on-4-with-needed.png)
+
+> **Boundary Level**
+
+✔ Boundary 1 – Node Domain
+
+- Sensor
+- Actuator
+- Local control engine
+- Interlock
+
+Jika Gateway & Server mati → Node tetap berjalan.
+
+✔ Boundary 2 – Gateway Domain
+
+- Routing
+- Dedup
+- Store-forward
+- Time authority
+
+Jika Server mati → Gateway buffer data.
+
+✔ Boundary 3 – Server Domain
+
+- MQTT broker
+- DB
+- Dashboard
+- OTA
+
+Jika Server mati → kontrol tetap di Node.
+
+---
+
+## 5.3 Control Hierarchy Model
+
+Kontrol dibagi menjadi 4 level:
+
+✔ Level 0 – Hardware Interlock
+
+- Relay wiring logic
+- Max runtime limit
+- Physical protection
+
+Tidak bisa di-bypass software.
+
+✔ Level 1 – Node Local Automation
+
+- Threshold control
+- Schedule fallback
+- Safety validation
+
+Authority utama kontrol.
+
+✔ Level 2 – Gateway Supervisory
+
+- Routing enforcement
+- Rate limiting
+- Time distribution
+
+Tidak boleh override interlock.
+
+✔ Level 3 – Server Supervisory
+
+- Setpoint change
+- Config update
+- Monitoring
+
+Tidak boleh menjadi hard dependency.
+
+---
+
+## 5.4 Communication Topology
+
+![Image](https://www.researchgate.net/publication/371948565/figure/fig3/AS%3A11431281171137242%401688046801606/ESP-NOW-two-way-communication-mesh-network.jpg)
+
+![Image](https://www.zenarmor.com/docs/assets/images/star-topology-with-switch-a08f8219b615a059a6341fc25322d936.png)
+
+✔ Intra-Site
+
+- ESP-NOW
+- Relay-aware star with limited hop
+- Hop limit wajib
+- Dedup wajib
+
+✔ Gateway to Server
+
+- MQTT over LAN
+- QoS defined in HTL-01
+- Persistent session
+
+✔ HMI Access
+
+Mode A:
+Smartphone → Node HTTP (local AP/LAN)
+
+Mode B:
+Smartphone → Pi Web → MQTT → Node
+
+---
+
+## 5.5 Data Flow Description
+
+✔ Telemetry Flow
+
+1. Sensor read
+2. Local validation
+3. Sequence increment
+4. Relay metadata attach
+5. Gateway validation
+6. MQTT publish
+7. DB ingestion
+
+✔ Command Flow
+
+1. User issue command
+2. Server publish with TTL
+3. Gateway validate
+4. Node validate interlock
+5. Execute
+6. ACK return
+7. Dashboard update
+
+---
+
+## 5.6 Degradation Mode Overview
+
+| Scenario      | System Mode               |
+| ------------- | ------------------------- |
+| Normal        | Full operation            |
+| Pi down       | Autonomous + no dashboard |
+| Gateway down  | Node local-only           |
+| Relay break   | Partial connectivity      |
+| LAN down      | Node autonomous           |
+| Internet down | No impact                 |
+
+Internet tidak mempengaruhi baseline operasi.
+
+---
+
+# 6. Technical Specification
+
+Section ini mengunci keputusan teknis inti arsitektur per-site dan menjadi referensi langsung bagi HTL-01 s/d HTL-09.
+
+---
+
+## 6.1 Node Architectural Role
+
+Node adalah **control authority utama** dalam sistem.
+
+✔ Tanggung Jawab Node
+
+- Sensor acquisition
+- Local filtering & validation
+- Threshold/schedule control
+- Safety interlock enforcement
+- Actuator driving
+- Telemetry generation
+- Command validation (TTL, idempotency)
+- Local buffering (minimum)
+- Watchdog & brownout handling
+
+✔ Prinsip Utama
+
+Node harus tetap:
+
+- Aman
+- Stabil
+- Deterministik
+
+Walaupun:
+
+- Gateway mati
+- Server mati
+- LAN mati
+- Internet tidak ada
+
+Node tidak boleh:
+
+- Bergantung pada server untuk keputusan pompa/valve
+- Menunggu ACK server untuk eksekusi kontrol lokal
+
+---
+
+## 6.2 Relay-Aware Topology Model
+
+![Image](https://dfzljdn9uc3pi.cloudfront.net/2023/cs-1363/1/fig-1-full.png)
+
+![Image](https://www.researchgate.net/profile/Trinh-Mien-2/publication/371298283/figure/fig5/AS%3A11431281170013501%401687566380076/Design-hardware-to-control-electrical-equipment-based-on-AWS-IoT-and-ESP-NOW_Q320.jpg)
+
+✔ Karakteristik
+
+- Max 10–15 node
+- Hop terbatas (dikunci di HTL-01)
+- Node mengetahui parent & child
+- Tidak full mesh dinamis
+- Tidak dynamic route discovery kompleks
+
+✔ Aturan Wajib
+
+1. Hop limit enforcement
+2. Sequence-based deduplication
+3. Routing table statis/semi-statis
+4. Loop prevention
+5. Relay tidak boleh memodifikasi payload kontrol
+
+✔ Dampak Failure
+
+Jika parent mati:
+
+- Node masuk fallback mode
+- Attempt rebind ke gateway jika dalam jangkauan
+- Tidak menghentikan kontrol lokal
+
+---
+
+## 6.3 Gateway Architectural Role
+
+Gateway adalah **bridge + policy enforcement layer**.
+
+✔ Tanggung Jawab Gateway
+
+- ESP-NOW coordinator
+- Relay metadata validation
+- Dedup engine
+- Store-and-forward (ringan)
+- MQTT publish
+- Command dispatch
+- Time authority distribution
+- Rate limiting
+
+Gateway tidak memiliki authority kontrol aktuator.
+
+---
+
+## 6.4 Raspberry Pi Architectural Role
+
+Pi adalah **supervisory & observability layer lokal**.
+
+✔ Tanggung Jawab Pi
+
+- MQTT broker
+- Data ingestion
+- Time-series database
+- Command management
+- Config registry
+- OTA repository
+- RBAC
+- Health monitoring
+- Backup
+
+Jika Pi mati:
+
+- Kontrol tetap berjalan
+- Data sementara tidak tercatat
+
+---
+
+## 6.5 Time Authority Model
+
+![Image](https://www.researchgate.net/publication/349623050/figure/fig1/AS%3A995461737488386%401614347981864/LoRa-and-edge-gateway-based-real-time-monitoring-of-forest-environment-LoRa-communication.png)
+
+✔ Hierarki Waktu
+
+1. Raspberry Pi (jika NTP tersedia)
+2. Gateway (distributor waktu)
+3. Node (sinkronisasi ringan)
+
+✔ Fallback
+
+Jika Pi tidak tersedia:
+
+- Gateway menjadi authority lokal
+  Jika gateway tidak tersedia:
+- Node menggunakan monotonic counter + uptime
+
+Timestamp server tidak boleh menjadi hard dependency kontrol.
+
+---
+
+## 6.6 Store-and-Forward Strategy
+
+✔ Node Buffer
+
+- Kapasitas minimal (beberapa siklus telemetry)
+- Digunakan saat relay sementara putus
+- Flush saat koneksi kembali
+
+✔ Gateway Buffer
+
+- Buffer utama sebelum MQTT publish
+- Wajib mencegah kehilangan data saat broker down
+- Policy drop jika buffer penuh (ditentukan di HTL-03)
+
+✔ Server Storage
+
+- Storage permanen
+- Retention policy ditentukan di HTL-04
+
+---
+
+## 6.7 Configuration Management Model
+
+✔ Konsep
+
+- Versioned configuration per-site
+- Per-node config binding
+- Immutable config snapshot
+- Rollback capability
+
+✔ Alur
+
+1. Config dibuat di Server
+2. Publish via MQTT
+3. Gateway forward
+4. Node validate checksum
+5. Apply & ACK
+6. Server update status
+
+Node tidak boleh apply config tanpa validasi integrity.
+
+---
+
+## 6.8 Observability Architecture
+
+![Image](https://www.researchgate.net/publication/384098996/figure/fig2/AS%3A11431281278494115%401726644526257/Block-Diagram-of-Edge-Computing-based-Context-Health-Monitoring-System.png)
+
+![Image](https://miro.medium.com/v2/resize%3Afit%3A1400/1%2AbI8wnC7Jv2Dr-aO_hV0c0g.png)
+
+![Image](https://www.researchgate.net/publication/340009172/figure/fig21/AS%3A923933498949666%401597294320999/Overall-system-architecture-of-the-IoT-for-environmental-monitoring.ppm)
+
+✔ Layer Monitoring
+
+✔ Node Level
+
+- Uptime
+- Reset counter
+- Supply voltage
+- RSSI
+- Buffer depth
+
+✔ Gateway Level
+
+- Free heap
+- Queue depth
+- MQTT state
+- Reconnect counter
+
+✔ Server Level
+
+- Broker connection count
+- DB write rate
+- Disk usage
+- CPU load
+
+Observability wajib lokal (tanpa cloud).
+
+---
+
+## 6.9 Command Authority Model
+
+Authority priority:
+
+1. Hardware interlock
+2. Node local rule
+3. Manual override (role-restricted)
+4. Server command
+
+Server tidak boleh override interlock.
+
+---
+
+## 6.10 Resource Baseline
+
+✔ Node
+
+- ESP32 baseline
+- RAM cukup untuk routing + buffer
+- Flash untuk OTA dual partition
+
+✔ Gateway
+
+- ESP32 recommended
+- Flash cukup untuk buffer
+
+✔ Server
+
+- Raspberry Pi 4 baseline
+- RAM ≥ 4GB recommended
+- Storage ≥ 32GB
+
+---
+
+# 7. Constraints
+
+Arsitektur HortiLink dirancang dalam batasan nyata berikut.
+
+---
+
+## 7.1 Hardware Constraints
+
+✔ Node (ESP32 baseline)
+
+- RAM terbatas (ratusan KB efektif)
+- Flash write cycle terbatas
+- Tidak cocok untuk heavy JSON parsing besar
+- Relay rating harus mengikuti load nyata
+
+✔ Gateway
+
+- RAM terbatas untuk buffering
+- Flash terbatas untuk store-forward
+- Tidak cocok untuk analytics berat
+
+✔ Raspberry Pi
+
+- CPU terbatas (bukan server enterprise)
+- Disk I/O terbatas (SD card wear risk)
+- Tidak cocok untuk high-frequency telemetry burst
+
+---
+
+## 7.2 Network Constraints
+
+✔ ESP-NOW
+
+- Airtime terbatas
+- Collision risk meningkat >15 node
+- Tidak ada delivery guarantee bawaan
+- Perlu dedup & retry policy
+
+✔ MQTT (LAN)
+
+- Broker connection limit
+- Message size limit
+- QoS trade-off latency vs reliability
+
+---
+
+## 7.3 Power Constraints
+
+- Brownout kemungkinan tinggi
+- Surge petir outdoor
+- Inrush current pompa 5–7x nominal
+- EMI dari motor
+
+---
+
+## 7.4 Scaling Constraints
+
+Baseline:
+
+- 10–15 node per-site
+- 1 gateway
+- 1 Pi
+
+Jika >15 node:
+
+- Perlu evaluasi ulang topology
+- Mungkin perlu gateway tambahan
+- MQTT throughput harus diuji ulang
+
+---
+
+# 8. Failure Handling
+
+HTL-08 akan memuat matrix detail.
+Di HTL-00 hanya mengunci containment model.
+
+---
+
+## 8.1 Containment Principle
+
+Failure harus:
+
+- Terlokalisasi
+- Tidak menjalar lintas domain
+- Tidak menghentikan kontrol kritikal
+
+---
+
+## 8.2 Failure Domain Summary
+
+✔ Node Failure
+
+- Kontrol node lain tidak terpengaruh
+
+✔ Relay Chain Break
+
+- Node terdampak masuk fallback mode
+- Node lain tetap berjalan
+
+✔ Gateway Failure
+
+- Semua node tetap autonomous
+
+✔ Server Failure
+
+- Monitoring & logging berhenti
+- Kontrol tetap berjalan
+
+✔ LAN Failure
+
+- Node tetap berjalan
+- Gateway buffer
+
+✔ Internet Failure
+
+- Tidak berdampak baseline
+
+---
+
+## 8.3 Degradation Modes
+
+| Mode             | Kondisi           | Dampak             |
+| ---------------- | ----------------- | ------------------ |
+| Normal           | Semua aktif       | Full observability |
+| Gateway Down     | Gateway mati      | Node autonomous    |
+| Server Down      | Pi mati           | No dashboard       |
+| Relay Partial    | 1 node relay mati | Partial telemetry  |
+| Electrical Fault | Power sag         | Brownout reset     |
+
+Kontrol kritikal selalu berada di Node.
+
+---
+
+# 9. Interfaces (High-Level Overview)
+
+Detail ada di HTL-01.
+
+---
+
+## 9.1 Data Plane
+
+Node → Gateway → MQTT → Server → DB
+
+Karakteristik:
+
+- Upstream dominan
+- Periodic telemetry
+- Sequence-based
+
+---
+
+## 9.2 Control Plane
+
+Server → MQTT → Gateway → Node → ACK
+
+Karakteristik:
+
+- TTL enforced
+- Idempotent
+- Interlock validated
+
+---
+
+## 9.3 Provisioning Interface
+
+- HTTP local
+- Device registration
+- Credential binding
+- Site ID assignment
+
+---
+
+## 9.4 OTA Interface
+
+- Metadata via MQTT
+- Firmware fetch via HTTP lokal
+- Signature verification
+- Rollback supported
+
+---
+
+## 9.5 Diagnostic Interface
+
+- Node health endpoint
+- Gateway diagnostic page
+- Server monitoring dashboard
+
+---
+
+# 10. Open Issues
+
+Keputusan berikut harus dikunci sebelum HTL-01 final:
+
+1. Telemetry interval baseline final
+2. Payload format final (JSON vs CBOR)
+3. Hop limit final
+4. Buffer size minimum gateway
+5. UPS mandatory untuk Pi?
+6. DB engine final
+7. Relay rebind strategy
+
+Dokumen HTL-01 tidak boleh dibekukan sebelum isu ini diselesaikan.
+
+---
+
+# 11. Revision History
+
+| Version | Date       | Author    | Description                       |
+| ------- | ---------- | --------- | --------------------------------- |
+| v0.1    | 2026-02-24 | Architect | Initial structured draft complete |
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

@@ -1,0 +1,1465 @@
+---
+title: NODE TECHNICAL SPECIFICATION (Outline v0.1)
+
+date: '2026-02-24'
+tags:
+  [
+    'node-authority',
+    'local-control-engine',
+    'relay-aware-routing',
+    'esp32-baseline',
+    'autonomous-operation',
+    'production-firmware',
+  ]
+draft: false
+summary: Node HortiLink adalah control authority utama dalam arsitektur per-site. Node berbasis ESP (baseline ESP32) bertanggung jawab atas pembacaan sensor, eksekusi kontrol aktuator, enforcement interlock keselamatan, serta operasi otonom saat gateway atau server tidak tersedia. Node juga menjalankan routing relay-aware intra-site, menghasilkan telemetry dan health message sesuai HTL-01, serta mengelola buffering lokal, OTA client, dan mekanisme watchdog. Dokumen ini mengunci arsitektur firmware, model kontrol lokal, mekanisme routing, serta strategi recovery agar Node tetap deterministik, aman, dan produksi-grade dalam lingkungan pertanian dengan listrik dan jaringan yang tidak stabil.
+---
+
+# **_HTL-02 – NODE TECHNICAL SPECIFICATION (Outline v0.1)_**
+
+---
+
+- [**_HTL-02 – NODE TECHNICAL SPECIFICATION (Outline v0.1)_**](#htl-02--node-technical-specification-outline-v01)
+- [1. Purpose](#1-purpose)
+  - [1.1 Document Objective](#11-document-objective)
+  - [1.2 Authority](#12-authority)
+  - [1.3 Change Governance](#13-change-governance)
+- [2. Scope](#2-scope)
+  - [2.1 In-Scope](#21-in-scope)
+  - [2.2 Out-of-Scope](#22-out-of-scope)
+- [3. Definitions](#3-definitions)
+  - [3.1 Node](#31-node)
+  - [3.2 Relay-Aware Node](#32-relay-aware-node)
+  - [3.3 Parent Node](#33-parent-node)
+  - [3.4 Child Node](#34-child-node)
+  - [3.5 Local Control Engine](#35-local-control-engine)
+  - [3.6 Interlock](#36-interlock)
+  - [3.7 Safe Mode](#37-safe-mode)
+  - [3.8 Command Queue](#38-command-queue)
+  - [3.9 Telemetry Cycle](#39-telemetry-cycle)
+  - [3.10 Brownout](#310-brownout)
+- [4. Assumptions](#4-assumptions)
+  - [4.1 Hardware Assumptions](#41-hardware-assumptions)
+  - [4.2 Operational Assumptions](#42-operational-assumptions)
+  - [4.3 Capacity Assumptions](#43-capacity-assumptions)
+- [5. System Description](#5-system-description)
+  - [5.1 Node Functional Block Diagram](#51-node-functional-block-diagram)
+  - [5.2 State Model Overview](#52-state-model-overview)
+  - [5.3 Relay-Aware Topology Model](#53-relay-aware-topology-model)
+  - [5.4 Control Flow Within One Telemetry Cycle](#54-control-flow-within-one-telemetry-cycle)
+  - [5.5 Local Safety Enforcement Model](#55-local-safety-enforcement-model)
+- [HTL-02 – NODE TECHNICAL SPECIFICATION](#htl-02--node-technical-specification)
+  - [Part 3 – Section 6 (Technical Specification)](#part-3--section-6-technical-specification)
+- [6. Technical Specification](#6-technical-specification)
+  - [6.1 Hardware Specification](#61-hardware-specification)
+  - [6.2 Firmware Architecture](#62-firmware-architecture)
+  - [6.3 Sensor Management](#63-sensor-management)
+  - [6.4 Local Control Engine](#64-local-control-engine)
+  - [6.5 Actuator Control](#65-actuator-control)
+  - [6.6 Command Handling](#66-command-handling)
+  - [6.7 Telemetry Generation](#67-telemetry-generation)
+  - [6.8 Relay-Aware Routing Logic](#68-relay-aware-routing-logic)
+  - [6.9 Local Buffering](#69-local-buffering)
+  - [6.10 OTA Client](#610-ota-client)
+  - [6.11 Watchdog \& Recovery](#611-watchdog--recovery)
+- [STATUS](#status)
+- [7. Constraints](#7-constraints)
+  - [7.1 Memory Constraint](#71-memory-constraint)
+  - [7.2 CPU Utilization Constraint](#72-cpu-utilization-constraint)
+  - [7.3 Flash Write Cycle Limit](#73-flash-write-cycle-limit)
+  - [7.4 Relay Electrical Rating](#74-relay-electrical-rating)
+  - [7.5 ESP-NOW Throughput Constraint](#75-esp-now-throughput-constraint)
+  - [7.6 Power Consumption Constraint](#76-power-consumption-constraint)
+- [8. Failure Handling](#8-failure-handling)
+  - [8.1 Sensor Failure](#81-sensor-failure)
+  - [8.2 Actuator Stuck](#82-actuator-stuck)
+  - [8.3 Command Expiry](#83-command-expiry)
+  - [8.4 Relay Chain Break](#84-relay-chain-break)
+  - [8.5 Brownout Reset](#85-brownout-reset)
+  - [8.6 OTA Interrupted](#86-ota-interrupted)
+  - [8.7 Flash Corruption](#87-flash-corruption)
+- [9. Interfaces](#9-interfaces)
+  - [9.1 MQTT Interaction (via Gateway)](#91-mqtt-interaction-via-gateway)
+  - [9.2 ESP-NOW Frame Structure Reference](#92-esp-now-frame-structure-reference)
+  - [9.3 HTTP Local Interface](#93-http-local-interface)
+  - [9.4 OTA Endpoint Interaction](#94-ota-endpoint-interaction)
+  - [9.5 Diagnostic Interface](#95-diagnostic-interface)
+- [10. Open Issues](#10-open-issues)
+- [11. Revision History](#11-revision-history)
+
+---
+
+# 1. Purpose
+
+## 1.1 Document Objective
+
+HTL-02 mendefinisikan spesifikasi teknis implementasi Node HortiLink.
+
+Dokumen ini mengunci:
+
+- Arsitektur firmware
+- Model kontrol lokal
+- Interlock keselamatan
+- Routing relay-aware
+- Telemetry & health generation
+- Command handling (sesuai HTL-01)
+- OTA client behavior
+- Watchdog & recovery model
+
+HTL-02 tidak mendefinisikan interface eksternal (lihat HTL-01).
+
+---
+
+## 1.2 Authority
+
+HTL-02 mengikat:
+
+- Tim firmware Node
+- Tim hardware Node (pin & driver constraint)
+- QA untuk unit test Node
+
+Node implementation yang tidak sesuai HTL-02 dianggap tidak production-ready.
+
+---
+
+## 1.3 Change Governance
+
+Perubahan pada:
+
+- Local control logic
+- Interlock rule
+- Routing behavior
+- OTA handling
+- Memory model
+
+Wajib review jika:
+
+- Mempengaruhi HTL-01 (payload / state machine)
+- Mempengaruhi HTL-00 (authority model)
+
+Perubahan kecil internal firmware yang tidak mengubah behavior eksternal tidak memerlukan revisi HTL-01.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'README',
+      href: '/blog/IoT/htl/README',
+      description: 'README - First',
+    },
+    {
+      name: 'SYSTEM ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-00-system-architecture-master-document',
+      description: 'SYSTEM ARCHITECTURE MASTER DOCUMENT',
+    },
+    {
+      name: 'INTERFACE SPECIFICATION',
+      href: '/blog/IoT/htl/htl-01-interface-specification',
+      description: 'INTERFACE SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'GATEWAY TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-03-gateway-technical-specification',
+      description: 'GATEWAY TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'SERVER RASPBERRY-PI',
+      href: '/blog/IoT/htl/htl-04-server-raspberry-pi-specification',
+      description: 'SERVER RASPBERRY-PI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'HMI SPECIFICATION',
+      href: '/blog/IoT/htl/htl-05-hmi-specification',
+      description: 'HMI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'ELECTRICAL & POWER',
+      href: '/blog/IoT/htl/htl-06-electrical-panel-design-specification',
+      description: 'ELECTRICAL & POWER INTEGRATION SPECIFICATION',
+    },
+    {
+      name: 'SECURITY ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-07-security-architecture',
+      description: 'SECURITY ARCHITECTURE (Outline v0.1)',
+    },
+    {
+      name: 'FAILURE MODE & RECOVERY',
+      href: '/blog/IoT/htl/htl-08-failure-mode-recovery-matrix',
+      description: 'FAILURE MODE & RECOVERY MATRIX (Outline v0.1)',
+    },
+    {
+      name: 'TEST PLAN & VALIDATION',
+      href: '/blog/IoT/htl/htl-09-test-plan-validation-matrix',
+      description: 'TEST PLAN & VALIDATION MATRIX (Outline v0.1)',
+    },
+  ]}
+/>
+
+---
+
+# 2. Scope
+
+## 2.1 In-Scope
+
+HTL-02 mencakup seluruh domain internal Node:
+
+✔ Firmware Architecture
+
+- Task model
+- Event loop
+- Memory management
+- Non-blocking design
+
+✔ Sensor Integration
+
+- Sampling
+- Filtering
+- Calibration
+- Plausibility validation
+
+✔ Actuator Control
+
+- Relay driving
+- Protection logic
+- Runtime enforcement
+
+✔ Local Automation Engine
+
+- Threshold logic
+- Schedule fallback
+- Safety enforcement
+
+✔ Relay-Aware Routing
+
+- Parent/child awareness
+- Hop limit
+- Dedup
+
+✔ Communication
+
+- Telemetry
+- Health
+- ACK
+- Config apply
+- OTA client
+
+✔ Reliability
+
+- Watchdog
+- Brownout handling
+- Safe mode
+- Local buffering
+
+---
+
+## 2.2 Out-of-Scope
+
+HTL-02 tidak mencakup:
+
+- Gateway routing policy
+- MQTT broker logic
+- Server DB ingestion
+- HMI implementation
+- Cloud logic
+
+Node tidak boleh mengimplementasikan behavior domain Gateway atau Server.
+
+---
+
+# 3. Definitions
+
+## 3.1 Node
+
+Perangkat berbasis ESP yang mengontrol sensor dan aktuator secara langsung serta menjalankan kontrol lokal.
+
+---
+
+## 3.2 Relay-Aware Node
+
+Node yang:
+
+- Mengetahui parent upstream
+- Mengetahui child downstream
+- Mengelola hop count
+- Mencegah loop
+
+---
+
+## 3.3 Parent Node
+
+Node atau Gateway yang menjadi jalur upstream untuk telemetry.
+
+---
+
+## 3.4 Child Node
+
+Node yang menggunakan Node ini sebagai relay.
+
+---
+
+## 3.5 Local Control Engine
+
+Modul firmware yang:
+
+- Membaca sensor
+- Mengevaluasi threshold
+- Menentukan state aktuator
+- Menghormati interlock
+
+---
+
+## 3.6 Interlock
+
+Mekanisme proteksi yang:
+
+- Tidak boleh dilewati command eksternal
+- Mencegah kondisi berbahaya
+- Contoh: max runtime, dry-run protection
+
+---
+
+## 3.7 Safe Mode
+
+Mode fallback ketika:
+
+- Sensor invalid
+- Config invalid
+- Brownout terjadi
+- OTA gagal
+
+Dalam Safe Mode, aktuator berada pada kondisi aman.
+
+---
+
+## 3.8 Command Queue
+
+Struktur internal Node untuk menyimpan command yang belum diproses.
+
+Queue harus terbatas dan idempotent.
+
+---
+
+## 3.9 Telemetry Cycle
+
+Siklus periodik:
+
+- Sensor read
+- Control evaluation
+- Telemetry publish
+- Sequence increment
+
+---
+
+## 3.10 Brownout
+
+Kondisi tegangan suplai turun di bawah ambang aman yang menyebabkan reset atau perilaku tidak stabil.
+
+Node wajib memiliki mekanisme deteksi brownout.
+
+---
+
+# 4. Assumptions
+
+## 4.1 Hardware Assumptions
+
+Baseline:
+
+- ESP32 (FreeRTOS available)
+- Relay atau contactor dikontrol via opto-isolated driver
+- Supply 12–24V → DC-DC → 5V/3.3V
+- Proteksi surge eksternal (lihat HTL-06)
+
+ESP8266 hanya mode terbatas (tanpa relay routing kompleks).
+
+---
+
+## 4.2 Operational Assumptions
+
+- Node dapat restart sewaktu-waktu
+- Parent node dapat mati
+- Gateway dapat offline
+- Listrik dapat fluktuatif
+- Lingkungan outdoor (noise & humidity)
+
+Node harus tetap deterministik dalam kondisi tersebut.
+
+---
+
+## 4.3 Capacity Assumptions
+
+Per-site:
+
+- Max 15 node
+- Hop max terbatas
+- Telemetry interval ditentukan di implementasi
+- Command queue depth terbatas (to be locked)
+
+Node tidak dirancang untuk mesh besar atau high-throughput telemetry.
+
+---
+
+# 5. System Description
+
+Node adalah unit kontrol otonom.
+Section ini mengunci struktur internal dan model operasionalnya.
+
+---
+
+## 5.1 Node Functional Block Diagram
+
+![Image](https://www.researchgate.net/publication/400334232/figure/fig2/AS%3A11431281908012216%401769970623226/ESP32-Pin-Configuration-and-Sensor-Actuator-Interfacing-Diagram-B-System-Architecture.png)
+
+> Blok Fungsional Utama
+
+✔ 1. Sensor Layer
+
+- ADC / Digital input
+- Sampling
+- Filtering
+- Calibration
+
+✔ 2. Local Control Engine
+
+- Threshold logic
+- Schedule fallback
+- Interlock enforcement
+- State transition
+
+✔ 3. Actuator Driver
+
+- Relay control
+- Soft start delay
+- Runtime protection
+- Fail-safe state
+
+✔ 4. Communication Layer
+
+- ESP-NOW stack
+- Message serialization
+- Sequence manager
+- Routing metadata
+
+✔ 5. Storage Layer
+
+- Config storage (NVS)
+- Local buffer (telemetry)
+- Restart reason log
+
+✔ 6. Watchdog & Power Monitor
+
+- Hardware watchdog
+- Software watchdog
+- Brownout detection
+
+Tidak ada dependency langsung ke MQTT di Node.
+
+---
+
+## 5.2 State Model Overview
+
+![Image](https://www.researchgate.net/publication/325718546/figure/fig1/AS%3A636736208109568%401528821150199/State-diagram-of-the-IoT-devices.png)
+
+Node memiliki state utama berikut:
+
+---
+
+✔ 5.2.1 BOOT
+
+- Initialize hardware
+- Load config
+- Validate config checksum
+- Determine restart reason
+- Transition ke:
+
+  - PROVISIONING (jika belum registered)
+  - NORMAL
+
+---
+
+✔ 5.2.2 PROVISIONING
+
+- Menunggu pairing
+- Menyimpan credential
+- Tidak mengaktifkan aktuator
+
+Transition:
+
+- Success → NORMAL
+- Timeout → SAFE MODE
+
+---
+
+✔ 5.2.3 NORMAL
+
+- Sensor sampling
+- Local control active
+- Telemetry publish
+- Command handling
+- Relay routing
+
+Jika error kritikal → SAFE MODE
+
+Jika OTA metadata valid → OTA MODE
+
+---
+
+✔ 5.2.4 RELAY MODE (Sub-state of NORMAL)
+
+- Parent valid
+- Child registered
+- Forward upstream messages
+- Enforce hop limit
+
+Jika parent down → attempt rebind
+
+---
+
+✔ 5.2.5 SAFE MODE
+
+Aktuator default safe state.
+Digunakan jika:
+
+- Config invalid
+- Sensor invalid critical
+- Brownout loop detected
+- Flash corruption
+
+Manual recovery atau reboot diperlukan.
+
+---
+
+✔ 5.2.6 OTA MODE
+
+- Validate firmware metadata
+- Download
+- Verify hash
+- Flash secondary partition
+- Reboot
+
+Failure → rollback → SAFE MODE (if persistent)
+
+---
+
+## 5.3 Relay-Aware Topology Model
+
+![Image](https://www.researchgate.net/publication/356519774/figure/fig6/AS%3A11431281657419969%401759312213545/Using-ESP-NOW-and-Wi-Fi-simultaneouslyRandom-Nerd-Tutorials-2020b.png)
+
+Node bukan mesh dinamis penuh.
+
+✔ Model yang Digunakan
+
+- Semi-statis relay-aware topology
+- Node mengetahui:
+
+  - parent_id
+  - child_list
+  - hop_count
+
+---
+
+✔ Routing Behavior
+
+1. Telemetry:
+
+   - Send ke parent
+   - Increment hop
+   - Attach routing metadata
+
+2. Command:
+
+   - Only accept jika target_id == node_id
+   - Forward jika child target match
+
+---
+
+✔ Hop Limit Enforcement
+
+Jika hop > MAX_HOP:
+
+- Drop frame
+- Log event
+
+---
+
+✔ Failure Propagation Model
+
+Jika parent hilang:
+
+- Node masuk degraded connectivity
+- Kontrol lokal tetap aktif
+- Attempt rebind ke gateway jika reachable
+
+Child tidak boleh kehilangan kontrol lokal walaupun parent mati.
+
+---
+
+## 5.4 Control Flow Within One Telemetry Cycle
+
+1. Read sensors
+2. Filter & validate
+3. Evaluate control logic
+4. Update actuator state
+5. Prepare telemetry payload
+6. Increment sequence
+7. Publish via ESP-NOW
+
+Control decision tidak boleh menunggu ACK.
+
+---
+
+## 5.5 Local Safety Enforcement Model
+
+Prioritas eksekusi:
+
+1. Hardware interlock
+2. Local interlock
+3. Command (valid & within TTL)
+4. Schedule fallback
+
+Command tidak boleh override safety interlock.
+
+---
+
+Baik.
+Berikut **HTL-02 – Part 3** — inti teknis implementasi Node.
+
+Section ini mengunci detail teknis yang harus dipatuhi oleh firmware engineer.
+
+---
+
+# HTL-02 – NODE TECHNICAL SPECIFICATION
+
+## Part 3 – Section 6 (Technical Specification)
+
+---
+
+# 6. Technical Specification
+
+---
+
+## 6.1 Hardware Specification
+
+✔ 6.1.1 MCU Variant
+
+Baseline:
+
+- ESP32 (dual-core, FreeRTOS)
+- Minimum Flash: 4MB (OTA dual partition)
+- Minimum RAM efektif: cukup untuk:
+
+  - routing table
+  - command queue
+  - JSON parsing
+
+ESP8266 hanya diperbolehkan jika:
+
+- Tidak menjadi relay node
+- Tidak menjalankan OTA dual partition
+
+---
+
+✔ 6.1.2 Pin Mapping Standard
+
+Wajib didefinisikan secara tetap per board:
+
+- ADC pin untuk sensor analog
+- Digital input pin
+- Relay output pin
+- Flow sensor interrupt pin (optional)
+- Status LED pin
+- Reset pin
+
+Pin tidak boleh di-hardcode tersebar di firmware.
+
+---
+
+✔ 6.1.3 Sensor Interface
+
+Jenis umum:
+
+- Analog (ADC)
+- Digital (I2C, OneWire, GPIO)
+- Pulse-based (flow sensor)
+
+Wajib:
+
+- Range validation
+- Timeout detection
+- Read failure detection
+
+---
+
+✔ 6.1.4 Actuator Driver Requirement
+
+- Opto-isolated driver wajib
+- Flyback diode (DC)
+- Snubber (AC load)
+- Contactor jika load > relay rating
+
+Firmware harus:
+
+- Default OFF saat boot
+- Fail-safe state jika error
+
+---
+
+✔ 6.1.5 Power Design Requirement
+
+- Brownout detection enabled
+- Minimum operating voltage threshold dikunci
+- Delay sebelum relay ON setelah boot
+
+---
+
+## 6.2 Firmware Architecture
+
+✔ 6.2.1 Task Model (ESP32 – FreeRTOS)
+
+Minimal task:
+
+- Sensor Task
+- Control Task
+- Communication Task
+- Storage Task
+- Watchdog Task
+
+Task tidak boleh blocking.
+
+---
+
+✔ 6.2.2 Memory Allocation Strategy
+
+- Hindari dynamic allocation besar
+- Gunakan static buffer jika memungkinkan
+- JSON parsing harus bounded
+- No recursive stack-heavy function
+
+Heap fragmentation harus dihindari.
+
+---
+
+✔ 6.2.3 Non-Blocking Design Requirement
+
+Tidak boleh:
+
+- Delay blocking > control cycle
+- Tunggu ACK sebelum lanjut
+- Block saat flash write
+
+Gunakan event-driven model.
+
+---
+
+## 6.3 Sensor Management
+
+✔ Sampling Frequency
+
+- Ditentukan per sensor
+- Harus konsisten dengan telemetry interval
+
+---
+
+✔ Filtering
+
+- Moving average / median filter
+- Reject spike > defined threshold
+
+---
+
+✔ Outlier Rejection
+
+Jika nilai di luar plausible range:
+
+- Tandai invalid
+- Jangan gunakan untuk kontrol
+
+---
+
+✔ Drift Detection
+
+Jika nilai tidak berubah dalam waktu lama:
+
+- Flag warning
+- Publish health anomaly
+
+---
+
+✔ Calibration Procedure
+
+- Offset & scaling stored in config
+- Checksum protected
+
+---
+
+✔ Plausibility Validation
+
+Contoh:
+
+- Soil moisture 0–100%
+- pH 0–14
+- Temperature -20–80°C
+
+Nilai di luar range → invalid
+
+---
+
+## 6.4 Local Control Engine
+
+---
+
+✔ Threshold-Based Control
+
+Contoh:
+
+IF soil_moisture < threshold
+→ pump ON
+ELSE → pump OFF
+
+---
+
+✔ Schedule-Based Fallback
+
+Jika sensor invalid:
+
+- Gunakan fallback schedule
+- Limit runtime
+
+---
+
+✔ Interlock Enforcement
+
+Wajib:
+
+- Max runtime protection
+- Min off-time protection
+- Optional dry-run detection
+
+Interlock > Command
+
+---
+
+✔ State Transition Rules
+
+OFF → ON:
+
+- Threshold met
+- Min off-time satisfied
+
+ON → OFF:
+
+- Threshold reached
+- Max runtime exceeded
+- Fault detected
+
+---
+
+## 6.5 Actuator Control
+
+- Debounce relay trigger
+- Soft-start delay (prevent inrush overlap)
+- Prevent rapid toggling
+- Fail-safe default = OFF
+
+Boot → All relay OFF
+
+---
+
+## 6.6 Command Handling
+
+---
+
+✔ Validation
+
+- protocol_version match
+- target_id match
+- TTL not expired
+- cmd_id not duplicate
+
+---
+
+✔ Idempotency
+
+Store last N cmd_id
+Duplicate → ACK without re-execute
+
+---
+
+✔ Queue Behavior
+
+- Bounded size
+- FIFO
+- Drop if full (log event)
+
+---
+
+✔ ACK Trigger Condition
+
+ACK hanya setelah:
+
+- Interlock check selesai
+- Action applied
+- State updated
+
+---
+
+## 6.7 Telemetry Generation
+
+---
+
+✔ Required Fields
+
+- protocol_version
+- site_id
+- node_id
+- seq
+- timestamp
+- sensor data
+- actuator state
+
+---
+
+✔ Sequence Increment Rule
+
+- Increment per cycle
+- Reset on reboot allowed
+- No reuse in same uptime session
+
+---
+
+✔ Timestamp Source Rule
+
+1. Gateway time (preferred)
+2. Local uptime-based fallback
+
+---
+
+✔ Relay Metadata Injection
+
+If acting as relay:
+
+- hop++
+- parent_id attach
+
+---
+
+✔ Publish Interval Rule
+
+- Fixed baseline
+- Jitter minimal
+- Not bursty
+
+---
+
+## 6.8 Relay-Aware Routing Logic
+
+---
+
+✔ Parent Selection Rule
+
+- Prefer gateway
+- Fallback to known parent
+- Avoid loop
+
+---
+
+✔ Child Registration
+
+- Child announces on join
+- Parent stores child_id
+
+---
+
+✔ Routing Table Structure
+
+- parent_id
+- child_list[]
+- last_seen timestamp
+
+---
+
+✔ Hop Limit Enforcement
+
+If hop > MAX_HOP:
+
+- Drop
+- Log
+
+---
+
+✔ Deduplication Rule
+
+Use:
+
+(node_id + seq) sliding window
+
+---
+
+✔ Failure Detection
+
+If parent heartbeat missing:
+
+- Mark disconnected
+- Attempt rebind
+
+---
+
+✔ Re-route Behavior
+
+Limited attempts
+No infinite retry loop
+
+---
+
+## 6.9 Local Buffering
+
+---
+
+✔ Storage Mechanism
+
+- NVS or LittleFS
+- Ring buffer
+
+---
+
+✔ Max Buffer Size
+
+Bounded (to be locked)
+
+---
+
+✔ Flush Condition
+
+- Parent reconnect
+- Gateway available
+
+---
+
+✔ Data Retention Rule
+
+If buffer full:
+
+- Drop oldest
+- Log overflow
+
+---
+
+## 6.10 OTA Client
+
+---
+
+✔ Version Check Rule
+
+- Compare firmware_version
+- Reject if lower than min_required_version
+
+---
+
+✔ Signature Verification
+
+- SHA-256 baseline
+- Reject mismatch
+
+---
+
+✔ Download Strategy
+
+- Chunk-based
+- Verify each chunk
+- Timeout rule
+
+---
+
+✔ Fail Rollback Behavior
+
+- Dual partition
+- Revert if boot fail
+
+---
+
+✔ Power Loss Handling
+
+- Resume not allowed
+- Restart OTA clean
+
+---
+
+## 6.11 Watchdog & Recovery
+
+---
+
+✔ Hardware Watchdog
+
+- Always enabled
+- Reset on stall
+
+---
+
+✔ Software Watchdog
+
+- Monitor task heartbeat
+- Trigger safe reset
+
+---
+
+✔ Brownout Detection
+
+- Use ESP brownout detector
+- Log event
+- Delay actuator restart
+
+---
+
+✔ Restart Reason Logging
+
+Store:
+
+- Brownout
+- Watchdog
+- OTA
+- Manual reset
+
+---
+
+✔ Safe State After Reboot
+
+All actuator OFF
+Wait stabilization delay
+Then enter NORMAL
+
+---
+
+# STATUS
+
+HTL-02 Part 3 selesai:
+
+✔ Hardware baseline terkunci
+✔ Firmware architecture terkunci
+✔ Control engine terkunci
+✔ Routing logic terkunci
+✔ Buffering terkunci
+✔ OTA client terkunci
+✔ Watchdog & brownout terkunci
+
+---
+
+# 7. Constraints
+
+Node harus beroperasi dalam batas berikut.
+
+---
+
+## 7.1 Memory Constraint
+
+✔ RAM
+
+- Static allocation diprioritaskan
+- JSON parsing ≤ bounded size
+- Routing table terbatas (≤ 15 node)
+- Command queue terbatas
+
+Heap fragmentation harus dihindari.
+
+---
+
+## 7.2 CPU Utilization Constraint
+
+- Control cycle tidak boleh terganggu komunikasi
+- Telemetry serialization tidak boleh blocking
+- OTA tidak boleh mengganggu watchdog
+
+Target:
+
+- CPU load stabil dalam kondisi normal
+- Tidak ada starvation antar task
+
+---
+
+## 7.3 Flash Write Cycle Limit
+
+- Config write dibatasi
+- Buffer flush di-batch
+- Restart reason logging minimal
+
+Flash tidak boleh digunakan sebagai log kontinu.
+
+---
+
+## 7.4 Relay Electrical Rating
+
+Firmware harus memperhitungkan:
+
+- Max switching frequency
+- Min off-time
+- Max runtime
+- Prevent chatter
+
+Node tidak boleh toggle relay secara cepat berulang.
+
+---
+
+## 7.5 ESP-NOW Throughput Constraint
+
+- Telemetry tidak boleh burst
+- Relay forward tidak boleh flood
+- Retry dibatasi
+
+Node tidak boleh menyebabkan airtime congestion.
+
+---
+
+## 7.6 Power Consumption Constraint
+
+- Boot surge minimal
+- Idle consumption rendah
+- OTA tidak terlalu lama
+
+Jika power drop sering terjadi, Node harus tetap stabil.
+
+---
+
+# 8. Failure Handling
+
+Format: Detection → Impact → Recovery → Fallback Mode
+
+---
+
+## 8.1 Sensor Failure
+
+Detection:
+
+- Nilai out-of-range
+- No change terlalu lama
+- Timeout read
+
+Impact:
+
+- Control logic tidak valid
+
+Recovery:
+
+- Mark sensor invalid
+- Gunakan fallback schedule
+
+Fallback Mode:
+
+- Schedule-based limited runtime
+
+---
+
+## 8.2 Actuator Stuck
+
+Detection:
+
+- Flow sensor mismatch (optional)
+- Runtime melebihi batas
+- Current anomaly (jika tersedia)
+
+Impact:
+
+- Overwatering / overheating
+
+Recovery:
+
+- Force OFF
+- Publish fault health
+
+Fallback Mode:
+
+- Lock actuator sampai manual reset
+
+---
+
+## 8.3 Command Expiry
+
+Detection:
+
+- TTL exceeded
+
+Impact:
+
+- Command tidak valid
+
+Recovery:
+
+- Reject
+- ACK status=expired
+
+Fallback Mode:
+
+- Tetap gunakan local control
+
+---
+
+## 8.4 Relay Chain Break
+
+Detection:
+
+- Parent heartbeat missing
+- Repeated send failure
+
+Impact:
+
+- Telemetry tidak sampai server
+
+Recovery:
+
+- Attempt rebind
+- Continue local control
+
+Fallback Mode:
+
+- Autonomous local-only mode
+
+---
+
+## 8.5 Brownout Reset
+
+Detection:
+
+- Restart reason = brownout
+
+Impact:
+
+- Unexpected reboot
+- Actuator off
+
+Recovery:
+
+- Delay actuator restart
+- Publish brownout health
+
+Fallback Mode:
+
+- Normal with delay protection
+
+---
+
+## 8.6 OTA Interrupted
+
+Detection:
+
+- Boot from fallback partition
+- Hash mismatch
+
+Impact:
+
+- Firmware upgrade gagal
+
+Recovery:
+
+- Rollback
+- Publish OTA error
+
+Fallback Mode:
+
+- Continue with previous firmware
+
+---
+
+## 8.7 Flash Corruption
+
+Detection:
+
+- Config checksum mismatch
+
+Impact:
+
+- Invalid parameter
+
+Recovery:
+
+- Enter SAFE MODE
+- Await reprovision
+
+Fallback Mode:
+
+- All actuator OFF
+
+---
+
+# 9. Interfaces
+
+---
+
+## 9.1 MQTT Interaction (via Gateway)
+
+Node tidak langsung berbicara MQTT.
+
+Semua publish/subscribe melalui Gateway sesuai HTL-01.
+
+---
+
+## 9.2 ESP-NOW Frame Structure Reference
+
+Mengikuti HTL-01:
+
+- msg_type
+- node_id
+- seq
+- hop
+- payload
+
+Node tidak boleh memodifikasi field yang bukan domainnya.
+
+---
+
+## 9.3 HTTP Local Interface
+
+Minimal:
+
+- GET /diagnostics
+- GET /version
+- POST /test-actuator
+
+Hanya LAN lokal.
+
+---
+
+## 9.4 OTA Endpoint Interaction
+
+- HTTP GET firmware
+- Verify hash
+- No external URL allowed
+
+---
+
+## 9.5 Diagnostic Interface
+
+Expose:
+
+- Uptime
+- Restart reason
+- Parent status
+- Buffer depth
+- Last error code
+
+---
+
+# 10. Open Issues
+
+Keputusan sebelum freeze:
+
+1. ESP32 mandatory?
+2. Max command queue depth?
+3. Max buffer size?
+4. Flow sensor wajib?
+5. JSON vs CBOR?
+6. Hash algorithm final?
+7. OTA chunk size?
+
+---
+
+# 11. Revision History
+
+| Version | Date       | Author    | Description              |
+| ------- | ---------- | --------- | ------------------------ |
+| v0.1    | 2026-02-24 | Architect | Initial structured draft |
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

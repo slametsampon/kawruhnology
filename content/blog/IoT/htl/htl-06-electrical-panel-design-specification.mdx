@@ -1,0 +1,1041 @@
+---
+title: ELECTRICAL & POWER INTEGRATION SPECIFICATION
+date: '2026-02-24'
+tags:
+  [
+    'electrical-integration',
+    'power-quality',
+    'relay-rating',
+    'hardware-interlock',
+    'brownout-protection',
+    'emi-control',
+  ]
+draft: false
+summary: HTL-06 mendefinisikan integrasi elektrikal antara Node HortiLink dan sistem aktuator fisik seperti pompa, solenoid valve, motor, dan panel daya. Dokumen ini mengunci desain supply power 12–24V ke 5V/3.3V, proteksi arus lebih, isolasi opto, relay/contactors rating, inrush current handling, grounding, serta proteksi terhadap brownout dan noise EMI. Kontrol logika tetap berada pada Node (HTL-02), namun keselamatan sistem harus dijamin melalui interlock fisik dan proteksi listrik independen dari software. HTL-06 memastikan bahwa kegagalan software, reset MCU, atau noise listrik tidak menyebabkan kondisi unsafe pada aktuator.
+---
+
+# **_HTL-06 – ELECTRICAL & POWER INTEGRATION SPECIFICATION_**
+
+---
+
+- [**_HTL-06 – ELECTRICAL \& POWER INTEGRATION SPECIFICATION_**](#htl-06--electrical--power-integration-specification)
+- [1. Purpose](#1-purpose)
+  - [1.1 Document Objective](#11-document-objective)
+  - [1.2 Authority](#12-authority)
+  - [1.3 Change Governance](#13-change-governance)
+- [2. Scope](#2-scope)
+  - [2.1 In-Scope](#21-in-scope)
+  - [2.2 Out-of-Scope](#22-out-of-scope)
+- [3. Definitions](#3-definitions)
+  - [3.1 Control Voltage](#31-control-voltage)
+  - [3.2 Actuator Power Line](#32-actuator-power-line)
+  - [3.3 Hardware Interlock](#33-hardware-interlock)
+  - [3.4 Brownout](#34-brownout)
+  - [3.5 Inrush Current](#35-inrush-current)
+  - [3.6 Opto-Isolation](#36-opto-isolation)
+  - [3.7 EMI (Electromagnetic Interference)](#37-emi-electromagnetic-interference)
+  - [3.8 Fail-Safe State](#38-fail-safe-state)
+- [4. Assumptions](#4-assumptions)
+  - [4.1 Operational Assumptions](#41-operational-assumptions)
+  - [4.2 Technical Assumptions](#42-technical-assumptions)
+  - [4.3 Capacity Assumptions](#43-capacity-assumptions)
+- [5. System Description](#5-system-description)
+  - [5.1 Power Topology Overview](#51-power-topology-overview)
+  - [5.2 Actuator Integration Model](#52-actuator-integration-model)
+  - [5.3 Grounding \& Noise Isolation Model](#53-grounding--noise-isolation-model)
+  - [5.4 Hardware Interlock Model](#54-hardware-interlock-model)
+  - [5.5 Brownout \& Power Fault Model](#55-brownout--power-fault-model)
+  - [5.6 Panel Segmentation Model](#56-panel-segmentation-model)
+- [6. Technical Specification](#6-technical-specification)
+  - [6.1 Power Budget Calculation](#61-power-budget-calculation)
+  - [6.2 Relay \& Contactor Rating](#62-relay--contactor-rating)
+  - [6.3 Fuse \& Protection Baseline](#63-fuse--protection-baseline)
+  - [6.4 Cable Sizing Baseline](#64-cable-sizing-baseline)
+  - [6.5 Power Quality Requirement](#65-power-quality-requirement)
+  - [6.6 Environmental Constraints](#66-environmental-constraints)
+  - [6.7 Safety Interlock Requirement](#67-safety-interlock-requirement)
+  - [6.8 Startup \& Recovery Rule](#68-startup--recovery-rule)
+  - [6.9 EMI \& Transient Suppression](#69-emi--transient-suppression)
+  - [6.10 Electrical Failure Scenarios](#610-electrical-failure-scenarios)
+- [7. Constraints](#7-constraints)
+  - [7.1 Power Capacity Constraint](#71-power-capacity-constraint)
+  - [7.2 Relay Electrical Rating Constraint](#72-relay-electrical-rating-constraint)
+  - [7.3 Thermal Constraint](#73-thermal-constraint)
+  - [7.4 Grounding Constraint](#74-grounding-constraint)
+  - [7.5 EMI Constraint](#75-emi-constraint)
+  - [7.6 Power Reliability Constraint](#76-power-reliability-constraint)
+- [8. Failure Handling](#8-failure-handling)
+  - [8.1 Power Loss](#81-power-loss)
+  - [8.2 Brownout Oscillation](#82-brownout-oscillation)
+  - [8.3 Relay Weld Contact](#83-relay-weld-contact)
+  - [8.4 Short Circuit Actuator](#84-short-circuit-actuator)
+  - [8.5 Thermal Overload](#85-thermal-overload)
+  - [8.6 EMI-Induced Reset](#86-emi-induced-reset)
+  - [8.7 Surge Event](#87-surge-event)
+- [9. Interfaces](#9-interfaces)
+  - [9.1 Node Electrical Interface](#91-node-electrical-interface)
+  - [9.2 Gateway Power Interface](#92-gateway-power-interface)
+  - [9.3 Server Power Interface](#93-server-power-interface)
+  - [9.4 Hardware Interlock Interface](#94-hardware-interlock-interface)
+  - [9.5 Panel Wiring Interface](#95-panel-wiring-interface)
+- [10. Open Issues](#10-open-issues)
+- [11. Revision History](#11-revision-history)
+
+---
+
+# 1. Purpose
+
+## 1.1 Document Objective
+
+Menjadi referensi teknis integrasi elektrikal untuk:
+
+- Node power supply
+- Actuator drive
+- Panel wiring
+- Electrical protection
+- Hardware safety interlock
+- EMI mitigation
+- Grounding strategy
+
+Dokumen ini menjamin bahwa implementasi HortiLink aman secara fisik.
+
+---
+
+## 1.2 Authority
+
+HTL-06 mengikat:
+
+- Tim Electrical
+- Tim Panel Builder
+- Tim Firmware (terkait safe-state behavior)
+- QA safety validation
+
+Perubahan rating atau proteksi wajib review lintas tim.
+
+---
+
+## 1.3 Change Governance
+
+Perubahan berikut wajib review arsitektur:
+
+- Relay/contact rating
+- Power topology
+- Interlock logic
+- Grounding model
+- Supply voltage baseline
+
+Jika mempengaruhi:
+
+- HTL-02 (fail-safe)
+- HTL-03 (gateway supply)
+- HTL-00 (failure containment)
+
+Maka revisi lintas dokumen wajib.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'README',
+      href: '/blog/IoT/htl/README',
+      description: 'README - First',
+    },
+    {
+      name: 'SYSTEM ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-00-system-architecture-master-document',
+      description: 'SYSTEM ARCHITECTURE MASTER DOCUMENT',
+    },
+    {
+      name: 'INTERFACE SPECIFICATION',
+      href: '/blog/IoT/htl/htl-01-interface-specification',
+      description: 'INTERFACE SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'NODE TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-02-node-technical-specification',
+      description: 'NODE TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'GATEWAY TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-03-gateway-technical-specification',
+      description: 'GATEWAY TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'SERVER RASPBERRY-PI',
+      href: '/blog/IoT/htl/htl-04-server-raspberry-pi-specification',
+      description: 'SERVER RASPBERRY-PI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'HMI SPECIFICATION',
+      href: '/blog/IoT/htl/htl-05-hmi-specification',
+      description: 'HMI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'SECURITY ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-07-security-architecture',
+      description: 'SECURITY ARCHITECTURE (Outline v0.1)',
+    },
+    {
+      name: 'FAILURE MODE & RECOVERY',
+      href: '/blog/IoT/htl/htl-08-failure-mode-recovery-matrix',
+      description: 'FAILURE MODE & RECOVERY MATRIX (Outline v0.1)',
+    },
+    {
+      name: 'TEST PLAN & VALIDATION',
+      href: '/blog/IoT/htl/htl-09-test-plan-validation-matrix',
+      description: 'TEST PLAN & VALIDATION MATRIX (Outline v0.1)',
+    },
+  ]}
+/>
+
+---
+
+# 2. Scope
+
+## 2.1 In-Scope
+
+- DC supply design (12–24V → 5V/3.3V)
+- Node power protection
+- Relay & contactor integration
+- Inrush handling
+- Overcurrent protection
+- Fuse/MCB selection baseline
+- EMI suppression
+- Grounding scheme
+- Panel layout baseline
+- Brownout behavior
+- Surge protection
+
+---
+
+## 2.2 Out-of-Scope
+
+- Utility-level grid design
+- High-voltage distribution > 400VAC
+- Certified safety compliance documentation (dibuat terpisah)
+- Mechanical enclosure design detail
+
+---
+
+# 3. Definitions
+
+## 3.1 Control Voltage
+
+Tegangan rendah untuk Node (3.3V / 5V / 12–24V DC).
+
+---
+
+## 3.2 Actuator Power Line
+
+Line daya utama untuk pompa, motor, valve (AC/DC).
+
+---
+
+## 3.3 Hardware Interlock
+
+Proteksi fisik yang mencegah kondisi unsafe tanpa bergantung software.
+
+---
+
+## 3.4 Brownout
+
+Kondisi tegangan supply turun di bawah threshold operasional MCU.
+
+---
+
+## 3.5 Inrush Current
+
+Arus awal tinggi saat motor/pompa start.
+
+---
+
+## 3.6 Opto-Isolation
+
+Isolasi galvanik antara MCU dan beban daya.
+
+---
+
+## 3.7 EMI (Electromagnetic Interference)
+
+Gangguan elektromagnetik akibat switching beban induktif.
+
+---
+
+## 3.8 Fail-Safe State
+
+Kondisi default aktuator saat:
+
+- Node reset
+- Supply hilang
+- Firmware crash
+
+---
+
+# 4. Assumptions
+
+## 4.1 Operational Assumptions
+
+- Sistem pertanian outdoor/semi-outdoor
+- Beban dominan: pompa air, valve solenoid
+- Power source: 220VAC atau 110VAC
+- Lingkungan lembab & berdebu mungkin terjadi
+
+---
+
+## 4.2 Technical Assumptions
+
+- Node menggunakan ESP32
+- Aktuator dikendalikan via relay/contact
+- Tidak ada direct MCU-to-motor control
+- Semua aktuator default OFF saat reset
+
+---
+
+## 4.3 Capacity Assumptions
+
+Per Node:
+
+- Maks 2–4 relay output
+- Beban pompa ≤ 1HP (baseline)
+- Total panel load sesuai kapasitas site
+
+Rating final dikunci sebelum produksi massal.
+
+---
+
+# 5. System Description
+
+Section ini mendefinisikan arsitektur elektrikal per Node dan integrasinya dengan panel daya site.
+
+Tujuan utama:
+
+- Mencegah kegagalan software menyebabkan kondisi unsafe
+- Mencegah gangguan daya merusak MCU
+- Memastikan isolasi kontrol & beban
+- Memastikan degradasi aman saat power fault
+
+---
+
+## 5.1 Power Topology Overview
+
+![Image](https://www.hendrickcorp.com/sites/default/files/styles/990x630/public/istock-466016597.jpg?itok=AFAQCfwl)
+
+✔ Layer Daya
+
+1. **AC Input (110/220VAC)**
+
+   - MCB utama
+   - Surge protection (SPD)
+   - EMI filter
+
+2. **DC Control Supply (12–24VDC)**
+
+   - SMPS industrial grade
+   - Fuse terpisah untuk control line
+
+3. **Local Regulation**
+
+   - 24V → 5V regulator
+   - 5V → 3.3V regulator
+   - Brownout detection aktif
+
+4. **Separation**
+
+   - Jalur daya aktuator terpisah dari jalur MCU
+
+---
+
+✔ Prinsip Utama
+
+- Control supply terpisah dari actuator supply
+- Ground star topology
+- Fuse per-segment
+- Tidak ada beban induktif langsung ke MCU
+
+---
+
+## 5.2 Actuator Integration Model
+
+![Image](https://i.sstatic.net/UdhG2.png)
+
+✔ Struktur Kontrol Aktuator
+
+MCU GPIO
+→ Opto-isolated driver
+→ Relay coil / Contactor coil
+→ Actuator power line
+
+---
+
+✔ Aturan Wajib
+
+- Opto-isolation mandatory
+- Flyback diode untuk DC coil
+- RC snubber untuk AC load
+- Contactor untuk beban > rating relay kecil
+- Relay hanya sebagai signal switching, bukan load switching besar
+
+---
+
+✔ Inrush Handling
+
+Untuk pompa/motor:
+
+- Gunakan contactor rating sesuai inrush
+- Pertimbangkan soft-start jika daya besar
+- Hindari start simultan beberapa motor
+
+Firmware tidak boleh menjadi satu-satunya proteksi inrush.
+
+---
+
+## 5.3 Grounding & Noise Isolation Model
+
+![Image](https://files.resources.altium.com/sites/default/files/inline-images/agnd-dgnd.png)
+
+✔ Grounding Principle
+
+- Star grounding
+- Power ground dan signal ground dikontrol
+- Shield cable untuk sensor analog
+- Avoid ground loop
+
+---
+
+✔ EMI Mitigation
+
+- Snubber pada relay contact
+- Twisted pair untuk signal
+- Decoupling capacitor dekat MCU
+- Ferrite bead pada supply jika perlu
+
+---
+
+## 5.4 Hardware Interlock Model
+
+Interlock fisik tidak boleh bergantung software.
+
+Contoh:
+
+- Level switch seri dengan coil contactor
+- Thermal overload relay inline
+- Pressure switch mechanical
+
+Jika MCU crash:
+
+→ Interlock fisik tetap bekerja.
+
+---
+
+## 5.5 Brownout & Power Fault Model
+
+Saat supply drop:
+
+1. Brownout detect MCU
+2. Node reset
+3. Relay default OFF
+4. Actuator OFF
+
+Tidak boleh ada kondisi latch ON setelah reset.
+
+Power recovery:
+
+- Delay sebelum enable control
+- Hindari start bersamaan
+
+---
+
+## 5.6 Panel Segmentation Model
+
+Panel dibagi menjadi:
+
+1. Power Section (AC input, MCB, contactor)
+2. Control Section (SMPS, Node, Gateway)
+3. Signal Section (sensor wiring)
+
+Wiring duct terpisah untuk:
+
+- High voltage
+- Low voltage
+- Signal analog
+
+---
+
+# 6. Technical Specification
+
+---
+
+## 6.1 Power Budget Calculation
+
+✔ 6.1.1 Control Power Budget (Per Node)
+
+Baseline konsumsi:
+
+- ESP32: ~150–300 mA peak (WiFi active)
+- Relay coil (per channel): 50–90 mA @5V
+- Sensor analog/digital: 10–100 mA
+- Margin safety: +30%
+
+Disarankan:
+
+- Supply 5V minimum 2A per Node assembly
+- 24V supply margin ≥ 2× total estimated current
+
+---
+
+✔ 6.1.2 Gateway & Pi Budget
+
+Gateway ESP32:
+
+- Peak WiFi + ESP-NOW burst
+
+Raspberry Pi:
+
+- 5V supply minimum 3A (disarankan 5A)
+
+Total panel control supply harus dihitung agregat.
+
+---
+
+## 6.2 Relay & Contactor Rating
+
+---
+
+✔ 6.2.1 Relay Control (Low Load)
+
+Untuk beban kecil (< 5A):
+
+- Relay minimal 250VAC rating
+- Current rating ≥ 2× nominal load
+- Mechanical endurance ≥ 100k cycle
+
+---
+
+✔ 6.2.2 Contactor (Motor Load)
+
+Untuk pompa/motor:
+
+- Rating sesuai motor HP
+- Inrush rating diperhitungkan
+- Coil voltage sesuai control supply (24V disarankan)
+
+Thermal overload relay disarankan inline.
+
+---
+
+✔ 6.2.3 Switching Rule
+
+Tidak diperbolehkan:
+
+- Relay PCB langsung menggerakkan motor > 0.5HP
+- MCU GPIO langsung ke coil tanpa driver
+
+---
+
+## 6.3 Fuse & Protection Baseline
+
+---
+
+✔ 6.3.1 AC Input Protection
+
+- MCB utama sesuai total load
+- Surge Protection Device (SPD) class sesuai site
+- EMI filter sebelum SMPS
+
+---
+
+✔ 6.3.2 DC Control Protection
+
+- Fuse terpisah untuk:
+
+  - Node
+  - Gateway
+  - Pi
+
+- Short circuit protection wajib
+
+---
+
+✔ 6.3.3 Per-Actuator Protection
+
+- MCB atau fuse per motor
+- Thermal overload relay untuk motor
+- Flyback/snubber wajib
+
+---
+
+## 6.4 Cable Sizing Baseline
+
+---
+
+✔ 6.4.1 Control Wiring
+
+- Minimal 0.5–0.75 mm² untuk control line
+- Shielded cable untuk sensor analog
+
+---
+
+✔ 6.4.2 Power Wiring
+
+- Disesuaikan dengan current rating
+- Voltage drop < 5%
+- Outdoor rating jika diperlukan
+
+---
+
+## 6.5 Power Quality Requirement
+
+---
+
+✔ 6.5.1 Voltage Stability
+
+Control supply tidak boleh:
+
+- Drop >10% nominal
+- Ripple berlebihan
+
+SMPS industrial grade disarankan.
+
+---
+
+✔ 6.5.2 Brownout Threshold
+
+MCU brownout threshold harus diaktifkan.
+
+Setelah brownout:
+
+- Relay default OFF
+- No auto resume tanpa valid state
+
+---
+
+## 6.6 Environmental Constraints
+
+---
+
+✔ 6.6.1 Temperature
+
+Panel harus mampu:
+
+- 0–50°C baseline
+- Ventilasi cukup
+- Hindari direct sunlight
+
+---
+
+✔ 6.6.2 Humidity
+
+- IP-rated enclosure jika outdoor
+- Anti-condensation jika perlu
+
+---
+
+✔ 6.6.3 Dust & Insects
+
+- Filter ventilation
+- Sealed gland untuk kabel
+
+---
+
+## 6.7 Safety Interlock Requirement
+
+---
+
+✔ 6.7.1 Mandatory Hardware Interlock
+
+Untuk pompa:
+
+- Level switch seri dengan coil
+- Thermal overload mechanical
+
+Untuk greenhouse:
+
+- Limit switch fisik jika ada mekanik
+
+---
+
+✔ 6.7.2 Software Tidak Boleh Jadi Satu-Satunya Proteksi
+
+Interlock fisik tetap harus bekerja jika:
+
+- MCU hang
+- Node reset
+- Firmware crash
+- Gateway offline
+
+---
+
+## 6.8 Startup & Recovery Rule
+
+---
+
+✔ 6.8.1 Power-Up Sequence
+
+1. Stabilize supply
+2. MCU boot
+3. Relay default OFF
+4. Self-check
+5. Enable control
+
+Tidak boleh auto-start motor tanpa explicit command atau schedule.
+
+---
+
+✔ 6.8.2 Simultaneous Start Protection
+
+Jika banyak motor:
+
+- Firmware stagger start
+- Delay antar start
+
+Panel harus mampu menangani peak current.
+
+---
+
+## 6.9 EMI & Transient Suppression
+
+---
+
+✔ 6.9.1 Snubber
+
+- AC contact: RC snubber
+- DC coil: Flyback diode
+
+---
+
+✔ 6.9.2 Decoupling
+
+- 100nF + bulk capacitor dekat MCU
+- Ferrite bead jika noise tinggi
+
+---
+
+## 6.10 Electrical Failure Scenarios
+
+Minimal harus diuji:
+
+1. Power loss saat motor ON
+2. Brownout oscillation
+3. Short circuit actuator
+4. Relay weld contact
+5. Surge spike
+6. EMI dari motor start
+7. Sensor cable short
+
+Panel harus fail-safe.
+
+---
+
+# 7. Constraints
+
+---
+
+## 7.1 Power Capacity Constraint
+
+- Total panel load tidak boleh melebihi rating MCB utama
+- Control supply harus memiliki margin ≥ 30%
+- Simultaneous motor start harus diperhitungkan
+
+Panel tidak boleh bergantung pada firmware untuk membatasi arus total.
+
+---
+
+## 7.2 Relay Electrical Rating Constraint
+
+- Relay rating ≥ 2× nominal current
+- Tidak boleh digunakan mendekati rating maksimum terus-menerus
+- Mechanical cycle limit harus diperhitungkan
+
+Relay PCB bukan pengganti contactor industri.
+
+---
+
+## 7.3 Thermal Constraint
+
+- Temperatur internal panel harus terkontrol
+- Ventilasi atau fan jika load tinggi
+- SMPS tidak boleh overheat
+
+---
+
+## 7.4 Grounding Constraint
+
+- Star grounding wajib
+- Hindari ground loop
+- Shield sensor harus di-ground satu sisi
+
+Improper grounding dapat menyebabkan noise dan reset MCU.
+
+---
+
+## 7.5 EMI Constraint
+
+- Beban induktif wajib snubber
+- Motor start tidak boleh menyebabkan reset Node
+- Cable high voltage dan signal harus dipisah
+
+---
+
+## 7.6 Power Reliability Constraint
+
+- Brownout harus ditangani
+- No uncontrolled actuator start saat power recovery
+- No latch ON setelah reset
+
+---
+
+# 8. Failure Handling
+
+Format: Detection → Impact → Recovery → Owner
+
+---
+
+## 8.1 Power Loss
+
+Detection:
+
+- Supply drop
+- Brownout reset
+
+Impact:
+
+- Node reset
+- Actuator OFF
+
+Recovery:
+
+- Controlled restart
+- No auto resume
+
+Owner:
+
+- Electrical + Firmware
+
+---
+
+## 8.2 Brownout Oscillation
+
+Detection:
+
+- Repeated reset log
+- Unstable voltage
+
+Impact:
+
+- Relay chatter
+- Possible contact wear
+
+Recovery:
+
+- Investigate supply
+- Add stabilization
+- Increase hold-up capacity
+
+Owner:
+
+- Electrical
+
+---
+
+## 8.3 Relay Weld Contact
+
+Detection:
+
+- Actuator ON meski output OFF
+- Current sensor anomaly (jika ada)
+
+Impact:
+
+- Unsafe actuator state
+
+Recovery:
+
+- Manual inspection
+- Replace relay
+- Add contact feedback in future revision
+
+Owner:
+
+- Maintenance
+
+---
+
+## 8.4 Short Circuit Actuator
+
+Detection:
+
+- Fuse blow
+- MCB trip
+
+Impact:
+
+- Load offline
+
+Recovery:
+
+- Replace fuse
+- Inspect wiring
+- Verify load
+
+Owner:
+
+- Electrical technician
+
+---
+
+## 8.5 Thermal Overload
+
+Detection:
+
+- Overload relay trip
+
+Impact:
+
+- Motor OFF
+
+Recovery:
+
+- Cooling period
+- Manual reset overload relay
+- Root cause analysis
+
+Owner:
+
+- Operator / Electrical
+
+---
+
+## 8.6 EMI-Induced Reset
+
+Detection:
+
+- Unexpected reset
+- Log restart reason
+
+Impact:
+
+- Telemetry interruption
+- Actuator OFF
+
+Recovery:
+
+- Improve shielding
+- Add snubber
+- Improve grounding
+
+Owner:
+
+- Electrical + Firmware
+
+---
+
+## 8.7 Surge Event
+
+Detection:
+
+- SPD indicator
+- Multiple device failure
+
+Impact:
+
+- Hardware damage
+
+Recovery:
+
+- Replace SPD
+- Inspect panel
+- Validate isolation
+
+Owner:
+
+- Electrical
+
+---
+
+# 9. Interfaces
+
+---
+
+## 9.1 Node Electrical Interface
+
+- GPIO via opto-isolated driver
+- Brownout detect
+- Relay control line
+- Sensor analog input
+
+Referensi HTL-02.
+
+---
+
+## 9.2 Gateway Power Interface
+
+- Dedicated 5V stable supply
+- Brownout handling
+- No shared heavy load line
+
+Referensi HTL-03.
+
+---
+
+## 9.3 Server Power Interface
+
+- Dedicated supply
+- UPS recommended
+- Surge protection
+
+Referensi HTL-04.
+
+---
+
+## 9.4 Hardware Interlock Interface
+
+Interlock harus:
+
+- Seri dengan coil
+- Tidak dapat dibypass software
+- Tidak tergantung MCU state
+
+---
+
+## 9.5 Panel Wiring Interface
+
+Segregasi wajib:
+
+- High voltage
+- Low voltage
+- Signal analog
+
+Cable duct terpisah.
+
+---
+
+# 10. Open Issues
+
+Harus dikunci sebelum produksi massal:
+
+1. Rating maksimal motor yang didukung per Node?
+2. Apakah soft-starter diwajibkan untuk motor > 1HP?
+3. Apakah feedback current sensor diwajibkan?
+4. Apakah UPS wajib untuk semua site?
+5. IP rating enclosure baseline?
+6. Surge protection class final?
+7. Standar kabel minimum?
+
+Tanpa keputusan ini, panel tidak boleh distandarisasi.
+
+---
+
+# 11. Revision History
+
+| Version | Date       | Author    | Description              |
+| ------- | ---------- | --------- | ------------------------ |
+| v0.1    | 2026-02-24 | Architect | Initial structured draft |
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

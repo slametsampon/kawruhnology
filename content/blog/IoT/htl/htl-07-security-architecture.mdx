@@ -1,0 +1,1310 @@
+---
+title: SECURITY ARCHITECTURE (Outline v0.1)
+date: '2026-02-24'
+tags:
+  [
+    'site-security-architecture',
+    'identity-model',
+    'mqtt-acl',
+    'ota-integrity',
+    'replay-protection',
+    'key-management',
+  ]
+draft: false
+summary: HTL-07 mendefinisikan arsitektur keamanan HortiLink per-site dengan pendekatan layered security yang mencakup physical protection, network isolation, device authentication, authorization berbasis role, serta integritas firmware dan command. Model identitas bersifat per-site dengan device_id unik untuk Node dan Gateway, serta user identity berbasis RBAC pada Server. MQTT dilindungi dengan ACL dan autentikasi, ESP-NOW menggunakan enkripsi dan replay protection, dan OTA wajib diverifikasi melalui hash dan signature. Keamanan dirancang untuk lingkungan LAN semi-trusted tanpa ketergantungan internet, dengan mekanisme key provisioning, revocation, audit trail, dan proteksi terhadap rogue device serta firmware tampering.
+---
+
+# **_HTL-07 – SECURITY ARCHITECTURE (Outline v0.1)_**
+
+---
+
+- [**_HTL-07 – SECURITY ARCHITECTURE (Outline v0.1)_**](#htl-07--security-architecture-outline-v01)
+- [1. Purpose](#1-purpose)
+  - [1.1 Document Objective](#11-document-objective)
+  - [1.2 Authority](#12-authority)
+  - [1.3 Change Governance](#13-change-governance)
+- [2. Scope](#2-scope)
+  - [2.1 In-Scope](#21-in-scope)
+  - [2.2 Out-of-Scope](#22-out-of-scope)
+- [3. Definitions](#3-definitions)
+  - [3.1 Identity](#31-identity)
+  - [3.2 Device Credential](#32-device-credential)
+  - [3.3 Site Secret](#33-site-secret)
+  - [3.4 MQTT ACL](#34-mqtt-acl)
+  - [3.5 Mutual Authentication](#35-mutual-authentication)
+  - [3.6 OTA Signature](#36-ota-signature)
+  - [3.7 Replay Attack](#37-replay-attack)
+  - [3.8 Privilege Escalation](#38-privilege-escalation)
+  - [3.9 Audit Trail](#39-audit-trail)
+  - [3.10 Trust Boundary](#310-trust-boundary)
+- [4. Assumptions](#4-assumptions)
+  - [4.1 Operational Assumptions](#41-operational-assumptions)
+  - [4.2 Threat Model Assumptions](#42-threat-model-assumptions)
+  - [4.3 Capacity Assumptions](#43-capacity-assumptions)
+- [HTL-07 – SECURITY ARCHITECTURE](#htl-07--security-architecture)
+  - [Part 2 – Section 5 (System Description)](#part-2--section-5-system-description)
+- [5. System Description](#5-system-description)
+  - [5.1 Trust Boundary Diagram](#51-trust-boundary-diagram)
+- [5.2 Identity Hierarchy Model](#52-identity-hierarchy-model)
+  - [5.2.1 Identity Structure](#521-identity-structure)
+  - [5.2.2 Device Identity](#522-device-identity)
+  - [5.2.3 User Identity](#523-user-identity)
+  - [5.2.4 Credential Binding Model](#524-credential-binding-model)
+- [5.3 Security Control Layers](#53-security-control-layers)
+  - [Layer 0 – Physical Protection](#layer-0--physical-protection)
+  - [Layer 1 – Network Isolation](#layer-1--network-isolation)
+  - [Layer 2 – Authentication](#layer-2--authentication)
+  - [Layer 3 – Authorization](#layer-3--authorization)
+  - [Layer 4 – Integrity Verification](#layer-4--integrity-verification)
+- [5.4 Security Interaction Flow](#54-security-interaction-flow)
+- [6. Technical Specification](#6-technical-specification)
+  - [6.1 Identity Model](#61-identity-model)
+  - [6.2 MQTT Security](#62-mqtt-security)
+  - [6.3 ESP-NOW Security](#63-esp-now-security)
+  - [6.4 HTTP Security](#64-http-security)
+  - [6.5 Command Authorization](#65-command-authorization)
+  - [6.6 OTA Security](#66-ota-security)
+  - [6.7 Key Management](#67-key-management)
+  - [6.8 Logging \& Audit](#68-logging--audit)
+  - [6.9 Physical Security Baseline](#69-physical-security-baseline)
+- [7. Constraints](#7-constraints)
+  - [7.1 ESP Memory Constraint](#71-esp-memory-constraint)
+  - [7.2 CPU Overhead TLS Constraint](#72-cpu-overhead-tls-constraint)
+  - [7.3 LAN Security Limitation](#73-lan-security-limitation)
+  - [7.4 Credential Storage Limitation](#74-credential-storage-limitation)
+  - [7.5 Operational Simplicity Constraint](#75-operational-simplicity-constraint)
+- [8. Failure Handling](#8-failure-handling)
+  - [8.1 Unauthorized MQTT Publish](#81-unauthorized-mqtt-publish)
+  - [8.2 Credential Leak](#82-credential-leak)
+  - [8.3 Firmware Tampering](#83-firmware-tampering)
+  - [8.4 Replay Attack Detected](#84-replay-attack-detected)
+  - [8.5 Excessive Login Attempt](#85-excessive-login-attempt)
+  - [8.6 Compromised Node](#86-compromised-node)
+  - [8.7 Key Rotation Failure](#87-key-rotation-failure)
+- [9. Interfaces](#9-interfaces)
+  - [9.1 MQTT Auth Interface](#91-mqtt-auth-interface)
+  - [9.2 OTA Metadata Security Interface](#92-ota-metadata-security-interface)
+  - [9.3 HMI Auth Interface](#93-hmi-auth-interface)
+  - [9.4 Device Provisioning Interface](#94-device-provisioning-interface)
+  - [9.5 Audit Log Interface](#95-audit-log-interface)
+- [10. Open Issues](#10-open-issues)
+- [11. Revision History](#11-revision-history)
+
+---
+
+# 1. Purpose
+
+## 1.1 Document Objective
+
+HTL-07 menjadi referensi arsitektur keamanan untuk:
+
+- Node
+- Gateway
+- Server (Raspberry Pi)
+- HMI
+
+Dokumen ini mengunci:
+
+- Identity hierarchy
+- Authentication mechanism
+- Authorization model
+- Integrity verification
+- Key management
+- Audit & logging baseline
+
+Keamanan harus terintegrasi dengan HTL-00 hingga HTL-06.
+
+---
+
+## 1.2 Authority
+
+HTL-07 mengikat:
+
+- Tim Firmware (Node & Gateway)
+- Tim Backend (Server & HMI)
+- Tim DevOps (deployment Pi)
+- Tim Electrical (physical baseline)
+
+Tidak diperbolehkan deployment produksi tanpa baseline security aktif.
+
+---
+
+## 1.3 Change Governance
+
+Perubahan berikut wajib review arsitektur:
+
+- Identity format
+- Credential storage method
+- Key rotation scheme
+- TLS policy
+- OTA verification model
+
+Jika perubahan mempengaruhi:
+
+- HTL-01 (payload & auth)
+- HTL-02 (secure storage)
+- HTL-03 (MQTT bridge auth)
+- HTL-04 (broker ACL)
+
+Maka revisi lintas dokumen wajib dilakukan.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'README',
+      href: '/blog/IoT/htl/README',
+      description: 'README - First',
+    },
+    {
+      name: 'SYSTEM ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-00-system-architecture-master-document',
+      description: 'SYSTEM ARCHITECTURE MASTER DOCUMENT',
+    },
+    {
+      name: 'INTERFACE SPECIFICATION',
+      href: '/blog/IoT/htl/htl-01-interface-specification',
+      description: 'INTERFACE SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'NODE TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-02-node-technical-specification',
+      description: 'NODE TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'GATEWAY TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-03-gateway-technical-specification',
+      description: 'GATEWAY TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'SERVER RASPBERRY-PI',
+      href: '/blog/IoT/htl/htl-04-server-raspberry-pi-specification',
+      description: 'SERVER RASPBERRY-PI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'HMI SPECIFICATION',
+      href: '/blog/IoT/htl/htl-05-hmi-specification',
+      description: 'HMI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'ELECTRICAL & POWER',
+      href: '/blog/IoT/htl/htl-06-electrical-panel-design-specification',
+      description: 'ELECTRICAL & POWER INTEGRATION SPECIFICATION',
+    },
+    {
+      name: 'FAILURE MODE & RECOVERY',
+      href: '/blog/IoT/htl/htl-08-failure-mode-recovery-matrix',
+      description: 'FAILURE MODE & RECOVERY MATRIX (Outline v0.1)',
+    },
+    {
+      name: 'TEST PLAN & VALIDATION',
+      href: '/blog/IoT/htl/htl-09-test-plan-validation-matrix',
+      description: 'TEST PLAN & VALIDATION MATRIX (Outline v0.1)',
+    },
+  ]}
+/>
+
+---
+
+# 2. Scope
+
+## 2.1 In-Scope
+
+Security baseline per-site meliputi:
+
+✔ Identity & Credential
+
+- device_id unik
+- gateway_id unik
+- site_id namespace
+- user_id & role
+
+✔ Communication Security
+
+- MQTT authentication & ACL
+- ESP-NOW encryption
+- Replay protection
+
+✔ Authorization
+
+- Role-to-command mapping
+- Manual override restriction
+
+✔ Integrity
+
+- OTA hash verification
+- Signature rule
+- Minimum version enforcement
+
+✔ Logging & Audit
+
+- Login log
+- Command log
+- Security event log
+
+✔ Physical Baseline
+
+- Panel lock
+- SD card protection
+- Device access limitation
+
+---
+
+## 2.2 Out-of-Scope
+
+Tidak termasuk:
+
+- Cloud IAM
+- Enterprise SSO
+- Multi-site federation
+- External PKI
+- Internet-based trust anchor
+
+Security model fokus per-site, offline-capable.
+
+---
+
+# 3. Definitions
+
+## 3.1 Identity
+
+Entitas unik yang dapat diautentikasi (device atau user).
+
+---
+
+## 3.2 Device Credential
+
+Secret atau credential yang mengikat device ke site tertentu.
+
+---
+
+## 3.3 Site Secret
+
+Secret unik per-site untuk komunikasi intra-site.
+
+---
+
+## 3.4 MQTT ACL
+
+Access Control List berbasis topic dan client identity.
+
+---
+
+## 3.5 Mutual Authentication
+
+Kedua pihak memverifikasi identitas satu sama lain.
+
+---
+
+## 3.6 OTA Signature
+
+Tanda tangan kriptografis firmware untuk menjamin integritas.
+
+---
+
+## 3.7 Replay Attack
+
+Pengiriman ulang message lama untuk memicu aksi tidak sah.
+
+---
+
+## 3.8 Privilege Escalation
+
+Upaya memperoleh akses lebih tinggi dari role yang diizinkan.
+
+---
+
+## 3.9 Audit Trail
+
+Log aktivitas yang tidak dapat dimodifikasi.
+
+---
+
+## 3.10 Trust Boundary
+
+Batas domain kepercayaan antara komponen sistem.
+
+---
+
+# 4. Assumptions
+
+---
+
+## 4.1 Operational Assumptions
+
+- LAN dianggap semi-trusted
+- Physical access mungkin terjadi
+- Operator bukan ahli keamanan
+- Internet tidak tersedia
+- SSH dibatasi atau dinonaktifkan
+
+Security harus realistis terhadap lingkungan pertanian.
+
+---
+
+## 4.2 Threat Model Assumptions
+
+Ancaman yang diasumsikan:
+
+1. Rogue device publish MQTT
+2. Replay frame ESP-NOW
+3. Unauthorized dashboard login
+4. Firmware dimodifikasi
+5. Node dicuri atau diganti
+6. Insider misuse
+
+Advanced nation-state attacker tidak menjadi baseline.
+
+---
+
+## 4.3 Capacity Assumptions
+
+Per-site:
+
+- 10–15 Node
+- 1 Gateway
+- 1 Server
+- 3–5 user aktif
+
+Skema keamanan harus ringan (ESP memory constraint).
+
+---
+
+Baik.
+Berikut **HTL-07 – Part 2** sesuai metodologi:
+
+- Section 5 – System Description
+- Diagram wajib
+- Fokus: Trust Boundary & Identity Hierarchy
+- Tidak masuk detail teknis implementasi (itu Part 3)
+
+---
+
+# HTL-07 – SECURITY ARCHITECTURE
+
+## Part 2 – Section 5 (System Description)
+
+---
+
+# 5. System Description
+
+Security HortiLink dirancang sebagai **layered defense model** dalam satu site yang semi-trusted dan offline-capable.
+
+Security tidak boleh:
+
+- Menghentikan kontrol lokal
+- Membuat sistem unusable
+- Bergantung internet
+
+---
+
+## 5.1 Trust Boundary Diagram
+
+![Image](https://www.researchgate.net/publication/339356002/figure/fig5/AS%3A860962206781443%401582280794761/Non-Exclusive-Trust-Overlapping-trust-boundary-U-I-A-S.png)
+
+✔ Boundary 1 – Physical Access Boundary
+
+- Panel kontrol
+- Node enclosure
+- Raspberry Pi casing
+- Kabel sensor & actuator
+
+Risiko:
+
+- Device theft
+- SD card removal
+- Direct wiring manipulation
+
+Mitigasi:
+
+- Panel lock
+- Tamper label
+- Physical isolation
+
+---
+
+✔ Boundary 2 – Node Domain
+
+- ESP32 firmware
+- Device credential
+- ESP-NOW encryption key
+- Local interlock logic
+
+Node harus:
+
+- Reject unauthenticated command
+- Reject invalid sequence
+- Verify OTA integrity
+
+---
+
+✔ Boundary 3 – Gateway Domain
+
+- ESP-NOW coordinator
+- MQTT client credential
+- Routing validation
+- Replay protection
+
+Gateway adalah enforcement point antara radio domain dan LAN.
+
+---
+
+✔ Boundary 4 – Server Domain (Pi)
+
+- MQTT broker
+- DB
+- Command manager
+- RBAC
+- OTA repository
+
+Server adalah identity authority per-site.
+
+---
+
+✔ Boundary 5 – User Domain
+
+- Operator
+- Engineer
+- Admin
+
+User identity tidak boleh memiliki akses langsung ke device tanpa role enforcement.
+
+---
+
+# 5.2 Identity Hierarchy Model
+
+![Image](https://www.researchgate.net/publication/369989525/figure/fig4/AS%3A11431281414972177%401746020584880/User-and-Device-Authentication-in-IoT.tif)
+
+![Image](https://cdn.ai-forall.com/ifa_dev_media/MQTT_Subscription_Identifier_Explained_1_3e3f3b17bf.jpg)
+
+---
+
+## 5.2.1 Identity Structure
+
+Hierarki:
+
+Site_ID
+├── Gateway_ID
+├── Node_ID (1..15)
+└── User_ID (role-bound)
+
+---
+
+## 5.2.2 Device Identity
+
+Setiap Node memiliki:
+
+- device_id unik
+- site binding
+- device credential
+
+Gateway memiliki:
+
+- gateway_id
+- broker credential
+
+Device identity tidak boleh reusable antar site.
+
+---
+
+## 5.2.3 User Identity
+
+User memiliki:
+
+- user_id
+- role
+- password hash
+- session token
+
+Role mapping:
+
+Operator → basic command
+Engineer → config & override
+Admin → user & OTA
+
+---
+
+## 5.2.4 Credential Binding Model
+
+Per-site credential:
+
+- MQTT username/password
+- ESP-NOW encryption key
+- OTA signature trust anchor
+
+Tidak boleh ada global shared secret lintas site.
+
+---
+
+# 5.3 Security Control Layers
+
+Security dibagi 5 layer:
+
+---
+
+## Layer 0 – Physical Protection
+
+- Panel lock
+- SD card protection
+- Device casing
+- Cable routing control
+
+---
+
+## Layer 1 – Network Isolation
+
+- LAN-only
+- Broker ACL
+- No anonymous MQTT
+- Limited SSH
+
+---
+
+## Layer 2 – Authentication
+
+- MQTT client auth
+- User login auth
+- Device credential validation
+- Direct-node PIN
+
+---
+
+## Layer 3 – Authorization
+
+- Role-based command
+- TTL enforcement
+- Topic-level ACL
+- Manual override restriction
+
+---
+
+## Layer 4 – Integrity Verification
+
+- OTA hash verify
+- Firmware signature
+- Replay detection
+- Sequence window
+
+---
+
+# 5.4 Security Interaction Flow
+
+Command Flow Security:
+
+User → Login → Role verified
+→ Command issued → Server validates
+→ Publish MQTT (ACL enforced)
+→ Gateway validates TTL & target
+→ Node validates seq & signature
+→ Execute
+
+OTA Flow Security:
+
+Admin upload → Hash compute
+→ Publish metadata
+→ Node verify hash & signature
+→ Apply
+
+---
+
+# 6. Technical Specification
+
+---
+
+## 6.1 Identity Model
+
+---
+
+✔ 6.1.1 Device Identity
+
+Setiap Node wajib memiliki:
+
+- device_id (UUID atau 64-bit unique ID)
+- site_id binding
+- device credential (secret key)
+
+Credential disimpan di:
+
+- NVS (protected partition)
+- Tidak boleh hardcoded global
+
+Device identity tidak boleh dipindahkan antar-site tanpa re-provisioning.
+
+---
+
+✔ 6.1.2 Gateway Identity
+
+Gateway memiliki:
+
+- gateway_id
+- MQTT username/password
+- site binding
+
+Gateway credential berbeda dari Node credential.
+
+---
+
+✔ 6.1.3 User Identity
+
+Server menyimpan:
+
+- user_id
+- password hash (bcrypt/argon2)
+- role
+- account status
+
+Password tidak boleh plaintext.
+
+---
+
+✔ 6.1.4 Device Registration Flow
+
+Provisioning awal:
+
+1. Device flashing firmware
+2. Assign site_id
+3. Inject device credential
+4. Register di server registry
+
+Tanpa registrasi, broker menolak komunikasi.
+
+---
+
+## 6.2 MQTT Security
+
+---
+
+✔ 6.2.1 Authentication
+
+Baseline:
+
+- Username/password wajib
+- No anonymous access
+- Per-client credential
+
+Opsional:
+
+- TLS (recommended jika CPU memadai)
+
+---
+
+✔ 6.2.2 Topic-Level ACL
+
+Gateway hanya boleh:
+
+- Publish node telemetry
+- Subscribe command topic
+
+Dashboard hanya boleh:
+
+- Publish command via server logic
+
+Node tidak boleh connect langsung ke broker.
+
+---
+
+✔ 6.2.3 Connection Policy
+
+- Max connection per client
+- Clean session disabled (persistent)
+- Message size limit enforced
+
+---
+
+✔ 6.2.4 Retain Policy
+
+- Telemetry: no retain
+- Command: no retain
+- Config metadata: controlled
+
+Broker persistence enabled.
+
+---
+
+## 6.3 ESP-NOW Security
+
+---
+
+✔ 6.3.1 Encryption Key
+
+Per-site encryption key:
+
+- Shared across Node & Gateway
+- Stored secure NVS
+- Tidak boleh default universal key
+
+---
+
+✔ 6.3.2 Replay Protection
+
+Node & Gateway wajib:
+
+- Sequence number
+- Sliding window
+- Reject duplicate
+
+Hop metadata diverifikasi.
+
+---
+
+✔ 6.3.3 Invalid Frame Handling
+
+Drop frame jika:
+
+- Unknown device_id
+- Invalid seq
+- Invalid hop
+- Oversized payload
+
+No verbose error broadcast.
+
+---
+
+## 6.4 HTTP Security
+
+---
+
+✔ 6.4.1 Direct-to-Node Security
+
+- Minimal PIN access
+- Auto timeout session
+- Rate limit attempt
+
+Tidak boleh expose config change tanpa auth.
+
+---
+
+✔ 6.4.2 Server Web Security
+
+- Session token
+- CSRF protection
+- HTTP-only cookie
+- Login attempt rate limiting
+
+HTTPS optional jika LAN isolated.
+
+---
+
+## 6.5 Command Authorization
+
+---
+
+✔ 6.5.1 Role-to-Command Mapping
+
+Operator:
+
+- Basic actuator command
+
+Engineer:
+
+- Config change
+- Manual override
+
+Admin:
+
+- OTA upload
+- User management
+
+---
+
+✔ 6.5.2 TTL Enforcement
+
+Server wajib:
+
+- Reject command TTL < = 0
+- Reject expired command
+
+Gateway wajib:
+
+- Re-validate TTL
+
+Node wajib:
+
+- Final TTL validation
+
+Triple validation mencegah replay misuse.
+
+---
+
+✔ 6.5.3 Duplicate Command Rejection
+
+cmd_id unik.
+
+Node menyimpan:
+
+- Recent cmd_id window
+- Reject duplicate
+
+---
+
+✔ 6.5.4 Audit Logging
+
+Setiap command log:
+
+- user_id
+- role
+- node_id
+- cmd_id
+- timestamp
+- result
+
+---
+
+## 6.6 OTA Security
+
+---
+
+✔ 6.6.1 Hash Verification
+
+Server:
+
+- Compute SHA-256
+
+Node:
+
+- Verify before flash
+
+Mismatch → reject.
+
+---
+
+✔ 6.6.2 Signature Verification (Recommended)
+
+Firmware ditandatangani private key.
+
+Node menyimpan public key trust anchor.
+
+Tanpa signature valid → reject OTA.
+
+---
+
+✔ 6.6.3 Minimum Version Enforcement
+
+Node tidak boleh downgrade ke:
+
+- Version lebih rendah tanpa explicit rollback policy
+
+Rollback harus tercatat.
+
+---
+
+✔ 6.6.4 Tamper Detection
+
+Node menyimpan:
+
+- Current firmware hash
+
+Jika mismatch saat boot:
+
+- Enter safe mode
+- Report anomaly
+
+---
+
+## 6.7 Key Management
+
+---
+
+✔ 6.7.1 Initial Provisioning
+
+- Device secret injected saat flashing
+- Site encryption key diberikan saat pairing
+
+Provisioning tool harus offline-capable.
+
+---
+
+✔ 6.7.2 Key Storage
+
+- Stored in NVS
+- Read-only partition jika memungkinkan
+- Tidak boleh print ke log
+
+---
+
+✔ 6.7.3 Key Rotation Procedure
+
+Manual rotation baseline:
+
+1. Generate new site key
+2. Update Gateway
+3. Update Node sequential
+4. Revoke old key
+
+Automatic rotation optional (future phase).
+
+---
+
+✔ 6.7.4 Compromised Device Revocation
+
+Jika device compromised:
+
+- Remove from server registry
+- Revoke MQTT credential
+- Rotate site key jika perlu
+
+Device lama tidak boleh reconnect.
+
+---
+
+✔ 6.7.5 Lost Device Handling
+
+Jika Node dicuri:
+
+- Mark device revoked
+- Rotate credential
+- Replace hardware
+
+---
+
+## 6.8 Logging & Audit
+
+Server wajib menyimpan:
+
+- Login attempt
+- Command issued
+- Config change
+- OTA trigger
+- Key rotation
+- Security violation
+
+Retention baseline harus ditentukan.
+
+Log tidak boleh editable via UI.
+
+---
+
+## 6.9 Physical Security Baseline
+
+- Panel locked
+- Pi in sealed enclosure
+- SD card inaccessible tanpa membuka casing
+- Tamper-evident label
+- Cable gland sealed
+
+Physical compromise harus terlihat.
+
+---
+
+# 7. Constraints
+
+---
+
+## 7.1 ESP Memory Constraint
+
+- ESP32 memiliki RAM & flash terbatas
+- Tidak semua algoritma kriptografi berat dapat digunakan
+- Signature verification harus efisien
+- Sliding window replay table bounded
+
+Security tidak boleh menyebabkan heap fragmentation.
+
+---
+
+## 7.2 CPU Overhead TLS Constraint
+
+Jika TLS diaktifkan pada MQTT:
+
+- Handshake cost signifikan
+- CPU usage meningkat
+- Latency publish meningkat
+
+TLS harus diuji pada load 10–15 node sebelum mandatory.
+
+---
+
+## 7.3 LAN Security Limitation
+
+LAN dianggap semi-trusted:
+
+- Tidak ada firewall enterprise
+- Insider risk ada
+- Physical access mungkin
+
+Security tidak boleh mengasumsikan LAN sepenuhnya aman.
+
+---
+
+## 7.4 Credential Storage Limitation
+
+- NVS tidak secure element hardware
+- Physical extraction masih mungkin
+- SD card Pi dapat dilepas
+
+Mitigasi:
+
+- Hash & signature verification
+- Per-site secret isolation
+- Revocation procedure jelas
+
+---
+
+## 7.5 Operational Simplicity Constraint
+
+Sistem pertanian tidak boleh:
+
+- Terlalu kompleks provisioning
+- Membutuhkan internet CA
+- Membutuhkan certificate renewal sering
+
+Security harus seimbang dengan maintainability.
+
+---
+
+# 8. Failure Handling
+
+Format: Detection → Impact → Recovery → Owner
+
+---
+
+## 8.1 Unauthorized MQTT Publish
+
+Detection:
+
+- Broker ACL violation
+- Unknown client_id
+
+Impact:
+
+- Potential rogue device attempt
+
+Recovery:
+
+- Reject connection
+- Log event
+- Investigate device
+
+Owner:
+
+- Server
+
+---
+
+## 8.2 Credential Leak
+
+Detection:
+
+- Suspicious login
+- Unexpected device behavior
+
+Impact:
+
+- Unauthorized access risk
+
+Recovery:
+
+- Rotate site secret
+- Re-provision device
+- Reset password
+
+Owner:
+
+- Admin
+
+---
+
+## 8.3 Firmware Tampering
+
+Detection:
+
+- Hash mismatch
+- Signature invalid
+
+Impact:
+
+- Node enters safe mode
+
+Recovery:
+
+- Reflash firmware
+- Audit physical access
+
+Owner:
+
+- Engineer/Admin
+
+---
+
+## 8.4 Replay Attack Detected
+
+Detection:
+
+- Sequence duplicate
+- Sliding window violation
+
+Impact:
+
+- Attempted duplicate command
+
+Recovery:
+
+- Drop message
+- Log anomaly
+
+Owner:
+
+- Node / Gateway
+
+---
+
+## 8.5 Excessive Login Attempt
+
+Detection:
+
+- Failed login threshold exceeded
+
+Impact:
+
+- Brute force attempt
+
+Recovery:
+
+- Account lock
+- Log event
+- Alert admin
+
+Owner:
+
+- Server
+
+---
+
+## 8.6 Compromised Node
+
+Detection:
+
+- Abnormal behavior
+- Credential misuse
+- Missing device physically
+
+Impact:
+
+- Potential site compromise
+
+Recovery:
+
+- Revoke device
+- Rotate site key
+- Replace hardware
+
+Owner:
+
+- Admin + Engineer
+
+---
+
+## 8.7 Key Rotation Failure
+
+Detection:
+
+- Device cannot authenticate after rotation
+
+Impact:
+
+- Node offline
+
+Recovery:
+
+- Manual re-provision
+- Restore previous key if needed
+
+Owner:
+
+- Admin
+
+---
+
+# 9. Interfaces
+
+---
+
+## 9.1 MQTT Auth Interface
+
+Mengacu HTL-01:
+
+- Username/password
+- Topic ACL
+- No anonymous
+
+Broker config documented di HTL-04.
+
+---
+
+## 9.2 OTA Metadata Security Interface
+
+Metadata harus memuat:
+
+- firmware_version
+- file_hash
+- signature
+- min_required_version
+
+Node memverifikasi sebelum flash.
+
+---
+
+## 9.3 HMI Auth Interface
+
+- Login endpoint
+- Session token
+- Role verification
+- Logout endpoint
+
+Mengacu HTL-05.
+
+---
+
+## 9.4 Device Provisioning Interface
+
+Provisioning flow harus mendukung:
+
+- Inject device credential
+- Assign site_id
+- Register device_id
+
+Tool provisioning terdokumentasi terpisah.
+
+---
+
+## 9.5 Audit Log Interface
+
+Audit log harus:
+
+- Read-only via UI
+- Exportable
+- Tidak dapat dihapus oleh Operator
+
+Retention baseline wajib dikunci.
+
+---
+
+# 10. Open Issues
+
+Harus diputuskan sebelum production:
+
+1. Per-device certificate atau per-site secret?
+2. TLS mandatory atau optional LAN?
+3. Hardware secure element diperlukan?
+4. Remote SSH disable total atau restricted?
+5. Automatic key rotation schedule?
+6. Signature algorithm (ED25519 vs RSA)?
+7. Audit log retention duration?
+
+Tanpa keputusan ini, security baseline belum freeze.
+
+---
+
+# 11. Revision History
+
+| Version | Date       | Author    | Description              |
+| ------- | ---------- | --------- | ------------------------ |
+| v0.1    | 2026-02-24 | Architect | Initial structured draft |
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

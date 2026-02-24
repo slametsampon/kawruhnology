@@ -1,0 +1,1358 @@
+---
+title: GATEWAY TECHNICAL SPECIFICATION (Outline v0.1)
+
+date: '2026-02-24'
+tags:
+  [
+    'gateway-bridge',
+    'esp-now-coordinator',
+    'mqtt-bridge',
+    'store-and-forward',
+    'time-authority',
+    'failure-containment',
+  ]
+draft: false
+summary: Gateway HortiLink adalah bridge intra-site antara domain Node (ESP-NOW relay-aware) dan Server Raspberry Pi (MQTT). Gateway bertindak sebagai ESP-NOW coordinator, validator routing, deduplication engine, store-and-forward buffer, serta distributor time authority. Gateway tidak memiliki otoritas kontrol aktuator dan tidak boleh menggantikan local control engine pada Node. Dokumen ini mengunci arsitektur firmware Gateway, mekanisme validasi pesan, buffering, rate limiting, reconnect strategy, serta health monitoring agar sistem tetap deterministik, terisolasi per-site, dan tahan terhadap kegagalan jaringan atau broker tanpa mengganggu kontrol lokal pada Node.
+---
+
+# HTL-03 – GATEWAY TECHNICAL SPECIFICATION (Outline v0.1)
+
+---
+
+- [HTL-03 – GATEWAY TECHNICAL SPECIFICATION (Outline v0.1)](#htl-03--gateway-technical-specification-outline-v01)
+- [1. Purpose](#1-purpose)
+  - [1.1 Document Objective](#11-document-objective)
+  - [1.2 Authority](#12-authority)
+  - [1.3 Change Governance](#13-change-governance)
+- [2. Scope](#2-scope)
+  - [2.1 In-Scope](#21-in-scope)
+  - [2.2 Out-of-Scope](#22-out-of-scope)
+- [3. Definitions](#3-definitions)
+  - [3.1 Gateway](#31-gateway)
+  - [3.2 ESP-NOW Coordinator](#32-esp-now-coordinator)
+  - [3.3 Routing Table](#33-routing-table)
+  - [3.4 Message Queue](#34-message-queue)
+  - [3.5 Store-and-Forward](#35-store-and-forward)
+  - [3.6 Time Authority](#36-time-authority)
+  - [3.7 Backoff Strategy](#37-backoff-strategy)
+  - [3.8 Rate Limiting](#38-rate-limiting)
+  - [3.9 Health Metrics](#39-health-metrics)
+- [4. Assumptions](#4-assumptions)
+  - [4.1 Deployment Assumptions](#41-deployment-assumptions)
+  - [4.2 Technical Assumptions](#42-technical-assumptions)
+  - [4.3 Capacity Assumptions](#43-capacity-assumptions)
+- [STATUS](#status)
+- [5. System Description](#5-system-description)
+  - [5.1 Gateway Functional Block Diagram](#51-gateway-functional-block-diagram)
+  - [5.2 Message Flow Overview](#52-message-flow-overview)
+  - [5.3 Trust Boundary Model](#53-trust-boundary-model)
+  - [5.4 Time Authority Model (Gateway Context)](#54-time-authority-model-gateway-context)
+  - [5.5 Operational Modes](#55-operational-modes)
+- [6. Technical Specification](#6-technical-specification)
+  - [6.1 Hardware Specification](#61-hardware-specification)
+  - [6.2 Firmware Architecture](#62-firmware-architecture)
+  - [6.3 ESP-NOW Coordinator Behavior](#63-esp-now-coordinator-behavior)
+  - [6.4 Routing \& Dedup Engine](#64-routing--dedup-engine)
+  - [6.5 MQTT Bridge Behavior](#65-mqtt-bridge-behavior)
+  - [6.6 Store-and-Forward Buffer](#66-store-and-forward-buffer)
+  - [6.7 Time Authority Model](#67-time-authority-model)
+  - [6.8 Rate Limiting \& Backoff](#68-rate-limiting--backoff)
+  - [6.9 Command Handling](#69-command-handling)
+  - [6.10 Health Monitoring](#610-health-monitoring)
+  - [6.11 Local HTTP Diagnostic Interface](#611-local-http-diagnostic-interface)
+- [7. Constraints](#7-constraints)
+  - [7.1 ESP RAM Limitation](#71-esp-ram-limitation)
+  - [7.2 Flash Write Cycle Limit](#72-flash-write-cycle-limit)
+  - [7.3 MQTT Broker Throughput (Pi)](#73-mqtt-broker-throughput-pi)
+  - [7.4 ESP-NOW Collision Risk](#74-esp-now-collision-risk)
+  - [7.5 WiFi Stability Constraint](#75-wifi-stability-constraint)
+  - [7.6 Power Stability Constraint](#76-power-stability-constraint)
+- [8. Failure Handling](#8-failure-handling)
+  - [8.1 Pi Down](#81-pi-down)
+  - [8.2 MQTT Broker Down](#82-mqtt-broker-down)
+  - [8.3 WiFi Disconnect](#83-wifi-disconnect)
+  - [8.4 Relay Chain Break](#84-relay-chain-break)
+  - [8.5 Node Flood (Misbehaving Node)](#85-node-flood-misbehaving-node)
+  - [8.6 Buffer Overflow](#86-buffer-overflow)
+  - [8.7 Gateway Reset](#87-gateway-reset)
+- [9. Interfaces](#9-interfaces)
+  - [9.1 ESP-NOW Interface Reference](#91-esp-now-interface-reference)
+  - [9.2 MQTT Interface Reference](#92-mqtt-interface-reference)
+  - [9.3 HTTP Diagnostic Endpoints](#93-http-diagnostic-endpoints)
+  - [9.4 Health Topic Reference](#94-health-topic-reference)
+  - [9.5 Time Sync Interface](#95-time-sync-interface)
+- [10. Open Issues](#10-open-issues)
+- [11. Revision History](#11-revision-history)
+
+---
+
+# 1. Purpose
+
+## 1.1 Document Objective
+
+HTL-03 mendefinisikan spesifikasi teknis implementasi Gateway HortiLink per-site.
+
+Dokumen ini mengunci:
+
+- Peran Gateway sebagai bridge
+- Koordinasi ESP-NOW
+- Validasi routing & dedup
+- MQTT bridging behavior
+- Store-and-forward model
+- Time authority distribution
+- Rate limiting & backoff
+- Health & diagnostics
+
+Gateway bukan control authority (lihat HTL-00).
+
+---
+
+## 1.2 Authority
+
+HTL-03 mengikat:
+
+- Tim firmware Gateway
+- Tim backend (untuk integrasi MQTT)
+- QA untuk integration test Node ↔ Gateway ↔ Server
+
+Implementasi Gateway yang melampaui domainnya (misalnya override interlock Node) dianggap pelanggaran arsitektur.
+
+---
+
+## 1.3 Change Governance
+
+Perubahan berikut wajib review lintas tim:
+
+- Topic mapping
+- Payload transformation
+- TTL handling logic
+- Buffering behavior
+- Time authority policy
+- Retry/backoff strategy
+
+Jika perubahan mempengaruhi:
+
+- HTL-01 (interface contract)
+- HTL-00 (authority boundary)
+
+Maka revisi arsitektur wajib dilakukan.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'README',
+      href: '/blog/IoT/htl/README',
+      description: 'README - First',
+    },
+    {
+      name: 'SYSTEM ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-00-system-architecture-master-document',
+      description: 'SYSTEM ARCHITECTURE MASTER DOCUMENT',
+    },
+    {
+      name: 'INTERFACE SPECIFICATION',
+      href: '/blog/IoT/htl/htl-01-interface-specification',
+      description: 'INTERFACE SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'NODE TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-02-node-technical-specification',
+      description: 'NODE TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'SERVER RASPBERRY-PI',
+      href: '/blog/IoT/htl/htl-04-server-raspberry-pi-specification',
+      description: 'SERVER RASPBERRY-PI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'HMI SPECIFICATION',
+      href: '/blog/IoT/htl/htl-05-hmi-specification',
+      description: 'HMI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'ELECTRICAL & POWER',
+      href: '/blog/IoT/htl/htl-06-electrical-panel-design-specification',
+      description: 'ELECTRICAL & POWER INTEGRATION SPECIFICATION',
+    },
+    {
+      name: 'SECURITY ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-07-security-architecture',
+      description: 'SECURITY ARCHITECTURE (Outline v0.1)',
+    },
+    {
+      name: 'FAILURE MODE & RECOVERY',
+      href: '/blog/IoT/htl/htl-08-failure-mode-recovery-matrix',
+      description: 'FAILURE MODE & RECOVERY MATRIX (Outline v0.1)',
+    },
+    {
+      name: 'TEST PLAN & VALIDATION',
+      href: '/blog/IoT/htl/htl-09-test-plan-validation-matrix',
+      description: 'TEST PLAN & VALIDATION MATRIX (Outline v0.1)',
+    },
+  ]}
+/>
+
+---
+
+# 2. Scope
+
+## 2.1 In-Scope
+
+HTL-03 mencakup seluruh domain internal Gateway:
+
+✔ Firmware Layer
+
+- ESP32-based firmware
+- Task model
+- Memory management
+
+✔ Communication Layer
+
+- ESP-NOW coordinator
+- Routing enforcement
+- Dedup engine
+- Replay protection
+
+✔ MQTT Bridge
+
+- Topic mapping
+- QoS handling
+- Persistent session
+- Command dispatch
+
+✔ Reliability Layer
+
+- Store-and-forward
+- Rate limiting
+- Backoff strategy
+- Reconnect strategy
+
+✔ Supervisory Layer
+
+- Time authority distribution
+- Health monitoring
+- HTTP diagnostics
+
+---
+
+## 2.2 Out-of-Scope
+
+Gateway tidak mencakup:
+
+- Sensor reading
+- Actuator control
+- Local automation logic
+- Dashboard logic
+- Cloud sync
+- Electrical panel design
+
+Gateway tidak boleh mengimplementasikan behavior Node.
+
+---
+
+# 3. Definitions
+
+## 3.1 Gateway
+
+Perangkat ESP yang menjadi bridge antara domain ESP-NOW dan MQTT LAN.
+
+---
+
+## 3.2 ESP-NOW Coordinator
+
+Modul Gateway yang:
+
+- Menerima frame dari Node
+- Mengelola peer list
+- Validasi hop
+- Dedup message
+
+---
+
+## 3.3 Routing Table
+
+Struktur internal yang menyimpan:
+
+- node_id
+- last_seen
+- RSSI
+- relay metadata
+
+Gateway tidak mengelola mesh global, hanya validasi.
+
+---
+
+## 3.4 Message Queue
+
+Queue internal untuk:
+
+- Telemetry awaiting MQTT publish
+- Command awaiting ESP-NOW dispatch
+- ACK tracking
+
+Queue harus bounded.
+
+---
+
+## 3.5 Store-and-Forward
+
+Mekanisme menyimpan sementara pesan jika:
+
+- MQTT broker down
+- WiFi disconnect
+- Server reboot
+
+Buffer tidak permanen jangka panjang.
+
+---
+
+## 3.6 Time Authority
+
+Gateway berfungsi sebagai distributor waktu ke Node jika:
+
+- Pi tersedia → Gateway sinkron ke Pi
+- Pi tidak tersedia → Gateway menjadi authority lokal
+
+---
+
+## 3.7 Backoff Strategy
+
+Strategi exponential delay untuk:
+
+- MQTT reconnect
+- ESP-NOW retry
+- Command retry
+
+Mencegah storm.
+
+---
+
+## 3.8 Rate Limiting
+
+Pembatasan:
+
+- Max publish per detik
+- Max inbound per node
+- Burst control
+
+---
+
+## 3.9 Health Metrics
+
+Parameter internal Gateway yang dipublish ke Server:
+
+- Uptime
+- Free heap
+- Queue depth
+- RSSI aggregate
+- MQTT state
+- Reconnect counter
+
+---
+
+# 4. Assumptions
+
+## 4.1 Deployment Assumptions
+
+Baseline per-site:
+
+- 1 Gateway
+- 10–15 Node
+- 1 Raspberry Pi
+- LAN lokal
+- Tidak ada dependency internet
+
+Gateway tidak dirancang untuk multi-site bridging.
+
+---
+
+## 4.2 Technical Assumptions
+
+- MQTT broker berjalan di Pi
+- WiFi stabil di dalam site
+- ESP-NOW digunakan intra-site
+- Hop limit telah dikunci di HTL-00
+- Gateway memiliki cukup flash untuk buffer terbatas
+
+---
+
+## 4.3 Capacity Assumptions
+
+Gateway harus mampu menangani:
+
+- Inbound telemetry dari 10–15 node
+- Outbound publish ke MQTT sesuai interval
+- Command dispatch tanpa blocking
+
+Burst scenario harus ditangani dengan rate limiting.
+
+---
+
+# STATUS
+
+HTL-03 Part 1 selesai:
+
+✔ Summary
+✔ Purpose
+✔ Scope
+✔ Definitions
+✔ Assumptions
+
+---
+
+# 5. System Description
+
+Gateway adalah boundary enforcement layer antara domain Node (ESP-NOW) dan domain Server (MQTT LAN).
+Section ini mengunci struktur internal dan model operasional Gateway.
+
+---
+
+## 5.1 Gateway Functional Block Diagram
+
+![Image](https://www.researchgate.net/publication/395543903/figure/fig1/AS%3A11431281650542144%401758916762805/Overall-gateway-architecture-showing-four-domains-IoT-devices-embedded-gateway-user.tif)
+
+![Image](https://www.researchgate.net/publication/324047132/figure/fig1/AS%3A608964932812802%401522199962417/Block-Diagram-Showing-the-Basic-Implementation-of-Gateway.png)
+
+> Blok Fungsional Utama
+
+✔ 1. ESP-NOW Receiver
+
+- Peer management
+- Frame parsing
+- RSSI capture
+
+✔ 2. Routing Validator
+
+- Hop limit enforcement
+- Parent-child consistency check
+- Target validation
+
+✔ 3. Dedup Engine
+
+- Sliding window per node
+- Sequence tracking
+- Replay protection
+
+✔ 4. Message Queue
+
+- Telemetry queue
+- Command dispatch queue
+- ACK tracking queue
+
+✔ 5. MQTT Client
+
+- Topic mapping
+- QoS handling
+- Publish confirmation
+- Subscription handler
+
+✔ 6. Local Buffer Storage
+
+- Store-and-forward
+- Ring buffer
+- Overflow policy
+
+✔ 7. Time Sync Module
+
+- Sync ke Pi
+- Drift monitoring
+- Time distribution
+
+✔ 8. Health Monitor
+
+- Resource tracking
+- Reconnect counter
+- Queue depth monitor
+
+✔ 9. HTTP Diagnostic Server
+
+- Status page
+- Routing table view
+- Buffer status
+- Manual test endpoint
+
+Gateway tidak memiliki Sensor Layer atau Control Engine.
+
+---
+
+## 5.2 Message Flow Overview
+
+![Image](https://docs.kelvin.ai/3.8/documentation/platform_server/control_center/bridges/images/kelvin-mqtt-bridge-explain.png)
+
+---
+
+✔ 5.2.1 Telemetry Flow (Upstream)
+
+1. Node → ESP-NOW frame
+2. Gateway:
+
+   - Validate hop
+   - Dedup check
+   - Validate payload size
+
+3. Enqueue message
+4. MQTT publish
+5. Publish confirmation
+6. Remove from queue
+
+Jika broker down:
+→ Store in buffer
+→ Retry publish
+
+---
+
+✔ 5.2.2 Command Flow (Downstream)
+
+1. Pi publish command
+2. Gateway subscribe receive
+3. Validate TTL
+4. Map topic → node_id
+5. ESP-NOW dispatch
+6. Track pending ACK
+7. Forward ACK ke MQTT
+
+Gateway tidak mengeksekusi command.
+
+---
+
+✔ 5.2.3 Buffer Flush Flow
+
+Condition:
+
+- MQTT reconnect
+- WiFi reconnect
+
+Flow:
+
+1. Load buffered message
+2. Publish in rate-limited mode
+3. Confirm
+4. Remove from buffer
+
+---
+
+## 5.3 Trust Boundary Model
+
+![Image](https://learn.microsoft.com/en-us/azure/iot-edge/media/iot-edge-as-gateway/edge-as-gateway-translation.png)
+
+![Image](https://www.cyber.gov.au/sites/default/files/2025-07/SDA-Security-Principles_Figure-2.png)
+
+---
+
+✔ Domain 1 – Node Trust Domain
+
+- Local control authority
+- Sensor & actuator domain
+- ESP-NOW transport
+
+Gateway tidak boleh override interlock.
+
+---
+
+✔ Domain 2 – Gateway Boundary
+
+- Validate message integrity
+- Enforce routing rules
+- Enforce TTL
+- Enforce rate limit
+
+Gateway adalah enforcement point.
+
+---
+
+✔ Domain 3 – Server Trust Domain
+
+- MQTT broker
+- DB
+- Dashboard
+- Config source
+
+Gateway tidak boleh memodifikasi payload domain Server.
+
+---
+
+## 5.4 Time Authority Model (Gateway Context)
+
+Hierarki:
+
+1. Pi (primary)
+2. Gateway (secondary)
+3. Node (fallback)
+
+Gateway:
+
+- Sync time from Pi
+- Distribute timestamp via ESP-NOW
+- Detect drift
+- Enter fallback if Pi unreachable
+
+Time sync tidak boleh blocking telemetry.
+
+---
+
+## 5.5 Operational Modes
+
+Gateway memiliki mode:
+
+- NORMAL
+- PI_DISCONNECTED
+- WIFI_DISCONNECTED
+- DEGRADED_BUFFERING
+- SAFE_RESTART
+
+Mode tidak boleh mempengaruhi Node control.
+
+---
+
+# 6. Technical Specification
+
+---
+
+## 6.1 Hardware Specification
+
+✔ 6.1.1 MCU Baseline
+
+- ESP32 (dual-core)
+- Minimum Flash: 4MB
+- Minimum RAM efektif: cukup untuk
+
+  - Dedup table (≤15 node)
+  - Message queue
+  - Buffer metadata
+
+ESP8266 tidak direkomendasikan untuk Gateway.
+
+---
+
+✔ 6.1.2 Network Interface
+
+- WiFi mandatory
+- Static IP recommended
+- Optional Ethernet bridge (future phase)
+
+Gateway harus mampu reconnect otomatis tanpa reboot.
+
+---
+
+✔ 6.1.3 Power Requirement
+
+- Stable 5V regulated supply
+- Brownout detection enabled
+- Disarankan UPS kecil jika site kritikal
+
+---
+
+## 6.2 Firmware Architecture
+
+✔ 6.2.1 Task Model (FreeRTOS)
+
+Minimal task:
+
+- ESP-NOW Task
+- MQTT Client Task
+- Buffer Manager Task
+- Health Monitor Task
+- HTTP Diagnostic Task
+- Time Sync Task
+
+Semua task non-blocking.
+
+---
+
+✔ 6.2.2 Non-Blocking Design Rule
+
+Tidak boleh:
+
+- Blocking wait MQTT ACK lama
+- Blocking flash write
+- Blocking reconnect loop
+
+Semua retry menggunakan event-driven callback.
+
+---
+
+✔ 6.2.3 Memory Management Strategy
+
+- Static allocation preferred
+- Bounded queue size
+- Dedup table fixed capacity (≤15 node)
+- Buffer metadata compact
+
+Tidak boleh dynamic growth tanpa batas.
+
+---
+
+## 6.3 ESP-NOW Coordinator Behavior
+
+---
+
+✔ Node Registration
+
+- Node announce on first contact
+- Gateway add to routing table
+- Record RSSI & last_seen
+
+---
+
+✔ Relay-Aware Validation
+
+Gateway wajib:
+
+- Check hop Kurang Dari = MAX_HOP
+- Validate node_id format
+- Reject frame tanpa protocol_version
+- Reject payload size > limit
+
+---
+
+✔ Parent-Child Consistency Check
+
+Jika metadata menunjukkan parent tidak valid:
+
+- Mark anomaly
+- Forward tetap diperbolehkan (non-blocking)
+- Log event
+
+Gateway bukan topology authority.
+
+---
+
+✔ Invalid Frame Rejection
+
+Drop jika:
+
+- Malformed JSON
+- Unknown msg_type
+- Hop overflow
+- Sequence replay outside window
+
+---
+
+## 6.4 Routing & Dedup Engine
+
+---
+
+✔ Sequence Tracking Per Node
+
+Gateway menyimpan:
+
+- node_id
+- last_seq
+- sliding window bitmap
+
+---
+
+✔ Sliding Window Rule
+
+- Window size fixed
+- Jika seq dalam window & sudah diterima → drop
+- Jika seq baru → forward
+
+Rollover handling mengikuti HTL-01.
+
+---
+
+✔ Relay Metadata Validation
+
+Gateway memeriksa:
+
+- hop increment konsisten
+- parent_id tidak self-loop
+
+Tidak melakukan re-route aktif.
+
+---
+
+✔ Replay Protection
+
+Frame dengan:
+
+- seq terlalu lama
+- timestamp terlalu jauh
+
+→ drop
+
+---
+
+## 6.5 MQTT Bridge Behavior
+
+---
+
+✔ Topic Mapping
+
+Mapping langsung mengikuti HTL-01.
+
+Gateway tidak boleh mengubah struktur payload.
+
+---
+
+✔ QoS Level Rule
+
+- Telemetry penting → QoS 1
+- Health → QoS 0 atau 1 (to be locked)
+- Command → QoS 1
+
+---
+
+✔ Publish Confirmation Handling
+
+Jika publish success:
+
+- Remove from queue
+
+Jika fail:
+
+- Retry sesuai backoff
+
+---
+
+✔ Command Subscription Rule
+
+Subscribe wildcard:
+
+htl/site_id/node/+/command
+
+---
+
+✔ Command Dispatch to Node
+
+Sebelum forward:
+
+- Validate TTL
+- Validate target node exists
+- Enqueue to dispatch queue
+
+Gateway tidak mengeksekusi command.
+
+---
+
+## 6.6 Store-and-Forward Buffer
+
+---
+
+✔ Storage Medium
+
+- NVS atau LittleFS
+- Ring buffer
+
+---
+
+✔ Buffer Size Minimum
+
+Harus mampu menahan beberapa siklus telemetry seluruh node
+(Nilai final dikunci sebelum production)
+
+---
+
+✔ Flush Trigger
+
+- MQTT reconnect
+- Broker ready
+
+Flush rate-limited.
+
+---
+
+✔ Drop Policy If Full
+
+- Drop oldest
+- Increment overflow counter
+- Publish health anomaly
+
+---
+
+✔ Aging Policy
+
+Message lebih tua dari threshold:
+
+- Drop
+- Log
+
+---
+
+## 6.7 Time Authority Model
+
+---
+
+✔ Sync ke Pi
+
+- Periodic time sync
+- Offset calculation
+- Drift monitoring
+
+---
+
+✔ Distribute ke Node
+
+Gateway kirim timestamp via:
+
+- ESP-NOW periodic broadcast
+- Atau attach di command/response
+
+---
+
+✔ Drift Detection Rule
+
+Jika drift > threshold:
+
+- Log anomaly
+- Resync
+
+---
+
+✔ Fallback Mode
+
+Jika Pi unreachable:
+
+- Gateway gunakan internal RTC
+- Continue distribute time
+
+---
+
+## 6.8 Rate Limiting & Backoff
+
+---
+
+✔ Node Burst Control
+
+Jika node kirim terlalu cepat:
+
+- Throttle forward
+- Log anomaly
+
+---
+
+✔ MQTT Publish Throttle
+
+Max publish per second dikunci
+Jika exceed:
+
+- Queue delay
+- Jangan drop kecuali buffer full
+
+---
+
+✔ Reconnect Exponential Backoff
+
+For:
+
+- WiFi reconnect
+- MQTT reconnect
+
+Delay meningkat bertahap
+Max delay capped
+
+---
+
+✔ Buffer Growth Protection
+
+Jika queue growth cepat:
+
+- Apply throttle
+- Reject new inbound (extreme case)
+
+---
+
+## 6.9 Command Handling
+
+---
+
+✔ TTL Validation
+
+Jika expired:
+
+- Reject
+- Publish expired ACK
+
+---
+
+✔ Forward to Node
+
+- Non-blocking send
+- Track pending cmd_id
+
+---
+
+✔ Track ACK
+
+Maintain pending command table:
+
+- cmd_id
+- node_id
+- timestamp
+
+---
+
+✔ Escalate Missing ACK
+
+Jika timeout:
+
+- Publish command incomplete event
+- Tidak auto re-execute
+
+---
+
+## 6.10 Health Monitoring
+
+Gateway publish health topic berisi:
+
+- Uptime
+- Free heap
+- Telemetry queue depth
+- Buffer depth
+- MQTT state
+- WiFi RSSI
+- Reconnect counter
+- Dedup drop count
+- Overflow count
+
+Health interval periodic.
+
+---
+
+## 6.11 Local HTTP Diagnostic Interface
+
+Minimal endpoint:
+
+- GET /status
+- GET /nodes
+- GET /routing-table
+- GET /buffer
+- POST /test-command
+- GET /logs
+
+HTTP hanya LAN lokal.
+
+---
+
+# 7. Constraints
+
+Gateway harus beroperasi dalam batas berikut.
+
+---
+
+## 7.1 ESP RAM Limitation
+
+- Dedup table maksimal 15 node
+- Queue bounded
+- Buffer metadata compact
+- Tidak boleh dynamic allocation tanpa limit
+
+Heap fragmentation harus dicegah.
+
+---
+
+## 7.2 Flash Write Cycle Limit
+
+- Store-and-forward harus batch write
+- Hindari write per message
+- Overflow counter disimpan periodik
+
+Flash tidak boleh digunakan sebagai high-frequency log.
+
+---
+
+## 7.3 MQTT Broker Throughput (Pi)
+
+Gateway tidak boleh:
+
+- Flood broker
+- Publish burst besar tanpa throttle
+- Mengirim payload melebihi batas
+
+Publish rate harus dibatasi.
+
+---
+
+## 7.4 ESP-NOW Collision Risk
+
+- Max 15 node baseline
+- Hop limit terbatas
+- Retry dibatasi
+- Throttle misbehaving node
+
+Gateway tidak boleh memperburuk congestion.
+
+---
+
+## 7.5 WiFi Stability Constraint
+
+- Reconnect otomatis
+- Tidak reboot terus-menerus
+- Backoff exponential
+- Static IP recommended
+
+---
+
+## 7.6 Power Stability Constraint
+
+- Brownout detection aktif
+- Restart tidak menyebabkan message storm
+- Delay sebelum reconnect MQTT
+
+---
+
+# 8. Failure Handling
+
+Format: Detection → Impact → Recovery → Owner
+
+---
+
+## 8.1 Pi Down
+
+Detection:
+
+- MQTT broker unreachable
+
+Impact:
+
+- Tidak bisa publish telemetry
+
+Recovery:
+
+- Store-and-forward aktif
+- Retry reconnect
+
+Owner:
+
+- Gateway
+
+Node tetap autonomous.
+
+---
+
+## 8.2 MQTT Broker Down
+
+Detection:
+
+- MQTT disconnect event
+
+Impact:
+
+- Publish fail
+
+Recovery:
+
+- Queue message
+- Retry backoff
+
+Owner:
+
+- Gateway
+
+---
+
+## 8.3 WiFi Disconnect
+
+Detection:
+
+- WiFi event disconnect
+
+Impact:
+
+- MQTT lost
+- No upstream
+
+Recovery:
+
+- Reconnect WiFi
+- Backoff incremental
+
+Owner:
+
+- Gateway
+
+---
+
+## 8.4 Relay Chain Break
+
+Detection:
+
+- Node last_seen timeout
+
+Impact:
+
+- Node unreachable
+- Partial telemetry loss
+
+Recovery:
+
+- Update routing table
+- Publish node offline health
+
+Owner:
+
+- Node (control)
+- Gateway (monitoring)
+
+---
+
+## 8.5 Node Flood (Misbehaving Node)
+
+Detection:
+
+- Msg/sec > threshold
+
+Impact:
+
+- Queue growth
+- Airtime congestion
+
+Recovery:
+
+- Throttle forwarding
+- Log anomaly
+- Optionally temporary block
+
+Owner:
+
+- Gateway
+
+---
+
+## 8.6 Buffer Overflow
+
+Detection:
+
+- Buffer full
+
+Impact:
+
+- Data loss
+
+Recovery:
+
+- Drop oldest
+- Publish overflow health
+
+Owner:
+
+- Gateway
+
+---
+
+## 8.7 Gateway Reset
+
+Detection:
+
+- Restart reason log
+
+Impact:
+
+- Temporary loss of routing table
+- Pending command lost
+
+Recovery:
+
+- Rebuild routing table
+- Reconnect MQTT
+- Publish restart health
+
+Owner:
+
+- Gateway
+
+Node control tidak terpengaruh.
+
+---
+
+# 9. Interfaces
+
+---
+
+## 9.1 ESP-NOW Interface Reference
+
+Mengacu HTL-01:
+
+- Frame structure
+- msg_type enum
+- hop rule
+- dedup rule
+
+Gateway tidak mengubah payload.
+
+---
+
+## 9.2 MQTT Interface Reference
+
+Mengacu HTL-01:
+
+- Topic namespace
+- QoS rule
+- Command topic
+- Health topic
+
+---
+
+## 9.3 HTTP Diagnostic Endpoints
+
+Minimal:
+
+- GET /status
+- GET /nodes
+- GET /routing-table
+- GET /buffer
+- GET /health
+- POST /test-command
+
+LAN only.
+
+---
+
+## 9.4 Health Topic Reference
+
+Publish ke:
+
+htl/site_id/gateway/gateway_id/health
+
+Field minimal:
+
+- uptime
+- free_heap
+- queue_depth
+- mqtt_state
+- wifi_rssi
+- reconnect_counter
+- overflow_counter
+
+---
+
+## 9.5 Time Sync Interface
+
+- Sync ke Pi
+- Broadcast time to Node
+- Drift detect
+
+Time tidak boleh menjadi blocking dependency.
+
+---
+
+# 10. Open Issues
+
+Keputusan sebelum freeze:
+
+1. Ethernet direct ke Pi diperlukan?
+2. Dual-radio redundancy?
+3. Buffer size minimum realistis?
+4. Gateway OTA via Pi atau manual?
+5. External hardware watchdog?
+6. QoS health topic final?
+7. Max publish/sec limit final?
+
+---
+
+# 11. Revision History
+
+| Version | Date       | Author    | Description              |
+| ------- | ---------- | --------- | ------------------------ |
+| v0.1    | 2026-02-24 | Architect | Initial structured draft |
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

@@ -1,0 +1,467 @@
+---
+title: README
+date: '2026-02-24'
+tags:
+  [
+    'engineering-governance',
+    'distributed-architecture',
+    'local-first-control',
+    'iot-agriculture',
+    'multi-team-development',
+    'production-readiness',
+  ]
+draft: false
+summary: Dokumen ini adalah entry-point resmi untuk seluruh framework engineering HortiLink (HTL-00 s/d HTL-09). Ia mendefinisikan struktur dokumentasi formal, tata kelola revisi, otoritas perubahan, serta ringkasan sistemik arsitektur platform kontrol pertanian terdistribusi berbasis site otonom. README ini memastikan setiap engineer memahami boundary sistem, kontrak lintas tim, hierarki kontrol, model degradasi, keamanan, serta gate validasi sebelum produksi. Dokumen ini bukan hanya indeks file, tetapi landasan governance engineering untuk pengembangan paralel, reliability lokal, dan kesiapan scale multi-site.
+---
+
+- [1. Pendahuluan](#1-pendahuluan)
+- [2. How to Read This Documentation](#2-how-to-read-this-documentation)
+  - [Onboarding Engineer Baru](#onboarding-engineer-baru)
+  - [Implementasi Komponen](#implementasi-komponen)
+  - [QA \& Field Validation](#qa--field-validation)
+  - [Perubahan Desain](#perubahan-desain)
+- [3. Document List](#3-document-list)
+- [4. Document Governance](#4-document-governance)
+- [5. Revision Format](#5-revision-format)
+- [6. Ownership](#6-ownership)
+- [7. Change Control](#7-change-control)
+- [8. EXECUTIVE SUMMARY](#8-executive-summary)
+  - [HortiLink Engineering Documentation Framework (HTL-00 s/d HTL-09)](#hortilink-engineering-documentation-framework-htl-00-sd-htl-09)
+- [9. RINGKASAN PER DOKUMEN](#9-ringkasan-per-dokumen)
+  - [HTL-00 – System Architecture Master Document](#htl-00--system-architecture-master-document)
+  - [HTL-01 – Interface Specification](#htl-01--interface-specification)
+  - [HTL-02 – Node Technical Specification](#htl-02--node-technical-specification)
+  - [HTL-03 – Gateway Technical Specification](#htl-03--gateway-technical-specification)
+  - [HTL-04 – Server Raspberry Pi Specification](#htl-04--server-raspberry-pi-specification)
+  - [HTL-05 – HMI Specification](#htl-05--hmi-specification)
+  - [HTL-06 – Electrical \& Panel Design Specification](#htl-06--electrical--panel-design-specification)
+  - [HTL-07 – Security Architecture](#htl-07--security-architecture)
+  - [HTL-08 – Failure Mode \& Recovery Matrix](#htl-08--failure-mode--recovery-matrix)
+  - [HTL-09 – Test Plan \& Validation Matrix](#htl-09--test-plan--validation-matrix)
+- [10. ARSITEKTUR KERANGKA BESAR](#10-arsitektur-kerangka-besar)
+- [11. MANFAAT UNTUK DOKUMEN DEVELOPMENT](#11-manfaat-untuk-dokumen-development)
+- [12. POSISI STRATEGIS PROYEK](#12-posisi-strategis-proyek)
+
+---
+
+# 1. Pendahuluan
+
+Direktori ini berisi dokumentasi teknis resmi untuk platform kontrol pertanian terdistribusi HortiLink.
+
+Seluruh dokumen dengan awalan `HTL-XX` merupakan dokumen engineering formal dan wajib mengikuti proses revisi terkontrol sesuai tata kelola yang ditetapkan.
+
+Dokumentasi ini berfungsi sebagai:
+
+- Sumber kebenaran arsitektur sistem
+- Kontrak komunikasi lintas tim engineering
+- Referensi resmi untuk QA dan tim lapangan
+- Gerbang validasi sebelum produksi (production gate)
+- Kerangka tata kelola engineering (engineering governance framework)
+
+---
+
+# 2. How to Read This Documentation
+
+Gunakan alur berikut sesuai kebutuhan:
+
+✔ Onboarding Engineer Baru
+
+HTL-00 → HTL-01 → domain spesifik (HTL-02/03/04/05/06/07)
+
+✔ Implementasi Komponen
+
+HTL-01 terlebih dahulu (kontrak) → lalu spesifikasi domain
+
+✔ QA & Field Validation
+
+HTL-08 → HTL-09
+
+✔ Perubahan Desain
+
+Cek governance & revision history
+
+---
+
+# 3. Document List
+
+| ID     | Document Name                           |
+| ------ | --------------------------------------- |
+| HTL-00 | System Architecture Master Document     |
+| HTL-01 | Interface Specification                 |
+| HTL-02 | Node Technical Specification            |
+| HTL-03 | Gateway Technical Specification         |
+| HTL-04 | Server (Raspberry Pi) Specification     |
+| HTL-05 | HMI Specification                       |
+| HTL-06 | Electrical & Panel Design Specification |
+| HTL-07 | Security Architecture                   |
+| HTL-08 | Failure Mode & Recovery Matrix          |
+| HTL-09 | Test Plan & Validation Matrix           |
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'SYSTEM ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-00-system-architecture-master-document',
+      description: 'SYSTEM ARCHITECTURE MASTER DOCUMENT',
+    },
+    {
+      name: 'INTERFACE SPECIFICATION',
+      href: '/blog/IoT/htl/htl-01-interface-specification',
+      description: 'INTERFACE SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'NODE TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-02-node-technical-specification',
+      description: 'NODE TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'GATEWAY TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-03-gateway-technical-specification',
+      description: 'GATEWAY TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'SERVER RASPBERRY-PI',
+      href: '/blog/IoT/htl/htl-04-server-raspberry-pi-specification',
+      description: 'SERVER RASPBERRY-PI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'HMI SPECIFICATION',
+      href: '/blog/IoT/htl/htl-05-hmi-specification',
+      description: 'HMI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'ELECTRICAL & POWER',
+      href: '/blog/IoT/htl/htl-06-electrical-panel-design-specification',
+      description: 'ELECTRICAL & POWER INTEGRATION SPECIFICATION',
+    },
+    {
+      name: 'SECURITY ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-07-security-architecture',
+      description: 'SECURITY ARCHITECTURE (Outline v0.1)',
+    },
+    {
+      name: 'FAILURE MODE & RECOVERY',
+      href: '/blog/IoT/htl/htl-08-failure-mode-recovery-matrix',
+      description: 'FAILURE MODE & RECOVERY MATRIX (Outline v0.1)',
+    },
+    {
+      name: 'TEST PLAN & VALIDATION',
+      href: '/blog/IoT/htl/htl-09-test-plan-validation-matrix',
+      description: 'TEST PLAN & VALIDATION MATRIX (Outline v0.1)',
+    },
+  ]}
+/>
+
+---
+
+# 4. Tata Kelola Dokumen
+
+- HTL-00 harus diselesaikan dan disetujui sebelum HTL-01 dibekukan (freeze).
+- HTL-01 mendefinisikan kontrak komunikasi antara tim Node, Gateway, dan Server.
+- Tidak ada implementasi yang boleh menyimpang dari HTL-01 tanpa pembaruan revisi resmi.
+- Seluruh dokumen wajib memiliki bagian riwayat revisi (revision history).
+
+---
+
+# 5. Format Revisi
+
+Format penomoran versi:
+
+vMAJOR.MINOR.PATCH
+
+Contoh:
+
+- v1.0.0 – Baseline awal
+- v1.1.0 – Penambahan bagian buffering pada gateway
+- v1.1.1 – Perbaikan kesalahan penulisan pada skema payload
+
+Keterangan:
+
+- **MAJOR**: Perubahan arsitektur atau kontrak yang signifikan dan tidak kompatibel ke belakang.
+- **MINOR**: Penambahan fitur atau perluasan spesifikasi yang tetap kompatibel.
+- **PATCH**: Perbaikan kesalahan, klarifikasi, atau koreksi minor tanpa perubahan perilaku sistem.
+
+---
+
+# 6. Kepemilikan Dokumen
+
+Setiap dokumen wajib mendefinisikan:
+
+- Pemilik dokumen (Owner)
+- Peninjau (Reviewer)
+- Otoritas persetujuan (Approval Authority)
+
+Tanpa struktur kepemilikan yang jelas, tata kelola dokumen dianggap tidak sah dan tidak dapat dijadikan referensi resmi.
+
+---
+
+# 7. Pengendalian Perubahan (Change Control)
+
+Setiap perubahan pada HTL-00 atau HTL-01 wajib melalui rapat tinjauan arsitektur (architecture review meeting).
+
+Perubahan terhadap boundary sistem atau kontrak komunikasi tidak boleh dilakukan secara sepihak oleh tim manapun.
+
+---
+
+# 8. EXECUTIVE SUMMARY
+
+## HortiLink Engineering Documentation Framework (HTL-00 s/d HTL-09)
+
+HortiLink dirancang sebagai **platform kontrol pertanian terdistribusi berbasis site otonom**, dengan arsitektur local-first dan server Raspberry Pi wajib per-site. Sistem terdiri dari Node (ESP sensor/actuator), relay-aware topology intra-site, Gateway ESP sebagai bridge, serta Server lokal sebagai broker, database, dan supervisory layer.
+
+Dokumentasi HTL-00 sampai HTL-09 membentuk satu kerangka engineering terstruktur yang memastikan:
+
+- Pengembangan paralel antar tim
+- Kontrak komunikasi formal
+- Kontrol lokal tetap berjalan saat server/gateway gagal
+- Proteksi elektrikal dan mekanikal sesuai kondisi lapangan
+- Model keamanan per-site yang terkontrol
+- Validasi sistem sebelum produksi
+
+Framework ini bukan sekadar dokumentasi teknis, tetapi struktur tata kelola engineering yang meminimalkan risiko kegagalan saat scale.
+
+---
+
+# 9. RINGKASAN PER DOKUMEN
+
+---
+
+## HTL-00 – System Architecture Master Document
+
+Peran: Dokumen arsitektur tertinggi.
+
+Mengunci:
+
+- Boundary sistem per-site
+- Control hierarchy (Level 0–3)
+- Topologi komunikasi
+- Relay-aware model
+- Degradation mode
+- Capacity baseline (10–15 node/site)
+- Ketiadaan cloud pada fase awal
+
+Tanpa HTL-00, semua dokumen lain akan ambigu.
+
+---
+
+## HTL-01 – Interface Specification
+
+Peran: Kontrak komunikasi lintas tim.
+
+Mengunci:
+
+- MQTT topic structure
+- Payload schema
+- Command state machine
+- Idempotency
+- Retry/backoff
+- TTL rule
+- OTA metadata format
+- ESP-NOW frame structure
+
+Ini memungkinkan Node, Gateway, dan Server dikembangkan paralel.
+
+---
+
+## HTL-02 – Node Technical Specification
+
+Peran: Spesifikasi firmware node.
+
+Mengunci:
+
+- Sensor handling
+- Local control engine
+- Interlock safety
+- Relay-aware routing
+- Telemetry generation
+- Command validation
+- Watchdog
+- Brownout handling
+- OTA client
+
+Node harus tetap aman walaupun gateway/server mati.
+
+---
+
+## HTL-03 – Gateway Technical Specification
+
+Peran: Spesifikasi bridge intra-site.
+
+Mengunci:
+
+- ESP-NOW coordinator
+- Routing validation
+- Deduplication
+- Store-and-forward
+- Time authority
+- Rate limiting
+- MQTT bridging
+
+Gateway tidak boleh menjadi control authority.
+
+---
+
+## HTL-04 – Server Raspberry Pi Specification
+
+Peran: Supervisory layer lokal.
+
+Mengunci:
+
+- MQTT broker configuration
+- DB ingestion
+- Command management
+- Config versioning
+- OTA repository
+- RBAC
+- Backup
+- Monitoring
+
+Server bukan kontrol kritikal, tetapi pusat observability dan orchestration lokal.
+
+---
+
+## HTL-05 – HMI Specification
+
+Peran: Interaksi manusia.
+
+Mengunci:
+
+- Mode direct-to-node
+- Mode via server
+- Role-based access
+- Manual override policy
+- Alarm model
+- Audit trail
+
+HMI tidak boleh melanggar interlock dan safety.
+
+---
+
+## HTL-06 – Electrical & Panel Design Specification
+
+Peran: Landasan keandalan fisik.
+
+Mengunci:
+
+- Power topology
+- HV/LV separation
+- Inrush handling
+- Surge protection
+- Grounding
+- Brownout mitigation
+- Wiring standard
+
+Tanpa HTL-06, sistem akan gagal secara fisik walau software benar.
+
+---
+
+## HTL-07 – Security Architecture
+
+Peran: Keamanan per-site.
+
+Mengunci:
+
+- Identity model
+- MQTT ACL
+- ESP-NOW encryption
+- OTA integrity
+- RBAC
+- Key management
+- Audit logging
+
+Fokus pada LAN security baseline.
+
+---
+
+## HTL-08 – Failure Mode & Recovery Matrix
+
+Peran: Manajemen risiko teknis.
+
+Mengunci:
+
+- Failure domain
+- Detection method
+- Containment boundary
+- Recovery mechanism
+- Escalation owner
+- Degradation mode
+
+Menjadi referensi QA dan troubleshooting lapangan.
+
+---
+
+## HTL-09 – Test Plan & Validation Matrix
+
+Peran: Verifikasi kesiapan produksi.
+
+Mengunci:
+
+- Unit test
+- Integration test
+- Electrical validation
+- Failure injection
+- Stress test
+- Soak test
+- OTA validation
+- Security validation
+- Commissioning checklist
+
+Tanpa HTL-09, tidak ada “Production Gate”.
+
+---
+
+# 10. ARSITEKTUR KERANGKA BESAR
+
+Secara sistemik, HortiLink per-site bekerja sebagai berikut:
+
+Node (sensor + actuator + control lokal)
+→ Relay-aware intra-site network
+→ Gateway ESP
+→ MQTT broker (Raspberry Pi)
+→ DB + Dashboard + OTA + RBAC
+
+Kontrol kritikal berada di Node.
+Gateway dan Server adalah supervisory.
+Internet tidak dibutuhkan untuk operasi dasar.
+
+---
+
+# 11. MANFAAT UNTUK DOKUMEN DEVELOPMENT
+
+Executive summary ini dapat digunakan untuk membuat dokumen:
+
+- Product Development Plan
+- Engineering Roadmap
+- Sprint Breakdown
+- Resource Allocation
+- Risk Register
+- Production Readiness Criteria
+
+Karena:
+
+- Boundary sudah jelas
+- Tanggung jawab sudah terpisah
+- Interface sudah dikontrakkan
+- Failure sudah dipetakan
+- Test gate sudah didefinisikan
+
+---
+
+# 12. POSISI STRATEGIS PROYEK
+
+Dengan framework HTL-00 s/d HTL-09:
+
+HortiLink bukan sekadar proyek IoT berbasis ESP.
+
+Ia menjadi:
+
+**Distributed Autonomous Agricultural Control System**
+
+dengan:
+
+- Local reliability
+- Structured governance
+- Controlled risk
+- Production readiness
+- Readiness untuk scale ke multi-site

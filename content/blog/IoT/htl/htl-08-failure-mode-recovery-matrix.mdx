@@ -1,0 +1,879 @@
+---
+title: FAILURE MODE & RECOVERY MATRIX (Outline v0.1)
+date: '2026-02-24'
+tags:
+  [
+    'failure-domain',
+    'containment-model',
+    'safe-degradation',
+    'automatic-recovery',
+    'field-troubleshooting',
+    'qa-validation',
+  ]
+draft: false
+summary: HTL-08 mendefinisikan seluruh skenario kegagalan dalam sistem HortiLink serta mekanisme deteksi, dampak, containment, dan recovery-nya. Dokumen ini mencakup kegagalan pada layer Node, relay chain, Gateway, Server (Raspberry Pi), jaringan LAN, elektrikal, software, data, dan keamanan. Setiap failure diklasifikasikan dan dipetakan dalam matriks terstruktur untuk memastikan sistem mampu beroperasi dalam mode degradasi aman (safe degradation) tanpa menghentikan kontrol lokal. HTL-08 menjadi referensi utama untuk QA validation, risk assessment, dan troubleshooting lapangan dengan pendekatan containment per-domain dan recovery bertahap otomatis maupun manual.
+---
+
+# **_HTL-08 – FAILURE MODE & RECOVERY MATRIX (Outline v0.1)_**
+
+---
+
+- [**_HTL-08 – FAILURE MODE \& RECOVERY MATRIX (Outline v0.1)_**](#htl-08--failure-mode--recovery-matrix-outline-v01)
+- [1. Purpose](#1-purpose)
+  - [1.1 Document Objective](#11-document-objective)
+  - [1.2 Authority](#12-authority)
+  - [1.3 Usage](#13-usage)
+- [2. Scope](#2-scope)
+  - [2.1 In-Scope](#21-in-scope)
+  - [2.2 Out-of-Scope](#22-out-of-scope)
+- [3. Definitions](#3-definitions)
+  - [3.1 Detection](#31-detection)
+  - [3.2 Impact](#32-impact)
+  - [3.3 Recovery](#33-recovery)
+  - [3.4 Containment](#34-containment)
+  - [3.5 Escalation](#35-escalation)
+  - [3.6 Safe Mode](#36-safe-mode)
+  - [3.7 Partial Degradation](#37-partial-degradation)
+  - [3.8 Total Degradation](#38-total-degradation)
+- [4. Assumptions](#4-assumptions)
+  - [4.1 Site Semi-Autonomous](#41-site-semi-autonomous)
+  - [4.2 Internet Tidak Kritikal](#42-internet-tidak-kritikal)
+  - [4.3 Node Dapat Restart Sewaktu-Waktu](#43-node-dapat-restart-sewaktu-waktu)
+  - [4.4 Power Fluktuatif](#44-power-fluktuatif)
+  - [4.5 Relay-Aware Topology Terbatas](#45-relay-aware-topology-terbatas)
+- [5. System Failure Domain Overview](#5-system-failure-domain-overview)
+  - [5.1 Failure Domain Diagram](#51-failure-domain-diagram)
+- [6. Failure Classification](#6-failure-classification)
+  - [6.1 Hardware Failure](#61-hardware-failure)
+  - [6.2 Network Failure](#62-network-failure)
+  - [6.3 Software Failure](#63-software-failure)
+  - [6.4 Data Failure](#64-data-failure)
+  - [6.5 Security Failure](#65-security-failure)
+  - [6.6 Environmental Failure](#66-environmental-failure)
+- [7. Failure Matrix](#7-failure-matrix)
+  - [7.1 Node-Level Failures](#71-node-level-failures)
+  - [7.2 Relay Chain Failures](#72-relay-chain-failures)
+  - [7.3 Gateway Failures](#73-gateway-failures)
+  - [7.4 Server (Pi) Failures](#74-server-pi-failures)
+  - [7.5 Electrical Failures](#75-electrical-failures)
+  - [7.6 Network Failures](#76-network-failures)
+  - [7.7 Security Failures](#77-security-failures)
+- [8. Recovery Strategy Model](#8-recovery-strategy-model)
+  - [8.1 Automatic Recovery](#81-automatic-recovery)
+  - [8.2 Manual Recovery](#82-manual-recovery)
+  - [8.3 Escalation Rule](#83-escalation-rule)
+- [9. Degradation Modes](#9-degradation-modes)
+  - [9.1 Normal Mode](#91-normal-mode)
+  - [9.2 Partial Mode (Gateway Down)](#92-partial-mode-gateway-down)
+  - [9.3 Autonomous Mode (Server Down)](#93-autonomous-mode-server-down)
+  - [9.4 Emergency Safe Mode](#94-emergency-safe-mode)
+  - [9.5 Degradation Mode Transition Diagram](#95-degradation-mode-transition-diagram)
+- [10. Open Issues](#10-open-issues)
+- [11. Revision History](#11-revision-history)
+
+---
+
+# 1. Purpose
+
+---
+
+## 1.1 Document Objective
+
+HTL-08 bertujuan untuk:
+
+- Mengidentifikasi seluruh kemungkinan failure mode
+- Menentukan metode deteksi
+- Mendefinisikan dampak sistemik
+- Mengunci containment boundary
+- Menentukan recovery otomatis & manual
+- Menetapkan escalation rule
+
+Dokumen ini memastikan sistem tidak memiliki failure behavior yang tidak terdefinisi.
+
+---
+
+## 1.2 Authority
+
+HTL-08 mengikat:
+
+- Firmware team
+- Backend team
+- Electrical team
+- QA team
+- Field technician
+
+Setiap failure scenario wajib memiliki owner yang jelas.
+
+---
+
+## 1.3 Usage
+
+HTL-08 digunakan untuk:
+
+- Design validation
+- QA stress test
+- Field troubleshooting checklist
+- Risk assessment review
+- Incident post-mortem analysis
+
+Dokumen ini menjadi referensi saat terjadi insiden nyata.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'README',
+      href: '/blog/IoT/htl/README',
+      description: 'README - First',
+    },
+    {
+      name: 'SYSTEM ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-00-system-architecture-master-document',
+      description: 'SYSTEM ARCHITECTURE MASTER DOCUMENT',
+    },
+    {
+      name: 'INTERFACE SPECIFICATION',
+      href: '/blog/IoT/htl/htl-01-interface-specification',
+      description: 'INTERFACE SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'NODE TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-02-node-technical-specification',
+      description: 'NODE TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'GATEWAY TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-03-gateway-technical-specification',
+      description: 'GATEWAY TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'SERVER RASPBERRY-PI',
+      href: '/blog/IoT/htl/htl-04-server-raspberry-pi-specification',
+      description: 'SERVER RASPBERRY-PI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'HMI SPECIFICATION',
+      href: '/blog/IoT/htl/htl-05-hmi-specification',
+      description: 'HMI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'ELECTRICAL & POWER',
+      href: '/blog/IoT/htl/htl-06-electrical-panel-design-specification',
+      description: 'ELECTRICAL & POWER INTEGRATION SPECIFICATION',
+    },
+    {
+      name: 'SECURITY ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-07-security-architecture',
+      description: 'SECURITY ARCHITECTURE (Outline v0.1)',
+    },
+    {
+      name: 'TEST PLAN & VALIDATION',
+      href: '/blog/IoT/htl/htl-09-test-plan-validation-matrix',
+      description: 'TEST PLAN & VALIDATION MATRIX (Outline v0.1)',
+    },
+  ]}
+/>
+
+---
+
+# 2. Scope
+
+---
+
+## 2.1 In-Scope
+
+Failure domain yang dianalisis:
+
+✔ Layer Node
+
+- Firmware crash
+- Sensor anomaly
+- Actuator failure
+- Relay-aware topology issue
+
+✔ Relay Chain
+
+- Parent-child disruption
+- Routing inconsistency
+
+✔ Gateway
+
+- ESP reboot
+- MQTT failure
+- Buffer overflow
+
+✔ Server (Pi)
+
+- Broker crash
+- DB corruption
+- Disk full
+
+✔ Electrical
+
+- Brownout
+- Surge
+- Overload
+- Grounding issue
+
+✔ Network
+
+- LAN failure
+- Packet loss
+- IP conflict
+
+✔ Security
+
+- Unauthorized publish
+- Replay attack
+- Credential misuse
+
+✔ OTA
+
+- Interrupted upgrade
+- Hash mismatch
+
+---
+
+## 2.2 Out-of-Scope
+
+Tidak mencakup:
+
+- Natural disaster yang menghancurkan seluruh site
+- Theft seluruh panel dan infrastruktur
+
+Namun partial theft (Node hilang) tetap in-scope.
+
+---
+
+# 3. Definitions
+
+---
+
+## 3.1 Detection
+
+Metode atau mekanisme untuk mengidentifikasi kegagalan.
+
+---
+
+## 3.2 Impact
+
+Konsekuensi terhadap sistem atau aktuator.
+
+---
+
+## 3.3 Recovery
+
+Langkah pemulihan untuk mengembalikan sistem ke kondisi operasional.
+
+---
+
+## 3.4 Containment
+
+Batas domain agar kegagalan tidak menyebar ke layer lain.
+
+---
+
+## 3.5 Escalation
+
+Level tanggung jawab saat recovery tidak berhasil.
+
+---
+
+## 3.6 Safe Mode
+
+Mode operasi dengan fungsi minimal dan aktuator dalam kondisi aman.
+
+---
+
+## 3.7 Partial Degradation
+
+Sebagian sistem berfungsi, sebagian tidak.
+
+---
+
+## 3.8 Total Degradation
+
+Site tetap hidup secara listrik tetapi seluruh kontrol digital tidak tersedia.
+
+---
+
+# 4. Assumptions
+
+---
+
+## 4.1 Site Semi-Autonomous
+
+- Node tetap dapat menjalankan kontrol lokal
+- Gateway atau Server bisa offline tanpa menghentikan kontrol dasar
+
+---
+
+## 4.2 Internet Tidak Kritikal
+
+- Tidak ada dependency cloud
+- LAN adalah satu-satunya network domain
+
+---
+
+## 4.3 Node Dapat Restart Sewaktu-Waktu
+
+- Brownout
+- Watchdog reset
+- Firmware crash
+
+Sistem harus toleran terhadap restart.
+
+---
+
+## 4.4 Power Fluktuatif
+
+- Brownout mungkin terjadi
+- Surge mungkin terjadi
+- EMI mungkin terjadi
+
+---
+
+## 4.5 Relay-Aware Topology Terbatas
+
+- Maks 15 node
+- Hop terbatas
+- Tidak ada mesh dinamis kompleks
+
+---
+
+# 5. System Failure Domain Overview
+
+Tujuan section ini adalah mendefinisikan **failure containment boundary** agar:
+
+- Kegagalan Node tidak menjatuhkan seluruh site
+- Kegagalan Gateway tidak menghentikan kontrol lokal
+- Kegagalan Server tidak mematikan aktuator
+- Kegagalan elektrikal tidak merusak perangkat lain
+
+---
+
+## 5.1 Failure Domain Diagram
+
+![Image](https://substackcdn.com/image/fetch/%24s_%21BzIJ%21%2Cf_auto%2Cq_auto%3Agood%2Cfl_progressive%3Asteep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fae5df68c-d4fd-4773-9f71-1d144a2ca2f2_1600x1200.png)
+
+---
+
+✔ Domain 1 – Electrical Layer
+
+Komponen:
+
+- AC input
+- SMPS
+- Fuse
+- Relay/contact
+- Panel wiring
+
+Failure di domain ini dapat:
+
+- Mematikan Node
+- Men-trip motor
+- Menyebabkan brownout
+
+Containment:
+
+- Fuse segmentation
+- Interlock fisik
+- Thermal overload
+
+---
+
+✔ Domain 2 – Node Layer
+
+Komponen:
+
+- ESP32 firmware
+- Sensor
+- Actuator driver
+- Local control engine
+
+Failure Node:
+
+- Tidak boleh mematikan node lain
+- Tidak boleh menyebabkan actuator unsafe
+
+Containment:
+
+- Safe state default OFF
+- Interlock fisik
+- Watchdog reset
+
+---
+
+✔ Domain 3 – Relay Chain Layer
+
+Komponen:
+
+- Parent-child routing
+- Hop logic
+- Sequence validation
+
+Failure:
+
+- Parent down
+- Routing loop
+
+Containment:
+
+- Hop limit enforcement
+- Re-route logic
+- Local autonomy
+
+---
+
+✔ Domain 4 – Gateway Layer
+
+Komponen:
+
+- ESP-NOW coordinator
+- MQTT bridge
+- Buffer
+
+Failure:
+
+- Gateway reboot
+- MQTT disconnect
+
+Containment:
+
+- Store-and-forward
+- Node autonomy
+- Automatic reconnect
+
+---
+
+✔ Domain 5 – Server Layer (Pi)
+
+Komponen:
+
+- MQTT broker
+- DB
+- Command manager
+- HMI
+
+Failure:
+
+- Broker crash
+- Disk full
+
+Containment:
+
+- Node autonomous mode
+- Gateway buffering
+- Restart service
+
+---
+
+✔ Domain 6 – User Layer
+
+Komponen:
+
+- Operator
+- Engineer
+- Admin
+
+Failure:
+
+- Wrong command
+- Unauthorized access
+
+Containment:
+
+- RBAC
+- TTL
+- Audit log
+
+---
+
+# 6. Failure Classification
+
+Semua failure diklasifikasikan untuk memudahkan QA dan analisis risiko.
+
+---
+
+## 6.1 Hardware Failure
+
+Contoh:
+
+- Relay weld
+- Sensor rusak
+- SMPS gagal
+- ESP flash corrupt
+- SD card rusak
+
+Karakteristik:
+
+- Fisik
+- Butuh intervensi manual
+
+---
+
+## 6.2 Network Failure
+
+Contoh:
+
+- LAN down
+- WiFi unstable
+- MQTT disconnect
+- Packet loss burst
+
+Karakteristik:
+
+- Biasanya temporer
+- Harus auto-recover
+
+---
+
+## 6.3 Software Failure
+
+Contoh:
+
+- Firmware crash
+- Deadlock service
+- Memory leak
+- Routing logic error
+
+Karakteristik:
+
+- Watchdog recovery
+- Service restart
+
+---
+
+## 6.4 Data Failure
+
+Contoh:
+
+- DB corruption
+- Flash corruption
+- Duplicate command
+- Sequence mismatch
+
+Karakteristik:
+
+- Harus deteksi integritas
+- Recovery via restore atau re-sync
+
+---
+
+## 6.5 Security Failure
+
+Contoh:
+
+- Unauthorized MQTT publish
+- Replay attack
+- Credential misuse
+- Firmware tampering
+
+Karakteristik:
+
+- Harus reject & log
+- Tidak boleh memicu actuator
+
+---
+
+## 6.6 Environmental Failure
+
+Contoh:
+
+- Overheat panel
+- High humidity
+- EMI burst
+- Voltage fluctuation
+
+Karakteristik:
+
+- Harus degrade safe
+- Electrical protection dominan
+
+---
+
+# 7. Failure Matrix
+
+---
+
+## 7.1 Node-Level Failures
+
+| ID   | Failure Scenario         | Detection                      | Impact                 | Containment        | Recovery            | Owner      |
+| ---- | ------------------------ | ------------------------------ | ---------------------- | ------------------ | ------------------- | ---------- |
+| N-01 | Node reboot unexpectedly | Restart counter increment      | Telemetry gap          | Default relay OFF  | Auto reconnect      | Firmware   |
+| N-02 | Brownout reset           | Brownout log flag              | Actuator OFF           | Brownout threshold | Stabilize power     | Electrical |
+| N-03 | Sensor drift             | Out-of-range persist           | Wrong control decision | Plausibility check | Recalibrate/replace | Field      |
+| N-04 | Actuator stuck ON        | Output OFF but current present | Unsafe state           | Interlock hardware | Replace relay       | Electrical |
+| N-05 | Flash corruption         | CRC fail at boot               | Node safe mode         | Safe mode entry    | Reflash firmware    | Engineer   |
+| N-06 | OTA interrupted          | Incomplete image detect        | Node reboot fail       | Dual partition     | Retry OTA           | Engineer   |
+| N-07 | Parent node down         | Missed heartbeat               | Child unreachable      | Re-route attempt   | Re-pair routing     | Firmware   |
+| N-08 | Node flooding message    | Message rate anomaly           | Gateway overload       | Rate limit         | Isolate node        | Gateway    |
+
+---
+
+## 7.2 Relay Chain Failures
+
+| ID   | Failure Scenario      | Detection               | Impact          | Containment           | Recovery         | Owner    |
+| ---- | --------------------- | ----------------------- | --------------- | --------------------- | ---------------- | -------- |
+| R-01 | Parent offline        | No route ACK            | Child isolated  | Hop limit             | Local autonomy   | Firmware |
+| R-02 | Child unreachable     | Missing telemetry       | Data gap        | Routing table aging   | Re-register      | Firmware |
+| R-03 | Hop loop detected     | Duplicate seq spike     | Congestion      | Hop limit enforcement | Reset routing    | Gateway  |
+| R-04 | Routing inconsistency | Conflicting parent      | Unstable path   | Gateway validation    | Rebuild topology | Firmware |
+| R-05 | Duplicate storm       | Sliding window overflow | Buffer pressure | Dedup engine          | Drop excess      | Gateway  |
+
+---
+
+## 7.3 Gateway Failures
+
+| ID   | Failure Scenario   | Detection              | Impact         | Containment        | Recovery          | Owner     |
+| ---- | ------------------ | ---------------------- | -------------- | ------------------ | ----------------- | --------- |
+| G-01 | Gateway reboot     | Restart log            | Telemetry gap  | Node autonomy      | Auto reconnect    | Firmware  |
+| G-02 | MQTT disconnect    | Broker state change    | Data buffering | Store-forward      | Reconnect backoff | Gateway   |
+| G-03 | WiFi down          | No LAN link            | Telemetry halt | Buffer local       | Reconnect         | Network   |
+| G-04 | Buffer overflow    | Queue depth exceed     | Data loss risk | Drop oldest policy | Increase buffer   | Architect |
+| G-05 | ESP-NOW congestion | High retry count       | Packet loss    | Rate limit         | Adjust interval   | Firmware  |
+| G-06 | Time sync failure  | Drift threshold exceed | Timestamp skew | Fallback time mode | Resync            | Gateway   |
+
+---
+
+## 7.4 Server (Pi) Failures
+
+| ID   | Failure Scenario | Detection        | Impact           | Containment        | Recovery         | Owner      |
+| ---- | ---------------- | ---------------- | ---------------- | ------------------ | ---------------- | ---------- |
+| S-01 | Broker crash     | Service down     | No command       | Node autonomy      | Restart service  | Backend    |
+| S-02 | DB corruption    | Write error      | Data loss risk   | Ingestion halt     | Restore backup   | Backend    |
+| S-03 | Disk full        | >90% usage       | Write fail       | Alert threshold    | Cleanup/archive  | Operator   |
+| S-04 | CPU overload     | Load > threshold | Slow dashboard   | No actuator impact | Optimize service | Backend    |
+| S-05 | Service deadlock | No response      | Dashboard freeze | Service restart    | Debug            | Backend    |
+| S-06 | Power loss       | Ping fail        | Server offline   | Node autonomy      | Boot restart     | Electrical |
+
+---
+
+## 7.5 Electrical Failures
+
+| ID   | Failure Scenario | Detection        | Impact             | Containment       | Recovery            | Owner      |
+| ---- | ---------------- | ---------------- | ------------------ | ----------------- | ------------------- | ---------- |
+| E-01 | Short circuit    | Fuse blow        | Actuator offline   | Fuse isolation    | Replace fuse        | Electrical |
+| E-02 | Pump overload    | Overload trip    | Pump OFF           | Thermal relay     | Reset relay         | Field      |
+| E-03 | Relay welding    | Actuator stuck   | Unsafe state       | Interlock         | Replace relay       | Electrical |
+| E-04 | Surge event      | SPD indicator    | Device damage risk | SPD isolation     | Replace SPD         | Electrical |
+| E-05 | Ground failure   | Noise/reset      | Instability        | Ground correction | Fix wiring          | Electrical |
+| E-06 | Panel overheat   | Temp > threshold | Hardware risk      | Thermal shutdown  | Improve ventilation | Electrical |
+
+---
+
+## 7.6 Network Failures
+
+| ID    | Failure Scenario  | Detection   | Impact            | Containment    | Recovery          | Owner   |
+| ----- | ----------------- | ----------- | ----------------- | -------------- | ----------------- | ------- |
+| NW-01 | LAN down          | No ping     | Dashboard offline | Node autonomy  | Fix switch/router | Network |
+| NW-02 | IP conflict       | ARP anomaly | Device unstable   | Manual isolate | Assign static IP  | Network |
+| NW-03 | Packet loss burst | Retry spike | Telemetry gap     | QoS1           | Stabilize LAN     | Network |
+| NW-04 | High latency      | RTT spike   | Slow command      | TTL control    | Optimize network  | Network |
+
+---
+
+## 7.7 Security Failures
+
+| ID     | Failure Scenario          | Detection           | Impact              | Containment         | Recovery          | Owner    |
+| ------ | ------------------------- | ------------------- | ------------------- | ------------------- | ----------------- | -------- |
+| SEC-01 | Unauthorized MQTT publish | ACL violation       | Command risk        | Reject connection   | Rotate credential | Admin    |
+| SEC-02 | Replay attack             | Duplicate seq       | Duplicate command   | Sliding window      | Log anomaly       | Firmware |
+| SEC-03 | Invalid firmware          | Hash mismatch       | OTA blocked         | Safe mode           | Reflash           | Engineer |
+| SEC-04 | Credential leak           | Suspicious login    | Unauthorized access | Account lock        | Reset credential  | Admin    |
+| SEC-05 | Excess login attempt      | Threshold exceeded  | Brute force risk    | Lock account        | Investigate       | Admin    |
+| SEC-06 | Device cloning attempt    | Duplicate device_id | Identity collision  | Reject registration | Revoke device     | Admin    |
+
+---
+
+# 8. Recovery Strategy Model
+
+Recovery dibagi menjadi tiga kategori utama:
+
+- Automatic Recovery
+- Manual Recovery
+- Escalation Rule
+
+---
+
+## 8.1 Automatic Recovery
+
+Dilakukan tanpa intervensi manusia.
+
+✔ Mekanisme Wajib
+
+- Watchdog reset (Node & Gateway)
+- MQTT reconnect dengan exponential backoff
+- ESP-NOW retry terbatas
+- Store-and-forward flush saat broker kembali
+- Safe mode entry saat firmware invalid
+- Service auto-restart via systemd (Pi)
+
+Automatic recovery tidak boleh menyebabkan actuator unsafe.
+
+---
+
+## 8.2 Manual Recovery
+
+Dilakukan oleh operator/engineer.
+
+Contoh:
+
+- Power cycle Node
+- Replace relay
+- Replace sensor
+- Restore DB backup
+- Reflash firmware
+- Re-provision device
+- Replace SMPS
+
+Semua manual recovery harus tercatat di log jika mempengaruhi sistem digital.
+
+---
+
+## 8.3 Escalation Rule
+
+Level 1 – Operator
+
+- Reset device
+- Check alarm
+- Replace fuse
+
+Level 2 – Engineer
+
+- Reflash firmware
+- Replace hardware
+- Restore backup
+- Investigate routing
+
+Level 3 – Architect
+
+- Root cause systemic
+- Update firmware logic
+- Revise design constraint
+- Update HTL document
+
+Jika failure berulang > threshold tertentu, escalation otomatis.
+
+---
+
+# 9. Degradation Modes
+
+Sistem harus memiliki mode operasi yang jelas.
+
+---
+
+## 9.1 Normal Mode
+
+Semua komponen aktif:
+
+Node ↔ Gateway ↔ Server ↔ HMI
+
+Full telemetry & control.
+
+---
+
+## 9.2 Partial Mode (Gateway Down)
+
+Kondisi:
+
+- Gateway reboot
+- MQTT unreachable
+
+Dampak:
+
+- Telemetry tidak sampai server
+- Command dari HMI tertunda
+
+Kontrol lokal tetap berjalan.
+
+---
+
+## 9.3 Autonomous Mode (Server Down)
+
+Kondisi:
+
+- Broker crash
+- Pi power loss
+
+Dampak:
+
+- Tidak ada dashboard
+- Tidak ada command baru
+
+Node tetap menjalankan:
+
+- Threshold control
+- Schedule fallback
+
+---
+
+## 9.4 Emergency Safe Mode
+
+Trigger:
+
+- Firmware corruption
+- Critical sensor invalid
+- Brownout oscillation
+- Security violation
+
+Perilaku:
+
+- Actuator default OFF
+- Telemetry minimal
+- No command execution
+
+---
+
+## 9.5 Degradation Mode Transition Diagram
+
+![Image](https://miro.medium.com/0%2AsBLK4CnybZBroLzD)
+
+![Image](https://www.researchgate.net/publication/303033625/figure/fig4/AS%3A383645383708675%401468479596072/Safe-state-activity-diagram-with-extra-functional-timing-properties.png)
+
+---
+
+Transisi umum:
+
+Normal
+↓ (Gateway fail)
+Partial
+↓ (Server fail)
+Autonomous
+↓ (Critical failure)
+Emergency Safe
+
+Recovery kembali ke Normal setelah kondisi stabil.
+
+---
+
+# 10. Open Issues
+
+Harus diputuskan sebelum production freeze:
+
+1. Maximum tolerable downtime per layer?
+2. UPS mandatory untuk Pi?
+3. Redundant gateway diperlukan?
+4. Self-healing limit (berapa retry sebelum isolate)?
+5. Field spare policy (berapa relay cadangan)?
+6. MTTR target per subsystem?
+7. SLA internal per-site?
+
+Tanpa angka target, QA tidak bisa menentukan acceptance.
+
+---
+
+# 11. Revision History
+
+| Version | Date       | Author    | Description              |
+| ------- | ---------- | --------- | ------------------------ |
+| v0.1    | 2026-02-24 | Architect | Initial structured draft |
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

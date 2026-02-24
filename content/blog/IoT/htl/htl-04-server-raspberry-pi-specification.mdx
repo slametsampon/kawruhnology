@@ -1,0 +1,1413 @@
+---
+title: SERVER RASPBERRY-PI SPECIFICATION (Outline v0.1)
+date: '2026-02-24'
+tags:
+  [
+    'raspberry-pi-server',
+    'mqtt-broker',
+    'time-series-db',
+    'local-dashboard',
+    'rbac-local',
+    'lan-only-operation',
+  ]
+draft: false
+summary: Site Server HortiLink berbasis Raspberry Pi adalah supervisory layer lokal yang menyediakan MQTT broker, ingestion telemetry, time-series database, command management, configuration registry, OTA repository, serta dashboard dan autentikasi berbasis LAN. Server tidak memiliki otoritas kontrol langsung terhadap aktuator; kontrol kritikal tetap berada di Node. Server harus mampu beroperasi sepenuhnya tanpa internet, mendukung buffering dari Gateway, menjaga integritas data historis, serta menyediakan RBAC dan mekanisme backup yang memadai. Dokumen ini mengunci konfigurasi broker, skema penyimpanan data, manajemen command & konfigurasi, serta strategi reliability dan recovery level server.
+---
+
+# **_HTL-04 – SERVER RASPBERRY-PI SPECIFICATION (Outline v0.1)_**
+
+---
+
+- [**_HTL-04 – SERVER RASPBERRY-PI SPECIFICATION (Outline v0.1)_**](#htl-04--server-raspberry-pi-specification-outline-v01)
+- [1. Purpose](#1-purpose)
+  - [1.1 Document Objective](#11-document-objective)
+  - [1.2 Authority](#12-authority)
+  - [1.3 Change Governance](#13-change-governance)
+- [2. Scope](#2-scope)
+  - [2.1 In-Scope](#21-in-scope)
+  - [2.2 Out-of-Scope](#22-out-of-scope)
+- [3. Definitions](#3-definitions)
+  - [3.1 Site Server](#31-site-server)
+  - [3.2 MQTT Broker](#32-mqtt-broker)
+  - [3.3 Telemetry Ingestion](#33-telemetry-ingestion)
+  - [3.4 Command Dispatcher](#34-command-dispatcher)
+  - [3.5 Config Registry](#35-config-registry)
+  - [3.6 OTA Repository](#36-ota-repository)
+  - [3.7 Role-Based Access Control (RBAC)](#37-role-based-access-control-rbac)
+  - [3.8 Retention Policy](#38-retention-policy)
+  - [3.9 Health Monitor](#39-health-monitor)
+- [4. Assumptions](#4-assumptions)
+  - [4.1 Deployment Assumptions](#41-deployment-assumptions)
+  - [4.2 Technical Assumptions](#42-technical-assumptions)
+  - [4.3 Capacity Assumptions](#43-capacity-assumptions)
+- [5. System Description](#5-system-description)
+  - [5.1 Server Functional Block Diagram](#51-server-functional-block-diagram)
+  - [5.2 Data Flow Overview](#52-data-flow-overview)
+  - [5.3 Trust Boundary Model](#53-trust-boundary-model)
+  - [5.4 Operational Modes](#54-operational-modes)
+- [6. Technical Specification](#6-technical-specification)
+  - [6.1 Hardware Specification](#61-hardware-specification)
+  - [6.2 Operating System](#62-operating-system)
+  - [6.3 MQTT Broker Configuration](#63-mqtt-broker-configuration)
+  - [6.4 Telemetry Ingestion Layer](#64-telemetry-ingestion-layer)
+  - [6.5 Time-Series Database](#65-time-series-database)
+  - [6.6 Command Management](#66-command-management)
+  - [6.7 Configuration Registry](#67-configuration-registry)
+  - [6.8 OTA Repository](#68-ota-repository)
+  - [6.9 Authentication \& RBAC](#69-authentication--rbac)
+  - [6.10 Health Monitoring](#610-health-monitoring)
+  - [6.11 Backup \& Recovery](#611-backup--recovery)
+- [7. Constraints](#7-constraints)
+  - [7.1 CPU Constraint](#71-cpu-constraint)
+  - [7.2 Memory Constraint](#72-memory-constraint)
+  - [7.3 Disk I/O Constraint](#73-disk-io-constraint)
+  - [7.4 Broker Throughput Constraint](#74-broker-throughput-constraint)
+  - [7.5 LAN Stability Constraint](#75-lan-stability-constraint)
+  - [7.6 Power Reliability Constraint](#76-power-reliability-constraint)
+- [8. Failure Handling](#8-failure-handling)
+  - [8.1 Pi Reboot](#81-pi-reboot)
+  - [8.2 Broker Crash](#82-broker-crash)
+  - [8.3 Disk Full](#83-disk-full)
+  - [8.4 DB Corruption](#84-db-corruption)
+  - [8.5 Gateway Disconnect](#85-gateway-disconnect)
+  - [8.6 Service Deadlock](#86-service-deadlock)
+  - [8.7 Unauthorized Access Attempt](#87-unauthorized-access-attempt)
+- [9. Interfaces](#9-interfaces)
+  - [9.1 MQTT Interface](#91-mqtt-interface)
+  - [9.2 HTTP API for Dashboard](#92-http-api-for-dashboard)
+  - [9.3 OTA File Endpoint](#93-ota-file-endpoint)
+  - [9.4 Auth Interface](#94-auth-interface)
+  - [9.5 Health Metrics Endpoint](#95-health-metrics-endpoint)
+- [10. Open Issues](#10-open-issues)
+- [11. Revision History](#11-revision-history)
+
+---
+
+# 1. Purpose
+
+## 1.1 Document Objective
+
+HTL-04 mendefinisikan spesifikasi teknis implementasi Site Server berbasis Raspberry Pi.
+
+Dokumen ini mengunci:
+
+- Konfigurasi MQTT broker
+- Telemetry ingestion layer
+- Time-series database baseline
+- Command management
+- Configuration registry
+- OTA repository
+- Authentication & RBAC
+- Health monitoring
+- Backup & recovery strategy
+
+Server adalah supervisory layer, bukan control authority (lihat HTL-00).
+
+---
+
+## 1.2 Authority
+
+HTL-04 mengikat:
+
+- Tim Backend / Server
+- Tim DevOps (deployment Pi)
+- QA untuk integration test Gateway ↔ Server
+
+Perubahan konfigurasi broker atau DB yang mempengaruhi HTL-01 wajib review lintas tim.
+
+---
+
+## 1.3 Change Governance
+
+Perubahan berikut wajib review arsitektur:
+
+- Topic namespace policy
+- TTL handling logic
+- DB schema breaking change
+- Retention policy drastis
+- OTA integrity model
+- RBAC model
+
+Jika perubahan mempengaruhi:
+
+- HTL-01 (interface contract)
+- HTL-00 (authority boundary)
+
+Maka revisi lintas dokumen wajib dilakukan.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'README',
+      href: '/blog/IoT/htl/README',
+      description: 'README - First',
+    },
+    {
+      name: 'SYSTEM ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-00-system-architecture-master-document',
+      description: 'SYSTEM ARCHITECTURE MASTER DOCUMENT',
+    },
+    {
+      name: 'INTERFACE SPECIFICATION',
+      href: '/blog/IoT/htl/htl-01-interface-specification',
+      description: 'INTERFACE SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'NODE TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-02-node-technical-specification',
+      description: 'NODE TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'GATEWAY TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-03-gateway-technical-specification',
+      description: 'GATEWAY TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'HMI SPECIFICATION',
+      href: '/blog/IoT/htl/htl-05-hmi-specification',
+      description: 'HMI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'ELECTRICAL & POWER',
+      href: '/blog/IoT/htl/htl-06-electrical-panel-design-specification',
+      description: 'ELECTRICAL & POWER INTEGRATION SPECIFICATION',
+    },
+    {
+      name: 'SECURITY ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-07-security-architecture',
+      description: 'SECURITY ARCHITECTURE (Outline v0.1)',
+    },
+    {
+      name: 'FAILURE MODE & RECOVERY',
+      href: '/blog/IoT/htl/htl-08-failure-mode-recovery-matrix',
+      description: 'FAILURE MODE & RECOVERY MATRIX (Outline v0.1)',
+    },
+    {
+      name: 'TEST PLAN & VALIDATION',
+      href: '/blog/IoT/htl/htl-09-test-plan-validation-matrix',
+      description: 'TEST PLAN & VALIDATION MATRIX (Outline v0.1)',
+    },
+  ]}
+/>
+
+---
+
+# 2. Scope
+
+## 2.1 In-Scope
+
+HTL-04 mencakup seluruh komponen server per-site:
+
+✔ MQTT Layer
+
+- Broker configuration
+- ACL policy
+- Persistence
+
+✔ Telemetry & Data Layer
+
+- Subscription
+- Validation
+- Time-series ingestion
+- Retention & aggregation
+
+✔ Control Layer
+
+- Command publish
+- TTL enforcement
+- ACK tracking
+- Command lifecycle mirror
+
+✔ Configuration Layer
+
+- Versioned config registry
+- Per-node config storage
+- Audit log
+
+✔ OTA Layer
+
+- Firmware repository
+- Hash verification
+- Version compatibility check
+
+✔ Security Layer
+
+- Local authentication
+- RBAC
+- Session management
+- Audit log
+
+✔ Reliability Layer
+
+- Health monitoring
+- Backup schedule
+- Recovery procedure
+
+Semua berjalan dalam LAN lokal.
+
+---
+
+## 2.2 Out-of-Scope
+
+Server tidak mencakup:
+
+- Cloud sync
+- Multi-site aggregation
+- AI analytics
+- Enterprise SSO
+- Remote internet dependency
+
+Server harus tetap beroperasi tanpa internet.
+
+---
+
+# 3. Definitions
+
+## 3.1 Site Server
+
+Raspberry Pi yang menjalankan seluruh komponen supervisory per-site.
+
+---
+
+## 3.2 MQTT Broker
+
+Service (misal Mosquitto) yang:
+
+- Mengelola publish/subscribe
+- Menyimpan session
+- Menerapkan ACL
+- Menyediakan QoS handling
+
+---
+
+## 3.3 Telemetry Ingestion
+
+Service yang:
+
+- Subscribe telemetry topic
+- Validasi payload
+- Tulis ke DB
+- Handle duplicate (jika perlu)
+
+---
+
+## 3.4 Command Dispatcher
+
+Modul yang:
+
+- Publish command
+- Assign cmd_id
+- Track ACK
+- Enforce TTL
+
+---
+
+## 3.5 Config Registry
+
+Penyimpanan konfigurasi:
+
+- Versioned
+- Per-node
+- Checksum protected
+- Audit logged
+
+---
+
+## 3.6 OTA Repository
+
+Storage firmware:
+
+- Version indexed
+- Hash verified
+- Local HTTP serve
+
+---
+
+## 3.7 Role-Based Access Control (RBAC)
+
+Model akses berbasis role:
+
+- Operator
+- Engineer
+- Admin
+
+Role menentukan:
+
+- Read-only
+- Command issue
+- Config modify
+- OTA upload
+
+---
+
+## 3.8 Retention Policy
+
+Kebijakan:
+
+- Berapa lama data disimpan
+- Data yang di-aggregate
+- Data yang dihapus otomatis
+
+---
+
+## 3.9 Health Monitor
+
+Service yang memantau:
+
+- Broker status
+- DB status
+- Disk usage
+- CPU load
+- Gateway connectivity
+
+---
+
+# 4. Assumptions
+
+## 4.1 Deployment Assumptions
+
+Baseline:
+
+- 1 Raspberry Pi per-site
+- Gateway dalam LAN sama
+- Node tidak langsung ke Pi (via Gateway)
+- Internet tidak diperlukan
+
+Pi dianggap semi-dedicated untuk HortiLink.
+
+---
+
+## 4.2 Technical Assumptions
+
+- Linux-based OS (Raspberry Pi OS Lite)
+- MQTT broker (Mosquitto atau equivalent)
+- Time-series DB (InfluxDB / TimescaleDB – TBD)
+- Local web dashboard berjalan di Pi
+- systemd untuk service management
+
+---
+
+## 4.3 Capacity Assumptions
+
+Baseline per-site:
+
+- 10–15 Node
+- Telemetry interval baseline (dikunci lintas dokumen)
+- Retention minimal beberapa bulan (nilai final TBD)
+- Storage minimal 32–64GB
+- RAM minimal 2–4GB (disarankan 4GB)
+
+Server tidak dirancang untuk heavy analytics.
+
+---
+
+# 5. System Description
+
+Site Server adalah supervisory & data persistence layer dalam satu site HortiLink.
+Server tidak menjalankan kontrol aktuator langsung, tetapi mengelola observability, command lifecycle, konfigurasi, dan OTA.
+
+---
+
+## 5.1 Server Functional Block Diagram
+
+![Image](https://www.researchgate.net/publication/304918738/figure/fig1/AS%3A381355008512000%401467933527354/Raspberry-Pi-2-B-based-platform-in-IoT-environment-Platform-is-based-on-4-with-needed.png)
+
+![Image](https://www.researchgate.net/publication/316018571/figure/fig1/AS%3A482179894517760%401491972053333/MQTT-Architecture-2-Broker-Broker-controls-the-distribution-of-information-and-mainly.png)
+
+> Blok Fungsional Utama
+
+✔ 1. MQTT Broker
+
+- Topic routing
+- QoS handling
+- Session persistence
+- ACL enforcement
+
+✔ 2. Telemetry Ingestion Service
+
+- Subscribe telemetry
+- Validate payload
+- Normalize timestamp
+- Write to DB
+
+✔ 3. Time-Series Database
+
+- Store telemetry
+- Retention policy
+- Aggregation
+
+✔ 4. Command Manager
+
+- Generate cmd_id
+- Enforce TTL
+- Track ACK
+- Update command state
+
+✔ 5. Config Registry
+
+- Versioned config
+- Per-node storage
+- Audit log
+- Rollback
+
+✔ 6. OTA Repository
+
+- Firmware storage
+- Version registry
+- Hash verification
+- Local HTTP serve
+
+✔ 7. Web Dashboard
+
+- Monitoring UI
+- Command UI
+- Config UI
+- Health view
+
+✔ 8. Auth & RBAC
+
+- User management
+- Role assignment
+- Session handling
+
+✔ 9. Health Monitor
+
+- CPU load
+- Memory usage
+- Disk usage
+- Broker status
+- DB status
+
+✔ 10. Backup Manager
+
+- Scheduled DB backup
+- Config backup
+- OTA backup
+
+---
+
+## 5.2 Data Flow Overview
+
+![Image](https://www.researchgate.net/publication/341751119/figure/fig1/AS%3A900135697534984%401591620482861/MQTT-Work-flow-representation-The-above-Fig-represents-how-the-MQTT-broker-works-The.jpg)
+
+![Image](https://learn.microsoft.com/en-us/azure/iot-hub/media/tutorial-device-twins/devicetwins.png)
+
+---
+
+✔ 5.2.1 Telemetry Flow
+
+1. Gateway publish ke MQTT
+2. Broker route ke Ingestion Service
+3. Ingestion:
+
+   - Validate schema
+   - Validate protocol_version
+   - Normalize timestamp
+
+4. Write to Time-Series DB
+5. Dashboard query DB
+
+Server tidak memodifikasi payload sebelum validasi.
+
+---
+
+✔ 5.2.2 Command Flow
+
+1. User issue command via Dashboard
+2. Command Manager:
+
+   - Generate cmd_id
+   - Assign TTL
+   - Store state = ISSUED
+
+3. Publish ke MQTT
+4. Gateway forward
+5. Node execute & ACK
+6. Broker deliver ACK
+7. Command Manager update state
+
+Server mirror state machine dari HTL-01.
+
+---
+
+✔ 5.2.3 Configuration Flow
+
+1. Engineer modify config
+2. Config Registry:
+
+   - Increment version
+   - Generate checksum
+   - Store audit log
+
+3. Publish config via MQTT
+4. Gateway → Node
+5. ACK update
+6. Update config status
+
+---
+
+✔ 5.2.4 OTA Flow
+
+1. Admin upload firmware
+2. Server:
+
+   - Calculate hash
+   - Register version
+
+3. Publish OTA metadata
+4. Node fetch file via HTTP
+5. Node verify hash
+6. Node reboot
+7. Health update version
+
+OTA file tidak boleh diakses tanpa auth.
+
+---
+
+## 5.3 Trust Boundary Model
+
+![Image](https://d8wojkg2185gh.cloudfront.net/strapi/Mqtt3_339170e0df.webp)
+
+---
+
+✔ Boundary 1 – LAN Trust Boundary
+
+- Gateway ↔ Pi via MQTT
+- Access terbatas LAN
+- ACL enforced
+
+---
+
+✔ Boundary 2 – User Access Boundary
+
+- Dashboard login required
+- RBAC enforced
+- Session timeout
+
+---
+
+✔ Boundary 3 – OTA Integrity Boundary
+
+- Firmware hash verification
+- Version compatibility check
+- No external download
+
+---
+
+✔ Boundary 4 – Storage Integrity Boundary
+
+- DB write only via ingestion service
+- Backup integrity check
+- No raw DB modification
+
+---
+
+## 5.4 Operational Modes
+
+Server memiliki mode:
+
+- NORMAL
+- DEGRADED (Gateway offline)
+- STORAGE_WARNING (disk threshold)
+- MAINTENANCE
+- BACKUP_RUNNING
+
+Mode tidak boleh mempengaruhi Node control.
+
+---
+
+# 6. Technical Specification
+
+---
+
+## 6.1 Hardware Specification
+
+✔ 6.1.1 Raspberry Pi Baseline
+
+Direkomendasikan:
+
+- Raspberry Pi 4
+- RAM minimum 4GB
+- Storage minimum 32GB (disarankan 64GB)
+- LAN stabil (wired recommended jika tersedia)
+
+---
+
+✔ 6.1.2 Storage Strategy
+
+- OS partition
+- Data partition (DB + backup)
+- OTA storage partition (opsional terpisah)
+
+SD card industrial grade disarankan.
+
+---
+
+✔ 6.1.3 Optional UPS
+
+Direkomendasikan jika:
+
+- Listrik tidak stabil
+- Data retention kritikal
+
+Server tetap boleh beroperasi tanpa UPS, dengan risiko data loss saat power cut.
+
+---
+
+## 6.2 Operating System
+
+✔ 6.2.1 OS Baseline
+
+- Raspberry Pi OS Lite (64-bit disarankan)
+
+---
+
+✔ 6.2.2 Required Services
+
+- mosquitto (MQTT broker)
+- DB engine (InfluxDB / TimescaleDB – TBD)
+- Web backend service
+- systemd-managed services
+
+---
+
+✔ 6.2.3 Boot Configuration
+
+- Auto-start broker
+- Auto-start ingestion
+- Auto-start dashboard
+- Auto-restart on crash (systemd Restart=always)
+
+---
+
+## 6.3 MQTT Broker Configuration
+
+---
+
+✔ 6.3.1 Topic Namespace Policy
+
+Broker hanya menerima:
+
+htl/site_id/#
+
+Cross-site topic tidak diperbolehkan.
+
+---
+
+✔ 6.3.2 QoS Rule
+
+- Telemetry penting → QoS 1
+- Health → QoS 0/1 (to be locked)
+- Command → QoS 1
+
+---
+
+✔ 6.3.3 Retain Flag Policy
+
+- Command: retain = false
+- Telemetry: retain = false
+- Config metadata: retain optional (to be locked)
+
+---
+
+✔ 6.3.4 ACL Rule
+
+- Gateway client hanya publish node telemetry
+- Gateway subscribe command topics
+- Dashboard publish command
+- No anonymous access
+
+---
+
+✔ 6.3.5 Message Size Limit
+
+Max payload disesuaikan dengan constraint ESP
+Hard cap ditetapkan di broker config.
+
+---
+
+✔ 6.3.6 Persistence Setting
+
+- Persistence enabled
+- Session persistence active
+- Disk write batched
+
+---
+
+## 6.4 Telemetry Ingestion Layer
+
+---
+
+✔ 6.4.1 Subscription Policy
+
+Subscribe wildcard:
+
+htl/site_id/node/+/telemetry
+htl/site_id/node/+/health
+
+---
+
+✔ 6.4.2 Data Validation
+
+- Validate protocol_version
+- Validate required fields
+- Validate timestamp range
+- Drop malformed payload
+
+---
+
+✔ 6.4.3 Timestamp Handling
+
+Prefer:
+
+- Gateway-supplied timestamp
+
+Fallback:
+
+- Broker receive timestamp
+
+Server tidak boleh mengubah payload original.
+
+---
+
+✔ 6.4.4 Batch Write Strategy
+
+- Batch DB write (interval small)
+- Avoid write per message
+- Retry on failure
+
+---
+
+✔ 6.4.5 Failure Handling
+
+Jika DB unavailable:
+
+- Queue sementara (bounded)
+- Drop oldest jika overflow
+- Log anomaly
+
+---
+
+## 6.5 Time-Series Database
+
+---
+
+✔ 6.5.1 DB Engine Decision
+
+TBD:
+
+- InfluxDB (simplicity)
+- TimescaleDB (PostgreSQL-based)
+
+Keputusan wajib sebelum freeze.
+
+---
+
+✔ 6.5.2 Measurement Schema
+
+Measurement:
+
+- telemetry
+- health
+
+Tag:
+
+- site_id
+- node_id
+
+Field:
+
+- sensor values
+- actuator state
+- meta metrics
+
+---
+
+✔ 6.5.3 Retention Policy
+
+- Raw data retention minimal X bulan (TBD)
+- Aggregated hourly/daily optional
+
+---
+
+✔ 6.5.4 Indexing Strategy
+
+Index pada:
+
+- node_id
+- timestamp
+
+Query dashboard tidak boleh full-scan.
+
+---
+
+## 6.6 Command Management
+
+---
+
+✔ 6.6.1 Command Publish Rule
+
+- Generate cmd_id (UUID)
+- Store command state = ISSUED
+- Publish via MQTT
+
+---
+
+✔ 6.6.2 TTL Enforcement
+
+Server tidak publish command dengan TTL ≤ 0.
+Server juga menandai expired jika ACK tidak diterima dalam window.
+
+---
+
+✔ 6.6.3 ACK Tracking
+
+Maintain table:
+
+- cmd_id
+- node_id
+- status
+- issued_timestamp
+- executed_timestamp
+
+---
+
+✔ 6.6.4 Duplicate Command Prevention
+
+Tidak boleh generate cmd_id sama.
+Manual retry harus menghasilkan cmd_id baru.
+
+---
+
+## 6.7 Configuration Registry
+
+---
+
+✔ 6.7.1 Versioned Configuration
+
+Format:
+
+major.minor.patch
+
+Perubahan parameter increment minor/patch.
+
+---
+
+✔ 6.7.2 Per-Node Config Storage
+
+Setiap node memiliki:
+
+- active_version
+- pending_version
+- history list
+
+---
+
+✔ 6.7.3 Rollback Rule
+
+Rollback ke:
+
+- Last known good version
+
+Audit log wajib disimpan.
+
+---
+
+## 6.8 OTA Repository
+
+---
+
+✔ 6.8.1 Firmware Storage Path
+
+Contoh:
+
+/opt/htl/ota/device_type/version.bin
+
+---
+
+✔ 6.8.2 Version Registry
+
+Simpan:
+
+- firmware_version
+- hash
+- upload_time
+- compatibility list
+
+---
+
+✔ 6.8.3 Hash Verification
+
+- SHA-256 baseline
+- Verify sebelum publish metadata
+
+---
+
+✔ 6.8.4 Compatibility Matrix
+
+Define:
+
+- device_type
+- min_supported_version
+
+OTA metadata tidak boleh dikirim jika tidak kompatibel.
+
+---
+
+## 6.9 Authentication & RBAC
+
+---
+
+✔ 6.9.1 Role Definition
+
+Operator:
+
+- View dashboard
+- Issue basic command
+
+Engineer:
+
+- Modify config
+- Trigger OTA
+
+Admin:
+
+- User management
+- Upload firmware
+- System config
+
+---
+
+✔ 6.9.2 Local User Database
+
+- Stored locally (hashed password)
+- No plaintext storage
+
+---
+
+✔ 6.9.3 Password Policy
+
+- Minimum length
+- Complexity rule
+- Account lock after repeated failure
+
+---
+
+✔ 6.9.4 Session Management
+
+- Session timeout
+- CSRF protection
+- Token-based session
+
+---
+
+✔ 6.9.5 Audit Logging
+
+Log:
+
+- Login
+- Command issued
+- Config change
+- OTA upload
+
+---
+
+## 6.10 Health Monitoring
+
+Server wajib expose metrics:
+
+- MQTT connection count
+- DB write rate
+- Disk usage %
+- CPU load %
+- Memory usage %
+- Gateway online/offline
+- Command pending count
+
+Threshold baseline harus ditentukan sebelum production.
+
+---
+
+## 6.11 Backup & Recovery
+
+---
+
+✔ 6.11.1 DB Backup Schedule
+
+- Daily incremental
+- Weekly full backup
+
+---
+
+✔ 6.11.2 Config Backup
+
+- Backup per config change
+
+---
+
+✔ 6.11.3 OTA File Backup
+
+- Backup firmware binary
+
+---
+
+✔ 6.11.4 Restore Procedure
+
+Dokumentasi wajib mencakup:
+
+- Restore DB
+- Restore config
+- Restore OTA
+- Restart service order
+
+---
+
+✔ 6.11.5 Disaster Recovery Checklist
+
+- Disk replacement
+- OS reinstall
+- Service redeploy
+- Data restore
+- Integrity verification
+
+---
+
+# 7. Constraints
+
+Server harus beroperasi dalam batas berikut.
+
+---
+
+## 7.1 CPU Constraint
+
+- Raspberry Pi bukan server enterprise
+- Tidak diperbolehkan menjalankan analytics berat
+- Query dashboard harus terindeks
+- Batch write DB wajib digunakan
+
+Target:
+
+- CPU stabil dalam kondisi normal
+- Tidak terjadi CPU starvation
+
+---
+
+## 7.2 Memory Constraint
+
+- RAM minimum 4GB disarankan
+- DB cache harus dibatasi
+- Tidak boleh memory leak pada ingestion service
+- MQTT connection harus dibatasi
+
+Server tidak boleh swap intensif.
+
+---
+
+## 7.3 Disk I/O Constraint
+
+- SD card memiliki write cycle terbatas
+- Batch DB write wajib
+- Log rotation wajib
+- Backup tidak boleh terlalu sering
+
+Disk usage threshold wajib didefinisikan (misal 80%).
+
+---
+
+## 7.4 Broker Throughput Constraint
+
+- Max connection limit dikunci
+- Max inflight message dikonfigurasi
+- Publish rate dari Gateway harus dikontrol
+- Message size limit enforced
+
+Broker tidak boleh menjadi bottleneck.
+
+---
+
+## 7.5 LAN Stability Constraint
+
+- Server hanya LAN-based
+- Tidak boleh bergantung DNS eksternal
+- Static IP disarankan
+- Firewall lokal dikonfigurasi
+
+---
+
+## 7.6 Power Reliability Constraint
+
+- Power loss dapat terjadi sewaktu-waktu
+- DB harus tahan abrupt shutdown
+- systemd auto-restart wajib
+- UPS disarankan untuk site kritikal
+
+---
+
+# 8. Failure Handling
+
+Format: Detection → Impact → Recovery → Owner
+
+---
+
+## 8.1 Pi Reboot
+
+Detection:
+
+- Service restart log
+
+Impact:
+
+- Temporary monitoring loss
+- Command in-flight hilang
+
+Recovery:
+
+- Auto-start broker & services
+- Gateway reconnect otomatis
+
+Owner:
+
+- Server
+
+Node tetap autonomous.
+
+---
+
+## 8.2 Broker Crash
+
+Detection:
+
+- Service status down
+
+Impact:
+
+- Gateway tidak dapat publish
+- Command tidak bisa dikirim
+
+Recovery:
+
+- systemd auto-restart
+- Persistence restore
+
+Owner:
+
+- Server
+
+---
+
+## 8.3 Disk Full
+
+Detection:
+
+- Disk usage > threshold
+
+Impact:
+
+- DB write fail
+- OTA upload fail
+
+Recovery:
+
+- Alert dashboard
+- Trigger cleanup
+- Retention purge
+
+Owner:
+
+- Server Admin
+
+---
+
+## 8.4 DB Corruption
+
+Detection:
+
+- DB service error
+- Integrity check fail
+
+Impact:
+
+- Telemetry tidak tersimpan
+- Dashboard error
+
+Recovery:
+
+- Restore from backup
+- Reinitialize DB
+- Verify integrity
+
+Owner:
+
+- Server Admin
+
+---
+
+## 8.5 Gateway Disconnect
+
+Detection:
+
+- Missing gateway health
+- MQTT disconnect
+
+Impact:
+
+- No telemetry
+- No command delivery
+
+Recovery:
+
+- Wait reconnect
+- Alert operator
+
+Owner:
+
+- Gateway (primary)
+- Server (monitoring)
+
+---
+
+## 8.6 Service Deadlock
+
+Detection:
+
+- Health monitor no update
+- Watchdog script detect stall
+
+Impact:
+
+- Ingestion freeze
+- Command freeze
+
+Recovery:
+
+- Restart affected service
+- Log incident
+
+Owner:
+
+- Server
+
+---
+
+## 8.7 Unauthorized Access Attempt
+
+Detection:
+
+- Failed login attempt
+- Invalid token
+
+Impact:
+
+- Security risk
+
+Recovery:
+
+- Lock account (threshold)
+- Log event
+- Alert admin
+
+Owner:
+
+- Server
+
+---
+
+# 9. Interfaces
+
+---
+
+## 9.1 MQTT Interface
+
+Mengacu HTL-01:
+
+- Topic namespace
+- QoS
+- Command & ACK format
+- Health topic
+
+Server tidak mengubah schema payload.
+
+---
+
+## 9.2 HTTP API for Dashboard
+
+Internal API:
+
+- GET /telemetry
+- POST /command
+- GET /config
+- POST /config
+- POST /ota-upload
+- GET /health
+
+API hanya tersedia di LAN.
+
+---
+
+## 9.3 OTA File Endpoint
+
+Contoh:
+
+GET /ota/device_type/version.bin
+
+File dilayani lokal, tidak boleh redirect eksternal.
+
+---
+
+## 9.4 Auth Interface
+
+- POST /login
+- POST /logout
+- POST /user-create (admin only)
+- POST /role-assign (admin only)
+
+---
+
+## 9.5 Health Metrics Endpoint
+
+Contoh:
+
+GET /metrics
+
+Berisi:
+
+- CPU
+- Memory
+- Disk
+- Broker status
+- DB status
+- Gateway connectivity
+
+---
+
+# 10. Open Issues
+
+Keputusan sebelum freeze:
+
+1. DB engine final choice (InfluxDB vs TimescaleDB)?
+2. UPS mandatory atau optional?
+3. RAID atau single SD card?
+4. Containerized deployment (Docker) atau native?
+5. Remote SSH allowed atau disabled?
+6. Health alert threshold baseline?
+7. Retention duration final?
+
+HTL-04 tidak boleh masuk production tanpa isu ini dikunci.
+
+---
+
+# 11. Revision History
+
+| Version | Date       | Author    | Description              |
+| ------- | ---------- | --------- | ------------------------ |
+| v0.1    | 2026-02-24 | Architect | Initial structured draft |
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

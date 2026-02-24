@@ -1,0 +1,1221 @@
+---
+title: INTERFACE SPECIFICATION (Outline v0.1)
+
+date: '2026-02-24'
+tags:
+  [
+    'interface-contract',
+    'mqtt-lan',
+    'esp-now-bridge',
+    'command-state-machine',
+    'idempotent-control',
+    'production-grade-iot',
+  ]
+draft: false
+summary: HTL-01 mendefinisikan kontrak komunikasi formal antar Node, Gateway, dan Server dalam satu site HortiLink. Dokumen ini mengunci struktur MQTT topic, skema payload telemetry, health, command, ACK, konfigurasi, serta metadata OTA. Selain itu, ditetapkan state machine command yang idempotent, aturan TTL, retry/backoff policy, dan batasan kapasitas payload sesuai constraint ESP dan Raspberry Pi. Tujuannya adalah memastikan pengembangan paralel antar tim tanpa ambiguitas, menjaga determinisme eksekusi kontrol, serta mencegah inkonsistensi komunikasi yang dapat menyebabkan perilaku tak terprediksi pada sistem produksi.
+---
+
+# **_HTL-01 – INTERFACE SPECIFICATION (Outline v0.1)_**
+
+---
+
+- [**_HTL-01 – INTERFACE SPECIFICATION (Outline v0.1)_**](#htl-01--interface-specification-outline-v01)
+- [1. Purpose](#1-purpose)
+  - [1.1 Document Objective](#11-document-objective)
+  - [1.2 Authority](#12-authority)
+  - [1.3 Change Control](#13-change-control)
+- [2. Scope](#2-scope)
+  - [2.1 In-Scope](#21-in-scope)
+  - [2.2 Out-of-Scope](#22-out-of-scope)
+- [3. Definitions](#3-definitions)
+  - [3.1 Data Plane](#31-data-plane)
+  - [3.2 Control Plane](#32-control-plane)
+  - [3.3 Telemetry Message](#33-telemetry-message)
+  - [3.4 Health Message](#34-health-message)
+  - [3.5 Command Message](#35-command-message)
+  - [3.6 Command Acknowledgment (ACK)](#36-command-acknowledgment-ack)
+  - [3.7 Configuration Message](#37-configuration-message)
+  - [3.8 OTA Metadata](#38-ota-metadata)
+  - [3.9 Sequence Number](#39-sequence-number)
+  - [3.10 Idempotency](#310-idempotency)
+  - [3.11 TTL (Time-To-Live)](#311-ttl-time-to-live)
+- [4. Assumptions](#4-assumptions)
+  - [4.1 Transport Assumptions](#41-transport-assumptions)
+  - [4.2 Reliability Assumptions](#42-reliability-assumptions)
+  - [4.3 Capacity Assumptions](#43-capacity-assumptions)
+- [5. System Description (Interface Context Only)](#5-system-description-interface-context-only)
+  - [5.1 Communication Layers Overview](#51-communication-layers-overview)
+  - [5.2 Message Flow Overview](#52-message-flow-overview)
+  - [5.3 Message Lifecycle Model](#53-message-lifecycle-model)
+  - [5.4 Reliability Model](#54-reliability-model)
+  - [5.5 Interface Boundary Summary](#55-interface-boundary-summary)
+- [6. Technical Specification](#6-technical-specification)
+  - [6.1 MQTT Topic Map](#61-mqtt-topic-map)
+  - [6.2 Payload Schema – Telemetry](#62-payload-schema--telemetry)
+  - [6.3 Payload Schema – Health](#63-payload-schema--health)
+  - [6.4 Payload Schema – Command](#64-payload-schema--command)
+  - [6.5 Command State Machine](#65-command-state-machine)
+  - [6.6 ACK Specification](#66-ack-specification)
+  - [6.7 Configuration Message Format](#67-configuration-message-format)
+  - [6.8 OTA Metadata Interface](#68-ota-metadata-interface)
+  - [6.9 ESP-NOW Message Class](#69-esp-now-message-class)
+  - [6.10 HTTP Provisioning Interface](#610-http-provisioning-interface)
+  - [6.11 Retry \& Backoff Policy](#611-retry--backoff-policy)
+  - [6.12 Versioning \& Backward Compatibility](#612-versioning--backward-compatibility)
+- [7. Constraints](#7-constraints)
+  - [7.1 Payload Size Constraint](#71-payload-size-constraint)
+  - [7.2 ESP Memory Constraint](#72-esp-memory-constraint)
+  - [7.3 MQTT Broker Limit (Pi)](#73-mqtt-broker-limit-pi)
+  - [7.4 ESP-NOW Throughput Limit](#74-esp-now-throughput-limit)
+  - [7.5 Relay Hop Limit](#75-relay-hop-limit)
+- [8. Failure Handling (Interface Level)](#8-failure-handling-interface-level)
+  - [8.1 Duplicate Message](#81-duplicate-message)
+  - [8.2 Lost ACK](#82-lost-ack)
+  - [8.3 Expired Command](#83-expired-command)
+  - [8.4 Partial OTA](#84-partial-ota)
+  - [8.5 Relay Chain Break](#85-relay-chain-break)
+  - [8.6 Broker Disconnect](#86-broker-disconnect)
+- [9. Interfaces Summary](#9-interfaces-summary)
+  - [9.1 Data Plane Interface Matrix](#91-data-plane-interface-matrix)
+  - [9.2 Control Plane Interface Matrix](#92-control-plane-interface-matrix)
+  - [9.3 Responsibility Boundary Table](#93-responsibility-boundary-table)
+- [10. Open Issues](#10-open-issues)
+- [11. Revision History](#11-revision-history)
+
+---
+
+# 1. Purpose
+
+## 1.1 Document Objective
+
+HTL-01 adalah dokumen kontrak komunikasi resmi antara:
+
+- Node
+- Gateway
+- Server (Raspberry Pi)
+
+Dokumen ini:
+
+- Mendefinisikan format pesan
+- Mendefinisikan namespace MQTT
+- Mendefinisikan struktur ESP-NOW frame
+- Mendefinisikan state machine command
+- Mengunci idempotency & TTL
+- Mengunci retry/backoff policy
+- Mengunci aturan kompatibilitas versi
+
+HTL-01 tidak membahas arsitektur sistem (lihat HTL-00).
+
+---
+
+## 1.2 Authority
+
+HTL-01 mengikat:
+
+- Tim Firmware Node
+- Tim Firmware Gateway
+- Tim Backend Server
+- Tim HMI (untuk command flow)
+
+Implementasi yang tidak sesuai HTL-01 dianggap tidak kompatibel sistem.
+
+---
+
+## 1.3 Change Control
+
+Perubahan pada:
+
+- Struktur topic MQTT
+- Payload schema
+- Field mandatory
+- State machine command
+- Retry policy
+- Version field
+
+Wajib:
+
+1. Impact analysis lintas tim
+2. Minor/Major version increment
+3. Backward compatibility evaluation
+4. Review arsitektur jika menyentuh HTL-00
+
+HTL-01 tidak boleh diubah sepihak oleh satu domain tim.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'README',
+      href: '/blog/IoT/htl/README',
+      description: 'README - First',
+    },
+    {
+      name: 'SYSTEM ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-00-system-architecture-master-document',
+      description: 'SYSTEM ARCHITECTURE MASTER DOCUMENT',
+    },
+    {
+      name: 'NODE TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-02-node-technical-specification',
+      description: 'NODE TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'GATEWAY TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-03-gateway-technical-specification',
+      description: 'GATEWAY TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'SERVER RASPBERRY-PI',
+      href: '/blog/IoT/htl/htl-04-server-raspberry-pi-specification',
+      description: 'SERVER RASPBERRY-PI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'HMI SPECIFICATION',
+      href: '/blog/IoT/htl/htl-05-hmi-specification',
+      description: 'HMI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'ELECTRICAL & POWER',
+      href: '/blog/IoT/htl/htl-06-electrical-panel-design-specification',
+      description: 'ELECTRICAL & POWER INTEGRATION SPECIFICATION',
+    },
+    {
+      name: 'SECURITY ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-07-security-architecture',
+      description: 'SECURITY ARCHITECTURE (Outline v0.1)',
+    },
+    {
+      name: 'FAILURE MODE & RECOVERY',
+      href: '/blog/IoT/htl/htl-08-failure-mode-recovery-matrix',
+      description: 'FAILURE MODE & RECOVERY MATRIX (Outline v0.1)',
+    },
+    {
+      name: 'TEST PLAN & VALIDATION',
+      href: '/blog/IoT/htl/htl-09-test-plan-validation-matrix',
+      description: 'TEST PLAN & VALIDATION MATRIX (Outline v0.1)',
+    },
+  ]}
+/>
+
+---
+
+# 2. Scope
+
+## 2.1 In-Scope
+
+HTL-01 mencakup:
+
+✔ Transport Layer Binding
+
+- MQTT (Gateway ↔ Pi)
+- ESP-NOW (Node ↔ Gateway)
+- HTTP lokal (provisioning & diagnostics)
+
+✔ Message Classes
+
+- Telemetry
+- Health
+- Command
+- ACK
+- Configuration
+- OTA metadata
+
+✔ Protocol Behavior
+
+- TTL enforcement
+- Idempotent execution
+- Duplicate detection
+- Retry/backoff
+- Versioning
+
+---
+
+## 2.2 Out-of-Scope
+
+HTL-01 tidak mencakup:
+
+- Cloud API
+- Dashboard UI detail
+- Database internal schema
+- Electrical interface
+- Security deep implementation (lihat HTL-07)
+
+---
+
+# 3. Definitions
+
+## 3.1 Data Plane
+
+Aliran pesan upstream:
+
+Node → Gateway → MQTT → Server
+
+Berisi telemetry dan health data.
+
+---
+
+## 3.2 Control Plane
+
+Aliran pesan downstream:
+
+Server → MQTT → Gateway → Node
+
+Berisi command, configuration, OTA metadata.
+
+---
+
+## 3.3 Telemetry Message
+
+Pesan periodik berisi data sensor dan state aktuator.
+
+---
+
+## 3.4 Health Message
+
+Pesan periodik/non-periodik berisi status sistem internal perangkat.
+
+---
+
+## 3.5 Command Message
+
+Pesan control yang dikirim dari Server ke Node melalui Gateway.
+
+Command harus:
+
+- Memiliki TTL
+- Memiliki cmd_id unik
+- Idempotent
+
+---
+
+## 3.6 Command Acknowledgment (ACK)
+
+Respons dari Node yang menyatakan status command:
+
+- EXECUTED
+- REJECTED
+- EXPIRED
+
+---
+
+## 3.7 Configuration Message
+
+Pesan berisi parameter konfigurasi versi tertentu yang harus diverifikasi checksum sebelum apply.
+
+---
+
+## 3.8 OTA Metadata
+
+Informasi versi firmware dan file integrity untuk proses OTA.
+
+---
+
+## 3.9 Sequence Number
+
+Counter monotonik pada setiap Node untuk:
+
+- Dedup detection
+- Replay prevention
+- Ordering validation
+
+Rollover rule akan dikunci di Section 6.
+
+---
+
+## 3.10 Idempotency
+
+Sifat command yang memastikan:
+
+Eksekusi ulang command dengan cmd_id sama
+tidak menyebabkan efek tambahan.
+
+---
+
+## 3.11 TTL (Time-To-Live)
+
+Durasi validitas command sejak issued_timestamp.
+
+Command yang melewati TTL wajib ditolak.
+
+---
+
+# 4. Assumptions
+
+## 4.1 Transport Assumptions
+
+- MQTT berjalan di LAN site
+- QoS default = 1 untuk telemetry penting
+- ESP-NOW adalah unreliable transport
+- HTTP hanya untuk provisioning & diagnostics lokal
+- Tidak ada dependency internet
+
+---
+
+## 4.2 Reliability Assumptions
+
+- Node dapat restart sewaktu-waktu
+- Gateway dapat reconnect sewaktu-waktu
+- MQTT broker dapat restart
+- Duplicate message mungkin terjadi
+- Packet loss ESP-NOW mungkin terjadi
+
+Karena itu:
+
+- Sequence number wajib
+- Dedup wajib
+- Retry policy wajib
+- TTL wajib
+
+---
+
+## 4.3 Capacity Assumptions
+
+Baseline per-site:
+
+- 10–15 node
+- Telemetry interval ditentukan di implementasi
+- Max payload size harus sesuai batas ESP memory
+- MQTT broker berjalan di Raspberry Pi kelas menengah
+
+Payload besar tidak diperbolehkan tanpa justifikasi.
+
+---
+
+# 5. System Description (Interface Context Only)
+
+Section ini tidak membahas arsitektur konseptual (lihat HTL-00),
+melainkan bagaimana **interface bekerja secara operasional** di dalam arsitektur tersebut.
+
+---
+
+## 5.1 Communication Layers Overview
+
+![Image](https://static.wixstatic.com/media/a4cd8d_8691abd068da4e20a690e4fdff7e75bb~mv2.png/v1/fill/w_521%2Ch_458%2Cal_c%2Clg_1%2Cq_85%2Cenc_avif%2Cquality_auto/a4cd8d_8691abd068da4e20a690e4fdff7e75bb~mv2.png)
+
+![Image](https://figures.semanticscholar.org/118819355ac870f6334fedbe8fa7aa7c1121106c/3-Figure3-1.png)
+
+✔ Layer 1 – Node Internal Layer
+
+- Sensor acquisition
+- Control engine
+- Command execution
+- Telemetry generation
+- Sequence increment
+
+Tidak terekspos ke luar kecuali melalui payload formal.
+
+---
+
+✔ Layer 2 – Node ↔ Gateway (ESP-NOW)
+
+Karakteristik:
+
+- Unreliable transport
+- Broadcast / peer-to-peer
+- Max payload terbatas
+- Retry manual
+- Dedup wajib
+
+Message class yang berjalan di layer ini:
+
+- Telemetry
+- Health
+- ACK
+- Command dispatch
+- Config
+- OTA metadata
+
+---
+
+✔ Layer 3 – Gateway ↔ Server (MQTT)
+
+Karakteristik:
+
+- TCP-based
+- QoS controlled
+- Topic-based namespace
+- Persistent session optional
+
+Gateway bertindak sebagai:
+
+- Publisher (telemetry, health, ACK)
+- Subscriber (command, config, OTA)
+
+---
+
+✔ Layer 4 – HMI ↔ Node (HTTP Lokal)
+
+Digunakan untuk:
+
+- Commissioning
+- Diagnostics
+- Direct actuator test
+- Firmware version check
+
+Tidak digunakan untuk routine telemetry ingestion.
+
+---
+
+✔ Layer 5 – HMI ↔ Server (Web + MQTT/WebSocket)
+
+Digunakan untuk:
+
+- Monitoring
+- Command issuing
+- Config update
+- OTA trigger
+
+---
+
+## 5.2 Message Flow Overview
+
+![Image](https://miro.medium.com/1%2AbDl73XcT8u0UyC-dmf06gA.png)
+
+![Image](https://www.winmate.com/Image/Blogimg/Gateway-IIoT-01.jpg)
+
+---
+
+✔ 5.2.1 Telemetry Upstream Flow (Data Plane)
+
+1. Node generate telemetry
+2. Attach:
+
+   - sequence_number
+   - timestamp
+   - hop metadata
+
+3. ESP-NOW send
+4. Gateway validate:
+
+   - hop limit
+   - duplicate
+   - payload size
+
+5. Gateway publish MQTT
+6. Server ingest to DB
+
+Failure behavior:
+
+- Duplicate drop
+- Buffer if broker down
+- Drop if TTL exceeded (if applicable)
+
+---
+
+✔ 5.2.2 Command Downstream Flow (Control Plane)
+
+1. User issue command via HMI
+2. Server:
+
+   - Assign cmd_id
+   - Set TTL
+   - Publish MQTT
+
+3. Gateway receive:
+
+   - Validate TTL
+   - Forward via ESP-NOW
+
+4. Node:
+
+   - Validate TTL
+   - Validate idempotency
+   - Check interlock
+   - Execute
+
+5. Node publish ACK
+6. Gateway forward ACK
+7. Server update state
+
+Command tidak boleh blocking.
+
+---
+
+✔ 5.2.3 Configuration Synchronization Flow
+
+1. Server publish config_version + checksum
+2. Gateway forward
+3. Node:
+
+   - Verify checksum
+   - Apply
+   - Store version
+   - ACK
+
+4. Server update status
+
+Rollback logic ditentukan di Section 6.
+
+---
+
+✔ 5.2.4 OTA Flow
+
+1. Server publish OTA metadata
+2. Gateway forward metadata
+3. Node validate:
+
+   - target_device_type
+   - version compatibility
+   - signature
+
+4. Node fetch firmware via HTTP lokal
+5. Verify hash
+6. Flash secondary partition
+7. Reboot
+8. Publish new version health
+
+Failure:
+
+- Revert ke firmware sebelumnya
+
+---
+
+## 5.3 Message Lifecycle Model
+
+✔ Telemetry Lifecycle
+
+GENERATED → RELAYED → VALIDATED → PUBLISHED → INGESTED
+
+---
+
+✔ Command Lifecycle
+
+ISSUED → RECEIVED → VALIDATED → EXECUTED → ACKED → CLOSED
+
+State machine detail akan dikunci di Part 3.
+
+---
+
+## 5.4 Reliability Model
+
+Transport behavior:
+
+| Layer   | Reliability      | Mitigation         |
+| ------- | ---------------- | ------------------ |
+| ESP-NOW | Unreliable       | Retry + dedup      |
+| MQTT    | Reliable (QoS 1) | Persistent session |
+| HTTP    | Best effort      | Hash verification  |
+
+Idempotency & sequence number adalah mandatory untuk menjaga determinisme.
+
+---
+
+## 5.5 Interface Boundary Summary
+
+Node bertanggung jawab atas:
+
+- Execution correctness
+
+Gateway bertanggung jawab atas:
+
+- Routing correctness
+- Dedup correctness
+
+Server bertanggung jawab atas:
+
+- Command lifecycle correctness
+- Data persistence
+
+Tidak ada domain yang boleh mengambil tanggung jawab domain lain.
+
+---
+
+# 6. Technical Specification
+
+---
+
+## 6.1 MQTT Topic Map
+
+✔ 6.1.1 Topic Naming Convention
+
+Format umum:
+
+```
+htl/{site_id}/{entity}/{entity_id}/{message_type}
+```
+
+Semua huruf lowercase.
+Tidak boleh ada spasi.
+`site_id` wajib ada di setiap topic.
+
+---
+
+✔ 6.1.2 Site-Level Namespace
+
+```
+htl/{site_id}/gateway/{gateway_id}/health
+htl/{site_id}/server/health
+```
+
+---
+
+✔ 6.1.3 Node-Level Namespace
+
+```
+htl/{site_id}/node/{node_id}/telemetry
+htl/{site_id}/node/{node_id}/health
+htl/{site_id}/node/{node_id}/ack
+htl/{site_id}/node/{node_id}/config
+htl/{site_id}/node/{node_id}/ota
+htl/{site_id}/node/{node_id}/command
+```
+
+---
+
+✔ 6.1.4 Command Topic
+
+Server publish:
+
+```
+htl/{site_id}/node/{node_id}/command
+```
+
+Gateway subscribe wildcard:
+
+```
+htl/{site_id}/node/+/command
+```
+
+---
+
+✔ 6.1.5 Health Topic
+
+Node publish:
+
+```
+htl/{site_id}/node/{node_id}/health
+```
+
+Gateway publish:
+
+```
+htl/{site_id}/gateway/{gateway_id}/health
+```
+
+---
+
+✔ 6.1.6 Config Topic
+
+```
+htl/{site_id}/node/{node_id}/config
+```
+
+---
+
+✔ 6.1.7 OTA Topic
+
+Metadata publish:
+
+```
+htl/{site_id}/node/{node_id}/ota
+```
+
+---
+
+## 6.2 Payload Schema – Telemetry
+
+✔ Required Fields
+
+```json
+{
+  "protocol_version": "1.0",
+  "site_id": "string",
+  "node_id": "string",
+  "seq": 12345,
+  "timestamp": 1700000000,
+  "sensor": {
+    "soil_moisture": 55.2,
+    "temperature": 28.4
+  },
+  "actuator_state": {
+    "pump": "on",
+    "valve": "off"
+  }
+}
+```
+
+---
+
+✔ Optional Fields
+
+- relay_hop
+- parent_id
+- rssi
+- battery_voltage
+
+---
+
+✔ Timestamp Rule
+
+- Unix epoch (seconds)
+- Authority: Gateway (if available)
+- Fallback: Node monotonic counter
+
+---
+
+✔ Sequence Rule
+
+- Increment per telemetry cycle
+- Reset allowed on reboot
+- Duplicate detection based on sliding window
+
+---
+
+✔ Size Limitation
+
+Target payload ≤ 512 bytes
+Hard limit ditentukan oleh ESP memory.
+
+---
+
+## 6.3 Payload Schema – Health
+
+```json
+{
+  "protocol_version": "1.0",
+  "site_id": "string",
+  "node_id": "string",
+  "uptime_sec": 123456,
+  "reset_counter": 3,
+  "supply_voltage": 4.98,
+  "rssi": -62,
+  "buffer_depth": 4
+}
+```
+
+Health interval lebih jarang dibanding telemetry.
+
+---
+
+## 6.4 Payload Schema – Command
+
+```json
+{
+  "protocol_version": "1.0",
+  "cmd_id": "uuid-string",
+  "target": "pump",
+  "action": "set",
+  "value": "on",
+  "ttl_sec": 30,
+  "issued_timestamp": 1700000000,
+  "priority": 1
+}
+```
+
+---
+
+✔ Command Rules
+
+- `cmd_id` wajib unik
+- `ttl_sec` wajib > 0
+- Node wajib menolak jika expired
+- Node wajib idempotent berdasarkan cmd_id
+
+---
+
+## 6.5 Command State Machine
+
+![Image](https://www.researchgate.net/publication/311311232/figure/fig1/AS%3A654381934456844%401533028219360/State-machine-that-describes-the-algorithms-execution.png)
+
+![Image](https://www.uml-diagrams.org/examples/state-machine-uml-example-hosted-app-life-cycle.png)
+
+✔ States
+
+- RECEIVED
+- VALIDATED
+- REJECTED
+- EXECUTED
+- EXPIRED
+
+✔ Transition Rules
+
+RECEIVED → VALIDATED (if format & TTL valid)
+VALIDATED → EXECUTED (if interlock pass)
+VALIDATED → REJECTED (if interlock fail)
+RECEIVED → EXPIRED (if TTL exceeded)
+
+Duplicate cmd_id → IGNORE (no re-execution)
+
+---
+
+## 6.6 ACK Specification
+
+```json
+{
+  "protocol_version": "1.0",
+  "ack_id": "uuid-string",
+  "cmd_id": "uuid-string",
+  "status": "executed",
+  "error_code": 0,
+  "executed_timestamp": 1700000005
+}
+```
+
+Status enum:
+
+- executed
+- rejected
+- expired
+- invalid
+
+---
+
+## 6.7 Configuration Message Format
+
+```json
+{
+  "protocol_version": "1.0",
+  "config_version": "1.2.3",
+  "parameters": {
+    "soil_threshold": 40,
+    "max_runtime_sec": 120
+  },
+  "effective_time": 1700001000,
+  "checksum": "sha256-hash"
+}
+```
+
+Node wajib:
+
+- Verify checksum
+- Store version
+- ACK apply result
+
+Rollback policy dikunci di HTL-02.
+
+---
+
+## 6.8 OTA Metadata Interface
+
+```json
+{
+  "protocol_version": "1.0",
+  "firmware_version": "2.0.1",
+  "target_device_type": "node-esp32",
+  "file_hash": "sha256-hash",
+  "file_size": 1048576,
+  "download_url": "http://pi.local/ota/node-esp32.bin",
+  "min_required_version": "1.5.0"
+}
+```
+
+Node wajib:
+
+- Verify target_device_type
+- Verify hash
+- Support rollback
+
+---
+
+## 6.9 ESP-NOW Message Class
+
+Frame internal minimal:
+
+```json
+{
+  "msg_type": "telemetry|command|ack|config|ota",
+  "node_id": "string",
+  "seq": 12345,
+  "hop": 1,
+  "ttl": 5,
+  "payload": { ... }
+}
+```
+
+Rules:
+
+- hop increment per relay
+- drop if hop > max_hop
+- dedup based on (node_id + seq)
+- retry max N times
+
+---
+
+## 6.10 HTTP Provisioning Interface
+
+Endpoints:
+
+```
+POST /register-node
+POST /pair-gateway
+GET  /diagnostics
+GET  /firmware/{device_type}
+```
+
+HTTP hanya untuk LAN lokal.
+
+---
+
+## 6.11 Retry & Backoff Policy
+
+✔ Node Retry
+
+- Max retry: N (to be locked)
+- Exponential backoff
+- Stop if TTL expired
+
+✔ Gateway Retry
+
+- Retry MQTT publish if broker down
+- Buffer limit enforcement
+
+✔ MQTT Reconnect
+
+- Exponential backoff
+- Max retry unlimited (until broker up)
+
+---
+
+## 6.12 Versioning & Backward Compatibility
+
+✔ Protocol Version Field
+
+Semua payload wajib memiliki:
+
+```
+"protocol_version": "major.minor"
+```
+
+✔ Compatibility Rule
+
+- Minor mismatch → allowed
+- Major mismatch → reject
+
+✔ Deprecation Rule
+
+- Minimum compatibility window: 2 minor versions
+
+---
+
+# 7. Constraints
+
+Interface harus beroperasi dalam batas berikut.
+
+---
+
+## 7.1 Payload Size Constraint
+
+✔ MQTT Payload
+
+- Target ≤ 512 byte
+- Hard upper bound ≤ 1024 byte (justified only)
+
+Alasan:
+
+- ESP memory constraint
+- Broker performance di Raspberry Pi
+- Latency & airtime ESP-NOW
+
+---
+
+## 7.2 ESP Memory Constraint
+
+Node dan Gateway:
+
+- JSON parsing tidak boleh blocking
+- Tidak boleh allocate dynamic large buffer
+- Max concurrent message queue terbatas
+
+Schema tidak boleh berkembang tanpa evaluasi memori.
+
+---
+
+## 7.3 MQTT Broker Limit (Pi)
+
+Constraint baseline:
+
+- Max connection: < 50
+- Max message/sec sesuai kemampuan Pi
+- Persistence enabled
+- Message size limit configured
+
+Flood telemetry tidak diperbolehkan.
+
+---
+
+## 7.4 ESP-NOW Throughput Limit
+
+- Broadcast domain terbatas
+- Collision meningkat >15 node
+- Retry meningkatkan airtime
+- Hop >2 tidak direkomendasikan
+
+Payload harus ringkas.
+
+---
+
+## 7.5 Relay Hop Limit
+
+Hop max baseline:
+(to be locked, recommended 2–3)
+
+Jika hop melebihi batas → drop frame.
+
+Loop detection wajib.
+
+---
+
+# 8. Failure Handling (Interface Level)
+
+Fokus pada kegagalan komunikasi, bukan kegagalan elektrikal.
+
+---
+
+## 8.1 Duplicate Message
+
+✔ Detection
+
+- node_id + seq
+- Sliding window
+
+✔ Action
+
+- Drop silently
+- Do not forward
+
+---
+
+## 8.2 Lost ACK
+
+✔ Detection
+
+- Server timeout
+- Missing ACK within TTL window
+
+✔ Action
+
+- Mark command incomplete
+- Do not auto re-execute
+- Manual retry required
+
+---
+
+## 8.3 Expired Command
+
+✔ Detection
+
+- issued_timestamp + ttl_sec < now
+
+✔ Action
+
+- Node reject
+- Send ACK status=expired
+
+---
+
+## 8.4 Partial OTA
+
+✔ Detection
+
+- Hash mismatch
+- Reboot before completion
+
+✔ Action
+
+- Rollback to previous firmware
+- Publish health with error flag
+
+---
+
+## 8.5 Relay Chain Break
+
+✔ Detection
+
+- Missing parent heartbeat
+- High hop failure
+
+✔ Action
+
+- Attempt rebind
+- Continue local control
+- Mark connectivity degraded
+
+---
+
+## 8.6 Broker Disconnect
+
+✔ Detection
+
+- MQTT client disconnect event
+
+✔ Action
+
+- Gateway buffer telemetry
+- Retry publish with backoff
+- Do not drop until buffer full
+
+---
+
+# 9. Interfaces Summary
+
+---
+
+## 9.1 Data Plane Interface Matrix
+
+| From    | To      | Transport | Message Type |
+| ------- | ------- | --------- | ------------ |
+| Node    | Gateway | ESP-NOW   | Telemetry    |
+| Node    | Gateway | ESP-NOW   | Health       |
+| Gateway | Pi      | MQTT      | Telemetry    |
+| Gateway | Pi      | MQTT      | Health       |
+| Node    | Gateway | ESP-NOW   | ACK          |
+| Gateway | Pi      | MQTT      | ACK          |
+
+---
+
+## 9.2 Control Plane Interface Matrix
+
+| From    | To      | Transport | Message Type |
+| ------- | ------- | --------- | ------------ |
+| Pi      | Gateway | MQTT      | Command      |
+| Gateway | Node    | ESP-NOW   | Command      |
+| Pi      | Gateway | MQTT      | Config       |
+| Gateway | Node    | ESP-NOW   | Config       |
+| Pi      | Gateway | MQTT      | OTA          |
+| Gateway | Node    | ESP-NOW   | OTA Metadata |
+
+---
+
+## 9.3 Responsibility Boundary Table
+
+| Component | Responsible For                 | Not Responsible For     |
+| --------- | ------------------------------- | ----------------------- |
+| Node      | Execution correctness           | Routing correctness     |
+| Gateway   | Routing & bridging              | Interlock override      |
+| Server    | Command lifecycle & persistence | Actuator control        |
+| HMI       | Command issuance                | Direct hardware control |
+
+Tidak boleh ada domain yang melampaui tanggung jawabnya.
+
+---
+
+# 10. Open Issues
+
+Keputusan wajib sebelum freeze v1.0:
+
+1. JSON vs CBOR final
+2. Hop limit final value
+3. Max retry N value
+4. Sequence rollover handling
+5. MQTT retain policy
+6. OTA chunk size
+7. Hash algorithm (SHA-256 baseline?)
+
+HTL-01 tidak boleh masuk production tanpa isu ini dikunci.
+
+---
+
+# 11. Revision History
+
+| Version | Date       | Author    | Description              |
+| ------- | ---------- | --------- | ------------------------ |
+| v0.1    | 2026-02-24 | Architect | Initial structured draft |
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>
