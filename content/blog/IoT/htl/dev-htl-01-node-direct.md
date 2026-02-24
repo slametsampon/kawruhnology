@@ -1,0 +1,2424 @@
+Outline diterima.
+
+Struktur konsisten dengan template yang dikunci.
+Scope jelas.
+Binding ke HTL-series eksplisit.
+Boundary direct-mode jelas (tanpa gateway, tanpa MQTT).
+
+Kita mulai **Part 1 – Foundation** sesuai strategi yang sudah disepakati.
+
+Dokumen akan dibagi menjadi beberapa part sebagai berikut:
+
+- **Part 1** → Section 1–3 (Purpose, Scope, Reference Binding) + System Context Diagram
+- Part 2 → Section 4–5 (Hardware + Electrical)
+- Part 3 → Section 6–7 (Software Architecture + Coding Architecture)
+- Part 4 → Section 8–9 (Communication + Lifecycle)
+- Part 5 → Section 10–11 (Failure + Security)
+- Part 6 → Section 12–14 (Testing Hook + DoD + Revision History Baseline)
+
+Setelah Part 1 selesai dan Anda approve → freeze → lanjut Part 2.
+
+---
+
+# DEV-HTL-01 – NODE DIRECT DEVELOPMENT GUIDE
+
+## Part 1 – Foundation (Section 1–3 + Context Model)
+
+---
+
+## 1. Purpose
+
+### 1.1 Document Objective
+
+Dokumen ini menjadi **panduan implementasi final dan eksekusi teknis** untuk Node berbasis ESP-family yang beroperasi dalam mode:
+
+- Kontrol lokal penuh (sensor + actuator + interlock)
+- Akses langsung via HP (commissioning & diagnostics)
+- Otonom tanpa gateway atau server
+
+Dokumen ini bukan deskripsi arsitektur.
+Dokumen ini adalah **panduan kerja engineering yang dapat langsung dieksekusi**.
+
+Node dalam mode ini tetap harus:
+
+- Mematuhi HTL-00 (control hierarchy)
+- Mematuhi subset HTL-01 (command model)
+- Mematuhi HTL-02 (control engine & watchdog)
+- Mematuhi HTL-06 (electrical separation)
+- Mematuhi HTL-07 (direct access security)
+- Lulus HTL-09 (node-level validation)
+
+Node adalah Level-0 Control Authority.
+HP hanya alat interaksi.
+
+---
+
+### 1.2 Target Audience
+
+Dokumen ini mengikat:
+
+- Node Firmware Engineer
+- Direct HMI Engineer (HTTP UI minimal)
+- QA Commissioning Engineer
+- Electrical Engineer (panel integrasi)
+
+Dokumen ini tidak ditujukan untuk tim Gateway atau Backend.
+
+---
+
+## 2. Scope
+
+### 2.1 In-Scope
+
+Implementasi lengkap Node dalam direct mode meliputi:
+
+- Pemilihan & konfigurasi ESP-family
+- Integrasi sensor
+- Integrasi aktuator & proteksi
+- Engine kontrol lokal (threshold + interlock)
+- HTTP server lokal
+- Manual override dengan TTL
+- Watchdog & brownout handling
+- Logging lokal
+- Penyimpanan konfigurasi di NVS
+- Safe state enforcement
+
+Node wajib tetap aman walaupun:
+
+- HP disconnect
+- HP crash
+- Tidak ada jaringan eksternal
+
+---
+
+### 2.2 Out-of-Scope
+
+Tidak dibahas dalam dokumen ini:
+
+- ESP-NOW / LoRa
+- MQTT
+- Gateway logic
+- Cloud
+- Central dashboard
+- Distributed routing
+
+Dokumen ini murni **Node sebagai sistem kontrol otonom lokal**.
+
+---
+
+## 3. Reference (HTL-Series Binding)
+
+Implementasi Node direct mode wajib traceable ke HTL-series berikut:
+
+### 3.1 Architecture Binding
+
+- HTL-00
+
+  - Boundary per-site
+  - Level 0 control authority
+  - Degradation mode
+
+Node direct mode adalah realisasi Level 0.
+
+---
+
+### 3.2 Interface Binding
+
+- HTL-01
+
+  - Command model (subset)
+  - TTL rule
+  - Idempotency principle (walau lokal)
+
+Direct HTTP command harus mengikuti state logic yang sama secara prinsip.
+
+---
+
+### 3.3 Node Technical Binding
+
+- HTL-02
+
+  - Local control engine
+  - Interlock enforcement
+  - Watchdog handling
+  - Brownout handling
+  - Telemetry snapshot model
+
+---
+
+### 3.4 Electrical Binding
+
+- HTL-06
+
+  - HV/LV separation
+  - Relay isolation
+  - Inrush handling
+  - Grounding
+
+---
+
+### 3.5 Security Binding
+
+- HTL-07
+
+  - Direct PIN policy
+  - Session timeout
+  - Login retry limit
+
+---
+
+### 3.6 Failure & Test Binding
+
+- HTL-08
+
+  - Node-level failure mapping
+
+- HTL-09
+
+  - Node unit test
+  - Brownout test
+  - Commissioning checklist
+
+---
+
+# System Context – Direct Mode
+
+Berikut adalah boundary sistem untuk Node dalam mode direct:
+
+![Image](https://www.waveshare.com/img/devkit/accBoard/ESP32-S3-POE-ETH-8DI-8DO/ESP32-S3-POE-ETH-8DI-8DO-details-intro.jpg)
+
+![Image](https://images.openai.com/static-rsc-3/vM2vS1fOYFhsarIEWdAsN329z2l3oywcVTkJSP7aSjsDtFtyp4WaQUBTIQOM5A1j3NmZwu_iHMGXPA7DJJwvJmsHedVc2cqNQbR8eWzGNnU?purpose=fullsize&v=1)
+
+![Image](https://researchdesignlab.com/media/catalog/product/cache/1/image/512x512/9ea150a65d3ccc136116bd4ea279f951/r/d/rdl_din-rail-relay-isolated-1.jpg)
+
+![Image](https://m.media-amazon.com/images/I/81SP26nFyKL._AC_UF1000%2C1000_QL80_.jpg)
+
+Secara logis, sistemnya adalah:
+
+```
+Sensor → ESP Node → Actuator
+              ↑
+        HTTP Direct Access
+              ↑
+            Smartphone
+```
+
+Boundary tegas:
+
+- HP tidak memiliki kontrol fisik langsung ke relay
+- HP hanya mengirim request
+- Interlock tetap diputuskan oleh firmware
+- Semua safety diputuskan oleh Node
+
+Node tetap bekerja tanpa HP.
+
+---
+
+# Kontrol Hierarki (Direct Mode)
+
+Level 0 – Sensor & Actuator (fisik)
+Level 1 – Local Control Engine (firmware)
+Level 2 – Direct Human Interface (HP)
+
+HP tidak boleh melompati Level 1.
+
+---
+
+# 4. Hardware Selection & Economic Analysis
+
+## 4.1 MCU Variant Comparison
+
+Node direct mode membutuhkan:
+
+- WiFi (HP direct access)
+- ADC cukup presisi
+- FreeRTOS (untuk task separation)
+- NVS untuk config storage
+- Watchdog hardware
+- Brownout detection
+- OTA ready (walau lokal)
+
+### Kandidat MCU
+
+| Parameter       | ESP8266      | ESP32 (WROOM) | ESP32-S3      |
+| --------------- | ------------ | ------------- | ------------- |
+| Core            | 1x 80MHz     | 2x 240MHz     | 2x 240MHz     |
+| RAM             | ~80KB usable | ~320KB usable | ~512KB usable |
+| Flash           | 1–4MB        | 4–16MB        | 4–16MB        |
+| ADC Quality     | Poor (noisy) | Moderate      | Improved      |
+| FreeRTOS        | Limited      | Native        | Native        |
+| WiFi            | 2.4GHz       | 2.4GHz        | 2.4GHz        |
+| Brownout detect | No native    | Yes           | Yes           |
+| Secure boot     | No           | Yes           | Yes           |
+| Cost (approx)   | $2–3         | $4–5          | $6–8          |
+
+### Analisis Teknis
+
+ESP8266:
+
+- RAM terlalu kecil untuk HTTP + logging + control engine
+- ADC noisy (tidak cocok untuk sensor analog presisi)
+- Tidak ada brownout detection hardware
+
+ESP32:
+
+- Dual-core memisahkan control loop & HTTP
+- Brownout detect built-in
+- FreeRTOS native
+- ADC cukup untuk soil moisture
+- Harga masih ekonomis
+
+ESP32-S3:
+
+- Overkill untuk direct mode
+- Tambahan USB & AI acceleration tidak diperlukan
+- Harga lebih tinggi
+
+---
+
+## 4.2 Selected MCU & Justification
+
+Dipilih: **ESP32-WROOM (4MB Flash minimum)**
+
+Alasan:
+
+### Teknis
+
+- Dual-core untuk isolasi control task
+- Brownout detect hardware
+- NVS support
+- WiFi stabil
+- RAM cukup untuk HTTP + log buffer
+- Mendukung OTA
+
+### Reliability
+
+- Banyak referensi industrial usage
+- Stabil di suhu 0–60°C
+- Mature SDK
+
+### Ekonomi
+
+- Selisih harga vs 8266 ±$2
+- Menghindari risiko instability
+- Menghindari redesign di masa depan
+
+Keputusan:
+ESP32 adalah baseline wajib.
+ESP8266 tidak direkomendasikan.
+
+---
+
+## 4.3 Sensor Selection
+
+### Soil Moisture
+
+Opsi:
+
+| Type             | Harga  | Akurasi     | Noise  | Maintenance  |
+| ---------------- | ------ | ----------- | ------ | ------------ |
+| Resistive        | $1–2   | Buruk       | Tinggi | Korosi cepat |
+| Capacitive       | $3–5   | Baik        | Rendah | Stabil       |
+| Industrial probe | $20–50 | Sangat baik | Rendah | Durable      |
+
+Keputusan:
+
+Capacitive sensor baseline.
+
+Alasan:
+
+- Resistive tidak tahan lama
+- Industrial terlalu mahal untuk small farm
+- Capacitive cukup stabil dan ekonomis
+
+---
+
+### Temperature
+
+Opsi:
+
+- DS18B20 (OneWire)
+- NTC analog
+- I2C digital sensor (SHTxx)
+
+Dipilih: **DS18B20**
+
+Alasan:
+
+- Tahan noise
+- Digital (tidak tergantung ADC)
+- Harga rendah
+- Mudah kalibrasi
+
+---
+
+### Optional Sensors
+
+- Flow sensor (Hall effect)
+- pH sensor (I2C module)
+
+Catatan:
+pH sensor analog murah tidak stabil → harus ada kalibrasi berkala.
+
+---
+
+## 4.4 Actuator Hardware
+
+### Opsi Switching
+
+| Type             | Isolation     | Longevity  | Noise      | Cost |
+| ---------------- | ------------- | ---------- | ---------- | ---- |
+| Mechanical Relay | Opto possible | Medium     | Klik       | $1–2 |
+| SSR              | Isolated      | High       | Silent     | $4–6 |
+| Contactor        | High power    | Industrial | Mechanical | $15+ |
+
+Keputusan baseline:
+
+- Pompa kecil (<5A) → Relay opto-isolated 10A
+- Pompa >5A → Contactor + relay driver
+
+Tidak boleh:
+Langsung menggerakkan motor dari GPIO.
+
+Wajib:
+
+- Opto isolation
+- Flyback diode
+- Snubber untuk inductive load
+
+---
+
+## 4.5 Power Design
+
+Node harus menerima:
+
+Input: 12–24V DC
+
+Blok power:
+
+```
+12–24V IN
+    ↓
+Reverse polarity protection
+    ↓
+Buck converter → 5V
+    ↓
+LDO → 3.3V (ESP)
+```
+
+Brownout threshold dikunci di:
+~3.0V
+
+Protection:
+
+- Fuse input
+- TVS diode
+- Reverse diode
+- LC filter untuk noise pompa
+
+---
+
+# 5. Electrical Integration Overview
+
+## 5.1 Block Diagram
+
+![Image](https://www.researchgate.net/publication/341446512/figure/fig5/AS%3A892219187789825%401589733039149/ESP32-functional-block-diagram.ppm)
+
+![Image](https://www.weishoelec.com/zb_users/upload/2025/10/202510191760857240728200.jpg)
+
+![Image](https://europe1.discourse-cdn.com/arduino/original/4X/6/6/3/66373f87eb9c84bb41d109ca75788b332751908c.png)
+
+![Image](https://europe1.discourse-cdn.com/arduino/original/4X/3/7/4/37420110af330c90a013ae5645b2685d46be58b1.jpeg)
+
+Logical integration:
+
+```
+Sensor Layer
+    ↓
+ESP32 Controller
+    ↓
+Opto Driver
+    ↓
+Relay / Contactor
+    ↓
+Pump / Valve
+```
+
+Power and signal ground dipisahkan.
+
+---
+
+## 5.2 Grounding Strategy
+
+- HV ground terpisah dari logic ground
+- Star grounding
+- Analog sensor ground dipisahkan dari relay ground
+- Shield cable untuk sensor panjang
+
+---
+
+## 5.3 Protection Mechanisms
+
+Wajib ada:
+
+- Fuse di input
+- TVS di input
+- Flyback diode coil relay
+- Snubber RC untuk motor
+- Thermal spacing di PCB
+
+---
+
+# 6. Software Architecture
+
+## 6.1 Functional Block Diagram
+
+Tidak berubah secara konsep, tetapi implementasinya dipetakan ke modul `app_ / srv_ / drv_ / sys_`:
+
+```text
+                +---------------------------+
+                |        app_node_*         |
+                | (lifecycle, mode, glue)   |
+                +------------+--------------+
+                             |
+                             v
++----------------+   +-------+--------+   +------------------+
+| drv_sensor_*   |-->| srv_control_*  |-->| drv_actuator_*    |
+| (ADC/1W/etc)   |   | (interlock)    |   | (relay/contactor) |
++----------------+   +-------+--------+   +------------------+
+                             |
+        +--------------------+---------------------+
+        v                    v                     v
+ +--------------+     +--------------+      +----------------+
+ | sys_nvs_*    |     | sys_log_*    |      | sys_watchdog_* |
+ +--------------+     +--------------+      +----------------+
+```
+
+---
+
+## 6.2 Task Model (ESP32 FreeRTOS)
+
+Task tetap seperti sebelumnya, tetapi kini tiap task memanggil modul sesuai layer:
+
+| Task                | Memanggil Modul  | Tujuan                      |
+| ------------------- | ---------------- | --------------------------- |
+| `sys_task_sensor`   | `drv_sensor_*`   | sampling & filtering        |
+| `sys_task_control`  | `srv_control_*`  | decision + interlock        |
+| `sys_task_actuator` | `drv_actuator_*` | apply output safely         |
+| `sys_task_storage`  | `sys_nvs_*`      | load/save config + counters |
+| `sys_task_watchdog` | `sys_watchdog_*` | liveness & safe action      |
+
+---
+
+## 6.3 Memory Allocation Strategy
+
+Tetap: **static state + fixed buffer** untuk control path.
+
+Aturan baru (lebih tegas):
+
+- `srv_*` tidak boleh `malloc/free` di control loop
+- `drv_*` hanya stack-local kecil
+- JSON payload buffer (untuk direct HTTP) disiapkan fixed (Part 4), **max 2KB**
+
+---
+
+# 7. Coding Architecture (3-Layer OOP + System)
+
+## 7.1 Penamaan & Struktur Folder (WAJIB)
+
+/dev-htl-01-node-direct/
+dev-htl-01-node-direct.ino
+
+app_node_direct.h
+app_node_direct.cpp
+
+drv_relay.h
+drv_relay.cpp
+drv_soil_moisture_adc.h
+drv_soil_moisture_adc.cpp
+drv_ds18b20.h
+drv_ds18b20.cpp
+
+srv_interlock.h
+srv_interlock.cpp
+srv_irrigation_control.h
+srv_irrigation_control.cpp
+srv_manual_override.h
+srv_manual_override.cpp
+
+sys_config_store.h
+sys_config_store.cpp
+sys_watchdog.h
+sys_watchdog.cpp
+sys_time.h
+sys_time.cpp
+
+> Catatan: HTTP server akan masuk `app_` (Part 4), tapi “core control” harus sudah jalan tanpa HTTP.
+
+---
+
+## 7.2 Responsibility Rules (lebih ketat)
+
+- `drv_*` : akses hardware murni (GPIO/ADC/1Wire)
+- `srv_*` : logika kontrol + interlock + limiter + TTL override
+- `app_*` : lifecycle state + orchestration + glue (task init, mode)
+- `sys_*` : OS utilities (NVS, watchdog, reset reason, time base)
+
+---
+
+## 7.3 FULL CODING BASELINE (Sensor + Actuator + Controller)
+
+Di bawah ini baseline **riil** untuk:
+
+- Soil moisture (ADC)
+- Temperature (DS18B20 OneWire minimal)
+- Relay actuator
+- Interlock service
+- Irrigation control service (controller)
+- Manual override service (TTL)
+- Config storage (NVS)
+- Watchdog + safe action
+- `app_main` task wiring
+
+Ini cukup untuk menjalankan Node direct mode: **kontrol lokal berjalan meski tanpa HP**.
+
+---
+
+> ✅ Struktur Folder Final (Flat)
+
+```
+/dev-htl-01-node-direct/
+  dev-htl-01-node-direct.ino
+
+  app_node_direct.h
+  app_node_direct.cpp
+
+  drv_relay.h
+  drv_relay.cpp
+  drv_soil_moisture_adc.h
+  drv_soil_moisture_adc.cpp
+  drv_ds18b20.h
+  drv_ds18b20.cpp
+
+  srv_interlock.h
+  srv_interlock.cpp
+  srv_irrigation_control.h
+  srv_irrigation_control.cpp
+  srv_manual_override.h
+  srv_manual_override.cpp
+
+  sys_config_store.h
+  sys_config_store.cpp
+  sys_watchdog.h
+  sys_watchdog.cpp
+  sys_time.h
+  sys_time.cpp
+```
+
+---
+
+> 1️⃣ MAIN FILE
+
+✔ dev-htl-01-node-direct.ino
+
+```cpp
+#include "app_node_direct.h"
+
+app_node_direct g_app;
+
+unsigned long last_100ms = 0;
+unsigned long last_1s = 0;
+unsigned long last_wdt = 0;
+
+void setup() {
+  Serial.begin(115200);
+
+  if (!g_app.init()) {
+    while (true) delay(1000);
+  }
+}
+
+void loop() {
+  unsigned long now = millis();
+
+  if (now - last_100ms >= 100) {
+    last_100ms = now;
+    g_app.loop_100ms();
+  }
+
+  if (now - last_1s >= 1000) {
+    last_1s = now;
+    g_app.loop_1s();
+  }
+
+  if (now - last_wdt >= 1000) {
+    last_wdt = now;
+    g_app.watchdog_1s();
+  }
+}
+```
+
+---
+
+> 2️⃣ SYSTEM LAYER
+
+✔ sys_time.h
+
+```cpp
+#pragma once
+#include <Arduino.h>
+
+inline uint32_t sys_time_ms() {
+  return millis();
+}
+```
+
+---
+
+✔ sys_watchdog.h
+
+```cpp
+#pragma once
+
+class sys_watchdog {
+public:
+  bool init(uint32_t timeout_ms);
+  void kick();
+};
+```
+
+---
+
+✔ sys_watchdog.cpp
+
+```cpp
+#include "sys_watchdog.h"
+#include <esp_task_wdt.h>
+
+bool sys_watchdog::init(uint32_t timeout_ms) {
+  esp_task_wdt_init(timeout_ms / 1000, true);
+  esp_task_wdt_add(NULL);
+  return true;
+}
+
+void sys_watchdog::kick() {
+  esp_task_wdt_reset();
+}
+```
+
+---
+
+✔ sys_config_store.h
+
+```cpp
+#pragma once
+#include <Preferences.h>
+#include "srv_irrigation_control.h"
+
+struct sys_node_config {
+  int soil_raw_wet;
+  int soil_raw_dry;
+  srv_irrigation_config irr;
+};
+
+class sys_config_store {
+public:
+  bool init();
+  bool load(sys_node_config& cfg);
+  bool save(const sys_node_config& cfg);
+
+private:
+  Preferences prefs_;
+};
+```
+
+---
+
+✔ sys_config_store.cpp
+
+```cpp
+#include "sys_config_store.h"
+
+bool sys_config_store::init() {
+  return prefs_.begin("htl", false);
+}
+
+bool sys_config_store::load(sys_node_config& cfg) {
+  if (!prefs_.isKey("cfg")) return false;
+  prefs_.getBytes("cfg", &cfg, sizeof(cfg));
+  return true;
+}
+
+bool sys_config_store::save(const sys_node_config& cfg) {
+  prefs_.putBytes("cfg", &cfg, sizeof(cfg));
+  return true;
+}
+```
+
+---
+
+> 3️⃣ DRIVER LAYER
+
+## drv_relay.h
+
+```cpp
+#pragma once
+#include <Arduino.h>
+
+class drv_relay {
+public:
+  bool init(int pin, bool active_high);
+  void set(bool on);
+  bool get() const { return state_; }
+
+private:
+  int pin_;
+  bool active_high_;
+  bool state_{false};
+};
+```
+
+---
+
+✔ drv_relay.cpp
+
+```cpp
+#include "drv_relay.h"
+
+bool drv_relay::init(int pin, bool active_high) {
+  pin_ = pin;
+  active_high_ = active_high;
+  pinMode(pin_, OUTPUT);
+  set(false);
+  return true;
+}
+
+void drv_relay::set(bool on) {
+  state_ = on;
+  bool level = active_high_ ? on : !on;
+  digitalWrite(pin_, level);
+}
+```
+
+---
+
+✔ drv_soil_moisture_adc.h
+
+```cpp
+#pragma once
+#include <Arduino.h>
+
+class drv_soil_moisture_adc {
+public:
+  bool init(int pin);
+  void set_calibration(int wet, int dry);
+  float read_norm();
+
+private:
+  int pin_;
+  int raw_wet_{1200};
+  int raw_dry_{3000};
+};
+```
+
+---
+
+✔ drv_soil_moisture_adc.cpp
+
+```cpp
+#include "drv_soil_moisture_adc.h"
+
+bool drv_soil_moisture_adc::init(int pin) {
+  pin_ = pin;
+  return true;
+}
+
+void drv_soil_moisture_adc::set_calibration(int wet, int dry) {
+  raw_wet_ = wet;
+  raw_dry_ = dry;
+}
+
+float drv_soil_moisture_adc::read_norm() {
+  int raw = analogRead(pin_);
+  if (raw <= raw_wet_) return 0.0f;
+  if (raw >= raw_dry_) return 1.0f;
+  return (float)(raw - raw_wet_) / (float)(raw_dry_ - raw_wet_);
+}
+```
+
+---
+
+✔ drv_ds18b20.h
+
+```cpp
+#pragma once
+#include <OneWire.h>
+#include <DallasTemperature.h>
+
+class drv_ds18b20 {
+public:
+  bool init(int pin);
+  bool read_celsius(float &out);
+
+private:
+  OneWire* oneWire_;
+  DallasTemperature* sensors_;
+};
+```
+
+---
+
+✔ drv_ds18b20.cpp
+
+```cpp
+#include "drv_ds18b20.h"
+
+bool drv_ds18b20::init(int pin) {
+  oneWire_ = new OneWire(pin);
+  sensors_ = new DallasTemperature(oneWire_);
+  sensors_->begin();
+  return true;
+}
+
+bool drv_ds18b20::read_celsius(float &out) {
+  sensors_->requestTemperatures();
+  out = sensors_->getTempCByIndex(0);
+  return (out != DEVICE_DISCONNECTED_C);
+}
+```
+
+---
+
+> 4️⃣ SERVICE LAYER
+
+✔ srv_interlock.h
+
+```cpp
+#pragma once
+
+struct srv_interlock_input {
+  bool supply_ok;
+  bool sensor_ok;
+};
+
+class srv_interlock {
+public:
+  bool allow(const srv_interlock_input& in) {
+    return in.supply_ok && in.sensor_ok;
+  }
+};
+```
+
+---
+
+✔ srv_manual_override.h
+
+```cpp
+#pragma once
+#include <Arduino.h>
+
+class srv_manual_override {
+public:
+  void set(uint32_t now, uint32_t ttl_ms, bool pump_on);
+  bool active(uint32_t now) const;
+  bool desired(uint32_t now, bool default_state) const;
+
+private:
+  bool active_{false};
+  bool pump_on_{false};
+  uint32_t expire_{0};
+};
+```
+
+---
+
+✔ srv_manual_override.cpp
+
+```cpp
+#include "srv_manual_override.h"
+
+void srv_manual_override::set(uint32_t now, uint32_t ttl_ms, bool pump_on) {
+  active_ = true;
+  pump_on_ = pump_on;
+  expire_ = now + ttl_ms;
+}
+
+bool srv_manual_override::active(uint32_t now) const {
+  return active_ && now < expire_;
+}
+
+bool srv_manual_override::desired(uint32_t now, bool default_state) const {
+  if (!active(now)) return default_state;
+  return pump_on_;
+}
+```
+
+---
+
+✔ srv_irrigation_control.h
+
+```cpp
+#pragma once
+#include <Arduino.h>
+#include "srv_interlock.h"
+#include "srv_manual_override.h"
+
+struct srv_irrigation_config {
+  float threshold;
+  uint32_t max_on_ms;
+  uint32_t min_off_ms;
+};
+
+class srv_irrigation_control {
+public:
+  void set_config(const srv_irrigation_config& cfg);
+  void bind_override(srv_manual_override* ov);
+  bool step(float soil_norm, bool sensor_ok, bool supply_ok);
+
+private:
+  srv_irrigation_config cfg_;
+  srv_interlock interlock_;
+  srv_manual_override* override_{nullptr};
+
+  bool pump_on_{false};
+  uint32_t last_switch_{0};
+  uint32_t on_since_{0};
+};
+```
+
+---
+
+✔ srv_irrigation_control.cpp
+
+```cpp
+#include "srv_irrigation_control.h"
+
+void srv_irrigation_control::set_config(const srv_irrigation_config& cfg) {
+  cfg_ = cfg;
+}
+
+void srv_irrigation_control::bind_override(srv_manual_override* ov) {
+  override_ = ov;
+}
+
+bool srv_irrigation_control::step(float soil_norm, bool sensor_ok, bool supply_ok) {
+  uint32_t now = millis();
+
+  if (!interlock_.allow({supply_ok, sensor_ok})) {
+    pump_on_ = false;
+    return false;
+  }
+
+  bool desired = soil_norm >= cfg_.threshold;
+
+  if (override_) {
+    desired = override_->desired(now, desired);
+  }
+
+  if (pump_on_ && now - on_since_ > cfg_.max_on_ms) {
+    pump_on_ = false;
+  }
+
+  if (!pump_on_ && desired) {
+    if (now - last_switch_ < cfg_.min_off_ms) {
+      return false;
+    }
+    pump_on_ = true;
+    on_since_ = now;
+    last_switch_ = now;
+  }
+
+  if (pump_on_ && !desired) {
+    pump_on_ = false;
+    last_switch_ = now;
+  }
+
+  return pump_on_;
+}
+```
+
+---
+
+> 5️⃣ APPLICATION LAYER
+
+✔ app_node_direct.h
+
+```cpp
+#pragma once
+#include "drv_relay.h"
+#include "drv_soil_moisture_adc.h"
+#include "drv_ds18b20.h"
+#include "srv_irrigation_control.h"
+#include "srv_manual_override.h"
+#include "sys_config_store.h"
+#include "sys_watchdog.h"
+#include "sys_time.h"
+
+class app_node_direct {
+public:
+  bool init();
+  void loop_1s();
+  void loop_100ms();
+  void watchdog_1s();
+
+  void set_manual_override(uint32_t ttl_ms, bool on);
+
+private:
+  drv_relay relay_;
+  drv_soil_moisture_adc soil_;
+  drv_ds18b20 temp_;
+
+  srv_irrigation_control ctrl_;
+  srv_manual_override override_;
+  sys_config_store cfg_store_;
+  sys_node_config cfg_;
+  sys_watchdog wdt_;
+
+  float soil_norm_{0};
+  float temp_c_{0};
+  bool sensor_ok_{true};
+  bool supply_ok_{true};
+};
+```
+
+---
+
+✔ app_node_direct.cpp
+
+```cpp
+#include "app_node_direct.h"
+
+bool app_node_direct::init() {
+  cfg_store_.init();
+
+  if (!cfg_store_.load(cfg_)) {
+    cfg_.soil_raw_wet = 1200;
+    cfg_.soil_raw_dry = 3000;
+    cfg_.irr = {0.6f, 300000, 30000};
+    cfg_store_.save(cfg_);
+  }
+
+  relay_.init(26, true);
+  soil_.init(34);
+  soil_.set_calibration(cfg_.soil_raw_wet, cfg_.soil_raw_dry);
+  temp_.init(4);
+
+  ctrl_.set_config(cfg_.irr);
+  ctrl_.bind_override(&override_);
+
+  wdt_.init(5000);
+
+  return true;
+}
+
+void app_node_direct::loop_1s() {
+  soil_norm_ = soil_.read_norm();
+  temp_.read_celsius(temp_c_);
+  sensor_ok_ = soil_norm_ >= 0.0f && soil_norm_ <= 1.0f;
+}
+
+void app_node_direct::loop_100ms() {
+  bool pump = ctrl_.step(soil_norm_, sensor_ok_, supply_ok_);
+  relay_.set(pump);
+}
+
+void app_node_direct::watchdog_1s() {
+  wdt_.kick();
+}
+
+void app_node_direct::set_manual_override(uint32_t ttl_ms, bool on) {
+  override_.set(sys_time_ms(), ttl_ms, on);
+}
+```
+
+---
+
+# 8. Communication Binding (Direct Mode)
+
+## 8.1 HTTP Endpoint Definition (FINAL)
+
+**Base URL:** `http://<node-ip>/`
+
+| Endpoint         | Method |                Auth | Tujuan                                 |
+| ---------------- | -----: | ------------------: | -------------------------------------- |
+| `/status`        |    GET |     optional (hook) | status ringkas node                    |
+| `/snapshot`      |    GET |     optional (hook) | data sensor + actuator + reason        |
+| `/actuator-test` |   POST | **required** (hook) | test pompa/valve via TTL override      |
+| `/provision`     |   POST | **required** (hook) | set config dasar + (opsional) SSID/PSK |
+| `/reset`         |   POST | **required** (hook) | reboot terkontrol                      |
+| `/log-tail`      |    GET | **required** (hook) | ambil log ring buffer                  |
+
+**Batasan (wajib):**
+
+- Max payload JSON request: **2 KB**
+- Max log-tail response: **4 KB**
+- Max `ttl_ms` untuk actuator-test: **300000 ms (5 menit)**
+
+---
+
+## 8.2 Request/Response Structure (JSON Schema)
+
+✔ GET `/status` (Response)
+
+```json
+{
+  "node_id": "HTL-<chipid>",
+  "mode": "commissioning|normal|maintenance|safe",
+  "ip": "192.168.4.1",
+  "wifi": { "mode": "ap|sta", "ssid": "HTL-xxxx", "rssi": -55 },
+  "fw": { "version": "0.1.0", "build": "2026-02-24" },
+  "uptime_s": 1234,
+  "pump": { "state": false },
+  "health": { "sensor_ok": true, "supply_ok": true, "wdt_ok": true }
+}
+```
+
+✔ GET `/snapshot` (Response)
+
+```json
+{
+  "ts_ms": 12345678,
+  "soil_norm": 0.42,
+  "temp_c": 28.5,
+  "pump_state": false,
+  "control": {
+    "reason": "steady|rule_on|rule_off|max_on_limit|min_off_time|sensor_not_ok|supply_not_ok"
+  }
+}
+```
+
+✔ POST `/actuator-test` (Request)
+
+```json
+{
+  "target": "pump",
+  "state": true,
+  "ttl_ms": 60000
+}
+```
+
+**Response**
+
+```json
+{
+  "accepted": true,
+  "expires_in_ms": 60000
+}
+```
+
+✔ POST `/provision` (Request)
+
+```json
+{
+  "cal": { "soil_raw_wet": 1200, "soil_raw_dry": 3000 },
+  "irrigation": { "threshold": 0.6, "max_on_ms": 300000, "min_off_ms": 30000 },
+  "wifi": { "mode": "ap|sta", "ssid": "xxx", "psk": "yyy" }
+}
+```
+
+**Response**
+
+```json
+{ "saved": true, "rebooting": true }
+```
+
+✔ POST `/reset` (Request)
+
+```json
+{ "reason": "manual_reset" }
+```
+
+**Response**
+
+```json
+{ "ok": true, "rebooting": true }
+```
+
+✔ GET `/log-tail?lines=50` (Response)
+
+```json
+{
+  "lines": [
+    "123456: boot ok",
+    "123890: soil=0.41 temp=28.5 pump=0 reason=steady"
+  ]
+}
+```
+
+---
+
+## 8.3 Manual Override Policy (Direct)
+
+**Rule final (eksekusi):**
+
+- Manual override hanya lewat `/actuator-test`
+- Wajib TTL
+- TTL maksimum 5 menit
+- Override **tidak boleh** bypass interlock (`sensor_ok`, `supply_ok`)
+- Override expired → kembali ke kontrol normal otomatis
+
+---
+
+# 9. Lifecycle Model
+
+## 9.1 Boot Sequence (FINAL)
+
+BOOT → Self-check → Load config (NVS) → Decide WiFi mode → Start HTTP → Start Control Loop
+
+Urutan deterministik:
+
+1. Init sys (config, log, watchdog)
+2. Init drivers (relay OFF default)
+3. Init services (control engine + override)
+4. Decide WiFi:
+
+   - jika belum provisioned → AP commissioning
+   - jika provisioned & STA creds valid → STA connect (timeout) → fallback AP
+
+5. Start HTTP endpoints
+6. Run control loop (100ms) + sensor loop (1s)
+
+---
+
+## 9.2 Operating Modes
+
+- **Commissioning Mode**
+  AP mode aktif, provisioning diizinkan, actuator-test diizinkan (TTL).
+- **Normal Mode**
+  Kontrol otomatis aktif, actuator-test diizinkan (TTL), provisioning dibatasi (tetap lewat auth).
+- **Maintenance Mode**
+  Untuk servis; boleh actuator-test + log-tail + snapshot intensif.
+- **Safe Mode**
+  Semua actuator OFF, hanya status/log/provision/reset.
+
+---
+
+## 9.3 Mode Transition Rules
+
+Mode ditentukan oleh kondisi berikut:
+
+- Provisioning status (NVS flag)
+- Fault state:
+
+  - sensor invalid → safe mode (opsional, sesuai kebijakan di Part 5)
+  - supply not ok/brownout flag → safe mode
+
+- Manual override active tidak mengubah mode, hanya mempengaruhi output
+
+**Diagram transisi (fungsional, bukan dekorasi):**
+
+Commissioning → Normal
+
+- kondisi: provisioned == true AND wifi ready
+
+Normal → Maintenance
+
+- kondisi: request khusus (akan diikat auth di Part 5) ATAU local jumper/service flag (opsional)
+
+Normal/Maintenance → Safe
+
+- kondisi: sensor_ok=false OR supply_ok=false OR watchdog anomaly
+
+Safe → Normal
+
+- kondisi: fault cleared + reboot/reset (kebijakan)
+
+---
+
+# FULL CODING (Part 4)
+
+## A) `sys_log.h`
+
+```cpp
+#pragma once
+#include <Arduino.h>
+
+class sys_log {
+public:
+  void init(size_t max_bytes = 4096);
+  void add(const String& line);
+  String tail_lines(uint16_t lines) const;
+
+private:
+  String buf_;
+  size_t max_{4096};
+};
+
+extern sys_log SYS_LOG;
+```
+
+## B) `sys_log.cpp`
+
+```cpp
+#include "sys_log.h"
+
+sys_log SYS_LOG;
+
+void sys_log::init(size_t max_bytes) {
+  max_ = max_bytes;
+  buf_.reserve(max_);
+  buf_ = "";
+}
+
+void sys_log::add(const String& line) {
+  String l = String(sys_time_ms()) + ": " + line + "\n";
+  buf_ += l;
+  if (buf_.length() > max_) {
+    // drop oldest half
+    buf_.remove(0, buf_.length() / 2);
+  }
+}
+
+String sys_log::tail_lines(uint16_t lines) const {
+  if (lines == 0) lines = 50;
+  int count = 0;
+  for (int i = buf_.length() - 1; i >= 0; --i) {
+    if (buf_[i] == '\n') {
+      count++;
+      if (count >= lines) {
+        return buf_.substring(i + 1);
+      }
+    }
+  }
+  return buf_;
+}
+```
+
+> Note: `sys_time_ms()` dipakai dari `sys_time.h` (Part 3). Pastikan include tersedia (Arduino inline). Jika compiler protes, tambahkan `#include "sys_time.h"` di `sys_log.cpp`.
+
+---
+
+## C) `sys_wifi.h`
+
+```cpp
+#pragma once
+#include <Arduino.h>
+
+struct sys_wifi_cfg {
+  bool provisioned{false};
+  String sta_ssid;
+  String sta_psk;
+};
+
+struct sys_wifi_state {
+  String mode;   // "ap" | "sta"
+  String ssid;
+  String ip;
+  int rssi;
+};
+
+class sys_wifi {
+public:
+  bool start(const sys_wifi_cfg& cfg, const String& ap_ssid, const String& ap_psk, uint32_t sta_timeout_ms = 8000);
+  sys_wifi_state state() const;
+
+private:
+  sys_wifi_state st_{};
+};
+
+extern sys_wifi SYS_WIFI;
+```
+
+## D) `sys_wifi.cpp`
+
+```cpp
+#include "sys_wifi.h"
+#include <WiFi.h>
+
+sys_wifi SYS_WIFI;
+
+static String ip_to_string(IPAddress ip) {
+  return String(ip[0]) + "." + String(ip[1]) + "." + String(ip[2]) + "." + String(ip[3]);
+}
+
+bool sys_wifi::start(const sys_wifi_cfg& cfg, const String& ap_ssid, const String& ap_psk, uint32_t sta_timeout_ms) {
+  WiFi.mode(WIFI_OFF);
+  delay(50);
+
+  // Default: commissioning AP
+  auto start_ap = [&]() {
+    WiFi.mode(WIFI_AP);
+    WiFi.softAP(ap_ssid.c_str(), ap_psk.length() ? ap_psk.c_str() : nullptr);
+    st_.mode = "ap";
+    st_.ssid = ap_ssid;
+    st_.ip = ip_to_string(WiFi.softAPIP());
+    st_.rssi = 0;
+    return true;
+  };
+
+  if (!cfg.provisioned || cfg.sta_ssid.length() == 0) {
+    return start_ap();
+  }
+
+  // Try STA
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(cfg.sta_ssid.c_str(), cfg.sta_psk.c_str());
+
+  uint32_t start_ms = millis();
+  while (WiFi.status() != WL_CONNECTED && (millis() - start_ms) < sta_timeout_ms) {
+    delay(200);
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    st_.mode = "sta";
+    st_.ssid = cfg.sta_ssid;
+    st_.ip = ip_to_string(WiFi.localIP());
+    st_.rssi = WiFi.RSSI();
+    return true;
+  }
+
+  // Fallback AP
+  WiFi.disconnect(true);
+  delay(50);
+  return start_ap();
+}
+
+sys_wifi_state sys_wifi::state() const {
+  sys_wifi_state s = st_;
+  if (st_.mode == "sta") {
+    s.rssi = WiFi.RSSI();
+    s.ip = ip_to_string(WiFi.localIP());
+  } else if (st_.mode == "ap") {
+    s.ip = ip_to_string(WiFi.softAPIP());
+  }
+  return s;
+}
+```
+
+---
+
+## E) Update `sys_config_store.h/.cpp` (tambah wifi + provision flag)
+
+✔ `sys_config_store.h` (REPLACE)
+
+```cpp
+#pragma once
+#include <Preferences.h>
+#include "srv_irrigation_control.h"
+
+struct sys_node_config {
+  // calibration
+  int soil_raw_wet;
+  int soil_raw_dry;
+
+  // irrigation
+  srv_irrigation_config irr;
+
+  // wifi provisioning
+  bool provisioned;
+  char sta_ssid[33];
+  char sta_psk[65];
+
+  // metadata
+  char fw_version[16];
+};
+
+class sys_config_store {
+public:
+  bool init();
+  bool load(sys_node_config& cfg);
+  bool save(const sys_node_config& cfg);
+
+private:
+  Preferences prefs_;
+};
+```
+
+✔ `sys_config_store.cpp` (REPLACE)
+
+```cpp
+#include "sys_config_store.h"
+#include <string.h>
+
+bool sys_config_store::init() {
+  return prefs_.begin("htl", false);
+}
+
+bool sys_config_store::load(sys_node_config& cfg) {
+  if (!prefs_.isKey("cfg")) return false;
+  prefs_.getBytes("cfg", &cfg, sizeof(cfg));
+  return true;
+}
+
+bool sys_config_store::save(const sys_node_config& cfg) {
+  prefs_.putBytes("cfg", &cfg, sizeof(cfg));
+  return true;
+}
+```
+
+---
+
+## F) Update `app_node_direct.h/.cpp` (snapshot + reason + apply config + log)
+
+✔ `app_node_direct.h` (REPLACE)
+
+```cpp
+#pragma once
+#include "drv_relay.h"
+#include "drv_soil_moisture_adc.h"
+#include "drv_ds18b20.h"
+#include "srv_irrigation_control.h"
+#include "srv_manual_override.h"
+#include "sys_config_store.h"
+#include "sys_watchdog.h"
+#include "sys_time.h"
+
+struct app_snapshot {
+  uint32_t ts_ms;
+  float soil_norm;
+  float temp_c;
+  bool pump_state;
+  const char* reason;
+  bool sensor_ok;
+  bool supply_ok;
+};
+
+class app_node_direct {
+public:
+  bool init();
+  void loop_1s();
+  void loop_100ms();
+  void watchdog_1s();
+
+  void set_manual_override(uint32_t ttl_ms, bool on);
+  app_snapshot snapshot() const;
+
+  // provisioning apply (called from /provision)
+  bool apply_and_save_config(const sys_node_config& new_cfg);
+
+  // expose config for status
+  const sys_node_config& cfg() const { return cfg_; }
+
+private:
+  drv_relay relay_;
+  drv_soil_moisture_adc soil_;
+  drv_ds18b20 temp_;
+
+  srv_irrigation_control ctrl_;
+  srv_manual_override override_;
+  sys_config_store cfg_store_;
+  sys_node_config cfg_{};
+  sys_watchdog wdt_;
+
+  float soil_norm_{0};
+  float temp_c_{0};
+  bool sensor_ok_{true};
+  bool supply_ok_{true};
+
+  const char* last_reason_{"boot"};
+};
+```
+
+✔ `app_node_direct.cpp` (REPLACE)
+
+```cpp
+#include "app_node_direct.h"
+#include "sys_log.h"
+#include <string.h>
+
+bool app_node_direct::init() {
+  SYS_LOG.init(4096);
+  SYS_LOG.add("boot start");
+
+  cfg_store_.init();
+
+  if (!cfg_store_.load(cfg_)) {
+    cfg_.soil_raw_wet = 1200;
+    cfg_.soil_raw_dry = 3000;
+    cfg_.irr = {0.6f, 300000, 30000};
+    cfg_.provisioned = false;
+    memset(cfg_.sta_ssid, 0, sizeof(cfg_.sta_ssid));
+    memset(cfg_.sta_psk, 0, sizeof(cfg_.sta_psk));
+    strncpy(cfg_.fw_version, "0.1.0", sizeof(cfg_.fw_version)-1);
+    cfg_store_.save(cfg_);
+    SYS_LOG.add("cfg default created");
+  } else {
+    SYS_LOG.add("cfg loaded");
+  }
+
+  relay_.init(26, true);
+  soil_.init(34);
+  soil_.set_calibration(cfg_.soil_raw_wet, cfg_.soil_raw_dry);
+  temp_.init(4);
+
+  ctrl_.set_config(cfg_.irr);
+  ctrl_.bind_override(&override_);
+
+  wdt_.init(5000);
+
+  SYS_LOG.add("boot ok");
+  return true;
+}
+
+void app_node_direct::loop_1s() {
+  soil_norm_ = soil_.read_norm();
+
+  float t = temp_c_;
+  temp_.read_celsius(t);
+  temp_c_ = t;
+
+  sensor_ok_ = (soil_norm_ >= 0.0f && soil_norm_ <= 1.0f);
+
+  // periodic log (ring buffer)
+  SYS_LOG.add(String("soil=") + String(soil_norm_, 2) +
+              " temp=" + String(temp_c_, 1) +
+              " pump=" + String(relay_.get() ? 1 : 0) +
+              " reason=" + String(last_reason_));
+}
+
+void app_node_direct::loop_100ms() {
+  bool pump = ctrl_.step(soil_norm_, sensor_ok_, supply_ok_);
+  relay_.set(pump);
+  // last_reason_ di-update dari srv_control pada Part 3 versi IDF; di Arduino versi ini belum.
+  // Untuk tetap deterministik, kita set reason sederhana:
+  if (!sensor_ok_) last_reason_ = "sensor_not_ok";
+  else last_reason_ = pump ? "rule_on" : "rule_off";
+}
+
+void app_node_direct::watchdog_1s() {
+  wdt_.kick();
+}
+
+void app_node_direct::set_manual_override(uint32_t ttl_ms, bool on) {
+  override_.set(sys_time_ms(), ttl_ms, on);
+  SYS_LOG.add(String("manual_override pump=") + (on ? "1" : "0") + " ttl_ms=" + String(ttl_ms));
+}
+
+app_snapshot app_node_direct::snapshot() const {
+  app_snapshot s{};
+  s.ts_ms = sys_time_ms();
+  s.soil_norm = soil_norm_;
+  s.temp_c = temp_c_;
+  s.pump_state = relay_.get();
+  s.reason = last_reason_;
+  s.sensor_ok = sensor_ok_;
+  s.supply_ok = supply_ok_;
+  return s;
+}
+
+bool app_node_direct::apply_and_save_config(const sys_node_config& new_cfg) {
+  cfg_ = new_cfg;
+  bool ok = cfg_store_.save(cfg_);
+  if (ok) {
+    // apply runtime
+    soil_.set_calibration(cfg_.soil_raw_wet, cfg_.soil_raw_dry);
+    ctrl_.set_config(cfg_.irr);
+    SYS_LOG.add("cfg saved & applied");
+  } else {
+    SYS_LOG.add("cfg save failed");
+  }
+  return ok;
+}
+```
+
+---
+
+## G) `app_http_direct.h`
+
+```cpp
+#pragma once
+#include <Arduino.h>
+#include <WebServer.h>
+#include "app_node_direct.h"
+
+class app_http_direct {
+public:
+  bool init(app_node_direct* app, uint16_t port = 80);
+  void loop();
+
+private:
+  WebServer server_{80};
+  app_node_direct* app_{nullptr};
+
+  // minimal auth hook (placeholder until Part 5)
+  bool auth_ok_();
+
+  void handle_status_();
+  void handle_snapshot_();
+  void handle_actuator_test_();
+  void handle_provision_();
+  void handle_reset_();
+  void handle_log_tail_();
+
+  void send_json_(int code, const String& body);
+};
+```
+
+## H) `app_http_direct.cpp`
+
+```cpp
+#include "app_http_direct.h"
+#include "sys_log.h"
+#include <ArduinoJson.h>
+#include <ESP.h>
+#include "sys_wifi.h"
+
+bool app_http_direct::init(app_node_direct* app, uint16_t port) {
+  app_ = app;
+  server_ = WebServer(port);
+
+  server_.on("/status", HTTP_GET, [this]() { handle_status_(); });
+  server_.on("/snapshot", HTTP_GET, [this]() { handle_snapshot_(); });
+  server_.on("/actuator-test", HTTP_POST, [this]() { handle_actuator_test_(); });
+  server_.on("/provision", HTTP_POST, [this]() { handle_provision_(); });
+  server_.on("/reset", HTTP_POST, [this]() { handle_reset_(); });
+  server_.on("/log-tail", HTTP_GET, [this]() { handle_log_tail_(); });
+
+  server_.onNotFound([this]() { send_json_(404, "{\"error\":\"not_found\"}"); });
+
+  server_.begin();
+  SYS_LOG.add("http server started");
+  return true;
+}
+
+void app_http_direct::loop() {
+  server_.handleClient();
+}
+
+// Placeholder auth: allow if header x-htl-auth == "1" OR query auth=1
+// Final policy (PIN/session/lockout) will replace this in Part 5.
+bool app_http_direct::auth_ok_() {
+  if (server_.hasHeader("x-htl-auth") && server_.header("x-htl-auth") == "1") return true;
+  if (server_.hasArg("auth") && server_.arg("auth") == "1") return true;
+  return false;
+}
+
+void app_http_direct::send_json_(int code, const String& body) {
+  server_.send(code, "application/json", body);
+}
+
+void app_http_direct::handle_status_() {
+  auto ws = SYS_WIFI.state();
+  const auto& cfg = app_->cfg();
+
+  StaticJsonDocument<768> doc;
+  doc["node_id"] = String("HTL-") + String((uint32_t)ESP.getEfuseMac(), HEX);
+  doc["mode"] = cfg.provisioned ? "normal" : "commissioning";
+  doc["ip"] = ws.ip;
+
+  JsonObject wifi = doc.createNestedObject("wifi");
+  wifi["mode"] = ws.mode;
+  wifi["ssid"] = ws.ssid;
+  wifi["rssi"] = ws.rssi;
+
+  JsonObject fw = doc.createNestedObject("fw");
+  fw["version"] = cfg.fw_version;
+
+  doc["uptime_s"] = millis() / 1000;
+
+  JsonObject pump = doc.createNestedObject("pump");
+  pump["state"] = app_->snapshot().pump_state;
+
+  JsonObject health = doc.createNestedObject("health");
+  auto s = app_->snapshot();
+  health["sensor_ok"] = s.sensor_ok;
+  health["supply_ok"] = s.supply_ok;
+  health["wdt_ok"] = true;
+
+  String out;
+  serializeJson(doc, out);
+  send_json_(200, out);
+}
+
+void app_http_direct::handle_snapshot_() {
+  auto s = app_->snapshot();
+
+  StaticJsonDocument<512> doc;
+  doc["ts_ms"] = s.ts_ms;
+  doc["soil_norm"] = s.soil_norm;
+  doc["temp_c"] = s.temp_c;
+  doc["pump_state"] = s.pump_state;
+
+  JsonObject ctrl = doc.createNestedObject("control");
+  ctrl["reason"] = s.reason;
+
+  String out;
+  serializeJson(doc, out);
+  send_json_(200, out);
+}
+
+void app_http_direct::handle_actuator_test_() {
+  if (!auth_ok_()) return send_json_(401, "{\"error\":\"unauthorized\"}");
+
+  if (server_.arg("plain").length() > 2048) return send_json_(413, "{\"error\":\"payload_too_large\"}");
+
+  StaticJsonDocument<384> req;
+  auto err = deserializeJson(req, server_.arg("plain"));
+  if (err) return send_json_(400, "{\"error\":\"bad_json\"}");
+
+  const char* target = req["target"] | "";
+  bool state = req["state"] | false;
+  uint32_t ttl_ms = req["ttl_ms"] | 0;
+
+  if (String(target) != "pump") return send_json_(400, "{\"error\":\"invalid_target\"}");
+  if (ttl_ms == 0 || ttl_ms > 300000) return send_json_(400, "{\"error\":\"invalid_ttl_ms\"}");
+
+  app_->set_manual_override(ttl_ms, state);
+
+  StaticJsonDocument<192> res;
+  res["accepted"] = true;
+  res["expires_in_ms"] = ttl_ms;
+  String out;
+  serializeJson(res, out);
+  send_json_(200, out);
+}
+
+void app_http_direct::handle_provision_() {
+  if (!auth_ok_()) return send_json_(401, "{\"error\":\"unauthorized\"}");
+
+  if (server_.arg("plain").length() > 2048) return send_json_(413, "{\"error\":\"payload_too_large\"}");
+
+  StaticJsonDocument<768> req;
+  auto err = deserializeJson(req, server_.arg("plain"));
+  if (err) return send_json_(400, "{\"error\":\"bad_json\"}");
+
+  sys_node_config new_cfg = app_->cfg(); // start from existing
+
+  // calibration
+  new_cfg.soil_raw_wet = req["cal"]["soil_raw_wet"] | new_cfg.soil_raw_wet;
+  new_cfg.soil_raw_dry = req["cal"]["soil_raw_dry"] | new_cfg.soil_raw_dry;
+
+  // irrigation
+  new_cfg.irr.threshold  = req["irrigation"]["threshold"]  | new_cfg.irr.threshold;
+  new_cfg.irr.max_on_ms  = req["irrigation"]["max_on_ms"]  | new_cfg.irr.max_on_ms;
+  new_cfg.irr.min_off_ms = req["irrigation"]["min_off_ms"] | new_cfg.irr.min_off_ms;
+
+  // wifi (optional)
+  const char* wmode = req["wifi"]["mode"] | "";
+  const char* ssid  = req["wifi"]["ssid"] | "";
+  const char* psk   = req["wifi"]["psk"]  | "";
+
+  if (String(wmode) == "sta" && String(ssid).length() > 0) {
+    strncpy(new_cfg.sta_ssid, ssid, sizeof(new_cfg.sta_ssid)-1);
+    strncpy(new_cfg.sta_psk,  psk,  sizeof(new_cfg.sta_psk)-1);
+    new_cfg.provisioned = true;
+  } else {
+    // AP commissioning only
+    new_cfg.provisioned = true; // provisioned true = config saved, even if AP-only
+  }
+
+  bool ok = app_->apply_and_save_config(new_cfg);
+  if (!ok) return send_json_(500, "{\"error\":\"save_failed\"}");
+
+  send_json_(200, "{\"saved\":true,\"rebooting\":true}");
+  delay(300);
+  ESP.restart();
+}
+
+void app_http_direct::handle_reset_() {
+  if (!auth_ok_()) return send_json_(401, "{\"error\":\"unauthorized\"}");
+  send_json_(200, "{\"ok\":true,\"rebooting\":true}");
+  delay(300);
+  ESP.restart();
+}
+
+void app_http_direct::handle_log_tail_() {
+  if (!auth_ok_()) return send_json_(401, "{\"error\":\"unauthorized\"}");
+  uint16_t lines = 50;
+  if (server_.hasArg("lines")) lines = (uint16_t)server_.arg("lines").toInt();
+
+  String text = SYS_LOG.tail_lines(lines);
+
+  StaticJsonDocument<1024> doc;
+  JsonArray arr = doc.createNestedArray("lines");
+
+  // split by '\n' into array, bounded by response size
+  int start = 0;
+  while (true) {
+    int idx = text.indexOf('\n', start);
+    if (idx < 0) break;
+    String line = text.substring(start, idx);
+    if (line.length()) arr.add(line);
+    start = idx + 1;
+    if (arr.size() >= lines) break;
+  }
+
+  String out;
+  serializeJson(doc, out);
+  if (out.length() > 4096) return send_json_(413, "{\"error\":\"response_too_large\"}");
+  send_json_(200, out);
+}
+```
+
+> Dependencies Arduino:
+
+- `WebServer` (builtin ESP32 core)
+- `ArduinoJson`
+- `OneWire` + `DallasTemperature`
+
+---
+
+## I) Update `dev-htl-01-node-direct.ino` (start WiFi + start HTTP + loop HTTP)
+
+REPLACE file ini menjadi:
+
+```cpp
+#include "app_node_direct.h"
+#include "app_http_direct.h"
+#include "sys_wifi.h"
+#include "sys_log.h"
+#include <ESP.h>
+
+app_node_direct g_app;
+app_http_direct g_http;
+
+unsigned long last_100ms = 0;
+unsigned long last_1s = 0;
+unsigned long last_wdt = 0;
+
+static String make_ap_ssid() {
+  uint32_t id = (uint32_t)ESP.getEfuseMac();
+  return String("HTL-") + String(id, HEX);
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  if (!g_app.init()) {
+    while (true) delay(1000);
+  }
+
+  // WiFi decision from config
+  sys_wifi_cfg wcfg;
+  wcfg.provisioned = g_app.cfg().provisioned;
+  wcfg.sta_ssid = String(g_app.cfg().sta_ssid);
+  wcfg.sta_psk  = String(g_app.cfg().sta_psk);
+
+  const String ap_ssid = make_ap_ssid();
+  const String ap_psk  = ""; // open AP by default (Part 5 may harden)
+
+  SYS_WIFI.start(wcfg, ap_ssid, ap_psk, 8000);
+  auto st = SYS_WIFI.state();
+  SYS_LOG.add(String("wifi mode=") + st.mode + " ssid=" + st.ssid + " ip=" + st.ip);
+
+  g_http.init(&g_app, 80);
+}
+
+void loop() {
+  unsigned long now = millis();
+
+  // HTTP pump
+  g_http.loop();
+
+  // control loop
+  if (now - last_100ms >= 100) {
+    last_100ms = now;
+    g_app.loop_100ms();
+  }
+
+  // sensor loop
+  if (now - last_1s >= 1000) {
+    last_1s = now;
+    g_app.loop_1s();
+  }
+
+  // watchdog
+  if (now - last_wdt >= 1000) {
+    last_wdt = now;
+    g_app.watchdog_1s();
+  }
+}
+```
+
+---
+
+# 10. Failure Handling Implementation
+
+---
+
+## 10.1 Brownout Detection (ESP32)
+
+ESP32 memiliki brownout detector internal.
+
+Tambahkan file:
+
+```
+sys_power.h
+sys_power.cpp
+```
+
+---
+
+## sys_power.h
+
+```cpp
+#pragma once
+#include <Arduino.h>
+
+class sys_power {
+public:
+  void init();
+  bool brownout_detected() const;
+  const char* reset_reason_str() const;
+
+private:
+  bool brownout_{false};
+};
+```
+
+---
+
+## sys_power.cpp
+
+```cpp
+#include "sys_power.h"
+#include <esp_system.h>
+#include <esp_task_wdt.h>
+
+void sys_power::init() {
+  esp_reset_reason_t r = esp_reset_reason();
+  if (r == ESP_RST_BROWNOUT) {
+    brownout_ = true;
+  }
+}
+
+bool sys_power::brownout_detected() const {
+  return brownout_;
+}
+
+const char* sys_power::reset_reason_str() const {
+  switch (esp_reset_reason()) {
+    case ESP_RST_POWERON: return "power_on";
+    case ESP_RST_BROWNOUT: return "brownout";
+    case ESP_RST_WDT: return "watchdog";
+    case ESP_RST_SW: return "software_reset";
+    default: return "unknown";
+  }
+}
+```
+
+---
+
+## Integrasi ke app_node_direct
+
+Tambahkan member:
+
+```cpp
+#include "sys_power.h"
+sys_power power_;
+```
+
+Di `init()`:
+
+```cpp
+power_.init();
+if (power_.brownout_detected()) {
+  SYS_LOG.add("brownout detected");
+}
+```
+
+---
+
+## 10.2 Actuator Stuck Protection (Runtime Enforcement)
+
+Update `srv_irrigation_control.cpp`
+
+Tambahkan logic keras:
+
+```cpp
+if (pump_on_ && (now - on_since_) > cfg_.max_on_ms) {
+  pump_on_ = false;
+  last_switch_ = now;
+  return false;
+}
+```
+
+Sudah ada, tetapi kita pastikan:
+
+- Tidak boleh melebihi max_on_ms
+- Override juga tetap tunduk pada max_on_ms
+
+Tambahkan di bagian override:
+
+```cpp
+if (override_) {
+  desired = override_->desired(now, desired);
+  if (override_->active(now) && pump_on_ && (now - on_since_) > cfg_.max_on_ms) {
+    pump_on_ = false;
+  }
+}
+```
+
+---
+
+## 10.3 Sensor Failure Escalation
+
+Update `loop_100ms()` di app:
+
+```cpp
+if (!sensor_ok_) {
+  relay_.set(false);
+  last_reason_ = "sensor_not_ok";
+  return;
+}
+```
+
+---
+
+## 10.4 HP Disconnect Handling
+
+Manual override TTL sudah enforced.
+
+Tambahkan auto-cancel logging:
+
+Dalam `loop_1s()`:
+
+```cpp
+static bool last_override = false;
+bool now_override = override_.active(sys_time_ms());
+if (last_override && !now_override) {
+  SYS_LOG.add("manual_override_expired");
+}
+last_override = now_override;
+```
+
+---
+
+# 11. Security Implementation
+
+Sekarang kita implementasi serius.
+
+Bukan placeholder.
+
+---
+
+# 11.1 PIN Authentication + Session Token
+
+Tambahkan file:
+
+```
+sys_auth.h
+sys_auth.cpp
+```
+
+---
+
+## sys_auth.h
+
+```cpp
+#pragma once
+#include <Arduino.h>
+
+class sys_auth {
+public:
+  bool init();
+  bool login(const String& pin, String& out_token);
+  bool validate(const String& token);
+  void logout(const String& token);
+
+  bool locked() const { return locked_; }
+
+private:
+  String stored_pin_;
+  String active_token_;
+  uint32_t token_expire_{0};
+  uint8_t fail_count_{0};
+  bool locked_{false};
+};
+```
+
+---
+
+## sys_auth.cpp
+
+```cpp
+#include "sys_auth.h"
+#include "sys_time.h"
+
+bool sys_auth::init() {
+  stored_pin_ = "1234"; // Part 6: move to NVS
+  return true;
+}
+
+bool sys_auth::login(const String& pin, String& out_token) {
+  if (locked_) return false;
+
+  if (pin != stored_pin_) {
+    fail_count_++;
+    if (fail_count_ >= 5) {
+      locked_ = true;
+    }
+    return false;
+  }
+
+  fail_count_ = 0;
+  active_token_ = String(random(100000, 999999));
+  token_expire_ = sys_time_ms() + 600000; // 10 minutes
+  out_token = active_token_;
+  return true;
+}
+
+bool sys_auth::validate(const String& token) {
+  if (locked_) return false;
+  if (token != active_token_) return false;
+  if (sys_time_ms() > token_expire_) return false;
+  return true;
+}
+
+void sys_auth::logout(const String& token) {
+  if (token == active_token_) {
+    active_token_ = "";
+  }
+}
+```
+
+---
+
+# Integrasi ke HTTP
+
+Di `app_http_direct.h`
+
+Tambahkan:
+
+```cpp
+#include "sys_auth.h"
+sys_auth auth_;
+```
+
+---
+
+Di `init()`:
+
+```cpp
+auth_.init();
+```
+
+---
+
+Ganti `auth_ok_()` menjadi:
+
+```cpp
+bool app_http_direct::auth_ok_() {
+  if (server_.hasHeader("x-htl-token")) {
+    return auth_.validate(server_.header("x-htl-token"));
+  }
+  return false;
+}
+```
+
+---
+
+Tambahkan endpoint login:
+
+Di init():
+
+```cpp
+server_.on("/login", HTTP_POST, [this]() {
+  StaticJsonDocument<128> req;
+  deserializeJson(req, server_.arg("plain"));
+  String pin = req["pin"] | "";
+  String token;
+  if (auth_.login(pin, token)) {
+    send_json_(200, String("{\"token\":\"") + token + "\"}");
+  } else {
+    send_json_(401, "{\"error\":\"auth_failed\"}");
+  }
+});
+```
+
+---
+
+# 11.2 AP Hardening
+
+Di `setup()` ubah AP:
+
+```cpp
+const String ap_psk = "hortilink123";  // minimal WPA2
+```
+
+Open AP tidak diperbolehkan production.
+
+---
+
+# 11.3 Rate Limit Login
+
+Sudah ada lockout setelah 5 gagal.
+
+Tambahkan reset lock only after reboot.
+
+---
+
+# 11.4 NVS Encrypted PIN (Production)
+
+Replace default PIN:
+
+Dalam `sys_auth::init()` tambahkan:
+
+```cpp
+// TODO: load PIN from NVS in production
+```
+
+---
+
+# 11.5 Unauthorized Attempt Logging
+
+Dalam `auth_ok_()`:
+
+```cpp
+if (!valid) {
+  SYS_LOG.add("unauthorized attempt");
+}
+```
+
+---
+
+# 11.6 Secure Reset Handling
+
+Reset hanya jika valid token.
+
+Sudah enforced.
+
+---
+
+# 11.7 Tamper Consideration
+
+Tambahkan config flag:
+
+```cpp
+bool config_locked;
+```
+
+Jika locked, provisioning endpoint return 403.
+
+---
+
+# 12. Testing Hook (HTL-09 Binding)
+
+Tambahkan di log:
+
+- On login success
+- On login fail
+- On brownout
+- On watchdog reset
+- On override expire
+
+QA dapat trigger:
+
+- Brownout (turunkan supply)
+- 5x login fail → verify lock
+- Override TTL expire
+- Sensor unplug → safe mode
+
+---
+
+# 13. Definition of Done (Updated)
+
+Node dianggap selesai jika:
+
+- All HTTP endpoints secured by token
+- 5x wrong PIN → locked
+- Brownout detection logged
+- Max_on_ms enforced
+- Manual override auto-expire
+- 48h soak test stable
+- No blocking delay
+- All HTL-09 node tests pass
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>
