@@ -14,39 +14,66 @@ draft: false
 summary: Dokumen ini adalah entry-point resmi untuk seluruh framework engineering HortiLink (HTL-00 s/d HTL-09) beserta dokumen eksekusi DEV-HTL-01 s/d DEV-HTL-04. Ia mendefinisikan struktur dokumentasi formal, tata kelola revisi, otoritas perubahan, serta menerjemahkan arsitektur sistem menjadi panduan implementasi riil dari Node hingga Cloud. README ini memastikan setiap engineer memahami boundary sistem, kontrak lintas tim, hierarki kontrol, model degradasi, keamanan, serta bagaimana spesifikasi formal diturunkan menjadi firmware, bridge, backend, dan cloud sync yang siap produksi.
 ---
 
-- [1. Pendahuluan](#1-pendahuluan)
-- [2. How to Read This Documentation](#2-how-to-read-this-documentation)
-- [3. Document List](#3-document-list)
-- [4. Tata Kelola Dokumen](#4-tata-kelola-dokumen)
-- [5. Format Revisi](#5-format-revisi)
-- [6. Kepemilikan Dokumen](#6-kepemilikan-dokumen)
-- [7. Pengendalian Perubahan (Change Control)](#7-pengendalian-perubahan-change-control)
-- [8. EXECUTIVE SUMMARY](#8-executive-summary)
-  - [HortiLink Engineering Documentation Framework (HTL-00 s/d HTL-09)](#hortilink-engineering-documentation-framework-htl-00-sd-htl-09)
-- [9. RINGKASAN PER DOKUMEN](#9-ringkasan-per-dokumen)
-  - [HTL-00 – System Architecture Master Document](#htl-00--system-architecture-master-document)
-  - [HTL-01 – Interface Specification](#htl-01--interface-specification)
-  - [HTL-02 – Node Technical Specification](#htl-02--node-technical-specification)
-  - [HTL-03 – Gateway Technical Specification](#htl-03--gateway-technical-specification)
-  - [HTL-04 – Server Raspberry Pi Specification](#htl-04--server-raspberry-pi-specification)
-  - [HTL-05 – HMI Specification](#htl-05--hmi-specification)
-  - [HTL-06 – Electrical \& Panel Design Specification](#htl-06--electrical--panel-design-specification)
-  - [HTL-07 – Security Architecture](#htl-07--security-architecture)
-  - [HTL-08 – Failure Mode \& Recovery Matrix](#htl-08--failure-mode--recovery-matrix)
-  - [HTL-09 – Test Plan \& Validation Matrix](#htl-09--test-plan--validation-matrix)
-- [10. ARSITEKTUR KERANGKA BESAR](#10-arsitektur-kerangka-besar)
-- [11. MANFAAT UNTUK DOKUMEN DEVELOPMENT](#11-manfaat-untuk-dokumen-development)
-- [12. DEV-HTL — DEVELOPMENT EXECUTION FRAMEWORK](#12-dev-htl--development-execution-framework)
-  - [DEV-HTL-01 – Node Direct](#dev-htl-01--node-direct)
-  - [DEV-HTL-02 – Node ↔ Gateway](#dev-htl-02--node--gateway)
-  - [DEV-HTL-03 – Gateway ↔ Server](#dev-htl-03--gateway--server)
-  - [DEV-HTL-04 – Server ↔ Cloud](#dev-htl-04--server--cloud)
-- [13. PRODUCTION READINESS PIPELINE](#13-production-readiness-pipeline)
-- [14. POSISI STRATEGIS PROYEK](#14-posisi-strategis-proyek)
+# HORTILINK ENGINEERING DOCUMENTATION FRAMEWORK
+
+README — Master Entry Point
+Tanggal: 2026-02-24
 
 ---
 
-# 1. Pendahuluan
+- [HORTILINK ENGINEERING DOCUMENTATION FRAMEWORK](#hortilink-engineering-documentation-framework)
+- [1. EXECUTIVE SUMMARY](#1-executive-summary)
+  - [HortiLink Engineering Documentation Framework (HTL-00 s/d HTL-09)](#hortilink-engineering-documentation-framework-htl-00-sd-htl-09)
+- [2. Pendahuluan](#2-pendahuluan)
+- [3. ARSITEKTUR KERANGKA BESAR](#3-arsitektur-kerangka-besar)
+- [4. STRUKTUR DOKUMENTASI \& EXECUTION MAP](#4-struktur-dokumentasi--execution-map)
+  - [4.1 HTL-Series (Formal Specification)](#41-htl-series-formal-specification)
+  - [4.2 Ringkasan Per Dokumen (HTL-00 s/d HTL-09)](#42-ringkasan-per-dokumen-htl-00-sd-htl-09)
+    - [HTL-00 – System Architecture Master Document](#htl-00--system-architecture-master-document)
+    - [HTL-01 – Interface Specification](#htl-01--interface-specification)
+    - [HTL-02 – Node Technical Specification](#htl-02--node-technical-specification)
+    - [HTL-03 – Gateway Technical Specification](#htl-03--gateway-technical-specification)
+    - [HTL-04 – Server Raspberry Pi Specification](#htl-04--server-raspberry-pi-specification)
+    - [HTL-05 – HMI Specification](#htl-05--hmi-specification)
+    - [HTL-06 – Electrical \& Panel Design Specification](#htl-06--electrical--panel-design-specification)
+    - [HTL-07 – Security Architecture](#htl-07--security-architecture)
+    - [HTL-08 – Failure Mode \& Recovery Matrix](#htl-08--failure-mode--recovery-matrix)
+    - [HTL-09 – Test Plan \& Validation Matrix](#htl-09--test-plan--validation-matrix)
+  - [4.3 DEV-HTL — Development Execution Framework](#43-dev-htl--development-execution-framework)
+    - [DEV-HTL-01 – Node Direct](#dev-htl-01--node-direct)
+    - [DEV-HTL-02 – Node ↔ Gateway](#dev-htl-02--node--gateway)
+    - [DEV-HTL-03 – Gateway ↔ Server](#dev-htl-03--gateway--server)
+    - [DEV-HTL-04 – Server ↔ Cloud](#dev-htl-04--server--cloud)
+- [5. Tata Kelola Dokumen](#5-tata-kelola-dokumen)
+- [6. Format Revisi](#6-format-revisi)
+- [7. Kepemilikan Dokumen](#7-kepemilikan-dokumen)
+- [8. Pengendalian Perubahan (Change Control)](#8-pengendalian-perubahan-change-control)
+- [9. PRODUCTION READINESS PIPELINE](#9-production-readiness-pipeline)
+- [10. MANFAAT UNTUK DOKUMEN DEVELOPMENT](#10-manfaat-untuk-dokumen-development)
+- [11. POSISI STRATEGIS PROYEK](#11-posisi-strategis-proyek)
+
+---
+
+# 1. EXECUTIVE SUMMARY
+
+## HortiLink Engineering Documentation Framework (HTL-00 s/d HTL-09)
+
+HortiLink dirancang sebagai **platform kontrol pertanian terdistribusi berbasis site otonom**, dengan arsitektur local-first dan server Raspberry Pi wajib per-site. Sistem terdiri dari Node (ESP sensor/actuator), relay-aware topology intra-site, Gateway ESP sebagai bridge, serta Server lokal sebagai broker, database, dan supervisory layer.
+
+Dokumentasi HTL-00 sampai HTL-09 membentuk satu kerangka engineering terstruktur yang memastikan:
+
+- Pengembangan paralel antar tim
+- Kontrak komunikasi formal
+- Kontrol lokal tetap berjalan saat server/gateway gagal
+- Proteksi elektrikal dan mekanikal sesuai kondisi lapangan
+- Model keamanan per-site yang terkontrol
+- Validasi sistem sebelum produksi
+
+Framework ini bukan sekadar dokumentasi teknis, tetapi struktur tata kelola engineering yang meminimalkan risiko kegagalan saat scale.
+
+---
+
+# 2. Pendahuluan
 
 Direktori ini berisi dokumentasi teknis resmi untuk platform kontrol pertanian terdistribusi HortiLink.
 
@@ -62,31 +89,25 @@ Dokumentasi ini berfungsi sebagai:
 
 ---
 
-# 2. How to Read This Documentation
+# 3. ARSITEKTUR KERANGKA BESAR
 
-Gunakan alur berikut sesuai kebutuhan:
+Secara sistemik, HortiLink per-site bekerja sebagai berikut:
 
-✔ Onboarding Engineer Baru
+Node (sensor + actuator + control lokal)
+→ Relay-aware intra-site network
+→ Gateway ESP
+→ MQTT broker (Raspberry Pi)
+→ DB + Dashboard + OTA + RBAC
 
-HTL-00 → HTL-01 → domain spesifik (HTL-02/03/04/05/06/07)
-
-✔ Implementasi Komponen
-
-HTL-01 terlebih dahulu (kontrak) → lalu spesifikasi domain
-
-✔ QA & Field Validation
-
-HTL-08 → HTL-09 → DEV-HTL test binding
-
-✔ Perubahan Desain
-
-Cek governance & revision history
+Kontrol kritikal berada di Node.
+Gateway dan Server adalah supervisory.
+Internet tidak dibutuhkan untuk operasi dasar.
 
 ---
 
-# 3. Document List
+# 4. STRUKTUR DOKUMENTASI & EXECUTION MAP
 
-> A. HTL-Series (Formal Specification)
+## 4.1 HTL-Series (Formal Specification)
 
 | ID     | Document Name                           |
 | ------ | --------------------------------------- |
@@ -101,19 +122,7 @@ Cek governance & revision history
 | HTL-08 | Failure Mode & Recovery Matrix          |
 | HTL-09 | Test Plan & Validation Matrix           |
 
----
-
-> B. DEV-HTL-Series (Execution Guide)
-
-| ID         | Document         | Output Artifact                |
-| ---------- | ---------------- | ------------------------------ |
-| DEV-HTL-01 | Node Direct      | ESP firmware + HTTP UI         |
-| DEV-HTL-02 | Node ↔ Gateway   | Radio stack + routing engine   |
-| DEV-HTL-03 | Gateway ↔ Server | MQTT bridge + SQLite ingestion |
-| DEV-HTL-04 | Server ↔ Cloud   | TLS cloud sync service         |
-
 HTL adalah spesifikasi.
-DEV-HTL adalah eksekusi.
 
 <ResourceBox
   title="Artikel Terkait:"
@@ -168,6 +177,215 @@ DEV-HTL adalah eksekusi.
       href: '/blog/IoT/htl/htl-09-test-plan-validation-matrix',
       description: 'TEST PLAN & VALIDATION MATRIX (Outline v0.1)',
     },
+  ]}
+/>
+
+---
+
+## 4.2 Ringkasan Per Dokumen (HTL-00 s/d HTL-09)
+
+### HTL-00 – System Architecture Master Document
+
+Peran: Dokumen arsitektur tertinggi.
+
+Mengunci:
+
+- Boundary sistem per-site
+- Control hierarchy (Level 0–3)
+- Topologi komunikasi
+- Relay-aware model
+- Degradation mode
+- Capacity baseline (10–15 node/site)
+- Ketiadaan cloud pada fase awal
+
+Tanpa HTL-00, semua dokumen lain akan ambigu.
+
+---
+
+### HTL-01 – Interface Specification
+
+Peran: Kontrak komunikasi lintas tim.
+
+Mengunci:
+
+- MQTT topic structure
+- Payload schema
+- Command state machine
+- Idempotency
+- Retry/backoff
+- TTL rule
+- OTA metadata format
+- ESP-NOW frame structure
+
+Ini memungkinkan Node, Gateway, dan Server dikembangkan paralel.
+
+---
+
+### HTL-02 – Node Technical Specification
+
+Peran: Spesifikasi firmware node.
+
+Mengunci:
+
+- Sensor handling
+- Local control engine
+- Interlock safety
+- Relay-aware routing
+- Telemetry generation
+- Command validation
+- Watchdog
+- Brownout handling
+- OTA client
+
+Node harus tetap aman walaupun gateway/server mati.
+
+---
+
+### HTL-03 – Gateway Technical Specification
+
+Peran: Spesifikasi bridge intra-site.
+
+Mengunci:
+
+- ESP-NOW coordinator
+- Routing validation
+- Deduplication
+- Store-and-forward
+- Time authority
+- Rate limiting
+- MQTT bridging
+
+Gateway tidak boleh menjadi control authority.
+
+---
+
+### HTL-04 – Server Raspberry Pi Specification
+
+Peran: Supervisory layer lokal.
+
+Mengunci:
+
+- MQTT broker configuration
+- DB ingestion
+- Command management
+- Config versioning
+- OTA repository
+- RBAC
+- Backup
+- Monitoring
+
+Server bukan kontrol kritikal, tetapi pusat observability dan orchestration lokal.
+
+---
+
+### HTL-05 – HMI Specification
+
+Peran: Interaksi manusia.
+
+Mengunci:
+
+- Mode direct-to-node
+- Mode via server
+- Role-based access
+- Manual override policy
+- Alarm model
+- Audit trail
+
+HMI tidak boleh melanggar interlock dan safety.
+
+---
+
+### HTL-06 – Electrical & Panel Design Specification
+
+Peran: Landasan keandalan fisik.
+
+Mengunci:
+
+- Power topology
+- HV/LV separation
+- Inrush handling
+- Surge protection
+- Grounding
+- Brownout mitigation
+- Wiring standard
+
+Tanpa HTL-06, sistem akan gagal secara fisik walau software benar.
+
+---
+
+### HTL-07 – Security Architecture
+
+Peran: Keamanan per-site.
+
+Mengunci:
+
+- Identity model
+- MQTT ACL
+- ESP-NOW encryption
+- OTA integrity
+- RBAC
+- Key management
+- Audit logging
+
+Fokus pada LAN security baseline.
+
+---
+
+### HTL-08 – Failure Mode & Recovery Matrix
+
+Peran: Manajemen risiko teknis.
+
+Mengunci:
+
+- Failure domain
+- Detection method
+- Containment boundary
+- Recovery mechanism
+- Escalation owner
+- Degradation mode
+
+Menjadi referensi QA dan troubleshooting lapangan.
+
+---
+
+### HTL-09 – Test Plan & Validation Matrix
+
+Peran: Verifikasi kesiapan produksi.
+
+Mengunci:
+
+- Unit test
+- Integration test
+- Electrical validation
+- Failure injection
+- Stress test
+- Soak test
+- OTA validation
+- Security validation
+- Commissioning checklist
+
+Tanpa HTL-09, tidak ada “Production Gate”.
+
+---
+
+## 4.3 DEV-HTL — Development Execution Framework
+
+HTL adalah spesifikasi.
+DEV-HTL adalah eksekusi.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'SYSTEM ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-00-system-architecture-master-document',
+      description: 'SYSTEM ARCHITECTURE MASTER DOCUMENT',
+    },
+    {
+      name: 'INTERFACE SPECIFICATION',
+      href: '/blog/IoT/htl/htl-01-interface-specification',
+      description: 'INTERFACE SPECIFICATION (Outline v0.1)',
+    },
     {
       name: 'NODE DIRECT',
       href: '/blog/IoT/htl/dev-htl-01-node-direct',
@@ -191,9 +409,52 @@ DEV-HTL adalah eksekusi.
   ]}
 />
 
+### DEV-HTL-01 – Node Direct
+
+- Full firmware ESP32
+- Sensor & actuator driver
+- Interlock enforcement
+- HTTP direct commissioning
+- Watchdog & brownout
+- Definition of Done terikat HTL-09
+
 ---
 
-# 4. Tata Kelola Dokumen
+### DEV-HTL-02 – Node ↔ Gateway
+
+- Transport selection (LoRa / ESP-NOW)
+- Frame structure
+- Routing table
+- Dedup window
+- Retry/backoff deterministic
+- Hop limit enforcement
+
+---
+
+### DEV-HTL-03 – Gateway ↔ Server
+
+- MQTT bridge
+- Store-and-forward buffer
+- SQLite WAL ingestion
+- Broker reconnect lifecycle
+- Health publish
+
+---
+
+### DEV-HTL-04 – Server ↔ Cloud
+
+- HTTPS TLS sync
+- Spool queue SQLite
+- Batch upload idempotent
+- Exponential backoff
+- WAN degradation safe mode
+
+DEV-HTL bukan narasi.
+Ia berisi hardware selection, OOP layering, coding, lifecycle, dan failure handling.
+
+---
+
+# 5. Tata Kelola Dokumen
 
 - HTL-00 harus diselesaikan dan disetujui sebelum HTL-01 dibekukan (freeze).
 - HTL-01 mendefinisikan kontrak komunikasi antara tim Node, Gateway, dan Server.
@@ -202,7 +463,7 @@ DEV-HTL adalah eksekusi.
 
 ---
 
-# 5. Format Revisi
+# 6. Format Revisi
 
 Format penomoran versi:
 
@@ -216,13 +477,13 @@ Contoh:
 
 Keterangan:
 
-- **MAJOR**: Perubahan arsitektur atau kontrak yang signifikan dan tidak kompatibel ke belakang.
-- **MINOR**: Penambahan fitur atau perluasan spesifikasi yang tetap kompatibel.
-- **PATCH**: Perbaikan kesalahan, klarifikasi, atau koreksi minor tanpa perubahan perilaku sistem.
+- MAJOR: Perubahan arsitektur atau kontrak signifikan dan tidak kompatibel ke belakang.
+- MINOR: Penambahan fitur tetap kompatibel.
+- PATCH: Klarifikasi tanpa perubahan perilaku sistem.
 
 ---
 
-# 6. Kepemilikan Dokumen
+# 7. Kepemilikan Dokumen
 
 Setiap dokumen wajib mendefinisikan:
 
@@ -230,11 +491,11 @@ Setiap dokumen wajib mendefinisikan:
 - Peninjau (Reviewer)
 - Otoritas persetujuan (Approval Authority)
 
-Tanpa struktur kepemilikan yang jelas, tata kelola dokumen dianggap tidak sah dan tidak dapat dijadikan referensi resmi.
+Tanpa struktur kepemilikan yang jelas, tata kelola dokumen dianggap tidak sah.
 
 ---
 
-# 7. Pengendalian Perubahan (Change Control)
+# 8. Pengendalian Perubahan (Change Control)
 
 Setiap perubahan pada HTL-00 atau HTL-01 wajib melalui rapat tinjauan arsitektur (architecture review meeting).
 
@@ -242,230 +503,22 @@ Perubahan terhadap boundary sistem atau kontrak komunikasi tidak boleh dilakukan
 
 ---
 
-# 8. EXECUTIVE SUMMARY
+# 9. PRODUCTION READINESS PIPELINE
 
-## HortiLink Engineering Documentation Framework (HTL-00 s/d HTL-09)
+1. Unit test
+2. Integration test
+3. Failure injection
+4. WAN unplug test
+5. Broker restart test
+6. Brownout simulation
+7. Soak test
+8. HTL-09 validation
 
-HortiLink dirancang sebagai **platform kontrol pertanian terdistribusi berbasis site otonom**, dengan arsitektur local-first dan server Raspberry Pi wajib per-site. Sistem terdiri dari Node (ESP sensor/actuator), relay-aware topology intra-site, Gateway ESP sebagai bridge, serta Server lokal sebagai broker, database, dan supervisory layer.
-
-Dokumentasi HTL-00 sampai HTL-09 membentuk satu kerangka engineering terstruktur yang memastikan:
-
-- Pengembangan paralel antar tim
-- Kontrak komunikasi formal
-- Kontrol lokal tetap berjalan saat server/gateway gagal
-- Proteksi elektrikal dan mekanikal sesuai kondisi lapangan
-- Model keamanan per-site yang terkontrol
-- Validasi sistem sebelum produksi
-
-Framework ini bukan sekadar dokumentasi teknis, tetapi struktur tata kelola engineering yang meminimalkan risiko kegagalan saat scale.
+Tanpa lulus HTL-09 → tidak production ready.
 
 ---
 
-# 9. RINGKASAN PER DOKUMEN
-
----
-
-## HTL-00 – System Architecture Master Document
-
-Peran: Dokumen arsitektur tertinggi.
-
-Mengunci:
-
-- Boundary sistem per-site
-- Control hierarchy (Level 0–3)
-- Topologi komunikasi
-- Relay-aware model
-- Degradation mode
-- Capacity baseline (10–15 node/site)
-- Ketiadaan cloud pada fase awal
-
-Tanpa HTL-00, semua dokumen lain akan ambigu.
-
----
-
-## HTL-01 – Interface Specification
-
-Peran: Kontrak komunikasi lintas tim.
-
-Mengunci:
-
-- MQTT topic structure
-- Payload schema
-- Command state machine
-- Idempotency
-- Retry/backoff
-- TTL rule
-- OTA metadata format
-- ESP-NOW frame structure
-
-Ini memungkinkan Node, Gateway, dan Server dikembangkan paralel.
-
----
-
-## HTL-02 – Node Technical Specification
-
-Peran: Spesifikasi firmware node.
-
-Mengunci:
-
-- Sensor handling
-- Local control engine
-- Interlock safety
-- Relay-aware routing
-- Telemetry generation
-- Command validation
-- Watchdog
-- Brownout handling
-- OTA client
-
-Node harus tetap aman walaupun gateway/server mati.
-
----
-
-## HTL-03 – Gateway Technical Specification
-
-Peran: Spesifikasi bridge intra-site.
-
-Mengunci:
-
-- ESP-NOW coordinator
-- Routing validation
-- Deduplication
-- Store-and-forward
-- Time authority
-- Rate limiting
-- MQTT bridging
-
-Gateway tidak boleh menjadi control authority.
-
----
-
-## HTL-04 – Server Raspberry Pi Specification
-
-Peran: Supervisory layer lokal.
-
-Mengunci:
-
-- MQTT broker configuration
-- DB ingestion
-- Command management
-- Config versioning
-- OTA repository
-- RBAC
-- Backup
-- Monitoring
-
-Server bukan kontrol kritikal, tetapi pusat observability dan orchestration lokal.
-
----
-
-## HTL-05 – HMI Specification
-
-Peran: Interaksi manusia.
-
-Mengunci:
-
-- Mode direct-to-node
-- Mode via server
-- Role-based access
-- Manual override policy
-- Alarm model
-- Audit trail
-
-HMI tidak boleh melanggar interlock dan safety.
-
----
-
-## HTL-06 – Electrical & Panel Design Specification
-
-Peran: Landasan keandalan fisik.
-
-Mengunci:
-
-- Power topology
-- HV/LV separation
-- Inrush handling
-- Surge protection
-- Grounding
-- Brownout mitigation
-- Wiring standard
-
-Tanpa HTL-06, sistem akan gagal secara fisik walau software benar.
-
----
-
-## HTL-07 – Security Architecture
-
-Peran: Keamanan per-site.
-
-Mengunci:
-
-- Identity model
-- MQTT ACL
-- ESP-NOW encryption
-- OTA integrity
-- RBAC
-- Key management
-- Audit logging
-
-Fokus pada LAN security baseline.
-
----
-
-## HTL-08 – Failure Mode & Recovery Matrix
-
-Peran: Manajemen risiko teknis.
-
-Mengunci:
-
-- Failure domain
-- Detection method
-- Containment boundary
-- Recovery mechanism
-- Escalation owner
-- Degradation mode
-
-Menjadi referensi QA dan troubleshooting lapangan.
-
----
-
-## HTL-09 – Test Plan & Validation Matrix
-
-Peran: Verifikasi kesiapan produksi.
-
-Mengunci:
-
-- Unit test
-- Integration test
-- Electrical validation
-- Failure injection
-- Stress test
-- Soak test
-- OTA validation
-- Security validation
-- Commissioning checklist
-
-Tanpa HTL-09, tidak ada “Production Gate”.
-
----
-
-# 10. ARSITEKTUR KERANGKA BESAR
-
-Secara sistemik, HortiLink per-site bekerja sebagai berikut:
-
-Node (sensor + actuator + control lokal)
-→ Relay-aware intra-site network
-→ Gateway ESP
-→ MQTT broker (Raspberry Pi)
-→ DB + Dashboard + OTA + RBAC
-
-Kontrol kritikal berada di Node.
-Gateway dan Server adalah supervisory.
-Internet tidak dibutuhkan untuk operasi dasar.
-
----
-
-# 11. MANFAAT UNTUK DOKUMEN DEVELOPMENT
+# 10. MANFAAT UNTUK DOKUMEN DEVELOPMENT
 
 Executive summary ini dapat digunakan untuk membuat dokumen:
 
@@ -486,65 +539,7 @@ Karena:
 
 ---
 
-# 12. DEV-HTL — DEVELOPMENT EXECUTION FRAMEWORK
-
-DEV-HTL menerjemahkan spesifikasi formal menjadi implementasi riil.
-
-## DEV-HTL-01 – Node Direct
-
-- Full firmware ESP32
-- Sensor & actuator driver
-- Interlock enforcement
-- HTTP direct commissioning
-- Watchdog & brownout
-- Definition of Done terikat HTL-09
-
-## DEV-HTL-02 – Node ↔ Gateway
-
-- Transport selection (LoRa / ESP-NOW)
-- Frame structure
-- Routing table
-- Dedup window
-- Retry/backoff deterministic
-- Hop limit enforcement
-
-## DEV-HTL-03 – Gateway ↔ Server
-
-- MQTT bridge
-- Store-and-forward buffer
-- SQLite WAL ingestion
-- Broker reconnect lifecycle
-- Health publish
-
-## DEV-HTL-04 – Server ↔ Cloud
-
-- HTTPS TLS sync
-- Spool queue SQLite
-- Batch upload idempotent
-- Exponential backoff
-- WAN degradation safe mode
-
-DEV-HTL bukan narasi.
-Ia berisi hardware selection, OOP layering, coding, lifecycle, dan failure handling.
-
----
-
-# 13. PRODUCTION READINESS PIPELINE
-
-1. Unit test
-2. Integration test
-3. Failure injection
-4. WAN unplug test
-5. Broker restart test
-6. Brownout simulation
-7. Soak test
-8. HTL-09 validation
-
-Tanpa lulus HTL-09 → tidak production ready.
-
----
-
-# 14. POSISI STRATEGIS PROYEK
+# 11. POSISI STRATEGIS PROYEK
 
 Dengan HTL + DEV-HTL:
 
@@ -564,3 +559,10 @@ dengan:
 - Multi-site scalability
 
 ---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>
