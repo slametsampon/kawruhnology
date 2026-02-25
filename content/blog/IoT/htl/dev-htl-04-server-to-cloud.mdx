@@ -1,0 +1,1164 @@
+---
+title: DEV-HTL-04 — SERVER TO CLOUD DEVELOPMENT GUIDE
+date: '2026-02-25'
+tags:
+  [
+    'cloud-sync',
+    'https-tls',
+    'spool-queue',
+    'wan-resilience',
+    'local-first-architecture',
+    'batch-upload',
+    'edge-to-cloud',
+    'devops-integration',
+  ]
+draft: false
+summary: DEV-HTL-04 mendefinisikan sinkronisasi non-kritikal antara Server lokal dan Cloud melalui HTTPS over TLS dengan spool queue berbasis SQLite. Cloud sync berjalan asynchronous, menggunakan batch upload, exponential backoff, serta backlog drain policy tanpa mempengaruhi MQTT internal atau kontrol lokal. Dokumen ini mengunci endpoint contract, idempotency requirement, retry strategy (5–300 detik), serta disk wear consideration (SSD recommended). WAN failure, TLS error, dan token expiration ditangani tanpa mengganggu operasi site. Cloud hanya berperan sebagai supervisory/analytics layer, bukan control authority, sesuai prinsip HTL-00. Dengan implementasi ini, setiap site tetap otonom meskipun koneksi internet gagal total.
+---
+
+# **_DEV-HTL-04 — SERVER TO CLOUD DEVELOPMENT GUIDE_**
+
+---
+
+- [**_DEV-HTL-04 — SERVER TO CLOUD DEVELOPMENT GUIDE_**](#dev-htl-04--server-to-cloud-development-guide)
+- [1. Purpose](#1-purpose)
+  - [1.1 Document Objective](#11-document-objective)
+  - [1.2 Prinsip Arsitektur (LOCK)](#12-prinsip-arsitektur-lock)
+- [2. Scope](#2-scope)
+  - [2.1 In-Scope](#21-in-scope)
+  - [2.2 Out-of-Scope](#22-out-of-scope)
+- [3. Reference (HTL Binding)](#3-reference-htl-binding)
+- [4. Hardware Selection \& Economic Analysis](#4-hardware-selection--economic-analysis)
+  - [4.1 Pi Resource Impact](#41-pi-resource-impact)
+  - [4.2 Disk Wear Analysis (Critical)](#42-disk-wear-analysis-critical)
+  - [4.3 Bandwidth Cost Estimation](#43-bandwidth-cost-estimation)
+- [5. Electrical Integration Overview](#5-electrical-integration-overview)
+  - [5.1 Power Reliability](#51-power-reliability)
+  - [5.2 UPS Strategy](#52-ups-strategy)
+  - [5.3 Network Redundancy (Optional)](#53-network-redundancy-optional)
+- [6. Software Architecture](#6-software-architecture)
+  - [6.1 High-Level Flow](#61-high-level-flow)
+  - [6.2 Module Overview](#62-module-overview)
+  - [6.3 Database Extension (Spool Table)](#63-database-extension-spool-table)
+- [7. Coding Architecture](#7-coding-architecture)
+- [8. Communication Binding (FINAL LOCK)](#8-communication-binding-final-lock)
+  - [8.1 Transport Protocol (LOCK)](#81-transport-protocol-lock)
+  - [8.2 Endpoint Contract (Upload)](#82-endpoint-contract-upload)
+  - [8.3 Batch Policy (LOCK)](#83-batch-policy-lock)
+  - [8.4 Event vs Batch Upload](#84-event-vs-batch-upload)
+  - [8.5 Downlink Policy (Guarded)](#85-downlink-policy-guarded)
+- [9. Lifecycle Model](#9-lifecycle-model)
+  - [9.1 State Diagram](#91-state-diagram)
+  - [9.2 Boot Sequence](#92-boot-sequence)
+  - [9.3 Online Mode](#93-online-mode)
+  - [9.4 Offline Mode](#94-offline-mode)
+  - [9.5 Backlog Drain Policy](#95-backlog-drain-policy)
+  - [9.6 LAN Independence Rule (CRITICAL LOCK)](#96-lan-independence-rule-critical-lock)
+  - [9.7 Retry Backoff (LOCK)](#97-retry-backoff-lock)
+  - [9.8 Disk Full Behavior](#98-disk-full-behavior)
+- [10. Failure Handling Implementation](#10-failure-handling-implementation)
+  - [10.1 WAN Down (Cable unplug / ISP failure)](#101-wan-down-cable-unplug--isp-failure)
+  - [10.2 TLS Certificate Failure](#102-tls-certificate-failure)
+  - [10.3 Authentication Expired (Token invalid)](#103-authentication-expired-token-invalid)
+  - [10.4 Endpoint Unreachable (Cloud app crash)](#104-endpoint-unreachable-cloud-app-crash)
+  - [10.5 Disk Full (Spool DB Full)](#105-disk-full-spool-db-full)
+  - [10.6 Corrupted DB](#106-corrupted-db)
+- [11. Security Implementation](#11-security-implementation)
+  - [11.1 TLS Enforcement (Mandatory)](#111-tls-enforcement-mandatory)
+  - [11.2 Token Handling](#112-token-handling)
+  - [11.3 Certificate Handling](#113-certificate-handling)
+  - [11.4 Replay Protection (Cloud Side Requirement)](#114-replay-protection-cloud-side-requirement)
+  - [11.5 Data Integrity](#115-data-integrity)
+- [12. Testing Hook (HTL-09 Reference)](#12-testing-hook-htl-09-reference)
+  - [12.1 WAN Unplug Test](#121-wan-unplug-test)
+  - [12.2 Backlog Drain Stress Test](#122-backlog-drain-stress-test)
+  - [12.3 TLS Validation Test](#123-tls-validation-test)
+  - [12.4 Credential Rotation Test](#124-credential-rotation-test)
+  - [12.5 Soak Test (24h)](#125-soak-test-24h)
+- [13. Definition of Done](#13-definition-of-done)
+- [14. Revision History](#14-revision-history)
+
+---
+
+# 1. Purpose
+
+## 1.1 Document Objective
+
+Menjadi panduan implementasi final sinkronisasi:
+
+```text
+Raspberry Pi (Local Site)
+        ↓
+Cloud Backend (Remote)
+```
+
+Tanpa:
+
+- Mengganggu kontrol lokal
+- Mengganggu MQTT internal
+- Mengganggu ingestion SQLite
+- Mengganggu HTL-00 prinsip local-first autonomy
+
+---
+
+## 1.2 Prinsip Arsitektur (LOCK)
+
+Cloud bersifat:
+
+- Supervisory
+- Analytical
+- Aggregation
+- Non-critical
+
+Cloud tidak boleh:
+
+- Mengendalikan actuator langsung
+- Meng-overwrite interlock lokal
+- Menghentikan sistem lokal jika gagal
+
+---
+
+# 2. Scope
+
+## 2.1 In-Scope
+
+- Spool queue berbasis SQLite
+- Batch upload
+- Event upload (priority)
+- TLS client secure channel
+- Retry/backoff engine
+- WAN degradation mode
+- Cloud health reporting
+- Optional remote config (guarded)
+
+---
+
+## 2.2 Out-of-Scope
+
+- Local control engine
+- MQTT internal site
+- Radio link
+- Direct HP mode
+- Real-time actuator override
+
+---
+
+# 3. Reference (HTL Binding)
+
+| HTL    | Binding                      |
+| ------ | ---------------------------- |
+| HTL-00 | Cloud non-critical boundary  |
+| HTL-04 | Server spec (SQLite, broker) |
+| HTL-07 | TLS & identity               |
+| HTL-08 | WAN failure                  |
+| HTL-09 | WAN simulation test          |
+
+---
+
+# 4. Hardware Selection & Economic Analysis
+
+Cloud sync berjalan di Raspberry Pi.
+
+## 4.1 Pi Resource Impact
+
+Baseline: Raspberry Pi 4 (2GB)
+
+Estimasi:
+
+| Component  | RAM     | CPU      |
+| ---------- | ------- | -------- |
+| Mosquitto  | 20–40MB | low      |
+| Ingestion  | 20MB    | low      |
+| SQLite     | minimal | low      |
+| Cloud Sync | 30–60MB | moderate |
+
+Total < 200MB.
+
+Aman untuk 2GB model.
+
+---
+
+## 4.2 Disk Wear Analysis (Critical)
+
+Spool berbasis SQLite → write-heavy.
+
+Perkiraan:
+
+- 15 node
+- Telemetry 10s
+- ~1KB per record
+- 15 \* 6/min = 90/min
+- 5400/hour
+- 129k/day
+- ~130MB/day raw
+
+Jika:
+
+- Retention local 7 hari → 910MB
+- Jika sync dan purge → jauh lebih kecil
+
+Rekomendasi:
+
+| Media         | Recommended? | Reason            |
+| ------------- | ------------ | ----------------- |
+| SD card murah | ❌           | cepat rusak       |
+| Industrial SD | ⚠            | terbatas          |
+| USB SSD       | ✅           | lebih tahan write |
+
+Keputusan:
+
+Production site → SSD strongly recommended.
+
+---
+
+## 4.3 Bandwidth Cost Estimation
+
+Per node:
+
+- 1KB per 10s
+- 8.6MB/day per node
+- 15 node → 129MB/day
+
+Jika compressed batch (gzip 70%):
+
+~40MB/day per site
+
+Jika 30 site:
+
+~1.2GB/day
+
+Cloud plan harus mempertimbangkan ini.
+
+---
+
+# 5. Electrical Integration Overview
+
+## 5.1 Power Reliability
+
+Cloud sync tidak boleh corrupt DB jika power drop.
+
+Wajib:
+
+- WAL mode SQLite
+- UPS minimal 5–10 menit
+
+---
+
+## 5.2 UPS Strategy
+
+Minimal:
+
+- DC UPS HAT
+- atau external 12V UPS untuk panel
+
+Graceful shutdown (optional advanced):
+
+- monitor battery GPIO
+- sync spool
+- shutdown OS
+
+---
+
+## 5.3 Network Redundancy (Optional)
+
+Baseline:
+
+- Single LAN
+
+Optional advanced:
+
+- 4G fallback
+- Dual WAN
+- Policy route
+
+Tidak mandatory phase awal.
+
+---
+
+# 6. Software Architecture
+
+## 6.1 High-Level Flow
+
+```text
+SQLite (local ingestion)
+        ↓
+SpoolManager
+        ↓
+Batch Builder
+        ↓
+TLSClient (HTTPS)
+        ↓
+Cloud Endpoint
+```
+
+Cloud sync **tidak membaca langsung dari MQTT**.
+Cloud sync membaca dari SQLite ingestion DB → memastikan tidak mengganggu local MQTT.
+
+---
+
+## 6.2 Module Overview
+
+✔ Core Modules
+
+| Module              | Responsibility            |
+| ------------------- | ------------------------- |
+| CloudSyncController | Lifecycle + orchestration |
+| SpoolManager        | Queueing & backlog        |
+| BatchBuilder        | Build upload payload      |
+| TLSClient           | HTTPS client with TLS     |
+| RetryController     | Backoff & retry           |
+| AuthManager         | Token handling            |
+
+---
+
+## 6.3 Database Extension (Spool Table)
+
+Tambahkan table baru ke SQLite:
+
+```sql
+CREATE TABLE IF NOT EXISTS cloud_spool (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ts_unix INTEGER NOT NULL,
+  site_id TEXT NOT NULL,
+  node_id TEXT NOT NULL,
+  topic TEXT NOT NULL,
+  payload_json TEXT NOT NULL,
+  status TEXT DEFAULT 'pending',
+  retry_count INTEGER DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_cloud_spool_status
+ON cloud_spool(status);
+```
+
+---
+
+# 7. Coding Architecture
+
+Struktur folder:
+
+```text
+dev-htl-04-server-to-cloud/
+  config.yaml
+  schema_spool.sql
+
+  controller_cloud_sync.py
+  service_spool_manager.py
+  service_batch_builder.py
+  service_retry_controller.py
+  service_auth_manager.py
+  transport_tls_client.py
+```
+
+---
+
+✔ A) FULL CODING
+
+---
+
+- A.1 `schema_spool.sql`
+
+```sql
+PRAGMA journal_mode=WAL;
+
+CREATE TABLE IF NOT EXISTS cloud_spool (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ts_unix INTEGER NOT NULL,
+  site_id TEXT NOT NULL,
+  node_id TEXT NOT NULL,
+  topic TEXT NOT NULL,
+  payload_json TEXT NOT NULL,
+  status TEXT DEFAULT 'pending',
+  retry_count INTEGER DEFAULT 0
+);
+```
+
+---
+
+- A.2 `service_spool_manager.py`
+
+```python
+import sqlite3
+import time
+from typing import List, Tuple
+
+class SpoolManager:
+    def __init__(self, db_path: str):
+        self.conn = sqlite3.connect(db_path, check_same_thread=False)
+        self.conn.execute("PRAGMA journal_mode=WAL;")
+
+    def enqueue_from_telemetry(self):
+        # Move unsynced telemetry into spool
+        self.conn.execute("""
+            INSERT INTO cloud_spool(ts_unix, site_id, node_id, topic, payload_json)
+            SELECT ts_unix, site_id, node_id, topic, payload_json
+            FROM telemetry
+        """)
+        self.conn.commit()
+
+    def fetch_batch(self, limit: int = 100) -> List[Tuple]:
+        cur = self.conn.execute("""
+            SELECT id, ts_unix, site_id, node_id, topic, payload_json
+            FROM cloud_spool
+            WHERE status='pending'
+            ORDER BY id ASC
+            LIMIT ?
+        """, (limit,))
+        return cur.fetchall()
+
+    def mark_sent(self, ids: List[int]):
+        self.conn.executemany("""
+            UPDATE cloud_spool SET status='sent' WHERE id=?
+        """, [(i,) for i in ids])
+        self.conn.commit()
+
+    def increment_retry(self, ids: List[int]):
+        self.conn.executemany("""
+            UPDATE cloud_spool
+            SET retry_count = retry_count + 1
+            WHERE id=?
+        """, [(i,) for i in ids])
+        self.conn.commit()
+```
+
+---
+
+- A.3 `service_batch_builder.py`
+
+```python
+import json
+from typing import List, Tuple
+
+class BatchBuilder:
+    @staticmethod
+    def build(records: List[Tuple]) -> str:
+        payload = []
+        for r in records:
+            rec_id, ts, site, node, topic, data = r
+            payload.append({
+                "id": rec_id,
+                "ts": ts,
+                "site": site,
+                "node": node,
+                "topic": topic,
+                "data": json.loads(data)
+            })
+        return json.dumps({"batch": payload})
+```
+
+---
+
+- A.4 `transport_tls_client.py`
+
+```python
+import requests
+
+class TLSClient:
+    def __init__(self, endpoint: str, token: str, verify_cert: bool = True):
+        self.endpoint = endpoint
+        self.token = token
+        self.verify_cert = verify_cert
+
+    def post_batch(self, json_payload: str) -> bool:
+        headers = {
+            "Authorization": f"Bearer {self.token}",
+            "Content-Type": "application/json"
+        }
+        try:
+            resp = requests.post(
+                self.endpoint,
+                data=json_payload,
+                headers=headers,
+                timeout=10,
+                verify=self.verify_cert
+            )
+            return resp.status_code == 200
+        except Exception:
+            return False
+```
+
+---
+
+- A.5 `service_retry_controller.py`
+
+```python
+import time
+
+class RetryController:
+    def __init__(self):
+        self.base_delay = 5
+        self.max_delay = 300
+        self.current_delay = self.base_delay
+
+    def success(self):
+        self.current_delay = self.base_delay
+
+    def fail(self):
+        self.current_delay = min(self.current_delay * 2, self.max_delay)
+
+    def wait(self):
+        time.sleep(self.current_delay)
+```
+
+---
+
+- A.6 `service_auth_manager.py`
+
+```python
+class AuthManager:
+    def __init__(self, config: dict):
+        self.token = config.get("cloud_token")
+
+    def get_token(self):
+        return self.token
+```
+
+---
+
+- A.7 `controller_cloud_sync.py`
+
+```python
+import yaml
+import time
+from service_spool_manager import SpoolManager
+from service_batch_builder import BatchBuilder
+from service_retry_controller import RetryController
+from service_auth_manager import AuthManager
+from transport_tls_client import TLSClient
+
+def load_config():
+    with open("config.yaml") as f:
+        return yaml.safe_load(f)
+
+def main():
+    cfg = load_config()
+
+    spool = SpoolManager(cfg["sqlite_db"])
+    auth = AuthManager(cfg)
+    tls = TLSClient(cfg["cloud_endpoint"], auth.get_token())
+    retry = RetryController()
+
+    while True:
+        records = spool.fetch_batch(limit=100)
+
+        if not records:
+            time.sleep(10)
+            continue
+
+        payload = BatchBuilder.build(records)
+        ids = [r[0] for r in records]
+
+        success = tls.post_batch(payload)
+
+        if success:
+            spool.mark_sent(ids)
+            retry.success()
+        else:
+            spool.increment_retry(ids)
+            retry.fail()
+            retry.wait()
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
+- A.8 `config.yaml`
+
+```yaml
+sqlite_db: '/opt/hortilink/hortilink.db'
+cloud_endpoint: 'https://api.example.com/hortilink/upload'
+cloud_token: 'REPLACE_WITH_REAL_TOKEN'
+```
+
+---
+
+# 8. Communication Binding (FINAL LOCK)
+
+Cloud tidak boleh mengganggu operasi lokal.
+Semua komunikasi WAN harus:
+
+- Asynchronous
+- Buffered
+- Retry-safe
+- Idempotent cloud-side
+
+---
+
+## 8.1 Transport Protocol (LOCK)
+
+Transport: **HTTPS over TLS 1.2+**
+
+- Port: 443
+- Method: POST
+- Content-Type: application/json
+- Authentication: Bearer Token
+- Certificate verification: mandatory (verify=True)
+
+Tidak menggunakan MQTT over WAN untuk fase awal (mengurangi kompleksitas broker federation).
+
+---
+
+## 8.2 Endpoint Contract (Upload)
+
+✔ Endpoint
+
+```text
+POST /hortilink/upload
+```
+
+✔ Payload Structure (Batch)
+
+```json
+{
+  "site_id": "site-01",
+  "sent_at": 1739990000,
+  "batch": [
+    {
+      "id": 1001,
+      "ts": 1739989900,
+      "node": "00000001",
+      "topic": "htl/site-01/telemetry/00000001",
+      "data": {
+        "soil": 0.42,
+        "temp": 28.5
+      }
+    }
+  ]
+}
+```
+
+✔ Response (Cloud → Site)
+
+```json
+{
+  "status": "ok",
+  "accepted": [1001],
+  "rejected": []
+}
+```
+
+Cloud wajib:
+
+- Idempotent berdasarkan `id`
+- Tidak duplicate insert jika ID sudah pernah diterima
+
+---
+
+## 8.3 Batch Policy (LOCK)
+
+| Parameter        | Value                   |
+| ---------------- | ----------------------- |
+| Max batch size   | 100 record              |
+| Max payload size | 1MB                     |
+| Compression      | Optional (gzip phase 2) |
+| Flush interval   | 10s minimum             |
+| Backlog priority | Oldest first            |
+
+---
+
+## 8.4 Event vs Batch Upload
+
+Telemetry → Batch
+Critical event (future) → Immediate POST (bypass batch)
+
+Untuk baseline:
+
+Semua via batch.
+
+---
+
+## 8.5 Downlink Policy (Guarded)
+
+Cloud boleh mengirim:
+
+- Advisory config
+- Firmware metadata pointer
+
+Cloud tidak boleh:
+
+- Direct actuator command
+
+Downlink format:
+
+```json
+{
+  "config_update": {...},
+  "note": "advisory only"
+}
+```
+
+Site harus:
+
+- Validate
+- Apply only if allowed by policy
+
+---
+
+# 9. Lifecycle Model
+
+Mengunci state machine Cloud Sync.
+
+---
+
+## 9.1 State Diagram
+
+```text
+BOOT
+ ↓
+INIT
+ ↓
+LAN READY
+ ↓
+TRY CLOUD CONNECT
+ ↓
++--------------------+
+| Cloud Online       |
+| - Upload batch     |
+| - Reset backoff    |
++--------------------+
+         ↓
+   Failure?
+         ↓
++--------------------+
+| Cloud Offline      |
+| - Exponential backoff |
+| - Accumulate spool |
++--------------------+
+         ↓
+   Retry
+```
+
+---
+
+## 9.2 Boot Sequence
+
+1. Load config.yaml
+2. Connect SQLite
+3. Ensure spool table exists
+4. Enter loop
+
+Tidak menunggu WAN sebelum berjalan.
+
+---
+
+## 9.3 Online Mode
+
+Condition:
+
+- HTTPS success
+- HTTP 200 returned
+
+Behavior:
+
+- Fetch batch
+- POST
+- Mark sent
+- Reset retry delay
+
+---
+
+## 9.4 Offline Mode
+
+Condition:
+
+- TLS fail
+- DNS fail
+- Timeout
+- HTTP != 200
+
+Behavior:
+
+- Increment retry
+- Exponential backoff
+- Do NOT block main thread permanently
+- Continue accumulating spool
+
+---
+
+## 9.5 Backlog Drain Policy
+
+Jika WAN down lama:
+
+Spool bisa besar.
+
+Drain strategy:
+
+- Batch size tetap 100
+- No parallel upload
+- Process sequential
+- Continue until no pending
+
+Optional enhancement:
+
+- If backlog > 10k → increase batch to 500 (phase 2)
+
+---
+
+## 9.6 LAN Independence Rule (CRITICAL LOCK)
+
+Jika WAN mati:
+
+- MQTT internal tetap berjalan
+- Ingestion SQLite tetap berjalan
+- Gateway tetap publish ke server
+- Tidak ada exception yang crash process
+
+Cloud sync process boleh crash sendiri → systemd restart, tapi tidak boleh mematikan ingestion.
+
+---
+
+## 9.7 Retry Backoff (LOCK)
+
+Base delay: 5s
+Multiply by 2
+Max delay: 300s
+
+Sequence:
+
+5 → 10 → 20 → 40 → 80 → 160 → 300 → 300...
+
+Reset to 5s after success.
+
+---
+
+## 9.8 Disk Full Behavior
+
+Jika spool insert gagal (disk full):
+
+- Log error
+- Stop cloud sync upload
+- Raise alarm topic (future integration)
+- Do not corrupt DB
+
+---
+
+# 10. Failure Handling Implementation
+
+Format wajib: **Detection → Impact → Recovery**
+
+---
+
+## 10.1 WAN Down (Cable unplug / ISP failure)
+
+✔ Detection
+
+- HTTPS timeout
+- DNS resolve fail
+- `requests.post()` exception
+- HTTP status != 200
+
+✔ Impact
+
+- Cloud tidak menerima data
+- Spool queue bertambah
+
+✔ Recovery
+
+- RetryController exponential backoff (5–300s)
+- Spool tetap menampung data
+- Tidak ada crash service
+- Saat WAN kembali → backlog drain
+
+✔ Guarantee
+
+- Local MQTT & ingestion unaffected
+- Tidak ada blocking call > timeout 10s
+
+---
+
+## 10.2 TLS Certificate Failure
+
+✔ Detection
+
+- `requests` SSL exception
+- verify=True fail
+
+✔ Impact
+
+- Cloud sync berhenti
+- Retry meningkat
+
+✔ Recovery
+
+- Tidak disable verify
+- Log error
+- DevOps replace expired certificate
+- Service restart otomatis (systemd recommended)
+
+---
+
+## 10.3 Authentication Expired (Token invalid)
+
+✔ Detection
+
+- HTTP 401 / 403
+
+✔ Impact
+
+- Batch tidak diterima
+- Retry loop
+
+✔ Recovery
+
+- Do not mark sent
+- Retry with backoff
+- Manual or automated token refresh (future enhancement)
+
+Optional Phase 2:
+
+- Implement token refresh endpoint
+
+---
+
+## 10.4 Endpoint Unreachable (Cloud app crash)
+
+✔ Detection
+
+- HTTP 5xx
+
+✔ Impact
+
+- Upload gagal
+- Retry
+
+✔ Recovery
+
+- Exponential backoff
+- Idempotent retry
+- No data corruption
+
+---
+
+## 10.5 Disk Full (Spool DB Full)
+
+✔ Detection
+
+- sqlite3 exception
+- OS disk usage > 95%
+
+✔ Impact
+
+- Tidak bisa insert ke spool
+- Cloud sync berhenti
+- Local ingestion tetap berjalan (telemetry table)
+
+✔ Recovery
+
+- Raise alarm (future integration)
+- Manual disk cleanup
+- Optional: auto purge `sent` older than X days
+
+---
+
+## 10.6 Corrupted DB
+
+✔ Detection
+
+- sqlite exception on open
+- PRAGMA integrity_check fail
+
+✔ Impact
+
+- Cloud sync stop
+
+✔ Recovery
+
+- Backup DB daily
+- If corruption → restore from backup
+- Never auto-delete DB
+
+---
+
+# 11. Security Implementation
+
+Binding: HTL-07 (TLS & identity)
+
+---
+
+## 11.1 TLS Enforcement (Mandatory)
+
+Transport:
+
+```text
+HTTPS (TLS 1.2+)
+verify_cert = True
+```
+
+Never:
+
+```python
+verify=False
+```
+
+---
+
+## 11.2 Token Handling
+
+Token:
+
+- Stored in `config.yaml`
+- File permission: 600
+- Owner: root
+
+Better practice (recommended):
+
+- Store token in `/etc/hortilink/token`
+- Load at runtime
+- Restrict read access
+
+---
+
+## 11.3 Certificate Handling
+
+Option A: Public CA signed
+Option B: Private CA (internal infra)
+
+If Private CA:
+
+- Install CA cert to Pi trust store
+- Or pass `verify="/path/to/ca.pem"`
+
+---
+
+## 11.4 Replay Protection (Cloud Side Requirement)
+
+Cloud must:
+
+- Reject duplicate `id`
+- Use idempotency key = record.id
+- Maintain processed-id index
+
+Server-to-cloud does not attempt dedup.
+
+---
+
+## 11.5 Data Integrity
+
+Payload must:
+
+- JSON valid
+- UTF-8
+- No binary blob
+
+Optional phase 2:
+
+- Add HMAC signature field
+- Or sign batch using site private key
+
+---
+
+# 12. Testing Hook (HTL-09 Reference)
+
+All tests mandatory before production.
+
+---
+
+## 12.1 WAN Unplug Test
+
+Procedure:
+
+1. Start cloud sync
+2. Unplug WAN 5 minutes
+3. Reconnect WAN
+
+Expected:
+
+- Spool size grows
+- No crash
+- After reconnect → backlog drained
+
+Pass Criteria:
+
+- No data loss
+- No duplicate in cloud
+
+---
+
+## 12.2 Backlog Drain Stress Test
+
+Procedure:
+
+- Simulate 10k records in spool
+- Restore WAN
+
+Expected:
+
+- Upload sequential
+- CPU < 80%
+- Memory stable
+- All marked sent
+
+---
+
+## 12.3 TLS Validation Test
+
+Procedure:
+
+- Replace cert with expired one
+
+Expected:
+
+- Upload fails
+- verify error logged
+- No fallback to insecure mode
+
+---
+
+## 12.4 Credential Rotation Test
+
+Procedure:
+
+- Change token in cloud
+- Update token in Pi
+
+Expected:
+
+- 401 until updated
+- After update → success
+- No data lost
+
+---
+
+## 12.5 Soak Test (24h)
+
+Requirements:
+
+- Continuous sync
+- No memory leak
+- No runaway CPU
+- No SQLite lock stall
+
+---
+
+# 13. Definition of Done
+
+DEV-HTL-04 dianggap selesai jika:
+
+1. Cloud upload via HTTPS TLS verified
+2. Spool queue berjalan (pending → sent)
+3. Exponential backoff validated
+4. WAN failure tidak mengganggu LAN operation
+5. Backlog drain validated
+6. Token auth validated
+7. TLS verify enforced
+8. Disk wear strategy applied (SSD recommended)
+9. HTL-09 WAN tests passed
+
+---
+
+# 14. Revision History
+
+| Version | Date       | Author | Description                                                          |
+| ------: | ---------- | ------ | -------------------------------------------------------------------- |
+|  v0.1.0 | 2026-02-25 | HTL    | Initial cloud sync baseline (HTTPS batch + spool + retry + TLS lock) |
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

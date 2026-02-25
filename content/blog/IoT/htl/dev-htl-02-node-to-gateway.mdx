@@ -1,0 +1,2099 @@
+---
+title: DEV-HTL-02 — Node ↔ Gateway
+date: '2026-02-25'
+tags:
+  [
+    'radio-stack',
+    'relay-topology',
+    'lora',
+    'esp-now',
+    'routing-engine',
+    'retry-backoff',
+    'field-communication',
+    'iot-networking',
+  ]
+draft: false
+summary: DEV-HTL-02 mengunci implementasi komunikasi lapangan antara Node dan Gateway, termasuk pemilihan transport (LoRa / ESP-NOW), struktur frame, routing relay-aware, deduplication engine, serta retry/backoff deterministik. Dokumen ini membahas integrasi radio hardware, parent-child discovery, hop limit enforcement, dan proteksi replay sesuai HTL-07. Arsitektur dikembangkan dengan layering OOP (App → Service → Driver → System) untuk kedua sisi Node dan Gateway. Fokus utama adalah menjaga determinisme komunikasi intra-site tanpa menjadikan gateway sebagai control authority. Field link harus tahan terhadap parent failure, duplicate storm, dan radio timeout. DEV-HTL-02 memastikan topologi 10–15 node per site dapat berjalan stabil sebelum diteruskan ke MQTT layer pada DEV-HTL-03.
+---
+
+# 2️⃣ **_DEV-HTL-02 — Node ↔ Gateway_**
+
+---
+
+- [2️⃣ **_DEV-HTL-02 — Node ↔ Gateway_**](#2️⃣-dev-htl-02--node--gateway)
+  - [1. Purpose](#1-purpose)
+  - [2. Scope](#2-scope)
+  - [3. Reference (HTL-Series Binding)](#3-reference-htl-series-binding)
+  - [Diagram Wajib (karena \>2 komponen)](#diagram-wajib-karena-2-komponen)
+  - [4. Hardware Selection \& Economic Analysis](#4-hardware-selection--economic-analysis)
+  - [5. Electrical Integration Overview](#5-electrical-integration-overview)
+  - [6. Software Architecture](#6-software-architecture)
+  - [7. Coding Architecture (3-Layer OOP)](#7-coding-architecture-3-layer-oop)
+  - [8. Communication Binding (LOCKED)](#8-communication-binding-locked)
+  - [9. Lifecycle Model (LOCKED)](#9-lifecycle-model-locked)
+- [10. Failure Handling Implementation](#10-failure-handling-implementation)
+  - [11. Security Implementation](#11-security-implementation)
+  - [12. Testing Hook (HTL-09 Binding)](#12-testing-hook-htl-09-binding)
+  - [13. Definition of Done](#13-definition-of-done)
+
+---
+
+## 1. Purpose
+
+✔ 1.1 Document Objective
+
+Menjadi panduan implementasi final komunikasi lapangan antara Node dan Gateway untuk HortiLink, termasuk pemilihan transport, desain frame, routing relay-aware, deduplication, retry/backoff, dan health monitoring agar sistem stabil pada 10–15 node/site serta tetap aman saat link tidak stabil.
+
+✔ 1.2 Target Audience
+
+- Node Firmware Engineer
+- Gateway Firmware Engineer
+- QA (Field Stress & Relay Testing)
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'SYSTEM ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-00-system-architecture-master-document',
+      description: 'SYSTEM ARCHITECTURE MASTER DOCUMENT',
+    },
+    {
+      name: 'INTERFACE SPECIFICATION',
+      href: '/blog/IoT/htl/htl-01-interface-specification',
+      description: 'INTERFACE SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'NODE TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-02-node-technical-specification',
+      description: 'NODE TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'GATEWAY TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-03-gateway-technical-specification',
+      description: 'GATEWAY TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'SERVER RASPBERRY-PI',
+      href: '/blog/IoT/htl/htl-04-server-raspberry-pi-specification',
+      description: 'SERVER RASPBERRY-PI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'HMI SPECIFICATION',
+      href: '/blog/IoT/htl/htl-05-hmi-specification',
+      description: 'HMI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'ELECTRICAL & POWER',
+      href: '/blog/IoT/htl/htl-06-electrical-panel-design-specification',
+      description: 'ELECTRICAL & POWER INTEGRATION SPECIFICATION',
+    },
+    {
+      name: 'SECURITY ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-07-security-architecture',
+      description: 'SECURITY ARCHITECTURE (Outline v0.1)',
+    },
+    {
+      name: 'FAILURE MODE & RECOVERY',
+      href: '/blog/IoT/htl/htl-08-failure-mode-recovery-matrix',
+      description: 'FAILURE MODE & RECOVERY MATRIX (Outline v0.1)',
+    },
+    {
+      name: 'TEST PLAN & VALIDATION',
+      href: '/blog/IoT/htl/htl-09-test-plan-validation-matrix',
+      description: 'TEST PLAN & VALIDATION MATRIX (Outline v0.1)',
+    },
+    {
+      name: 'NODE DIRECT',
+      href: '/blog/IoT/htl/dev-htl-01-node-direct',
+      description: 'NODE DIRECT DEVELOPMENT GUIDE',
+    },
+    {
+      name: 'Node ↔ Gateway',
+      href: '/blog/IoT/htl/dev-htl-02-node-to-gateway',
+      description: 'Node ↔ Gateway DEVELOPMENT GUIDE',
+    },
+    {
+      name: 'GATEWAY TO SERVER',
+      href: '/blog/IoT/htl/dev-htl-03-gateway-to-server',
+      description: 'GATEWAY TO SERVER DEVELOPMENT GUIDE',
+    },
+    {
+      name: 'SERVER TO CLOUD',
+      href: '/blog/IoT/htl/dev-htl-04-server-to-cloud',
+      description: 'SERVER TO CLOUD DEVELOPMENT GUIDE',
+    },
+  ]}
+/>
+
+---
+
+## 2. Scope
+
+✔ 2.1 In-Scope
+
+- Transport selection (LoRa / ESP-NOW / Hybrid)
+- Radio hardware integration
+- Frame structure implementation
+- Routing & relay-aware behavior
+- Parent-child discovery
+- Deduplication engine
+- Retry & backoff strategy
+- Buffering (node side minimal)
+- Field link health monitoring
+
+✔ 2.2 Out-of-Scope
+
+- HTTP direct mode
+- MQTT broker logic
+- Cloud sync
+- HMI dashboard
+
+---
+
+## 3. Reference (HTL-Series Binding)
+
+- HTL-00 – Relay-aware topology & hop limit
+- HTL-01 – Message class & payload schema
+- HTL-02 – Node routing & command handling
+- HTL-03 – Gateway coordinator behavior
+- HTL-07 – ESP-NOW encryption / replay protection
+- HTL-08 – Relay chain failure cases
+- HTL-09 – Stress & failure injection test
+
+---
+
+## Diagram Wajib (karena >2 komponen)
+
+**Konteks link lapangan (hanya scope DEV-HTL-02):**
+
+```text
+Node (leaf/relay)  <---field link--->  Gateway (root)
+        ^                                   |
+        | (relay-aware forwarding)          | (bridge boundary)
+        +-----------------------------------+
+```
+
+_(Diagram detail topologi & hop limit akan masuk Part 4 saat Lifecycle & Communication Binding dikunci.)_
+
+---
+
+## 4. Hardware Selection & Economic Analysis
+
+---
+
+- 4.1 Radio Option Comparison
+
+Sistem harus mendukung:
+
+- ≤15 node per site
+- Hop limit ≤3 (HTL-00)
+- Payload ≤250 byte
+- Deterministic retry
+- Relay-aware topology
+
+Tiga opsi dianalisis:
+
+---
+
+✔ Option A — ESP-NOW (Native ESP32)
+
+**Karakteristik:**
+
+- 2.4 GHz
+- Range tipikal 50–200 m (LOS)
+- Throughput tinggi (~1 Mbps raw)
+- Tidak perlu module tambahan
+- Antena PCB internal
+
+**Kelebihan:**
+
+- Tidak menambah BOM
+- Latency rendah
+- Integrasi firmware sederhana
+- Tidak perlu SPI tambahan
+- Konsumsi daya moderat
+
+**Kekurangan:**
+
+- Interferensi 2.4 GHz
+- Range terbatas dibanding LoRa
+
+**Biaya:**
+
+| Item             | Estimasi |
+| ---------------- | -------- |
+| ESP32 Dev/Module | $3–6     |
+| Antena           | Built-in |
+| RF Frontend      | None     |
+
+Total tambahan cost per node: **$0**
+
+---
+
+✔ Option B — LoRa (SX1276 / SX1278)
+
+**Karakteristik:**
+
+- 868 / 915 MHz
+- Range 500 m – 2 km
+- Throughput rendah
+- SPI external module
+- Antena eksternal wajib
+
+**Kelebihan:**
+
+- Jarak jauh
+- Stabil rural deployment
+
+**Kekurangan:**
+
+- Latency tinggi
+- Payload kecil
+- Duty-cycle regulatory limit
+- Kompleksitas driver
+- Tambahan komponen & wiring
+
+**Biaya:**
+
+| Item              | Estimasi |
+| ----------------- | -------- |
+| SX1276 module     | $3–6     |
+| Antena SMA        | $1–3     |
+| PCB area tambahan | +        |
+
+Total tambahan cost per node: **$4–9**
+
+---
+
+✔ Option C — Hybrid (ESP-NOW + LoRa)
+
+Digunakan jika:
+
+- Cluster lokal padat
+- Gateway jauh
+- Perlu bridge jarak jauh
+
+**Kekurangan utama:**
+
+- Kompleksitas firmware
+- BOM tinggi
+- Maintenance lebih sulit
+
+---
+
+- 4.2 Selected Transport & Justification (LOCK)
+
+Transport baseline untuk DEV-HTL-02:
+
+> **ESP-NOW**
+
+✔ Alasan Teknis
+
+- Cukup untuk ≤200m intra-site
+- Relay-aware model mengatasi blind spot
+- Payload 250 byte cukup untuk HTL-01 schema
+- Latency rendah untuk command ACK
+
+✔ Alasan Reliability
+
+- Tidak tergantung external RF module
+- Tidak ada SPI bus tambahan
+- Lebih sedikit failure point
+
+✔ Alasan Ekonomi
+
+- Tanpa tambahan module
+- Tanpa antena eksternal
+- Tanpa enclosure RF tambahan
+
+✔ Deployment Suitability
+
+Cocok untuk:
+
+- Greenhouse cluster
+- Farm plot < 5 hektar
+- Node density sedang
+
+Jika deployment >300m radius → dokumen revisi diperlukan.
+
+---
+
+- 4.3 RF Layout Considerations
+
+Walaupun ESP-NOW native, tetap ada aturan layout:
+
+✔ Antena Placement
+
+- Antena PCB tidak boleh tertutup ground pour
+- Tidak dekat relay coil
+- Tidak dekat switching buck
+
+✔ Ground Plane
+
+- 2-layer PCB minimal
+- RF section dipisahkan dari high current area
+- Star grounding
+
+✔ EMI Mitigation
+
+- Relay coil flyback diode wajib
+- Snubber untuk motor load
+- Buck converter shielded inductor
+
+---
+
+## 5. Electrical Integration Overview
+
+---
+
+- 5.1 ESP32 + Field Link Block Diagram
+
+```
++---------------------------+
+|        NODE (ESP32)       |
+|                           |
+|  +---------------------+  |
+|  |  ESP32 MCU + WiFi  |<~~~~ ESP-NOW ~~~~> Gateway
+|  +---------------------+  |
+|           |                |
+|   +-------+-------+        |
+|   |  Sensors      |        |
+|   +---------------+        |
+|   |  Relay Driver |        |
+|   +---------------+        |
+|           |                |
+|     Power Regulation       |
++---------------------------+
+```
+
+---
+
+- 5.2 SPI/UART Wiring (Jika Future LoRa)
+
+Walaupun LoRa tidak dipilih baseline, desain PCB sebaiknya:
+
+- Sisakan footprint SPI (MISO/MOSI/SCK/CS)
+- 3.3V rail capable ≥150mA extra
+- GPIO interrupt pin cadangan
+
+Ini untuk future revision tanpa redesign besar.
+
+---
+
+- 5.3 Surge & Noise Protection
+
+Field environment = harsh.
+
+Minimum requirement:
+
+- TVS diode di supply input
+- Reverse polarity protection (Schottky / MOSFET ideal diode)
+- Buck converter ripple < 50mV
+- Separate analog ground for ADC sensor
+
+Relay switching harus:
+
+- Flyback diode (DC load)
+- RC snubber (AC load)
+- Clearance ≥3mm HV-LV
+
+Binding ke HTL-06.
+
+---
+
+- 5.4 Power Stability Requirement
+
+ESP32 sensitif terhadap brownout.
+
+Minimum:
+
+- Input 12–24V
+- Buck 12→5V
+- LDO 5→3.3V low noise
+- Output 3.3V ripple < 30mV
+- Brownout threshold ≥3.0V
+
+Jika power tidak stabil:
+
+- Link drop
+- Frame corruption
+- False duplicate storm
+
+Ini akan masuk ke Section 10 nanti.
+
+---
+
+## 6. Software Architecture
+
+Transport sudah dikunci: **ESP-NOW**
+Topologi: **Relay-aware tree**
+Hop limit: **≤3**
+Node count: **≤15**
+
+Software architecture harus:
+
+- Deterministik
+- Non-blocking
+- Event-driven
+- Bounded memory
+- Tanpa dynamic allocation liar
+
+---
+
+- 6.1 Node Side Modules
+
+✔ Functional Block Diagram – Node Radio Stack
+
+```text
++--------------------------------------------------+
+|                    NODE (ESP32)                  |
+|                                                  |
+|  +---------------------+                         |
+|  |  TelemetryBuilder   |                         |
+|  +----------+----------+                         |
+|             |                                    |
+|  +----------v----------+                         |
+|  |   FieldFrameBuilder |                         |
+|  +----------+----------+                         |
+|             |                                    |
+|  +----------v----------+                         |
+|  |   RetryController   |                         |
+|  +----------+----------+                         |
+|             |                                    |
+|  +----------v----------+                         |
+|  |   RoutingManager    |                         |
+|  +----------+----------+                         |
+|             |                                    |
+|  +----------v----------+                         |
+|  |   ESPNowDriver      |                         |
+|  +----------+----------+                         |
+|             |                                    |
+|  +----------v----------+                         |
+|  | FieldLinkHealthMon  |                         |
++--------------------------------------------------+
+```
+
+---
+
+✔ Module Responsibilities
+
+✔ 1. TelemetryBuilder
+
+- Build payload sesuai HTL-01
+- Tidak tahu radio
+- Tidak tahu routing
+
+✔ 2. FieldFrameBuilder
+
+- Encode header
+- Inject seq
+- Inject ttl
+- Compute CRC
+
+✔ 3. RetryController
+
+- Exponential backoff
+- Max retry lock (3)
+- No infinite loop
+
+✔ 4. RoutingManager
+
+- Store parent MAC
+- Hop limit enforcement
+- TTL decrement
+- Relay decision
+
+✔ 5. FieldLinkHealthMonitor
+
+- Count retry
+- Track RSSI (if available)
+- Track drop rate
+- Publish health frame
+
+---
+
+- 6.2 Gateway Side Modules
+
+✔ Functional Block Diagram – Gateway Radio Layer
+
+```text
++--------------------------------------------------+
+|                    GATEWAY                       |
+|                                                  |
+|  +---------------------+                         |
+|  |   ESPNowDriver      |                         |
+|  +----------+----------+                         |
+|             |                                    |
+|  +----------v----------+                         |
+|  |  FieldFrameParser   |                         |
+|  +----------+----------+                         |
+|             |                                    |
+|  +----------v----------+                         |
+|  |   DedupEngine       |                         |
+|  +----------+----------+                         |
+|             |                                    |
+|  +----------v----------+                         |
+|  |  RoutingValidator   |                         |
+|  +----------+----------+                         |
+|             |                                    |
+|  +----------v----------+                         |
+|  |  BridgeDispatcher   | --> DEV-HTL-03         |
++--------------------------------------------------+
+```
+
+---
+
+✔ Module Responsibilities
+
+✔ 1. FieldFrameParser
+
+- Validate magic
+- Validate CRC
+- Validate proto version
+
+✔ 2. DedupEngine
+
+- Sliding window per src_id
+- Drop duplicate
+
+✔ 3. RoutingValidator
+
+- Enforce hop limit
+- Validate TTL
+- Drop loop
+
+✔ 4. BridgeDispatcher
+
+- Convert binary → MQTT payload
+- Forward to DEV-HTL-03 boundary
+
+---
+
+## 7. Coding Architecture (3-Layer OOP)
+
+Layer model wajib konsisten dengan DEV-HTL-01.
+
+- 7.1 Layer Definition
+
+| Layer       | Prefix | Responsibility        |
+| ----------- | ------ | --------------------- |
+| Application | app\_  | Mode orchestration    |
+| Service     | srv\_  | Logic & protocol      |
+| Driver      | drv\_  | Hardware abstraction  |
+| System      | sys\_  | Logging, time, config |
+
+---
+
+✔ Flat Folder (rekomendasi untuk `dev-htl-02-node-to-gateway/`)
+
+```text
+dev-htl-02-node-to-gateway-node.ino
+dev-htl-02-node-to-gateway-gateway.ino
+
+sys_time.h
+sys_log.h
+sys_log.cpp
+
+drv_espnow.h
+drv_espnow.cpp
+
+srv_crc16.h
+srv_crc16.cpp
+srv_field_frame.h
+srv_field_frame.cpp
+srv_retry_controller.h
+srv_retry_controller.cpp
+srv_routing_manager.h
+srv_routing_manager.cpp
+srv_field_link_health.h
+srv_field_link_health.cpp
+
+srv_dedup_window.h
+srv_dedup_window.cpp
+srv_routing_validator.h
+srv_routing_validator.cpp
+
+app_field_node.h
+app_field_node.cpp
+app_gateway_radio.h
+app_gateway_radio.cpp
+```
+
+> Catatan disiplin: **Frame detail** secara dokumen akan “dikunci” di Section 8 (Part 4), tapi **implementasi struct/pack/unpack tetap harus ada** agar engineer bisa eksekusi. Jadi di Part 3 ini saya tulis modulnya dan konstanta headernya minimal.
+
+---
+
+- 0. System
+
+✔ `sys_time.h`
+
+```cpp
+#pragma once
+#include <Arduino.h>
+static inline uint32_t sys_time_ms() { return millis(); }
+```
+
+✔ `sys_log.h`
+
+```cpp
+#pragma once
+#include <Arduino.h>
+
+class sys_log {
+public:
+  void add(const String& s) { Serial.println(s); }
+};
+
+extern sys_log SYS_LOG;
+```
+
+✔ `sys_log.cpp`
+
+```cpp
+#include "sys_log.h"
+sys_log SYS_LOG;
+```
+
+---
+
+- 1. Driver — `drv_espnow`
+
+✔ `drv_espnow.h`
+
+```cpp
+#pragma once
+#include <Arduino.h>
+
+typedef void (*drv_espnow_rx_cb)(const uint8_t* mac, const uint8_t* data, int len);
+typedef void (*drv_espnow_tx_cb)(const uint8_t* mac, bool ok);
+
+class drv_espnow {
+public:
+  bool init(uint8_t channel, drv_espnow_rx_cb rx, drv_espnow_tx_cb tx);
+  bool add_peer(const uint8_t mac[6], uint8_t channel, bool encrypt = false);
+  bool send(const uint8_t mac[6], const uint8_t* data, size_t len);
+};
+
+extern drv_espnow DRV_ESPNOW;
+```
+
+✔ `drv_espnow.cpp`
+
+```cpp
+#include "drv_espnow.h"
+#include <WiFi.h>
+#include <esp_now.h>
+#include <esp_wifi.h>
+
+drv_espnow DRV_ESPNOW;
+
+static drv_espnow_rx_cb s_rx = nullptr;
+static drv_espnow_tx_cb s_tx = nullptr;
+
+static void on_recv(const uint8_t* mac, const uint8_t* data, int len) {
+  if (s_rx) s_rx(mac, data, len);
+}
+static void on_sent(const uint8_t* mac, esp_now_send_status_t status) {
+  if (s_tx) s_tx(mac, status == ESP_NOW_SEND_SUCCESS);
+}
+
+bool drv_espnow::init(uint8_t channel, drv_espnow_rx_cb rx, drv_espnow_tx_cb tx) {
+  s_rx = rx; s_tx = tx;
+
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect(true);
+  delay(50);
+
+  esp_wifi_set_promiscuous(true);
+  esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
+  esp_wifi_set_promiscuous(false);
+
+  if (esp_now_init() != ESP_OK) return false;
+  esp_now_register_recv_cb(on_recv);
+  esp_now_register_send_cb(on_sent);
+  return true;
+}
+
+bool drv_espnow::add_peer(const uint8_t mac[6], uint8_t channel, bool encrypt) {
+  esp_now_peer_info_t peer{};
+  memcpy(peer.peer_addr, mac, 6);
+  peer.channel = channel;
+  peer.encrypt = encrypt;
+  return esp_now_add_peer(&peer) == ESP_OK;
+}
+
+bool drv_espnow::send(const uint8_t mac[6], const uint8_t* data, size_t len) {
+  return esp_now_send(mac, data, len) == ESP_OK;
+}
+```
+
+---
+
+- 2. Service — CRC16
+
+✔ `srv_crc16.h`
+
+```cpp
+#pragma once
+#include <Arduino.h>
+uint16_t srv_crc16_ccitt(const uint8_t* data, size_t len, uint16_t seed = 0xFFFF);
+```
+
+✔ `srv_crc16.cpp`
+
+```cpp
+#include "srv_crc16.h"
+
+uint16_t srv_crc16_ccitt(const uint8_t* data, size_t len, uint16_t seed) {
+  uint16_t crc = seed;
+  for (size_t i = 0; i < len; i++) {
+    crc ^= (uint16_t)data[i] << 8;
+    for (int b = 0; b < 8; b++) crc = (crc & 0x8000) ? (crc << 1) ^ 0x1021 : (crc << 1);
+  }
+  return crc;
+}
+```
+
+---
+
+- 3. Service — Frame (binary pack/unpack)
+
+✔ `srv_field_frame.h`
+
+```cpp
+#pragma once
+#include <Arduino.h>
+
+static const uint8_t FF_MAGIC0 = 0x48; // 'H'
+static const uint8_t FF_MAGIC1 = 0x54; // 'T'
+static const uint8_t FF_PROTO  = 0x01;
+
+enum srv_msg_type : uint8_t {
+  MSG_TELEMETRY = 0x01,
+  MSG_HEALTH    = 0x02,
+  MSG_COMMAND   = 0x03,
+  MSG_ACK       = 0x04,
+  MSG_CONFIG    = 0x05,
+  MSG_OTA_META  = 0x06,
+};
+
+enum srv_flags : uint8_t {
+  FL_ACK_REQ  = 1 << 0,
+  FL_ENCRYPT  = 1 << 1,
+  FL_RELAYED  = 1 << 2,
+};
+
+#pragma pack(push, 1)
+struct srv_field_header {
+  uint8_t  magic[2];
+  uint8_t  proto;
+  uint8_t  msg_type;
+  uint8_t  flags;
+  uint8_t  hop;
+  uint8_t  ttl;
+  uint8_t  payload_len;
+  uint16_t site_id;
+  uint32_t src_id;
+  uint32_t dst_id;     // 0=Gateway
+  uint16_t seq;
+  uint16_t ts16;
+  uint16_t crc16;      // crc header+payload (crc16=0 when calculating)
+  uint16_t reserved;
+};
+#pragma pack(pop)
+
+struct srv_field_frame {
+  srv_field_header h;
+  uint8_t payload[200];
+};
+
+bool srv_frame_build(
+  srv_field_frame& out,
+  uint16_t site_id,
+  uint32_t src_id,
+  uint32_t dst_id,
+  uint8_t msg_type,
+  uint8_t flags,
+  uint8_t ttl,
+  uint16_t seq,
+  uint16_t ts16,
+  const uint8_t* payload,
+  uint8_t payload_len
+);
+
+bool srv_frame_validate(const uint8_t* data, size_t len, srv_field_frame& out);
+size_t srv_frame_wire_size(const srv_field_frame& f);
+```
+
+✔ `srv_field_frame.cpp`
+
+```cpp
+#include "srv_field_frame.h"
+#include "srv_crc16.h"
+#include <string.h>
+
+static uint16_t crc_over(srv_field_header h, const uint8_t* payload, uint8_t plen) {
+  h.crc16 = 0;
+  uint16_t crc = srv_crc16_ccitt((const uint8_t*)&h, sizeof(h));
+  if (plen && payload) crc = srv_crc16_ccitt(payload, plen, crc);
+  return crc;
+}
+
+bool srv_frame_build(
+  srv_field_frame& out,
+  uint16_t site_id,
+  uint32_t src_id,
+  uint32_t dst_id,
+  uint8_t msg_type,
+  uint8_t flags,
+  uint8_t ttl,
+  uint16_t seq,
+  uint16_t ts16,
+  const uint8_t* payload,
+  uint8_t payload_len
+) {
+  if (payload_len > sizeof(out.payload)) return false;
+  memset(&out, 0, sizeof(out));
+  out.h.magic[0] = FF_MAGIC0;
+  out.h.magic[1] = FF_MAGIC1;
+  out.h.proto = FF_PROTO;
+  out.h.msg_type = msg_type;
+  out.h.flags = flags;
+  out.h.hop = 0;
+  out.h.ttl = ttl;
+  out.h.payload_len = payload_len;
+  out.h.site_id = site_id;
+  out.h.src_id = src_id;
+  out.h.dst_id = dst_id;
+  out.h.seq = seq;
+  out.h.ts16 = ts16;
+
+  if (payload_len && payload) memcpy(out.payload, payload, payload_len);
+  out.h.crc16 = crc_over(out.h, out.payload, out.h.payload_len);
+  return true;
+}
+
+size_t srv_frame_wire_size(const srv_field_frame& f) {
+  return sizeof(srv_field_header) + f.h.payload_len;
+}
+
+bool srv_frame_validate(const uint8_t* data, size_t len, srv_field_frame& out) {
+  if (len < sizeof(srv_field_header)) return false;
+
+  srv_field_header h{};
+  memcpy(&h, data, sizeof(h));
+
+  if (h.magic[0] != FF_MAGIC0 || h.magic[1] != FF_MAGIC1) return false;
+  if (h.proto != FF_PROTO) return false;
+  if (h.payload_len > 200) return false;
+  if (len != sizeof(srv_field_header) + h.payload_len) return false;
+
+  const uint8_t* payload = data + sizeof(srv_field_header);
+  uint16_t expected = crc_over(h, payload, h.payload_len);
+  if (expected != h.crc16) return false;
+
+  memset(&out, 0, sizeof(out));
+  out.h = h;
+  if (h.payload_len) memcpy(out.payload, payload, h.payload_len);
+  return true;
+}
+```
+
+---
+
+- 4. Service — Non-blocking Retry (event-driven)
+
+✔ `srv_retry_controller.h`
+
+```cpp
+#pragma once
+#include <Arduino.h>
+
+class srv_retry_controller {
+public:
+  void init(uint32_t base_ms = 100, uint8_t max_retry = 3);
+
+  // call when first send attempt starts
+  void begin(uint32_t now_ms);
+
+  // schedule next retry, returns true if retry scheduled
+  bool schedule_next(uint32_t now_ms);
+
+  bool due(uint32_t now_ms) const;
+  uint8_t attempt() const { return attempt_; }
+  bool exhausted() const { return attempt_ >= max_; }
+  void mark_sent() { sent_ = true; }
+  void reset();
+
+private:
+  uint32_t base_{100};
+  uint8_t  max_{3};
+
+  uint8_t  attempt_{0};
+  uint32_t next_due_{0};
+  bool sent_{false};
+};
+```
+
+✔ `srv_retry_controller.cpp`
+
+```cpp
+#include "srv_retry_controller.h"
+
+void srv_retry_controller::init(uint32_t base_ms, uint8_t max_retry) {
+  base_ = base_ms;
+  max_ = max_retry;
+  reset();
+}
+
+void srv_retry_controller::begin(uint32_t now_ms) {
+  attempt_ = 0;
+  sent_ = false;
+  next_due_ = now_ms; // due now for first send
+}
+
+bool srv_retry_controller::schedule_next(uint32_t now_ms) {
+  if (attempt_ >= max_) return false;
+  uint32_t backoff = base_ << attempt_; // 100,200,400
+  attempt_++;
+  next_due_ = now_ms + backoff;
+  sent_ = false;
+  return true;
+}
+
+bool srv_retry_controller::due(uint32_t now_ms) const {
+  return now_ms >= next_due_;
+}
+
+void srv_retry_controller::reset() {
+  attempt_ = 0;
+  next_due_ = 0;
+  sent_ = false;
+}
+```
+
+---
+
+- 5. Service — Routing Manager (parent MAC + hop gate)
+
+✔ `srv_routing_manager.h`
+
+```cpp
+#pragma once
+#include <Arduino.h>
+
+struct srv_parent {
+  uint8_t mac[6];
+  int rssi;
+  bool valid;
+};
+
+class srv_routing_manager {
+public:
+  void init(uint8_t hop_limit = 3);
+  void set_parent(const uint8_t mac[6], int rssi);
+  srv_parent parent() const { return parent_; }
+
+  bool can_forward(uint8_t hop, uint8_t ttl) const;
+  uint8_t hop_limit() const { return hop_limit_; }
+
+private:
+  srv_parent parent_{};
+  uint8_t hop_limit_{3};
+};
+```
+
+✔ `srv_routing_manager.cpp`
+
+```cpp
+#include "srv_routing_manager.h"
+#include <string.h>
+
+void srv_routing_manager::init(uint8_t hop_limit) {
+  hop_limit_ = hop_limit;
+  parent_.valid = false;
+  parent_.rssi = -999;
+}
+
+void srv_routing_manager::set_parent(const uint8_t mac[6], int rssi) {
+  memcpy(parent_.mac, mac, 6);
+  parent_.rssi = rssi;
+  parent_.valid = true;
+}
+
+bool srv_routing_manager::can_forward(uint8_t hop, uint8_t ttl) const {
+  if (hop >= hop_limit_) return false;
+  if (ttl == 0) return false;
+  return true;
+}
+```
+
+---
+
+- 6. Service — Field Link Health (counters)
+
+✔ `srv_field_link_health.h`
+
+```cpp
+#pragma once
+#include <Arduino.h>
+
+struct srv_link_metrics {
+  uint32_t tx_ok;
+  uint32_t tx_fail;
+  uint32_t rx_ok;
+  uint32_t rx_drop;
+  uint32_t dup_drop;
+  uint32_t hop_drop;
+  uint32_t last_rx_ms;
+};
+
+class srv_field_link_health {
+public:
+  void reset();
+  void on_tx(bool ok);
+  void on_rx_ok(uint32_t now_ms);
+  void on_rx_drop();
+  void on_dup_drop();
+  void on_hop_drop();
+  srv_link_metrics metrics() const { return m_; }
+
+private:
+  srv_link_metrics m_{};
+};
+```
+
+✔ `srv_field_link_health.cpp`
+
+```cpp
+#include "srv_field_link_health.h"
+
+void srv_field_link_health::reset() { m_ = {}; }
+
+void srv_field_link_health::on_tx(bool ok) { ok ? m_.tx_ok++ : m_.tx_fail++; }
+void srv_field_link_health::on_rx_ok(uint32_t now_ms) { m_.rx_ok++; m_.last_rx_ms = now_ms; }
+void srv_field_link_health::on_rx_drop() { m_.rx_drop++; }
+void srv_field_link_health::on_dup_drop() { m_.dup_drop++; }
+void srv_field_link_health::on_hop_drop() { m_.hop_drop++; }
+```
+
+---
+
+- 7. Gateway Service — Dedup + Routing Validator
+
+✔ `srv_dedup_window.h`
+
+```cpp
+#pragma once
+#include <Arduino.h>
+
+class srv_dedup_window {
+public:
+  void init(uint8_t window = 32);
+  bool seen_or_mark(uint32_t src_id, uint16_t seq);
+
+private:
+  static const int MAX_SRC = 20;
+  struct entry { uint32_t src; uint16_t last; uint32_t bitmap; bool used; } e_[MAX_SRC];
+  int find_or_alloc_(uint32_t src_id);
+};
+```
+
+✔ `srv_dedup_window.cpp`
+
+```cpp
+#include "srv_dedup_window.h"
+#include <string.h>
+
+void srv_dedup_window::init(uint8_t) { memset(e_, 0, sizeof(e_)); }
+
+int srv_dedup_window::find_or_alloc_(uint32_t src_id) {
+  for (int i=0;i<MAX_SRC;i++) if (e_[i].used && e_[i].src==src_id) return i;
+  for (int i=0;i<MAX_SRC;i++) if (!e_[i].used) { e_[i]={src_id,0,0,true}; return i; }
+  e_[0]={src_id,0,0,true}; return 0;
+}
+
+bool srv_dedup_window::seen_or_mark(uint32_t src_id, uint16_t seq) {
+  int i = find_or_alloc_(src_id);
+  auto &en = e_[i];
+
+  if (en.bitmap==0 && en.last==0) { en.last=seq; en.bitmap=1; return false; }
+
+  int16_t diff = (int16_t)(seq - en.last);
+  if (diff==0) return true;
+
+  if (diff>0) {
+    if (diff>=32) en.bitmap=0;
+    else en.bitmap <<= diff;
+    en.bitmap |= 1;
+    en.last = seq;
+    return false;
+  }
+
+  int back = -diff;
+  if (back>=32) return false;
+  uint32_t mask = (1u<<back);
+  if (en.bitmap & mask) return true;
+  en.bitmap |= mask;
+  return false;
+}
+```
+
+✔ `srv_routing_validator.h`
+
+```cpp
+#pragma once
+#include <Arduino.h>
+
+class srv_routing_validator {
+public:
+  void init(uint8_t hop_limit = 3) { hop_limit_ = hop_limit; }
+  bool accept(uint8_t hop, uint8_t ttl) const {
+    if (hop > hop_limit_) return false;
+    if (ttl == 0) return false;
+    return true;
+  }
+private:
+  uint8_t hop_limit_{3};
+};
+```
+
+✔ `srv_routing_validator.cpp`
+
+```cpp
+#include "srv_routing_validator.h"
+```
+
+---
+
+- 8. Application — Node side radio app (`app_field_node`)
+
+Ini yang **relate ke DEV-HTL-01**:
+payload telemetry bisa diambil dari “controller/firmware utama” (misal `app_node_direct.snapshot()`), lalu di-encode menjadi payload binary.
+
+✔ `app_field_node.h`
+
+```cpp
+#pragma once
+#include <Arduino.h>
+#include "drv_espnow.h"
+#include "srv_field_frame.h"
+#include "srv_retry_controller.h"
+#include "srv_routing_manager.h"
+#include "srv_field_link_health.h"
+
+typedef bool (*app_payload_builder)(uint8_t* out, uint8_t& out_len);
+
+class app_field_node {
+public:
+  bool init(uint16_t site_id, uint32_t node_id, uint8_t channel, const uint8_t parent_mac[6]);
+  void set_payload_builder(app_payload_builder fn);
+
+  // call from main loop frequently (non-blocking)
+  void loop();
+
+  // trigger telemetry send (will schedule retries non-blocking)
+  void trigger_telemetry(uint8_t ttl = 3);
+
+  // RX path for relay forwarding (basic)
+  void on_rx(const uint8_t* mac, const uint8_t* data, int len);
+
+  // TX callback
+  void on_tx(const uint8_t* mac, bool ok);
+
+private:
+  uint16_t site_id_{0};
+  uint32_t node_id_{0};
+  uint8_t  channel_{1};
+
+  uint8_t parent_mac_[6]{};
+
+  srv_retry_controller retry_;
+  srv_routing_manager routing_;
+  srv_field_link_health health_;
+
+  app_payload_builder payload_builder_{nullptr};
+
+  bool tx_pending_{false};
+  srv_field_frame tx_frame_{};
+  size_t tx_len_{0};
+
+  uint16_t seq_{1};
+  uint8_t ttl_{3};
+
+  void build_and_arm_tx_();
+};
+```
+
+✔ `app_field_node.cpp`
+
+```cpp
+#include "app_field_node.h"
+#include "sys_time.h"
+#include "sys_log.h"
+#include <string.h>
+
+static app_field_node* g_self = nullptr;
+
+static void _rx_cb(const uint8_t* mac, const uint8_t* data, int len) {
+  if (g_self) g_self->on_rx(mac, data, len);
+}
+static void _tx_cb(const uint8_t* mac, bool ok) {
+  if (g_self) g_self->on_tx(mac, ok);
+}
+
+bool app_field_node::init(uint16_t site_id, uint32_t node_id, uint8_t channel, const uint8_t parent_mac[6]) {
+  site_id_ = site_id;
+  node_id_ = node_id;
+  channel_ = channel;
+  memcpy(parent_mac_, parent_mac, 6);
+
+  retry_.init(100, 3);
+  routing_.init(3);
+  routing_.set_parent(parent_mac_, -50);
+  health_.reset();
+
+  g_self = this;
+  if (!DRV_ESPNOW.init(channel_, _rx_cb, _tx_cb)) return false;
+  if (!DRV_ESPNOW.add_peer(parent_mac_, channel_, false)) return false;
+
+  SYS_LOG.add("app_field_node init ok");
+  return true;
+}
+
+void app_field_node::set_payload_builder(app_payload_builder fn) {
+  payload_builder_ = fn;
+}
+
+void app_field_node::trigger_telemetry(uint8_t ttl) {
+  ttl_ = ttl;
+  build_and_arm_tx_();
+  retry_.begin(sys_time_ms());
+  tx_pending_ = true;
+}
+
+void app_field_node::build_and_arm_tx_() {
+  uint8_t payload[200];
+  uint8_t plen = 0;
+  if (payload_builder_) {
+    if (!payload_builder_(payload, plen)) plen = 0;
+  }
+
+  uint16_t ts16 = (uint16_t)(sys_time_ms() & 0xFFFF);
+
+  srv_frame_build(
+    tx_frame_,
+    site_id_,
+    node_id_,
+    0, // dst=Gateway
+    MSG_TELEMETRY,
+    FL_ACK_REQ,
+    ttl_,
+    seq_++,
+    ts16,
+    payload,
+    plen
+  );
+  tx_len_ = srv_frame_wire_size(tx_frame_);
+}
+
+void app_field_node::loop() {
+  if (!tx_pending_) return;
+
+  uint32_t now = sys_time_ms();
+  if (retry_.due(now)) {
+    DRV_ESPNOW.send(parent_mac_, (uint8_t*)&tx_frame_.h, tx_len_);
+    retry_.mark_sent();
+
+    // schedule next retry (non-blocking), unless exhausted
+    if (!retry_.schedule_next(now)) {
+      tx_pending_ = false;
+    }
+  }
+}
+
+void app_field_node::on_tx(const uint8_t* mac, bool ok) {
+  (void)mac;
+  health_.on_tx(ok);
+}
+
+void app_field_node::on_rx(const uint8_t* mac, const uint8_t* data, int len) {
+  (void)mac;
+  srv_field_frame f;
+  if (!srv_frame_validate(data, len, f)) {
+    health_.on_rx_drop();
+    return;
+  }
+  health_.on_rx_ok(sys_time_ms());
+
+  // relay forward minimal: forward frames not destined to me
+  if (f.h.dst_id != 0 && f.h.dst_id != node_id_) {
+    if (!routing_.can_forward(f.h.hop, f.h.ttl)) return;
+    f.h.hop += 1;
+    f.h.ttl -= 1;
+    f.h.flags |= FL_RELAYED;
+
+    // rebuild CRC by rebuild frame using builder (simpler)
+    srv_field_frame rebuilt;
+    srv_frame_build(
+      rebuilt, f.h.site_id, f.h.src_id, f.h.dst_id, f.h.msg_type, f.h.flags,
+      f.h.ttl, f.h.seq, f.h.ts16, f.payload, f.h.payload_len
+    );
+    size_t rlen = srv_frame_wire_size(rebuilt);
+    DRV_ESPNOW.send(parent_mac_, (uint8_t*)&rebuilt.h, rlen);
+  }
+}
+```
+
+---
+
+- 9. Application — Gateway radio app (`app_gateway_radio`)
+
+✔ `app_gateway_radio.h`
+
+```cpp
+#pragma once
+#include <Arduino.h>
+#include "drv_espnow.h"
+#include "srv_field_frame.h"
+#include "srv_dedup_window.h"
+#include "srv_routing_validator.h"
+#include "srv_field_link_health.h"
+
+class app_gateway_radio {
+public:
+  bool init(uint8_t channel);
+
+  // RX/TX callbacks
+  void on_rx(const uint8_t* mac, const uint8_t* data, int len);
+  void on_tx(const uint8_t* mac, bool ok);
+
+private:
+  uint8_t channel_{1};
+  srv_dedup_window dedup_;
+  srv_routing_validator rvalid_;
+  srv_field_link_health health_;
+};
+```
+
+✔ `app_gateway_radio.cpp`
+
+```cpp
+#include "app_gateway_radio.h"
+#include "sys_time.h"
+#include "sys_log.h"
+
+static app_gateway_radio* g_gw = nullptr;
+
+static void _gw_rx(const uint8_t* mac, const uint8_t* data, int len) {
+  if (g_gw) g_gw->on_rx(mac, data, len);
+}
+static void _gw_tx(const uint8_t* mac, bool ok) {
+  if (g_gw) g_gw->on_tx(mac, ok);
+}
+
+bool app_gateway_radio::init(uint8_t channel) {
+  channel_ = channel;
+  dedup_.init(32);
+  rvalid_.init(3);
+  health_.reset();
+
+  g_gw = this;
+  if (!DRV_ESPNOW.init(channel_, _gw_rx, _gw_tx)) return false;
+
+  SYS_LOG.add("app_gateway_radio init ok");
+  return true;
+}
+
+void app_gateway_radio::on_tx(const uint8_t* mac, bool ok) {
+  (void)mac;
+  health_.on_tx(ok);
+}
+
+void app_gateway_radio::on_rx(const uint8_t* mac, const uint8_t* data, int len) {
+  (void)mac;
+  srv_field_frame f;
+  if (!srv_frame_validate(data, len, f)) { health_.on_rx_drop(); return; }
+
+  if (!rvalid_.accept(f.h.hop, f.h.ttl)) { health_.on_hop_drop(); return; }
+
+  if (dedup_.seen_or_mark(f.h.src_id, f.h.seq)) { health_.on_dup_drop(); return; }
+
+  health_.on_rx_ok(sys_time_ms());
+
+  // Boundary ke DEV-HTL-03: dispatch upstream (di sini hanya log)
+  SYS_LOG.add(String("GW RX type=") + String(f.h.msg_type) +
+              " src=" + String(f.h.src_id, HEX) +
+              " seq=" + String(f.h.seq) +
+              " plen=" + String(f.h.payload_len));
+}
+```
+
+---
+
+- 10. Node Sketch (contoh integrasi ke DEV-HTL-01)
+
+✔ `dev-htl-02-node-to-gateway-node.ino`
+
+```cpp
+#include <Arduino.h>
+#include <ESP.h>
+#include "app_field_node.h"
+#include "sys_log.h"
+
+// Site lock sementara (akan dikunci di Part 4)
+static const uint16_t SITE_ID = 0x1234;
+static const uint8_t  CH = 1;
+
+// Parent MAC (gateway) sementara
+static uint8_t GW_MAC[6] = {0x24,0x6F,0x28,0xAA,0xBB,0xCC};
+
+app_field_node FIELD;
+
+// Payload builder: contoh payload 8 byte (soil_norm float + temp float)
+// Di proyek nyata: ambil dari app_node_direct.snapshot() (DEV-HTL-01)
+static bool build_payload(uint8_t* out, uint8_t& out_len) {
+  float soil = 0.42f;
+  float temp = 28.5f;
+  memcpy(out, &soil, 4);
+  memcpy(out + 4, &temp, 4);
+  out_len = 8;
+  return true;
+}
+
+void setup() {
+  Serial.begin(115200);
+  uint32_t node_id = (uint32_t)ESP.getEfuseMac(); // stable-ish
+
+  FIELD.init(SITE_ID, node_id, CH, GW_MAC);
+  FIELD.set_payload_builder(build_payload);
+
+  SYS_LOG.add("node ready");
+}
+
+void loop() {
+  static uint32_t last = 0;
+  uint32_t now = millis();
+
+  // trigger telemetry every 2s
+  if (now - last >= 2000) {
+    last = now;
+    FIELD.trigger_telemetry(3);
+  }
+
+  // non-blocking retry engine
+  FIELD.loop();
+}
+```
+
+---
+
+- 11. Gateway Sketch
+
+✔ `dev-htl-02-node-to-gateway-gateway.ino`
+
+```cpp
+#include <Arduino.h>
+#include "app_gateway_radio.h"
+#include "sys_log.h"
+
+static const uint8_t CH = 1;
+app_gateway_radio GW;
+
+void setup() {
+  Serial.begin(115200);
+  GW.init(CH);
+  SYS_LOG.add("gateway ready");
+}
+
+void loop() {
+  // callback driven
+}
+```
+
+---
+
+## 8. Communication Binding (LOCKED)
+
+Bagian ini mengunci kontrak komunikasi Node ↔ Gateway.
+
+Semua engineer wajib mengikuti ini.
+
+---
+
+✔ 8.1 Frame Structure (Final Lock)
+
+Binary frame sudah diimplementasikan di Part 3.
+Sekarang dikunci secara formal.
+
+✔ Header (Fixed 24 byte)
+
+```text
+Offset  Size  Field
+0       2     Magic ('H','T')
+2       1     Protocol Version (0x01)
+3       1     Message Type
+4       1     Flags
+5       1     Hop Count
+6       1     TTL
+7       1     Payload Length
+8       2     Site ID
+10      4     Source ID
+14      4     Destination ID (0 = Gateway)
+18      2     Sequence
+20      2     Timestamp16
+22      2     CRC16
+24      2     Reserved
+```
+
+Total header: 26 byte (packed)
+
+Payload: 0–200 byte
+
+Max wire size: 226 byte
+
+---
+
+✔ 8.2 Message Class Mapping (HTL-01 Binding)
+
+| Class     | msg_type | ACK Required | Notes          |
+| --------- | -------- | ------------ | -------------- |
+| Telemetry | 0x01     | Optional     | Periodic       |
+| Health    | 0x02     | No           | Every 10s      |
+| Command   | 0x03     | Mandatory    | Gateway → Node |
+| ACK       | 0x04     | No           | For command    |
+| Config    | 0x05     | Mandatory    | Versioned      |
+| OTA Meta  | 0x06     | Mandatory    | Pre-OTA        |
+
+---
+
+✔ 8.3 Rate Limiting Rule (LOCK)
+
+Node side:
+
+- Max 2 frame / second
+- Telemetry default: 2s interval
+- Health: ≥10s interval
+
+Gateway side:
+
+- Max 50 frame / second total
+- Drop frame jika overflow
+
+Implementasi guard (Node):
+
+```cpp
+static uint32_t last_tx_ms = 0;
+if (millis() - last_tx_ms < 500) return; // 2 fps limit
+last_tx_ms = millis();
+```
+
+---
+
+✔ 8.4 Payload Size Limit
+
+- Max payload: 200 byte
+- Recommended telemetry: ≤32 byte
+- OTA meta: ≤128 byte
+- Command: ≤32 byte
+
+Jika payload >200 → drop sebelum build.
+
+---
+
+✔ 8.5 ACK Handling Flow
+
+✔ Telemetry (optional ACK)
+
+```
+Node → Gateway
+No retry beyond 3 attempts
+No ACK mandatory
+```
+
+✔ Command (mandatory ACK)
+
+```
+Gateway → Node
+Node → ACK (same seq)
+If no ACK:
+  Gateway retry 3x
+```
+
+Node side ACK build:
+
+```cpp
+srv_field_frame ack;
+srv_frame_build(
+  ack,
+  site_id,
+  node_id,
+  f.h.src_id,
+  MSG_ACK,
+  0,
+  3,
+  f.h.seq,
+  f.h.ts16,
+  nullptr,
+  0
+);
+DRV_ESPNOW.send(parent_mac, (uint8_t*)&ack.h, srv_frame_wire_size(ack));
+```
+
+---
+
+✔ 8.6 Relay Rules (LOCK)
+
+Node acting as relay must:
+
+1. Increment hop
+2. Decrement ttl
+3. Set FL_RELAYED
+4. Recompute CRC
+5. Drop if:
+
+   - hop > 3
+   - ttl == 0
+   - site_id mismatch
+
+---
+
+✔ 8.7 Field Link Health Publish
+
+Health payload format (12 byte):
+
+```text
+uint32 tx_ok
+uint32 tx_fail
+uint32 rx_ok
+```
+
+Built every 10s.
+
+---
+
+## 9. Lifecycle Model (LOCKED)
+
+Bagian ini mendefinisikan bagaimana Node bergabung, beroperasi, dan recover.
+
+---
+
+- 9.1 Field Link Initialization
+
+Sequence:
+
+1. ESP boot
+2. WiFi STA mode
+3. Set channel
+4. Init ESP-NOW
+5. Add parent peer
+6. Enter DISCOVERY state
+
+---
+
+- 9.2 Parent Discovery (Phase 1 Implementation)
+
+Mode sederhana (phase sekarang):
+
+- Parent MAC pre-configured (NVS)
+- No dynamic scanning
+
+Future phase (optional):
+
+- Broadcast HELLO
+- Gateway reply
+- RSSI-based parent select
+
+Saat ini dikunci: static parent.
+
+---
+
+- 9.3 Join Procedure
+
+After init:
+
+1. Send HELLO frame (MSG_HEALTH)
+2. Wait ACK (optional)
+3. If success → NORMAL MODE
+4. If 3 retry fail → enter RETRY WAIT
+
+Retry wait:
+
+- Backoff 5s
+- Retry join
+
+---
+
+- 9.4 Normal Operation
+
+State machine:
+
+```text
+INIT
+ ↓
+JOIN
+ ↓
+NORMAL
+ ↓
+LINK_LOST (if no RX 30s)
+ ↓
+REJOIN
+```
+
+---
+
+✔ Normal Loop Behavior
+
+Node:
+
+- Send telemetry periodic
+- Process command
+- Relay frames
+- Monitor link metrics
+
+Gateway:
+
+- Validate frame
+- Dedup
+- Dispatch to DEV-HTL-03
+
+---
+
+- 9.5 Link Loss Detection
+
+Condition:
+
+```
+millis() - last_rx_ms > 30000
+```
+
+Action:
+
+- Mark link degraded
+- Attempt rejoin
+- Increase telemetry interval (fail-safe)
+
+---
+
+- 9.6 Rejoin Logic
+
+```cpp
+if (link_lost) {
+  routing.reset_parent();
+  delay(5000);
+  attempt_join();
+}
+```
+
+No infinite loop allowed.
+
+---
+
+- 9.7 Mode Transition Rules
+
+| From      | To        | Condition |
+| --------- | --------- | --------- |
+| INIT      | JOIN      | Radio OK  |
+| JOIN      | NORMAL    | ACK OK    |
+| NORMAL    | LINK_LOST | 30s no RX |
+| LINK_LOST | JOIN      | Retry     |
+
+---
+
+# 10. Failure Handling Implementation
+
+Semua failure harus mengikuti format:
+
+Detection → Impact → Recovery
+
+---
+
+- 10.1 Parent Down
+
+✔ Detection
+
+```cpp
+if (millis() - health.metrics().last_rx_ms > 30000) {
+  link_lost = true;
+}
+```
+
+✔ Impact
+
+- Telemetry tidak sampai
+- Command tidak diterima
+
+✔ Recovery
+
+1. Stop normal telemetry
+2. Enter LINK_LOST state
+3. Retry join every 5s
+4. If join success → NORMAL
+
+---
+
+- 10.2 Gateway Unreachable (Repeated TX Fail)
+
+✔ Detection
+
+```cpp
+if (health.metrics().tx_fail >= 3) {
+  link_degraded = true;
+}
+```
+
+✔ Recovery
+
+- Reduce telemetry rate to 10s
+- Attempt rejoin
+
+---
+
+- 10.3 Duplicate Storm (Gateway)
+
+✔ Detection
+
+```cpp
+if (dup_rate > threshold) {
+  storm_detected = true;
+}
+```
+
+✔ Recovery
+
+- Drop frame immediately
+- Do not relay
+- Log event
+
+---
+
+- 10.4 Hop Overflow
+
+✔ Detection
+
+Already in validator:
+
+```cpp
+if (!rvalid_.accept(f.h.hop, f.h.ttl))
+```
+
+✔ Recovery
+
+- Drop
+- Increment hop_drop counter
+
+---
+
+- 10.5 Radio Timeout
+
+✔ Detection
+
+ESP-NOW TX callback fail:
+
+```cpp
+void app_field_node::on_tx(..., bool ok) {
+  if (!ok) health_.on_tx(false);
+}
+```
+
+✔ Recovery
+
+Handled by retry controller.
+
+No infinite retry allowed.
+
+---
+
+- 10.6 Buffer Overflow Prevention
+
+Node:
+
+- Single TX frame only
+- No queue
+
+Gateway:
+
+- Drop if >50fps
+
+---
+
+## 11. Security Implementation
+
+Binding ke HTL-07.
+
+---
+
+- 11.1 Per-Site Key (Phase 1)
+
+Saat ini:
+
+- ESP-NOW encryption disabled (controlled LAN)
+
+Next phase:
+
+```cpp
+peer.encrypt = true;
+memcpy(peer.lmk, site_key, 16);
+```
+
+---
+
+- 11.2 Frame Validation
+
+Already enforced:
+
+- Magic check
+- Proto version
+- CRC check
+- Payload length check
+
+If invalid:
+
+```cpp
+health_.on_rx_drop();
+return;
+```
+
+---
+
+- 11.3 Replay Protection (Gateway)
+
+Using `srv_dedup_window`.
+
+- Window size: 32
+- Per src_id
+
+If duplicate:
+
+```cpp
+health_.on_dup_drop();
+return;
+```
+
+---
+
+- 11.4 Site Isolation Rule
+
+```cpp
+if (f.h.site_id != SITE_ID) return;
+```
+
+Mandatory on Gateway.
+
+---
+
+- 11.5 TTL & Hop Protection
+
+Prevents routing loop.
+
+Already enforced in validator.
+
+---
+
+## 12. Testing Hook (HTL-09 Binding)
+
+Semua test di bawah wajib dieksekusi sebelum release.
+
+---
+
+- 12.1 15 Node Stress Test
+
+Scenario:
+
+- 15 node
+- Telemetry 2s
+- 10 minute run
+
+Pass criteria:
+
+- No crash
+- No memory leak
+- Dedup stable
+- No hop overflow
+
+---
+
+- 12.2 Packet Loss Simulation
+
+Inject:
+
+- Force TX fail
+
+Expect:
+
+- Retry 3x
+- Then stop
+
+---
+
+- 12.3 Parent Removal Test
+
+Power off Gateway.
+
+Expect:
+
+- Node detect in ≤30s
+- Enter LINK_LOST
+- Attempt rejoin
+
+---
+
+- 12.4 Flood Test
+
+Force rapid telemetry.
+
+Expect:
+
+- Rate limiter block >2fps
+
+---
+
+- 12.5 Hop Limit Validation
+
+Create chain 3 node.
+
+Force relay >3.
+
+Expect:
+
+- Drop
+
+---
+
+- 12.6 Dedup Validation
+
+Send same frame twice.
+
+Expect:
+
+- Second drop
+- dup_drop++
+
+---
+
+## 13. Definition of Done
+
+DEV-HTL-02 dianggap selesai jika:
+
+- ✔ Transport decision locked
+- ✔ Frame format locked
+- ✔ Hop limit enforced
+- ✔ Dedup window working
+- ✔ Retry bounded (max 3)
+- ✔ No blocking delay
+- ✔ 15-node stress passed
+- ✔ Link-loss recovery validated
+- ✔ HTL-09 radio tests passed
+- ✔ Gateway dispatch stable
+
+Jika salah satu gagal → tidak production ready.
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

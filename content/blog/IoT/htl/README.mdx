@@ -11,20 +11,16 @@ tags:
     'production-readiness',
   ]
 draft: false
-summary: Dokumen ini adalah entry-point resmi untuk seluruh framework engineering HortiLink (HTL-00 s/d HTL-09). Ia mendefinisikan struktur dokumentasi formal, tata kelola revisi, otoritas perubahan, serta ringkasan sistemik arsitektur platform kontrol pertanian terdistribusi berbasis site otonom. README ini memastikan setiap engineer memahami boundary sistem, kontrak lintas tim, hierarki kontrol, model degradasi, keamanan, serta gate validasi sebelum produksi. Dokumen ini bukan hanya indeks file, tetapi landasan governance engineering untuk pengembangan paralel, reliability lokal, dan kesiapan scale multi-site.
+summary: Dokumen ini adalah entry-point resmi untuk seluruh framework engineering HortiLink (HTL-00 s/d HTL-09) beserta dokumen eksekusi DEV-HTL-01 s/d DEV-HTL-04. Ia mendefinisikan struktur dokumentasi formal, tata kelola revisi, otoritas perubahan, serta menerjemahkan arsitektur sistem menjadi panduan implementasi riil dari Node hingga Cloud. README ini memastikan setiap engineer memahami boundary sistem, kontrak lintas tim, hierarki kontrol, model degradasi, keamanan, serta bagaimana spesifikasi formal diturunkan menjadi firmware, bridge, backend, dan cloud sync yang siap produksi.
 ---
 
 - [1. Pendahuluan](#1-pendahuluan)
 - [2. How to Read This Documentation](#2-how-to-read-this-documentation)
-  - [Onboarding Engineer Baru](#onboarding-engineer-baru)
-  - [Implementasi Komponen](#implementasi-komponen)
-  - [QA \& Field Validation](#qa--field-validation)
-  - [Perubahan Desain](#perubahan-desain)
 - [3. Document List](#3-document-list)
-- [4. Document Governance](#4-document-governance)
-- [5. Revision Format](#5-revision-format)
-- [6. Ownership](#6-ownership)
-- [7. Change Control](#7-change-control)
+- [4. Tata Kelola Dokumen](#4-tata-kelola-dokumen)
+- [5. Format Revisi](#5-format-revisi)
+- [6. Kepemilikan Dokumen](#6-kepemilikan-dokumen)
+- [7. Pengendalian Perubahan (Change Control)](#7-pengendalian-perubahan-change-control)
 - [8. EXECUTIVE SUMMARY](#8-executive-summary)
   - [HortiLink Engineering Documentation Framework (HTL-00 s/d HTL-09)](#hortilink-engineering-documentation-framework-htl-00-sd-htl-09)
 - [9. RINGKASAN PER DOKUMEN](#9-ringkasan-per-dokumen)
@@ -40,7 +36,13 @@ summary: Dokumen ini adalah entry-point resmi untuk seluruh framework engineerin
   - [HTL-09 – Test Plan \& Validation Matrix](#htl-09--test-plan--validation-matrix)
 - [10. ARSITEKTUR KERANGKA BESAR](#10-arsitektur-kerangka-besar)
 - [11. MANFAAT UNTUK DOKUMEN DEVELOPMENT](#11-manfaat-untuk-dokumen-development)
-- [12. POSISI STRATEGIS PROYEK](#12-posisi-strategis-proyek)
+- [12. DEV-HTL — DEVELOPMENT EXECUTION FRAMEWORK](#12-dev-htl--development-execution-framework)
+  - [DEV-HTL-01 – Node Direct](#dev-htl-01--node-direct)
+  - [DEV-HTL-02 – Node ↔ Gateway](#dev-htl-02--node--gateway)
+  - [DEV-HTL-03 – Gateway ↔ Server](#dev-htl-03--gateway--server)
+  - [DEV-HTL-04 – Server ↔ Cloud](#dev-htl-04--server--cloud)
+- [13. PRODUCTION READINESS PIPELINE](#13-production-readiness-pipeline)
+- [14. POSISI STRATEGIS PROYEK](#14-posisi-strategis-proyek)
 
 ---
 
@@ -74,7 +76,7 @@ HTL-01 terlebih dahulu (kontrak) → lalu spesifikasi domain
 
 ✔ QA & Field Validation
 
-HTL-08 → HTL-09
+HTL-08 → HTL-09 → DEV-HTL test binding
 
 ✔ Perubahan Desain
 
@@ -83,6 +85,8 @@ Cek governance & revision history
 ---
 
 # 3. Document List
+
+> A. HTL-Series (Formal Specification)
 
 | ID     | Document Name                           |
 | ------ | --------------------------------------- |
@@ -96,6 +100,20 @@ Cek governance & revision history
 | HTL-07 | Security Architecture                   |
 | HTL-08 | Failure Mode & Recovery Matrix          |
 | HTL-09 | Test Plan & Validation Matrix           |
+
+---
+
+> B. DEV-HTL-Series (Execution Guide)
+
+| ID         | Document         | Output Artifact                |
+| ---------- | ---------------- | ------------------------------ |
+| DEV-HTL-01 | Node Direct      | ESP firmware + HTTP UI         |
+| DEV-HTL-02 | Node ↔ Gateway   | Radio stack + routing engine   |
+| DEV-HTL-03 | Gateway ↔ Server | MQTT bridge + SQLite ingestion |
+| DEV-HTL-04 | Server ↔ Cloud   | TLS cloud sync service         |
+
+HTL adalah spesifikasi.
+DEV-HTL adalah eksekusi.
 
 <ResourceBox
   title="Artikel Terkait:"
@@ -149,6 +167,26 @@ Cek governance & revision history
       name: 'TEST PLAN & VALIDATION',
       href: '/blog/IoT/htl/htl-09-test-plan-validation-matrix',
       description: 'TEST PLAN & VALIDATION MATRIX (Outline v0.1)',
+    },
+    {
+      name: 'NODE DIRECT',
+      href: '/blog/IoT/htl/dev-htl-01-node-direct',
+      description: 'NODE DIRECT DEVELOPMENT GUIDE',
+    },
+    {
+      name: 'Node ↔ Gateway',
+      href: '/blog/IoT/htl/dev-htl-02-node-to-gateway',
+      description: 'Node ↔ Gateway DEVELOPMENT GUIDE',
+    },
+    {
+      name: 'GATEWAY TO SERVER',
+      href: '/blog/IoT/htl/dev-htl-03-gateway-to-server',
+      description: 'GATEWAY TO SERVER DEVELOPMENT GUIDE',
+    },
+    {
+      name: 'SERVER TO CLOUD',
+      href: '/blog/IoT/htl/dev-htl-04-server-to-cloud',
+      description: 'SERVER TO CLOUD DEVELOPMENT GUIDE',
     },
   ]}
 />
@@ -448,9 +486,67 @@ Karena:
 
 ---
 
-# 12. POSISI STRATEGIS PROYEK
+# 12. DEV-HTL — DEVELOPMENT EXECUTION FRAMEWORK
 
-Dengan framework HTL-00 s/d HTL-09:
+DEV-HTL menerjemahkan spesifikasi formal menjadi implementasi riil.
+
+## DEV-HTL-01 – Node Direct
+
+- Full firmware ESP32
+- Sensor & actuator driver
+- Interlock enforcement
+- HTTP direct commissioning
+- Watchdog & brownout
+- Definition of Done terikat HTL-09
+
+## DEV-HTL-02 – Node ↔ Gateway
+
+- Transport selection (LoRa / ESP-NOW)
+- Frame structure
+- Routing table
+- Dedup window
+- Retry/backoff deterministic
+- Hop limit enforcement
+
+## DEV-HTL-03 – Gateway ↔ Server
+
+- MQTT bridge
+- Store-and-forward buffer
+- SQLite WAL ingestion
+- Broker reconnect lifecycle
+- Health publish
+
+## DEV-HTL-04 – Server ↔ Cloud
+
+- HTTPS TLS sync
+- Spool queue SQLite
+- Batch upload idempotent
+- Exponential backoff
+- WAN degradation safe mode
+
+DEV-HTL bukan narasi.
+Ia berisi hardware selection, OOP layering, coding, lifecycle, dan failure handling.
+
+---
+
+# 13. PRODUCTION READINESS PIPELINE
+
+1. Unit test
+2. Integration test
+3. Failure injection
+4. WAN unplug test
+5. Broker restart test
+6. Brownout simulation
+7. Soak test
+8. HTL-09 validation
+
+Tanpa lulus HTL-09 → tidak production ready.
+
+---
+
+# 14. POSISI STRATEGIS PROYEK
+
+Dengan HTL + DEV-HTL:
 
 HortiLink bukan sekadar proyek IoT berbasis ESP.
 
@@ -462,6 +558,9 @@ dengan:
 
 - Local reliability
 - Structured governance
-- Controlled risk
+- Deterministic degradation
+- Secure transport
 - Production readiness
-- Readiness untuk scale ke multi-site
+- Multi-site scalability
+
+---

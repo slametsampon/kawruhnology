@@ -1,34 +1,85 @@
-Outline diterima.
+---
+title: DEV-HTL-01 – NODE DIRECT DEVELOPMENT GUIDE
+date: '2026-02-25'
+tags:
+  [
+    'node-firmware',
+    'esp32',
+    'local-first-control',
+    'direct-hmi',
+    'oop-architecture',
+    'embedded-systems',
+    'interlock-safety',
+    'iot-agriculture',
+  ]
+draft: false
+summary: DEV-HTL-01 mendefinisikan implementasi final firmware Node berbasis ESP-family yang mampu beroperasi secara otonom dan dapat diakses langsung melalui smartphone (HTTP direct mode). Dokumen ini mengunci pemilihan hardware (MCU, sensor, actuator, power design), integrasi elektrikal, serta arsitektur software 3-layer OOP (app*, srv*, drv*, sys*). Node bertanggung jawab atas kontrol lokal, interlock safety, watchdog, brownout handling, dan manual override dengan TTL enforcement. Endpoint HTTP minimal disediakan untuk commissioning, diagnostics, dan maintenance tanpa ketergantungan gateway atau server. Dokumen ini memastikan bahwa kontrol kritikal tetap berada di Node, sesuai prinsip local-first pada HTL-00, serta menyediakan definisi selesai (Definition of Done) dan hook pengujian HTL-09 untuk validasi produksi.
+---
 
-Struktur konsisten dengan template yang dikunci.
-Scope jelas.
-Binding ke HTL-series eksplisit.
-Boundary direct-mode jelas (tanpa gateway, tanpa MQTT).
-
-Kita mulai **Part 1 – Foundation** sesuai strategi yang sudah disepakati.
-
-Dokumen akan dibagi menjadi beberapa part sebagai berikut:
-
-- **Part 1** → Section 1–3 (Purpose, Scope, Reference Binding) + System Context Diagram
-- Part 2 → Section 4–5 (Hardware + Electrical)
-- Part 3 → Section 6–7 (Software Architecture + Coding Architecture)
-- Part 4 → Section 8–9 (Communication + Lifecycle)
-- Part 5 → Section 10–11 (Failure + Security)
-- Part 6 → Section 12–14 (Testing Hook + DoD + Revision History Baseline)
-
-Setelah Part 1 selesai dan Anda approve → freeze → lanjut Part 2.
+# **_DEV-HTL-01 – NODE DIRECT DEVELOPMENT GUIDE_**
 
 ---
 
-# DEV-HTL-01 – NODE DIRECT DEVELOPMENT GUIDE
-
-## Part 1 – Foundation (Section 1–3 + Context Model)
+- [**_DEV-HTL-01 – NODE DIRECT DEVELOPMENT GUIDE_**](#dev-htl-01--node-direct-development-guide)
+  - [1. Purpose](#1-purpose)
+  - [2. Scope](#2-scope)
+  - [3. Reference (HTL-Series Binding)](#3-reference-htl-series-binding)
+- [System Context – Direct Mode](#system-context--direct-mode)
+- [Kontrol Hierarki (Direct Mode)](#kontrol-hierarki-direct-mode)
+- [4. Hardware Selection \& Economic Analysis](#4-hardware-selection--economic-analysis)
+  - [4.1 MCU Variant Comparison](#41-mcu-variant-comparison)
+  - [4.2 Selected MCU \& Justification](#42-selected-mcu--justification)
+  - [4.3 Sensor Selection](#43-sensor-selection)
+  - [4.4 Actuator Hardware](#44-actuator-hardware)
+  - [4.5 Power Design](#45-power-design)
+- [5. Electrical Integration Overview](#5-electrical-integration-overview)
+  - [5.1 Block Diagram](#51-block-diagram)
+  - [5.2 Grounding Strategy](#52-grounding-strategy)
+  - [5.3 Protection Mechanisms](#53-protection-mechanisms)
+- [6. Software Architecture](#6-software-architecture)
+  - [6.1 Functional Block Diagram](#61-functional-block-diagram)
+  - [6.2 Task Model (ESP32 FreeRTOS)](#62-task-model-esp32-freertos)
+  - [6.3 Memory Allocation Strategy](#63-memory-allocation-strategy)
+- [7. Coding Architecture (3-Layer OOP + System)](#7-coding-architecture-3-layer-oop--system)
+  - [7.1 Penamaan \& Struktur Folder (WAJIB)](#71-penamaan--struktur-folder-wajib)
+  - [7.2 Responsibility Rules (lebih ketat)](#72-responsibility-rules-lebih-ketat)
+  - [7.3 FULL CODING BASELINE (Sensor + Actuator + Controller)](#73-full-coding-baseline-sensor--actuator--controller)
+  - [drv_relay.h](#drv_relayh)
+- [8. Communication Binding (Direct Mode)](#8-communication-binding-direct-mode)
+  - [8.1 HTTP Endpoint Definition (FINAL)](#81-http-endpoint-definition-final)
+  - [8.2 Request/Response Structure (JSON Schema)](#82-requestresponse-structure-json-schema)
+  - [8.3 Manual Override Policy (Direct)](#83-manual-override-policy-direct)
+- [9. Lifecycle Model](#9-lifecycle-model)
+  - [9.1 Boot Sequence (FINAL)](#91-boot-sequence-final)
+  - [9.2 Operating Modes](#92-operating-modes)
+  - [9.3 Mode Transition Rules](#93-mode-transition-rules)
+- [10. Failure Handling Implementation](#10-failure-handling-implementation)
+  - [10.1 Brownout Detection (ESP32)](#101-brownout-detection-esp32)
+  - [sys_power.h](#sys_powerh)
+  - [sys_power.cpp](#sys_powercpp)
+  - [Integrasi ke app_node_direct](#integrasi-ke-app_node_direct)
+  - [10.2 Actuator Stuck Protection (Runtime Enforcement)](#102-actuator-stuck-protection-runtime-enforcement)
+  - [10.3 Sensor Failure Escalation](#103-sensor-failure-escalation)
+  - [10.4 HP Disconnect Handling](#104-hp-disconnect-handling)
+- [11. Security Implementation](#11-security-implementation)
+- [11.1 PIN Authentication + Session Token](#111-pin-authentication--session-token)
+  - [sys_auth.h](#sys_authh)
+  - [sys_auth.cpp](#sys_authcpp)
+- [Integrasi ke HTTP](#integrasi-ke-http)
+- [11.2 AP Hardening](#112-ap-hardening)
+- [11.3 Rate Limit Login](#113-rate-limit-login)
+- [11.4 NVS Encrypted PIN (Production)](#114-nvs-encrypted-pin-production)
+- [11.5 Unauthorized Attempt Logging](#115-unauthorized-attempt-logging)
+- [11.6 Secure Reset Handling](#116-secure-reset-handling)
+- [11.7 Tamper Consideration](#117-tamper-consideration)
+- [12. Testing Hook (HTL-09 Binding)](#12-testing-hook-htl-09-binding)
+- [13. Definition of Done (Updated)](#13-definition-of-done-updated)
 
 ---
 
 ## 1. Purpose
 
-### 1.1 Document Objective
+✔ 1.1 Document Objective
 
 Dokumen ini menjadi **panduan implementasi final dan eksekusi teknis** untuk Node berbasis ESP-family yang beroperasi dalam mode:
 
@@ -53,7 +104,7 @@ HP hanya alat interaksi.
 
 ---
 
-### 1.2 Target Audience
+✔ 1.2 Target Audience
 
 Dokumen ini mengikat:
 
@@ -64,11 +115,87 @@ Dokumen ini mengikat:
 
 Dokumen ini tidak ditujukan untuk tim Gateway atau Backend.
 
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'SYSTEM ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-00-system-architecture-master-document',
+      description: 'SYSTEM ARCHITECTURE MASTER DOCUMENT',
+    },
+    {
+      name: 'INTERFACE SPECIFICATION',
+      href: '/blog/IoT/htl/htl-01-interface-specification',
+      description: 'INTERFACE SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'NODE TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-02-node-technical-specification',
+      description: 'NODE TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'GATEWAY TECHNICAL SPECIFICATION',
+      href: '/blog/IoT/htl/htl-03-gateway-technical-specification',
+      description: 'GATEWAY TECHNICAL SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'SERVER RASPBERRY-PI',
+      href: '/blog/IoT/htl/htl-04-server-raspberry-pi-specification',
+      description: 'SERVER RASPBERRY-PI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'HMI SPECIFICATION',
+      href: '/blog/IoT/htl/htl-05-hmi-specification',
+      description: 'HMI SPECIFICATION (Outline v0.1)',
+    },
+    {
+      name: 'ELECTRICAL & POWER',
+      href: '/blog/IoT/htl/htl-06-electrical-panel-design-specification',
+      description: 'ELECTRICAL & POWER INTEGRATION SPECIFICATION',
+    },
+    {
+      name: 'SECURITY ARCHITECTURE',
+      href: '/blog/IoT/htl/htl-07-security-architecture',
+      description: 'SECURITY ARCHITECTURE (Outline v0.1)',
+    },
+    {
+      name: 'FAILURE MODE & RECOVERY',
+      href: '/blog/IoT/htl/htl-08-failure-mode-recovery-matrix',
+      description: 'FAILURE MODE & RECOVERY MATRIX (Outline v0.1)',
+    },
+    {
+      name: 'TEST PLAN & VALIDATION',
+      href: '/blog/IoT/htl/htl-09-test-plan-validation-matrix',
+      description: 'TEST PLAN & VALIDATION MATRIX (Outline v0.1)',
+    },
+    {
+      name: 'NODE DIRECT',
+      href: '/blog/IoT/htl/dev-htl-01-node-direct',
+      description: 'NODE DIRECT DEVELOPMENT GUIDE',
+    },
+    {
+      name: 'Node ↔ Gateway',
+      href: '/blog/IoT/htl/dev-htl-02-node-to-gateway',
+      description: 'Node ↔ Gateway DEVELOPMENT GUIDE',
+    },
+    {
+      name: 'GATEWAY TO SERVER',
+      href: '/blog/IoT/htl/dev-htl-03-gateway-to-server',
+      description: 'GATEWAY TO SERVER DEVELOPMENT GUIDE',
+    },
+    {
+      name: 'SERVER TO CLOUD',
+      href: '/blog/IoT/htl/dev-htl-04-server-to-cloud',
+      description: 'SERVER TO CLOUD DEVELOPMENT GUIDE',
+    },
+  ]}
+/>
+
 ---
 
 ## 2. Scope
 
-### 2.1 In-Scope
+✔ 2.1 In-Scope
 
 Implementasi lengkap Node dalam direct mode meliputi:
 
@@ -91,7 +218,7 @@ Node wajib tetap aman walaupun:
 
 ---
 
-### 2.2 Out-of-Scope
+✔ 2.2 Out-of-Scope
 
 Tidak dibahas dalam dokumen ini:
 
@@ -110,7 +237,7 @@ Dokumen ini murni **Node sebagai sistem kontrol otonom lokal**.
 
 Implementasi Node direct mode wajib traceable ke HTL-series berikut:
 
-### 3.1 Architecture Binding
+✔ 3.1 Architecture Binding
 
 - HTL-00
 
@@ -122,7 +249,7 @@ Node direct mode adalah realisasi Level 0.
 
 ---
 
-### 3.2 Interface Binding
+✔ 3.2 Interface Binding
 
 - HTL-01
 
@@ -134,7 +261,7 @@ Direct HTTP command harus mengikuti state logic yang sama secara prinsip.
 
 ---
 
-### 3.3 Node Technical Binding
+✔ 3.3 Node Technical Binding
 
 - HTL-02
 
@@ -146,7 +273,7 @@ Direct HTTP command harus mengikuti state logic yang sama secara prinsip.
 
 ---
 
-### 3.4 Electrical Binding
+✔ 3.4 Electrical Binding
 
 - HTL-06
 
@@ -157,7 +284,7 @@ Direct HTTP command harus mengikuti state logic yang sama secara prinsip.
 
 ---
 
-### 3.5 Security Binding
+✔ 3.5 Security Binding
 
 - HTL-07
 
@@ -167,7 +294,7 @@ Direct HTTP command harus mengikuti state logic yang sama secara prinsip.
 
 ---
 
-### 3.6 Failure & Test Binding
+✔ 3.6 Failure & Test Binding
 
 - HTL-08
 
@@ -185,13 +312,7 @@ Direct HTTP command harus mengikuti state logic yang sama secara prinsip.
 
 Berikut adalah boundary sistem untuk Node dalam mode direct:
 
-![Image](https://www.waveshare.com/img/devkit/accBoard/ESP32-S3-POE-ETH-8DI-8DO/ESP32-S3-POE-ETH-8DI-8DO-details-intro.jpg)
-
 ![Image](https://images.openai.com/static-rsc-3/vM2vS1fOYFhsarIEWdAsN329z2l3oywcVTkJSP7aSjsDtFtyp4WaQUBTIQOM5A1j3NmZwu_iHMGXPA7DJJwvJmsHedVc2cqNQbR8eWzGNnU?purpose=fullsize&v=1)
-
-![Image](https://researchdesignlab.com/media/catalog/product/cache/1/image/512x512/9ea150a65d3ccc136116bd4ea279f951/r/d/rdl_din-rail-relay-isolated-1.jpg)
-
-![Image](https://m.media-amazon.com/images/I/81SP26nFyKL._AC_UF1000%2C1000_QL80_.jpg)
 
 Secara logis, sistemnya adalah:
 
@@ -238,7 +359,7 @@ Node direct mode membutuhkan:
 - Brownout detection
 - OTA ready (walau lokal)
 
-### Kandidat MCU
+✔ Kandidat MCU
 
 | Parameter       | ESP8266      | ESP32 (WROOM) | ESP32-S3      |
 | --------------- | ------------ | ------------- | ------------- |
@@ -252,7 +373,7 @@ Node direct mode membutuhkan:
 | Secure boot     | No           | Yes           | Yes           |
 | Cost (approx)   | $2–3         | $4–5          | $6–8          |
 
-### Analisis Teknis
+✔ Analisis Teknis
 
 ESP8266:
 
@@ -282,7 +403,7 @@ Dipilih: **ESP32-WROOM (4MB Flash minimum)**
 
 Alasan:
 
-### Teknis
+✔ Teknis
 
 - Dual-core untuk isolasi control task
 - Brownout detect hardware
@@ -291,13 +412,13 @@ Alasan:
 - RAM cukup untuk HTTP + log buffer
 - Mendukung OTA
 
-### Reliability
+✔ Reliability
 
 - Banyak referensi industrial usage
 - Stabil di suhu 0–60°C
 - Mature SDK
 
-### Ekonomi
+✔ Ekonomi
 
 - Selisih harga vs 8266 ±$2
 - Menghindari risiko instability
@@ -311,7 +432,7 @@ ESP8266 tidak direkomendasikan.
 
 ## 4.3 Sensor Selection
 
-### Soil Moisture
+✔ Soil Moisture
 
 Opsi:
 
@@ -333,7 +454,7 @@ Alasan:
 
 ---
 
-### Temperature
+✔ Temperature
 
 Opsi:
 
@@ -352,7 +473,7 @@ Alasan:
 
 ---
 
-### Optional Sensors
+✔ Optional Sensors
 
 - Flow sensor (Hall effect)
 - pH sensor (I2C module)
@@ -364,7 +485,7 @@ pH sensor analog murah tidak stabil → harus ada kalibrasi berkala.
 
 ## 4.4 Actuator Hardware
 
-### Opsi Switching
+✔ Opsi Switching
 
 | Type             | Isolation     | Longevity  | Noise      | Cost |
 | ---------------- | ------------- | ---------- | ---------- | ---- |
@@ -374,7 +495,7 @@ pH sensor analog murah tidak stabil → harus ada kalibrasi berkala.
 
 Keputusan baseline:
 
-- Pompa kecil (<5A) → Relay opto-isolated 10A
+- Pompa kecil (< 5A) → Relay opto-isolated 10A
 - Pompa >5A → Contactor + relay driver
 
 Tidak boleh:
@@ -422,13 +543,9 @@ Protection:
 
 ## 5.1 Block Diagram
 
-![Image](https://www.researchgate.net/publication/341446512/figure/fig5/AS%3A892219187789825%401589733039149/ESP32-functional-block-diagram.ppm)
-
 ![Image](https://www.weishoelec.com/zb_users/upload/2025/10/202510191760857240728200.jpg)
 
 ![Image](https://europe1.discourse-cdn.com/arduino/original/4X/6/6/3/66373f87eb9c84bb41d109ca75788b332751908c.png)
-
-![Image](https://europe1.discourse-cdn.com/arduino/original/4X/3/7/4/37420110af330c90a013ae5645b2685d46be58b1.jpeg)
 
 Logical integration:
 
@@ -619,7 +736,7 @@ Ini cukup untuk menjalankan Node direct mode: **kontrol lokal berjalan meski tan
 
 > 1️⃣ MAIN FILE
 
-✔ dev-htl-01-node-direct.ino
+- ✔ dev-htl-01-node-direct.ino
 
 ```cpp
 #include "app_node_direct.h"
@@ -662,7 +779,7 @@ void loop() {
 
 > 2️⃣ SYSTEM LAYER
 
-✔ sys_time.h
+- ✔ sys_time.h
 
 ```cpp
 #pragma once
@@ -675,7 +792,7 @@ inline uint32_t sys_time_ms() {
 
 ---
 
-✔ sys_watchdog.h
+- ✔ sys_watchdog.h
 
 ```cpp
 #pragma once
@@ -689,7 +806,7 @@ public:
 
 ---
 
-✔ sys_watchdog.cpp
+- ✔ sys_watchdog.cpp
 
 ```cpp
 #include "sys_watchdog.h"
@@ -708,7 +825,7 @@ void sys_watchdog::kick() {
 
 ---
 
-✔ sys_config_store.h
+- ✔ sys_config_store.h
 
 ```cpp
 #pragma once
@@ -734,7 +851,7 @@ private:
 
 ---
 
-✔ sys_config_store.cpp
+- ✔ sys_config_store.cpp
 
 ```cpp
 #include "sys_config_store.h"
@@ -780,7 +897,7 @@ private:
 
 ---
 
-✔ drv_relay.cpp
+- ✔ drv_relay.cpp
 
 ```cpp
 #include "drv_relay.h"
@@ -802,7 +919,7 @@ void drv_relay::set(bool on) {
 
 ---
 
-✔ drv_soil_moisture_adc.h
+- ✔ drv_soil_moisture_adc.h
 
 ```cpp
 #pragma once
@@ -823,7 +940,7 @@ private:
 
 ---
 
-✔ drv_soil_moisture_adc.cpp
+- ✔ drv_soil_moisture_adc.cpp
 
 ```cpp
 #include "drv_soil_moisture_adc.h"
@@ -848,7 +965,7 @@ float drv_soil_moisture_adc::read_norm() {
 
 ---
 
-✔ drv_ds18b20.h
+- ✔ drv_ds18b20.h
 
 ```cpp
 #pragma once
@@ -868,7 +985,7 @@ private:
 
 ---
 
-✔ drv_ds18b20.cpp
+- ✔ drv_ds18b20.cpp
 
 ```cpp
 #include "drv_ds18b20.h"
@@ -891,7 +1008,7 @@ bool drv_ds18b20::read_celsius(float &out) {
 
 > 4️⃣ SERVICE LAYER
 
-✔ srv_interlock.h
+- ✔ srv_interlock.h
 
 ```cpp
 #pragma once
@@ -911,7 +1028,7 @@ public:
 
 ---
 
-✔ srv_manual_override.h
+- ✔ srv_manual_override.h
 
 ```cpp
 #pragma once
@@ -932,7 +1049,7 @@ private:
 
 ---
 
-✔ srv_manual_override.cpp
+- ✔ srv_manual_override.cpp
 
 ```cpp
 #include "srv_manual_override.h"
@@ -955,7 +1072,7 @@ bool srv_manual_override::desired(uint32_t now, bool default_state) const {
 
 ---
 
-✔ srv_irrigation_control.h
+- ✔ srv_irrigation_control.h
 
 ```cpp
 #pragma once
@@ -988,7 +1105,7 @@ private:
 
 ---
 
-✔ srv_irrigation_control.cpp
+- ✔ srv_irrigation_control.cpp
 
 ```cpp
 #include "srv_irrigation_control.h"
@@ -1041,7 +1158,7 @@ bool srv_irrigation_control::step(float soil_norm, bool sensor_ok, bool supply_o
 
 > 5️⃣ APPLICATION LAYER
 
-✔ app_node_direct.h
+- ✔ app_node_direct.h
 
 ```cpp
 #pragma once
@@ -1083,7 +1200,7 @@ private:
 
 ---
 
-✔ app_node_direct.cpp
+- ✔ app_node_direct.cpp
 
 ```cpp
 #include "app_node_direct.h"
@@ -1158,7 +1275,7 @@ void app_node_direct::set_manual_override(uint32_t ttl_ms, bool on) {
 
 ## 8.2 Request/Response Structure (JSON Schema)
 
-✔ GET `/status` (Response)
+- ✔ GET `/status` (Response)
 
 ```json
 {
@@ -1173,7 +1290,7 @@ void app_node_direct::set_manual_override(uint32_t ttl_ms, bool on) {
 }
 ```
 
-✔ GET `/snapshot` (Response)
+- ✔ GET `/snapshot` (Response)
 
 ```json
 {
@@ -1187,7 +1304,7 @@ void app_node_direct::set_manual_override(uint32_t ttl_ms, bool on) {
 }
 ```
 
-✔ POST `/actuator-test` (Request)
+- ✔ POST `/actuator-test` (Request)
 
 ```json
 {
@@ -1206,7 +1323,7 @@ void app_node_direct::set_manual_override(uint32_t ttl_ms, bool on) {
 }
 ```
 
-✔ POST `/provision` (Request)
+- ✔ POST `/provision` (Request)
 
 ```json
 {
@@ -1222,7 +1339,7 @@ void app_node_direct::set_manual_override(uint32_t ttl_ms, bool on) {
 { "saved": true, "rebooting": true }
 ```
 
-✔ POST `/reset` (Request)
+- ✔ POST `/reset` (Request)
 
 ```json
 { "reason": "manual_reset" }
@@ -1234,7 +1351,7 @@ void app_node_direct::set_manual_override(uint32_t ttl_ms, bool on) {
 { "ok": true, "rebooting": true }
 ```
 
-✔ GET `/log-tail?lines=50` (Response)
+- ✔ GET `/log-tail?lines=50` (Response)
 
 ```json
 {
@@ -1325,9 +1442,9 @@ Safe → Normal
 
 ---
 
-# FULL CODING (Part 4)
+✔ FULL CODING (Part 4)
 
-## A) `sys_log.h`
+- A) `sys_log.h`
 
 ```cpp
 #pragma once
@@ -1347,7 +1464,7 @@ private:
 extern sys_log SYS_LOG;
 ```
 
-## B) `sys_log.cpp`
+- B) `sys_log.cpp`
 
 ```cpp
 #include "sys_log.h"
@@ -1388,7 +1505,7 @@ String sys_log::tail_lines(uint16_t lines) const {
 
 ---
 
-## C) `sys_wifi.h`
+- C) `sys_wifi.h`
 
 ```cpp
 #pragma once
@@ -1419,7 +1536,7 @@ private:
 extern sys_wifi SYS_WIFI;
 ```
 
-## D) `sys_wifi.cpp`
+- D) `sys_wifi.cpp`
 
 ```cpp
 #include "sys_wifi.h"
@@ -1487,9 +1604,9 @@ sys_wifi_state sys_wifi::state() const {
 
 ---
 
-## E) Update `sys_config_store.h/.cpp` (tambah wifi + provision flag)
+- E) Update `sys_config_store.h/.cpp` (tambah wifi + provision flag)
 
-✔ `sys_config_store.h` (REPLACE)
+- ✔ `sys_config_store.h` (REPLACE)
 
 ```cpp
 #pragma once
@@ -1524,7 +1641,7 @@ private:
 };
 ```
 
-✔ `sys_config_store.cpp` (REPLACE)
+- ✔ `sys_config_store.cpp` (REPLACE)
 
 ```cpp
 #include "sys_config_store.h"
@@ -1548,9 +1665,9 @@ bool sys_config_store::save(const sys_node_config& cfg) {
 
 ---
 
-## F) Update `app_node_direct.h/.cpp` (snapshot + reason + apply config + log)
+- F) Update `app_node_direct.h/.cpp` (snapshot + reason + apply config + log)
 
-✔ `app_node_direct.h` (REPLACE)
+- ✔ `app_node_direct.h` (REPLACE)
 
 ```cpp
 #pragma once
@@ -1609,7 +1726,7 @@ private:
 };
 ```
 
-✔ `app_node_direct.cpp` (REPLACE)
+- ✔ `app_node_direct.cpp` (REPLACE)
 
 ```cpp
 #include "app_node_direct.h"
@@ -1713,7 +1830,7 @@ bool app_node_direct::apply_and_save_config(const sys_node_config& new_cfg) {
 
 ---
 
-## G) `app_http_direct.h`
+- G) `app_http_direct.h`
 
 ```cpp
 #pragma once
@@ -1744,7 +1861,7 @@ private:
 };
 ```
 
-## H) `app_http_direct.cpp`
+- H) `app_http_direct.cpp`
 
 ```cpp
 #include "app_http_direct.h"
@@ -1948,7 +2065,7 @@ void app_http_direct::handle_log_tail_() {
 
 ---
 
-## I) Update `dev-htl-01-node-direct.ino` (start WiFi + start HTTP + loop HTTP)
+- I) Update `dev-htl-01-node-direct.ino` (start WiFi + start HTTP + loop HTTP)
 
 REPLACE file ini menjadi:
 
