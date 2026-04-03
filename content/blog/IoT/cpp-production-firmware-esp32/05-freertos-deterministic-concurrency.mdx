@@ -75,24 +75,66 @@ Artinya:
 
 Firmware bukan single-thread.
 
+Pada titik ini, firmware yang sudah dibangun pada Artikel 1–4 memiliki struktur:
+
+```text
+app_ → svc_ → drv_
+```
+
+Struktur ini mengatur **siapa boleh memanggil siapa**,
+tetapi belum mengatur **siapa menjalankan kode tersebut**.
+
+Masalah mulai muncul ketika struktur ini dijalankan dalam konteks FreeRTOS.
+
+Beberapa eksekusi berjalan bersamaan:
+
+- callback MQTT berjalan di task network
+- ISR berjalan asynchronous
+- loop berjalan di task utama
+- task internal ESP32 berjalan di background
+
+Semua ini bisa memanggil kode yang sama.
+
+Jika tidak dikontrol, maka:
+
+- ISR bisa langsung mengubah state service
+- callback bisa langsung mengontrol actuator
+- task berbeda bisa mengakses resource yang sama
+
+Artinya:
+
+```text
+execution tidak lagi mengikuti boundary layer
+```
+
 Masalah umum yang muncul:
 
-- ISR langsung mengubah state service.
-- MQTT callback memanggil actuator.
-- Control loop memanggil publish blocking.
-- Logging blocking di task utama.
-- Queue tanpa batas menyebabkan memory spike.
+- ISR langsung mengubah state service
+- MQTT callback memanggil actuator
+- Control loop memanggil publish blocking
+- Logging blocking di task utama
+- Queue tanpa batas menyebabkan memory spike
 
 Gejala produksi:
 
-- Relay chatter.
-- Watchdog reset.
-- Latency tidak konsisten.
-- Bug hanya muncul saat traffic tinggi.
+- Relay chatter
+- Watchdog reset
+- Latency tidak konsisten
+- Bug hanya muncul saat traffic tinggi
 
 Masalahnya bukan FreeRTOS.
 
 Masalahnya:
+
+> **Layer sudah benar, tetapi eksekusi tidak mengikuti layer tersebut.**
+
+Atau lebih spesifik:
+
+```text
+tidak ada boundary eksekusi yang menjaga agar:
+Task → app_ → svc_ → drv_
+tetap konsisten
+```
 
 > Tidak ada boundary eksekusi yang dikunci.
 

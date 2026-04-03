@@ -64,58 +64,6 @@ Seri ini dirancang untuk engineer yang:
 - Ingin firmware yang stabil dan scalable
 - Ingin masuk ke pola produksi tanpa trial-error mahal
 
-<ResourceBox
-  title="Artikel Terkait:"
-  items={[
-    {
-      name: 'Dual-Track Course Syllabus',
-      href: '/blog/IoT/firmware-foundations-esp32/syllabus-12-16-week-dual-track-esp32-firmware',
-      description:
-        'Dual-Track Course Syllabus - ESP32 Firmware Engineering (Foundation → Production)',
-    },
-    {
-      name: 'ESP32 Execution',
-      href: '/blog/IoT/firmware-foundations-esp32/01-esp32-execution-reality',
-      description: 'ESP32 Execution Reality Under Arduino Core',
-    },
-    {
-      name: 'Concurrency & RTOS',
-      href: '/blog/IoT/firmware-foundations-esp32/02-rtos-concurrency-fundamentals-esp32',
-      description: 'Concurrency & RTOS Fundamentals (ESP32 Context)',
-    },
-    {
-      name: 'FreeRTOS Execution Model',
-      href: '/blog/IoT/firmware-foundations-esp32/03-freertos-execution-model-esp32',
-      description: 'FreeRTOS Execution Model on ESP32 (Arduino Context)',
-    },
-    {
-      name: 'Memory Model & Object Lifetime',
-      href: '/blog/IoT/firmware-foundations-esp32/04-memory-model-object-lifetime-esp32',
-      description: 'Memory Model & Object Lifetime on ESP32',
-    },
-    {
-      name: 'OOP for Embedded Firmware',
-      href: '/blog/IoT/firmware-foundations-esp32/05-oop-embedded-firmware-esp32',
-      description: 'OOP for Embedded Firmware on ESP32',
-    },
-    {
-      name: '3-Layer Firmware Architecture',
-      href: '/blog/IoT/firmware-foundations-esp32/06-3-layer-firmware-architecture-esp32',
-      description: '3-Layer Firmware Architecture on ESP32',
-    },
-    {
-      name: 'Communication & State Thinking',
-      href: '/blog/IoT/firmware-foundations-esp32/07-communication-state-thinking-esp32',
-      description: 'Communication & State Thinking on ESP32',
-    },
-    {
-      name: 'Reliability Thinking',
-      href: '/blog/IoT/firmware-foundations-esp32/08-reliability-transition-to-production-esp32',
-      description: 'Reliability Thinking & Transition to Production Discipline',
-    },
-  ]}
-/>
-
 ---
 
 ## 📌 Mengapa Foundation Diperlukan?
@@ -160,6 +108,17 @@ Foundation Track membangun pemahaman tersebut sebelum aturan dikunci di Producti
 - ISR preemption
 - Watchdog interaction
 
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'ESP32 Execution',
+      href: '/blog/IoT/firmware-foundations-esp32/01-esp32-execution-reality',
+      description: 'ESP32 Execution Reality Under Arduino Core',
+    },
+  ]}
+/>
+
 ---
 
 ### 02 — Concurrency & RTOS Fundamentals
@@ -169,6 +128,17 @@ Foundation Track membangun pemahaman tersebut sebelum aturan dikunci di Producti
 - Shared state risk
 - Queue vs global
 - Race condition awareness
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Concurrency & RTOS',
+      href: '/blog/IoT/firmware-foundations-esp32/02-rtos-concurrency-fundamentals-esp32',
+      description: 'Concurrency & RTOS Fundamentals (ESP32 Context)',
+    },
+  ]}
+/>
 
 ---
 
@@ -180,6 +150,17 @@ Foundation Track membangun pemahaman tersebut sebelum aturan dikunci di Producti
 - Heap vs stack
 - Context switch cost
 
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'FreeRTOS Execution Model',
+      href: '/blog/IoT/firmware-foundations-esp32/03-freertos-execution-model-esp32',
+      description: 'FreeRTOS Execution Model on ESP32 (Arduino Context)',
+    },
+  ]}
+/>
+
 ---
 
 ### 04 — Memory Model & Object Lifetime
@@ -189,6 +170,17 @@ Foundation Track membangun pemahaman tersebut sebelum aturan dikunci di Producti
 - Object lifetime alignment
 - Hidden allocation
 - TLS memory spike
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Memory Model & Object Lifetime',
+      href: '/blog/IoT/firmware-foundations-esp32/04-memory-model-object-lifetime-esp32',
+      description: 'Memory Model & Object Lifetime on ESP32',
+    },
+  ]}
+/>
 
 ---
 
@@ -200,6 +192,17 @@ Foundation Track membangun pemahaman tersebut sebelum aturan dikunci di Producti
 - Ownership clarity
 - Dynamic allocation awareness
 
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'OOP for Embedded Firmware',
+      href: '/blog/IoT/firmware-foundations-esp32/05-oop-embedded-firmware-esp32',
+      description: 'OOP for Embedded Firmware on ESP32',
+    },
+  ]}
+/>
+
 ---
 
 ### 06 — 3-Layer Firmware Architecture
@@ -209,6 +212,17 @@ Foundation Track membangun pemahaman tersebut sebelum aturan dikunci di Producti
 - Driver
 - System module
 - Dependency direction
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: '3-Layer Firmware Architecture',
+      href: '/blog/IoT/firmware-foundations-esp32/06-3-layer-firmware-architecture-esp32',
+      description: '3-Layer Firmware Architecture on ESP32',
+    },
+  ]}
+/>
 
 ---
 
@@ -220,6 +234,17 @@ Foundation Track membangun pemahaman tersebut sebelum aturan dikunci di Producti
 - Reconnect behavior
 - Event-driven model
 
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Communication & State Thinking',
+      href: '/blog/IoT/firmware-foundations-esp32/07-communication-state-thinking-esp32',
+      description: 'Communication & State Thinking on ESP32',
+    },
+  ]}
+/>
+
 ---
 
 ### 08 — Reliability & Transition to Production
@@ -229,6 +254,17 @@ Foundation Track membangun pemahaman tersebut sebelum aturan dikunci di Producti
 - Watchdog perspective
 - Error containment
 - Transition to production discipline
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Reliability Thinking',
+      href: '/blog/IoT/firmware-foundations-esp32/08-reliability-transition-to-production-esp32',
+      description: 'Reliability Thinking & Transition to Production Discipline',
+    },
+  ]}
+/>
 
 ---
 

@@ -33,9 +33,16 @@ summary: Artikel ini mengunci struktur arsitektur firmware berbasis class yang l
     - [🔒 Rule 1 — 3-Layer Model Final](#-rule-1--3-layer-model-final)
     - [🔒 Rule 2 — Dependency Direction Strict (DAG)](#-rule-2--dependency-direction-strict-dag)
     - [🔒 Rule 3 — Driver is Pure Hardware Boundary](#-rule-3--driver-is-pure-hardware-boundary)
+    - [🔒 Rule 4 — Service is Domain Boundary (Final)](#-rule-4--service-is-domain-boundary-final)
+    - [🔒 Rule 5 — Application is System Decision Layer (Final)](#-rule-5--application-is-system-decision-layer-final)
+    - [🔒 Rule 6 — Composition Root Only in IndustrialNode.ino](#-rule-6--composition-root-only-in-industrialnodeino)
+    - [Setelah Artikel 4](#setelah-artikel-4)
+    - [Inti yang Harus Dipahami Engineer Baru](#inti-yang-harus-dipahami-engineer-baru)
     - [🔒 Rule 4 — Service is Domain Boundary](#-rule-4--service-is-domain-boundary)
     - [🔒 Rule 5 — Application is Decision Layer](#-rule-5--application-is-decision-layer)
-    - [🔒 Rule 6 — Composition Root Only in IndustrialNode.ino](#-rule-6--composition-root-only-in-industrialnodeino)
+    - [🔒 Rule 6 — Composition Root Only in IndustrialNode.ino](#-rule-6--composition-root-only-in-industrialnodeino-1)
+    - [Setelah Artikel 4](#setelah-artikel-4-1)
+    - [Inti yang Harus Dipahami Engineer Baru](#inti-yang-harus-dipahami-engineer-baru-1)
   - [4. Implementation Pattern (ESP32 Arduino Context)](#4-implementation-pattern-esp32-arduino-context)
     - [4.1 Struktur File Final (Flat Arduino)](#41-struktur-file-final-flat-arduino)
     - [4.2 Dependency Direction Diagram](#42-dependency-direction-diagram)
@@ -82,56 +89,56 @@ Tanpa aturan dependency direction,
 struktur akan kembali menjadi spaghetti — versi class.
 
 <ResourceBox
-  title="Artikel Terkait:"
-  items={[
-    {
-      name: 'Readme',
-      href: '/blog/IoT/cpp-production-firmware-esp32/README',
-      description: 'Readme - C++ for Production Firmware on ESP32',
-    },
-    {
-      name: 'ARCHITECTURE_RULES',
-      href: '/blog/IoT/cpp-production-firmware-esp32/ARCHITECTURE_RULES',
-      description:
-        'ARCHITECTURE_RULES - Production Firmware Discipline — ESP32 (Arduino Core)',
-    },
-    {
-      name: 'Firmware C di ESP32 Jadi Spaghetti',
-      href: '/blog/IoT/cpp-production-firmware-esp32/01-problem-firmware-spaghetti',
-      description: 'Kenapa Firmware C di ESP32 Jadi Spaghetti Setelah 6 Bulan?',
-    },
-    {
-      name: 'OOP Sebagai Alat Mengontrol Dependency',
-      href: '/blog/IoT/cpp-production-firmware-esp32/02-oop-dependency-control',
-      description: 'OOP Sebagai Alat Mengontrol Dependency (Bukan Gaya-Gayaan)',
-    },
-    {
-      name: 'Object Lifecycle & Memory',
-      href: '/blog/IoT/cpp-production-firmware-esp32/03-object-lifecycle-memory-discipline',
-      description: 'Object Lifecycle & Memory Discipline di Embedded',
-    },
-    {
-      name: 'OOP + FreeRTOS',
-      href: '/blog/IoT/cpp-production-firmware-esp32/05-freertos-deterministic-concurrency',
-      description: 'OOP + FreeRTOS Tanpa Membunuh Determinism',
-    },
-    {
-      name: 'Communication Module Design',
-      href: '/blog/IoT/cpp-production-firmware-esp32/06-decoupled-communication-architecture',
-      description:
-        'Communication Module Design (WiFi, MQTT, OTA) yang Tidak Coupled',
-    },
-    {
-      name: 'Production Reliability Design',
-      href: '/blog/IoT/cpp-production-firmware-esp32/07-production-reliability-design',
-      description: 'Production Reliability Design dengan C++',
-    },
-    {
-      name: 'Anti-Pattern',
-      href: '/blog/IoT/cpp-production-firmware-esp32/08-oop-anti-pattern-embedded',
-      description: 'Anti-Pattern: Cara OOP Menghancurkan Embedded System',
-    },
-  ]}
+title="Artikel Terkait:"
+items={[
+{
+name: 'Readme',
+href: '/blog/IoT/cpp-production-firmware-esp32/README',
+description: 'Readme - C++ for Production Firmware on ESP32',
+},
+{
+name: 'ARCHITECTURE_RULES',
+href: '/blog/IoT/cpp-production-firmware-esp32/ARCHITECTURE_RULES',
+description:
+'ARCHITECTURE_RULES - Production Firmware Discipline — ESP32 (Arduino Core)',
+},
+{
+name: 'Firmware C di ESP32 Jadi Spaghetti',
+href: '/blog/IoT/cpp-production-firmware-esp32/01-problem-firmware-spaghetti',
+description: 'Kenapa Firmware C di ESP32 Jadi Spaghetti Setelah 6 Bulan?',
+},
+{
+name: 'OOP Sebagai Alat Mengontrol Dependency',
+href: '/blog/IoT/cpp-production-firmware-esp32/02-oop-dependency-control',
+description: 'OOP Sebagai Alat Mengontrol Dependency (Bukan Gaya-Gayaan)',
+},
+{
+name: 'Object Lifecycle & Memory',
+href: '/blog/IoT/cpp-production-firmware-esp32/03-object-lifecycle-memory-discipline',
+description: 'Object Lifecycle & Memory Discipline di Embedded',
+},
+{
+name: 'OOP + FreeRTOS',
+href: '/blog/IoT/cpp-production-firmware-esp32/05-freertos-deterministic-concurrency',
+description: 'OOP + FreeRTOS Tanpa Membunuh Determinism',
+},
+{
+name: 'Communication Module Design',
+href: '/blog/IoT/cpp-production-firmware-esp32/06-decoupled-communication-architecture',
+description:
+'Communication Module Design (WiFi, MQTT, OTA) yang Tidak Coupled',
+},
+{
+name: 'Production Reliability Design',
+href: '/blog/IoT/cpp-production-firmware-esp32/07-production-reliability-design',
+description: 'Production Reliability Design dengan C++',
+},
+{
+name: 'Anti-Pattern',
+href: '/blog/IoT/cpp-production-firmware-esp32/08-oop-anti-pattern-embedded',
+description: 'Anti-Pattern: Cara OOP Menghancurkan Embedded System',
+},
+]}
 />
 
 ---
@@ -179,109 +186,441 @@ Firmware kehilangan bentuk.
 
 ---
 
+Baik. Berikut **full version yang sudah diperbaiki** (khususnya Rule 4 & 5), tanpa mengubah struktur lain, dan tanpa ambiguitas serta tanpa melanggar layering.
+
+---
+
 ## 3. Design Principle (Rule yang Dikunci)
 
-Artikel 4 adalah structural freeze paling besar dalam seri ini.
+Artikel ini adalah titik di mana struktur firmware **tidak lagi bebas berubah**.
+
+Sebelum titik ini:
+
+- kode masih bisa dipindah-pindah
+- tanggung jawab masih bisa dicampur
+- eksperimen masih diperbolehkan
+
+Setelah titik ini:
+
+- struktur menjadi **tetap**
+- setiap file punya **batas tanggung jawab**
+- perubahan hanya boleh terjadi **di dalam layer**, bukan antar layer
+
+Tujuannya bukan “rapi secara teori”, tetapi:
+
+```id="goal"
+mencegah firmware menjadi sulit dipelihara setelah jumlah file bertambah
+```
 
 ---
 
 ### 🔒 Rule 1 — 3-Layer Model Final
 
-Firmware wajib memiliki layer berikut:
+Firmware dibagi menjadi 4 kelompok file berdasarkan prefix:
 
-```text id="s7plx1"
-Application Layer  → prefix: app_
-Service Layer      → prefix: svc_
-Driver Layer       → prefix: drv_
-System Layer       → prefix: sys_
+```text
+app_   → logic utama sistem
+svc_   → pengelola domain
+drv_   → akses hardware
+sys_   → tipe dan konfigurasi dasar
 ```
 
-Karena struktur Arduino flat,
-prefix menjadi boundary enforcement.
+Karena Arduino tidak mendukung struktur folder kompleks, maka:
+
+```id="reason_prefix"
+prefix file = satu-satunya cara membedakan layer
+```
+
+Contoh nyata di project:
+
+```text
+app_control.cpp
+svc_sensor.cpp
+drv_relay.cpp
+sys_config.h
+```
+
+Jika prefix tidak konsisten, maka:
+
+- engineer tidak tahu file itu berada di layer mana
+- dependency mudah salah arah
 
 ---
 
 ### 🔒 Rule 2 — Dependency Direction Strict (DAG)
 
-Allowed:
+Arah include ditentukan secara eksplisit:
 
-- `app_` → include `svc_`, `sys_`
-- `svc_` → include `drv_`, `sys_`
-- `drv_` → include `sys_`
+```text
+app_ → svc_ → drv_ → sys_
+```
 
-Forbidden:
+Ini berarti:
 
-- `drv_` include `svc_`
-- `svc_` include `app_`
-- `app_` include `drv_`
-- Circular include
+- `app_` boleh memakai `svc_`
+- `svc_` boleh memakai `drv_`
+- `drv_` hanya boleh memakai `sys_`
 
-Dependency harus Directed Acyclic Graph.
+Alasan praktis:
+
+```id="reason_dag"
+mencegah dependency saling silang yang sulit ditelusuri
+```
+
+Contoh masalah jika dilanggar:
+
+- driver memanggil service → driver tidak bisa dipakai ulang
+- service memanggil app → logika jadi berputar
+- circular include → compile error atau coupling tinggi
+
+DAG memastikan:
+
+```id="dag"
+tidak ada siklus dependency
+```
 
 ---
 
 ### 🔒 Rule 3 — Driver is Pure Hardware Boundary
 
-Driver hanya boleh:
+Driver hanya berisi kode seperti:
 
-- GPIO
-- I2C
-- SPI
-- Peripheral API Arduino
+- `digitalWrite`
+- `analogRead`
+- `Wire.read`
+- `SPI.transfer`
 
-Driver tidak boleh tahu:
+Driver tidak boleh mengandung:
 
-- MQTT
-- Mode AUTO/MANUAL
-- Business rule
-- Fail-safe policy
+```id="forbidden_driver"
+if mode == AUTO
+if mqtt_connected
+if temperature > threshold
+```
+
+Alasan:
+
+```id="reason_driver"
+driver harus tetap bisa dipakai ulang tanpa tahu sistem di atasnya
+```
+
+Contoh:
+
+`drv_relay.cpp` hanya tahu:
+
+```text
+set HIGH
+set LOW
+```
+
+Tidak tahu:
+
+- kenapa relay ON
+- kapan relay ON
+- siapa yang memutuskan
 
 ---
 
-### 🔒 Rule 4 — Service is Domain Boundary
+### 🔒 Rule 4 — Service is Domain Boundary (Final)
 
-Service:
+Service berada di tengah:
 
-- Mengelola domain (sensor, actuator, communication)
-- Tidak tahu UI / policy bisnis
-- Tidak tahu ISR langsung
+- menerima data dari driver
+- menyediakan fungsi ke application
 
-Service adalah mediator domain.
+Contoh:
+
+```text
+svc_sensor
+svc_actuator
+svc_comm
+```
+
+Service boleh:
+
+- mengolah data sensor
+- melakukan filtering sederhana
+- melakukan logic lokal sederhana (tidak bergantung kondisi global sistem)
+- menyediakan API seperti `getTemperature()`
+
+Contoh logic yang **boleh di service**:
+
+```cpp
+if (temp > threshold)
+    actuatorService.on();
+else
+    actuatorService.off();
+```
+
+Selama:
+
+```text
+tidak ada mode (AUTO/MANUAL)
+tidak ada state machine
+tidak ada kondisi global sistem
+```
+
+Service tidak boleh:
+
+```id="forbidden_service"
+mengandung mode sistem (AUTO/MANUAL)
+mengatur state machine utama
+menggunakan kondisi global (system_error, network_state, dll)
+mengakses ISR langsung
+```
+
+Alasan:
+
+```id="reason_service"
+service hanya menangani perilaku lokal domain, bukan keputusan sistem
+```
 
 ---
 
-### 🔒 Rule 5 — Application is Decision Layer
+### 🔒 Rule 5 — Application is System Decision Layer (Final)
+
+Application adalah tempat keputusan **tingkat sistem** dibuat.
+
+Contoh:
+
+- mode AUTO / MANUAL
+- fail-safe
+- override
+- kombinasi beberapa service
 
 Application:
 
-- Mengatur state machine utama
-- Mengatur mode sistem
-- Menggabungkan service
-- Mengelola fail-safe
+- menggunakan service
+- menggabungkan beberapa input
+- menentukan perilaku sistem secara keseluruhan
 
-Application tidak tahu register hardware.
+Contoh yang **benar (fail-safe, tidak melanggar layer)**:
+
+```cpp
+if (system_error)
+{
+    actuatorService.forceOff();
+}
+```
+
+Penjelasan:
+
+```id="why_valid"
+Application membuat keputusan
+Service mengeksekusi aksi
+Driver tetap tersembunyi
+```
+
+Application tidak boleh:
+
+```id="forbidden_app"
+memanggil relay langsung
+memanggil digitalWrite langsung
+mengakses Wire/SPI langsung
+```
+
+Alasan:
+
+```id="reason_app"
+application menangani keputusan sistem, bukan implementasi hardware
+```
 
 ---
 
 ### 🔒 Rule 6 — Composition Root Only in IndustrialNode.ino
 
-Semua instance dibuat di:
+Semua object dibuat hanya di:
 
-> `IndustrialNode.ino`
+```text
+IndustrialNode.ino
+```
 
-Tidak boleh instansiasi tersebar.
+Contoh:
 
-Ini adalah satu-satunya composition root.
+```cpp
+RelayDriver relay(5);
+TempSensor sensor;
+ActuatorService actuator(relay);
+ControlApp app(sensor, actuator);
+```
+
+Tidak boleh:
+
+- membuat object di banyak file
+- membuat object tersembunyi di dalam class lain
+
+Alasan:
+
+```id="reason_root"
+agar semua dependency terlihat di satu tempat
+```
 
 ---
 
-Setelah Artikel 4:
+### Setelah Artikel 4
 
-- ❌ Tidak boleh ubah layering
-- ❌ Tidak boleh circular dependency
-- ❌ Tidak boleh bypass layer
+Mulai titik ini, aturan tidak boleh dilanggar:
 
-Arsitektur terkunci.
+```text
+❌ tidak boleh ubah layer
+❌ tidak boleh include melanggar arah
+❌ tidak boleh shortcut antar layer
+```
+
+Jika dilanggar, efeknya biasanya:
+
+- dependency sulit dilacak
+- perubahan kecil merusak banyak file
+- firmware sulit dikembangkan
+
+---
+
+### Inti yang Harus Dipahami Engineer Baru
+
+Layering ini bukan untuk “rapi”, tetapi untuk:
+
+```id="core"
+membatasi dampak perubahan
+```
+
+Contoh:
+
+- ubah driver → tidak merusak application
+- ubah logic → tidak menyentuh hardware
+- ganti sensor → hanya ubah driver/service
+
+Jika boundary ini dijaga, firmware tetap bisa berkembang tanpa menjadi kacau.
+
+---
+
+### 🔒 Rule 4 — Service is Domain Boundary
+
+Service berada di tengah:
+
+- menerima data dari driver
+- menyediakan fungsi ke application
+
+Contoh:
+
+```text
+svc_sensor
+svc_actuator
+svc_comm
+```
+
+Service boleh:
+
+- mengolah data sensor
+- melakukan filtering sederhana
+- menyediakan API seperti `getTemperature()`
+
+Service tidak boleh:
+
+```id="forbidden_service"
+memutuskan mode sistem
+mengatur state machine utama
+mengakses ISR langsung
+```
+
+Alasan:
+
+```id="reason_service"
+service harus tetap netral terhadap keputusan sistem
+```
+
+---
+
+### 🔒 Rule 5 — Application is Decision Layer
+
+Application adalah tempat semua keputusan dibuat.
+
+Contoh:
+
+- jika suhu > threshold → nyalakan relay
+- jika error → masuk fail-safe
+
+Application:
+
+- menggunakan service
+- tidak langsung menyentuh hardware
+
+Tidak boleh:
+
+```id="forbidden_app"
+digitalWrite langsung
+Wire.read langsung
+```
+
+Alasan:
+
+```id="reason_app"
+memisahkan keputusan dari implementasi hardware
+```
+
+---
+
+### 🔒 Rule 6 — Composition Root Only in IndustrialNode.ino
+
+Semua object dibuat hanya di:
+
+```text
+IndustrialNode.ino
+```
+
+Contoh:
+
+```cpp
+RelayDriver relay(5);
+TempSensor sensor;
+ControlApp app(sensor, relay);
+```
+
+Tidak boleh:
+
+- membuat object di banyak file
+- membuat object tersembunyi di dalam class lain
+
+Alasan:
+
+```id="reason_root"
+agar semua dependency terlihat di satu tempat
+```
+
+---
+
+### Setelah Artikel 4
+
+Mulai titik ini, aturan tidak boleh dilanggar:
+
+```text
+❌ tidak boleh ubah layer
+❌ tidak boleh include melanggar arah
+❌ tidak boleh shortcut antar layer
+```
+
+Jika dilanggar, efeknya biasanya:
+
+- dependency sulit dilacak
+- perubahan kecil merusak banyak file
+- firmware sulit dikembangkan
+
+---
+
+### Inti yang Harus Dipahami Engineer Baru
+
+Layering ini bukan untuk “rapi”, tetapi untuk:
+
+```id="core"
+membatasi dampak perubahan
+```
+
+Contoh:
+
+- ubah driver → tidak merusak application
+- ubah logic → tidak menyentuh hardware
+- ganti sensor → hanya ubah driver/service
+
+Jika boundary ini dijaga, firmware tetap bisa berkembang tanpa menjadi kacau.
 
 ---
 
