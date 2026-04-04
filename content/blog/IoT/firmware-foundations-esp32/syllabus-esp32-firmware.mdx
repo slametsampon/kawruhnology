@@ -1,0 +1,579 @@
+---
+title: Syllabus - C++ Firmware Engineering for ESP32 (Foundation → Production)
+date: '2026-02-23'
+tags:
+  [
+    'esp32-course',
+    'firmware-engineering',
+    'dual-track-learning',
+    'embedded-architecture',
+    'freertos-training',
+    'production-firmware',
+    'memory-discipline',
+    'reliability-model',
+  ]
+draft: false
+summary: Dokumen ini menyusun syllabus 12–16 minggu berbasis dua track terintegrasi - Foundation dan Production untuk firmware ESP32 berbasis Arduino. Foundation Track membangun mental model execution, concurrency, memory, OOP, layering, communication state, dan reliability thinking. Production Track mengunci disiplin arsitektur melalui dependency freeze, memory discipline, layering enforcement, communication boundary, error model, dan guardrail audit. Struktur course dirancang progresif - pemahaman → implementasi → refactor → audit produksi. Tujuannya adalah membentuk engineer yang mampu membangun firmware ESP32 yang deterministik, scalable, dan stabil dalam jangka panjang tanpa redesign besar di fase akhir.
+---
+
+# 📘 **_Syllabus: C++ Firmware Engineering for ESP32 (Foundation → Production)_**
+
+**Environment:** ESP32 + VSCode + Arduino Community Edition
+**Project Base:** `IndustrialNode/IndustrialNode.ino`
+**Use Case:** Generic Sensor + Relay Node
+
+---
+
+- [📘 **_Syllabus: C++ Firmware Engineering for ESP32 (Foundation → Production)_**](#-syllabus-c-firmware-engineering-for-esp32-foundation--production)
+- [🧭 Learning Progression Model](#-learning-progression-model)
+- [📆 Phase 1 — Foundation (Week 1–5)](#-phase-1--foundation-week-15)
+  - [Week 1 — Execution Reality (Article 01)](#week-1--execution-reality-article-01)
+  - [Week 2 — Concurrency (Article 02)](#week-2--concurrency-article-02)
+  - [Week 3 — Execution Model Deep Dive (Article 03)](#week-3--execution-model-deep-dive-article-03)
+  - [Week 4 — Memory Model (Article 04)](#week-4--memory-model-article-04)
+  - [Week 5 — OOP Foundation (Article 05)](#week-5--oop-foundation-article-05)
+- [📆 Phase 2 — System Structuring (Week 6–8)](#-phase-2--system-structuring-week-68)
+  - [Week 6 — 3-Layer Architecture (Article 06)](#week-6--3-layer-architecture-article-06)
+  - [Week 7 — Communication \& State (Article 07)](#week-7--communication--state-article-07)
+  - [Week 8 — Reliability Thinking (Article 08)](#week-8--reliability-thinking-article-08)
+- [📆 Phase 3 — Production Hardening (Week 9–16)](#-phase-3--production-hardening-week-916)
+  - [Week 9–10 — Dependency Locking](#week-910--dependency-locking)
+  - [Week 11–12 — Memory Discipline](#week-1112--memory-discipline)
+  - [Week 13 — Communication Hardening](#week-13--communication-hardening)
+  - [Week 14 — Reliability Formalization](#week-14--reliability-formalization)
+  - [Week 15 — System Audit](#week-15--system-audit)
+  - [Week 16 — Production Freeze](#week-16--production-freeze)
+- [🧪 Learning Mechanics](#-learning-mechanics)
+- [⚠️ Kenapa Production Tidak Bisa Dilewati](#️-kenapa-production-tidak-bisa-dilewati)
+- [🎯 Outcome Akhir](#-outcome-akhir)
+- [🔒 Final Positioning](#-final-positioning)
+
+---
+
+# 🧭 Learning Progression Model
+
+Course ini adalah **satu sistem yang berkembang**:
+
+```text
+Execution Awareness
+        ↓
+Concurrency Awareness
+        ↓
+Memory Awareness
+        ↓
+Ownership & OOP
+        ↓
+Layered Architecture
+        ↓
+Communication State
+        ↓
+Reliability Thinking
+        ↓
+Production Discipline
+```
+
+Setiap fase:
+
+- Mengubah cara berpikir
+- Mengubah struktur kode
+- Mengubah bentuk sistem
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Readme',
+      href: '/blog/IoT/firmware-foundations-esp32/README',
+      description: 'README - C++ Firmware Engineering Foundations for ESP32',
+    },
+  ]}
+/>
+
+---
+
+# 📆 Phase 1 — Foundation (Week 1–5)
+
+Fokus:
+
+> Memahami realitas sistem (execution, concurrency, memory)
+
+---
+
+## Week 1 — Execution Reality (Article 01)
+
+**Concept:**
+
+- loop() = task
+- FreeRTOS berjalan di bawah Arduino
+- ISR preemption
+- Dual-core awareness
+
+**Practice:**
+
+- Bandingkan:
+
+  - delay()
+  - busy loop
+
+- Observasi jitter sederhana
+
+**System State:**
+
+```text
+Single loop
+No structure
+Global state
+```
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Readme',
+      href: '/blog/IoT/firmware-foundations-esp32/README',
+      description: 'README - C++ Firmware Engineering Foundations for ESP32',
+    },
+    {
+      name: 'ESP32 Execution',
+      href: '/blog/IoT/firmware-foundations-esp32/01-esp32-execution-reality',
+      description: 'ESP32 Execution Reality Under Arduino Core',
+    },
+  ]}
+/>
+
+---
+
+## Week 2 — Concurrency (Article 02)
+
+**Concept:**
+
+- Task & scheduler
+- Preemption
+- Race condition
+- Shared state danger
+
+**Practice:**
+
+- Simulasi race condition (ISR + loop)
+- Refactor:
+
+  - global → event/flag sederhana
+
+**System State:**
+
+```text
+Masih flat
+Mulai sadar concurrency risk
+```
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Readme',
+      href: '/blog/IoT/firmware-foundations-esp32/README',
+      description: 'README - C++ Firmware Engineering Foundations for ESP32',
+    },
+    {
+      name: 'FreeRTOS Execution Model',
+      href: '/blog/IoT/firmware-foundations-esp32/03-freertos-execution-model-esp32',
+      description: 'FreeRTOS Execution Model on ESP32 (Arduino Context)',
+    },
+  ]}
+/>
+
+---
+
+## Week 3 — Execution Model Deep Dive (Article 03)
+
+**Concept:**
+
+- loopTask internal
+- Core mapping
+- Stack per task
+- Context switch
+
+**Practice:**
+
+- Eksperimen stack:
+
+  - buffer besar di loop
+
+- Observasi behavior aneh
+
+**System State:**
+
+```text
+Masih flat
+Mulai sadar constraint system
+```
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Readme',
+      href: '/blog/IoT/firmware-foundations-esp32/README',
+      description: 'README - C++ Firmware Engineering Foundations for ESP32',
+    },
+    {
+      name: 'FreeRTOS Execution Model',
+      href: '/blog/IoT/firmware-foundations-esp32/03-freertos-execution-model-esp32',
+      description: 'FreeRTOS Execution Model on ESP32 (Arduino Context)',
+    },
+  ]}
+/>
+
+---
+
+## Week 4 — Memory Model (Article 04)
+
+**Concept:**
+
+- Heap vs stack
+- Fragmentasi
+- Object lifetime
+- Hidden allocation
+
+**Practice:**
+
+- Stress test:
+
+  - String allocation berulang
+
+- Observasi heap behavior
+
+**System State:**
+
+```text
+Masih flat
+Mulai muncul masalah real
+```
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Readme',
+      href: '/blog/IoT/firmware-foundations-esp32/README',
+      description: 'README - C++ Firmware Engineering Foundations for ESP32',
+    },
+    {
+      name: 'Memory Model & Object Lifetime',
+      href: '/blog/IoT/firmware-foundations-esp32/04-memory-model-object-lifetime-esp32',
+      description: 'Memory Model & Object Lifetime on ESP32',
+    },
+  ]}
+/>
+
+---
+
+## Week 5 — OOP Foundation (Article 05)
+
+**Concept:**
+
+- Encapsulation = ownership
+- Constructor & lifecycle
+- Composition
+- Hindari dynamic allocation
+
+**Practice:**
+
+- Refactor:
+
+  - relay → class
+  - sensor → class
+
+**System State:**
+
+```text
+Object-based
+Ownership mulai jelas
+Masih tanpa layer
+```
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Readme',
+      href: '/blog/IoT/firmware-foundations-esp32/README',
+      description: 'README - C++ Firmware Engineering Foundations for ESP32',
+    },
+    {
+      name: 'OOP for Embedded Firmware',
+      href: '/blog/IoT/firmware-foundations-esp32/05-oop-embedded-firmware-esp32',
+      description: 'OOP for Embedded Firmware on ESP32',
+    },
+  ]}
+/>
+
+---
+
+# 📆 Phase 2 — System Structuring (Week 6–8)
+
+Fokus:
+
+> Mengendalikan kompleksitas sistem
+
+---
+
+## Week 6 — 3-Layer Architecture (Article 06)
+
+**Concept:**
+
+- app* / svc* / drv\_
+- Dependency direction
+- Boundary system
+
+**Practice:**
+
+- Refactor full project:
+
+  - pindahkan logic ke svc\_
+  - isolate hardware ke drv\_
+
+**System State:**
+
+```text
+Layered system
+Dependency mulai terkendali
+```
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Readme',
+      href: '/blog/IoT/firmware-foundations-esp32/README',
+      description: 'README - C++ Firmware Engineering Foundations for ESP32',
+    },
+    {
+      name: '3-Layer Firmware Architecture',
+      href: '/blog/IoT/firmware-foundations-esp32/06-3-layer-firmware-architecture-esp32',
+      description: '3-Layer Firmware Architecture on ESP32',
+    },
+  ]}
+/>
+
+---
+
+## Week 7 — Communication & State (Article 07)
+
+**Concept:**
+
+- State machine
+- Event-driven
+- Callback hazard
+- Transport vs domain
+
+**Practice:**
+
+- Introduce:
+
+  - svc_CommManager
+
+- Refactor:
+
+  - MQTT callback → event
+
+**System State:**
+
+```text
+Communication isolated
+State mulai eksplisit
+```
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Readme',
+      href: '/blog/IoT/firmware-foundations-esp32/README',
+      description: 'README - C++ Firmware Engineering Foundations for ESP32',
+    },
+    {
+      name: 'Communication & State Thinking',
+      href: '/blog/IoT/firmware-foundations-esp32/07-communication-state-thinking-esp32',
+      description: 'Communication & State Thinking on ESP32',
+    },
+  ]}
+/>
+
+---
+
+## Week 8 — Reliability Thinking (Article 08)
+
+**Concept:**
+
+- Fail-safe vs fail-open
+- Observability
+- Watchdog
+- Error containment
+
+**Practice:**
+
+- Tambahkan:
+
+  - fail-safe relay logic
+  - basic logging
+
+**System State:**
+
+```text
+System-aware
+Mulai stabil
+Tetapi belum production-grade
+```
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Readme',
+      href: '/blog/IoT/firmware-foundations-esp32/README',
+      description: 'README - C++ Firmware Engineering Foundations for ESP32',
+    },
+    {
+      name: 'Reliability Thinking',
+      href: '/blog/IoT/firmware-foundations-esp32/08-reliability-transition-to-production-esp32',
+      description: 'Reliability Thinking & Transition to Production Discipline',
+    },
+  ]}
+/>
+
+---
+
+# 📆 Phase 3 — Production Hardening (Week 9–16)
+
+Fokus:
+
+> Mengunci disiplin sistem
+
+---
+
+## Week 9–10 — Dependency Locking
+
+- Larang:
+
+  - upward dependency
+  - cross-layer access
+
+- Audit include
+
+---
+
+## Week 11–12 — Memory Discipline
+
+- Minimalkan dynamic allocation
+- Audit:
+
+  - String usage
+  - hidden allocation
+
+- Monitor heap
+
+---
+
+## Week 13 — Communication Hardening
+
+- Centralize:
+
+  - reconnect logic
+
+- Tambahkan:
+
+  - backoff strategy
+  - retry control
+
+---
+
+## Week 14 — Reliability Formalization
+
+- Error handling pattern
+- State fallback
+- Watchdog-aware design
+
+---
+
+## Week 15 — System Audit
+
+- Dependency check
+- Memory check
+- Communication check
+- Failure scenario test
+
+---
+
+## Week 16 — Production Freeze
+
+- Final structure locked
+- Tidak ada perubahan arsitektur
+- Hanya bug fix
+
+---
+
+# 🧪 Learning Mechanics
+
+Setiap minggu terdiri dari:
+
+```text
+Concept → Practice → System Change
+```
+
+Bukan:
+
+```text
+Concept → selesai
+```
+
+---
+
+# ⚠️ Kenapa Production Tidak Bisa Dilewati
+
+Tanpa Production Hardening:
+
+- Heap akan fragmentasi
+- Race condition akan muncul
+- Reconnect akan chaotic
+- Watchdog reset akan sporadis
+- Dependency akan liar
+
+Production bukan fase tambahan.
+
+> Production adalah konsekuensi dari kompleksitas sistem.
+
+---
+
+# 🎯 Outcome Akhir
+
+Setelah menyelesaikan course ini:
+
+Engineer mampu:
+
+- Memahami execution model ESP32
+- Mendesain firmware berbasis layering
+- Mengontrol dependency
+- Mengelola memory dengan disiplin
+- Mengisolasi komunikasi
+- Mendesain sistem fail-safe
+- Menghasilkan firmware yang stabil jangka panjang
+
+---
+
+# 🔒 Final Positioning
+
+Course ini bukan tutorial.
+
+Course ini adalah:
+
+> Transformasi dari firmware eksperimental menjadi firmware production-grade
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

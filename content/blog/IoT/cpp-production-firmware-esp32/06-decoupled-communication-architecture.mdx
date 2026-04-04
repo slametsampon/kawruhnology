@@ -18,8 +18,6 @@ summary: Artikel ini mengunci arsitektur komunikasi firmware ESP32 berbasis Ardu
 
 # 📘 Artikel 6: Communication Module Design (WiFi, MQTT, OTA) yang Tidak Coupled
 
-#
-
 **Posisi:** Artikel 6 dari 8
 **Domain Keputusan:** Communication Architecture
 **Status Lock:** 🔒 Communication Boundary & State Machine Freeze
@@ -28,7 +26,6 @@ summary: Artikel ini mengunci arsitektur komunikasi firmware ESP32 berbasis Ardu
 ---
 
 - [📘 Artikel 6: Communication Module Design (WiFi, MQTT, OTA) yang Tidak Coupled](#-artikel-6-communication-module-design-wifi-mqtt-ota-yang-tidak-coupled)
-- [](#)
   - [1. Problem Reality](#1-problem-reality)
   - [2. Root Cause Analysis](#2-root-cause-analysis)
     - [2.1 Transport Bercampur Business Logic](#21-transport-bercampur-business-logic)
@@ -76,6 +73,50 @@ Setelah Artikel 5:
 
 Masalah baru muncul saat komunikasi ditambahkan.
 
+Pada Artikel 5, eksekusi firmware sudah dipisahkan menjadi beberapa task:
+
+```text id="p6_1"
+ControlTask → menjalankan application
+CommTask    → menangani komunikasi
+ISR         → hanya notify
+```
+
+Struktur layer tetap:
+
+```text id="p6_2"
+app_ → svc_ → drv_
+```
+
+Namun komunikasi memperkenalkan karakteristik baru:
+
+```text id="p6_3"
+event asynchronous dari luar sistem
+(network, broker, OTA server)
+```
+
+Event ini masuk melalui:
+
+- MQTT callback
+- WiFi event handler
+- OTA trigger
+
+Semua berjalan di **context CommTask / network stack**, bukan ControlTask.
+
+Jika tidak dikontrol, maka:
+
+```text id="p6_4"
+CommTask bisa langsung memanggil svc_ atau bahkan drv_
+```
+
+Artinya:
+
+```text id="p6_5"
+execution melanggar flow:
+Task → app_ → svc_ → drv_
+```
+
+Inilah sumber masalah komunikasi.
+
 Gejala yang sering terjadi:
 
 - WiFi event handler mengubah state aplikasi langsung.
@@ -111,7 +152,7 @@ Masalahnya bukan MQTT.
 
 Masalahnya:
 
-> Communication tidak diperlakukan sebagai domain terisolasi.
+> **Communication berjalan di task terpisah, tetapi tidak mengikuti boundary layer dan execution yang sudah dikunci.**
 
 <ResourceBox
   title="Artikel Terkait:"
@@ -356,6 +397,26 @@ Communication boundary final.
 
 ### 4.1 CommManager Skeleton
 
+CommManager bukan sekadar class service.
+
+CommManager adalah:
+
+```text id="p6_6"
+execution unit yang berjalan di CommTask
+```
+
+Artinya:
+
+- `CommManager::run()` dipanggil oleh **CommTask**
+- Bukan oleh ControlTask
+- Bukan oleh ISR
+
+Sehingga:
+
+```text id="p6_7"
+CommTask → svc_CommManager → (internal state machine)
+```
+
 ```cpp id="n6g8rx"
 class CommManager {
 public:
@@ -374,9 +435,46 @@ private:
 
 State machine dikelola internal.
 
+Namun yang penting:
+
+```text id="p6_8"
+CommManager tidak boleh langsung mengontrol application
+```
+
+Ia hanya:
+
+```text id="p6_9"
+mengubah state internal komunikasi
+mengirim event / command ke application
+```
+
 ---
 
 ### 4.2 Command Handling Interface
+
+Interface ini adalah boundary antara:
+
+```text id="p6_10"
+CommTask (communication context)
+dan
+ControlTask (application context)
+```
+
+Flow lengkap:
+
+```text id="p6_11"
+MQTT callback (CommTask)
+→ CommManager parse
+→ enqueue command
+→ ControlTask ambil command
+→ app_ memproses
+```
+
+Yang penting:
+
+```text id="p6_12"
+callback tidak pernah menyentuh service langsung
+```
 
 ```cpp id="q9t3ve"
 class ICommandHandler {
@@ -397,6 +495,28 @@ Callback tidak menyentuh service langsung.
 
 ### 4.3 Offline Buffer (Fixed Size)
 
+Buffer ini berada di dalam CommManager (CommTask).
+
+Fungsinya:
+
+```text id="p6_13"
+menyerap ketidakstabilan network
+tanpa mengganggu ControlTask
+```
+
+Tanpa ini:
+
+```text id="p6_14"
+ControlTask bisa terblokir oleh publish
+```
+
+Dengan ini:
+
+```text id="p6_15"
+ControlTask tetap deterministic
+CommTask menangani backlog
+```
+
 ```cpp id="x5md8z"
 #define TELEMETRY_BACKLOG_SIZE 10
 
@@ -407,6 +527,25 @@ uint8_t backlogCount;
 
 Bounded.
 No dynamic allocation.
+
+Semua pattern di atas menjaga satu hal:
+
+```text id="p6_16"
+CommTask tidak boleh mengontrol sistem langsung
+```
+
+Alur final harus tetap:
+
+```text id="p6_17"
+CommTask → CommManager → (queue/event)
+→ ControlTask → app_ → svc_ → drv_
+```
+
+Dengan ini:
+
+- komunikasi tetap asynchronous
+- control tetap deterministic
+- layering tetap utuh
 
 ---
 

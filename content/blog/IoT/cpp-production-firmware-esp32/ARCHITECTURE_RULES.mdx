@@ -55,6 +55,21 @@ summary: ARCHITECTURE_RULES adalah dokumen normatif yang merangkum seluruh freez
   - [🔒 R25 — Fail-Safe Mandatory](#-r25--fail-safe-mandatory)
   - [🔒 R26 — Logging via Interface](#-r26--logging-via-interface)
   - [🔒 R27 — Health Telemetry Mandatory](#-r27--health-telemetry-mandatory)
+- [7️⃣ Reference Implementation (Minimal Project)](#7️⃣-reference-implementation-minimal-project)
+  - [7.1 Struktur File (Arduino Flat Constraint)](#71-struktur-file-arduino-flat-constraint)
+  - [7.2 Composition Root (R3, R5, R12)](#72-composition-root-r3-r5-r12)
+  - [7.3 Application Layer (app\_)](#73-application-layer-app_)
+  - [7.4 Service Layer (svc\_)](#74-service-layer-svc_)
+  - [7.5 Driver Layer (drv\_)](#75-driver-layer-drv_)
+  - [7.6 Task Implementation (Artikel 5 → R13–R16)](#76-task-implementation-artikel-5--r13r16)
+    - [ControlTask](#controltask)
+    - [CommTask](#commtask)
+  - [7.7 ISR Pattern (R13)](#77-isr-pattern-r13)
+  - [7.8 Inter-Task Communication (R15, R16)](#78-inter-task-communication-r15-r16)
+  - [7.9 Communication Boundary (Artikel 6 → R17–R21)](#79-communication-boundary-artikel-6--r17r21)
+  - [7.10 Execution Flow Final](#710-execution-flow-final)
+  - [7.11 Rule Coverage Mapping](#711-rule-coverage-mapping)
+  - [7.12 Inti yang Harus Terlihat](#712-inti-yang-harus-terlihat)
 - [🛡 Final Enforcement](#-final-enforcement)
 
 ---
@@ -68,56 +83,56 @@ Aturan di bawah ini **tidak boleh dilanggar** tanpa redesign formal.
 Jika satu saja dilanggar, firmware berisiko kembali menjadi spaghetti.
 
 <ResourceBox
-  title="Artikel Terkait:"
-  items={[
-    {
-      name: 'Readme',
-      href: '/blog/IoT/cpp-production-firmware-esp32/README',
-      description: 'Readme - C++ for Production Firmware on ESP32',
-    },
-    {
-      name: 'Firmware C di ESP32 Jadi Spaghetti',
-      href: '/blog/IoT/cpp-production-firmware-esp32/01-problem-firmware-spaghetti',
-      description: 'Kenapa Firmware C di ESP32 Jadi Spaghetti Setelah 6 Bulan?',
-    },
-    {
-      name: 'OOP Sebagai Alat Mengontrol Dependency',
-      href: '/blog/IoT/cpp-production-firmware-esp32/02-oop-dependency-control',
-      description: 'OOP Sebagai Alat Mengontrol Dependency (Bukan Gaya-Gayaan)',
-    },
-    {
-      name: 'Object Lifecycle & Memory',
-      href: '/blog/IoT/cpp-production-firmware-esp32/03-object-lifecycle-memory-discipline',
-      description: 'Object Lifecycle & Memory Discipline di Embedded',
-    },
-    {
-      name: 'Firmware Architecture',
-      href: '/blog/IoT/cpp-production-firmware-esp32/04-layered-firmware-architecture',
-      description:
-        'Firmware Architecture Berbasis Class (Layered & Deterministic)',
-    },
-    {
-      name: 'OOP + FreeRTOS',
-      href: '/blog/IoT/cpp-production-firmware-esp32/05-freertos-deterministic-concurrency',
-      description: 'OOP + FreeRTOS Tanpa Membunuh Determinism',
-    },
-    {
-      name: 'Communication Module Design',
-      href: '/blog/IoT/cpp-production-firmware-esp32/06-decoupled-communication-architecture',
-      description:
-        'Communication Module Design (WiFi, MQTT, OTA) yang Tidak Coupled',
-    },
-    {
-      name: 'Production Reliability Design',
-      href: '/blog/IoT/cpp-production-firmware-esp32/07-production-reliability-design',
-      description: 'Production Reliability Design dengan C++',
-    },
-    {
-      name: 'Anti-Pattern',
-      href: '/blog/IoT/cpp-production-firmware-esp32/08-oop-anti-pattern-embedded',
-      description: 'Anti-Pattern: Cara OOP Menghancurkan Embedded System',
-    },
-  ]}
+title="Artikel Terkait:"
+items={[
+{
+name: 'Readme',
+href: '/blog/IoT/cpp-production-firmware-esp32/README',
+description: 'Readme - C++ for Production Firmware on ESP32',
+},
+{
+name: 'Firmware C di ESP32 Jadi Spaghetti',
+href: '/blog/IoT/cpp-production-firmware-esp32/01-problem-firmware-spaghetti',
+description: 'Kenapa Firmware C di ESP32 Jadi Spaghetti Setelah 6 Bulan?',
+},
+{
+name: 'OOP Sebagai Alat Mengontrol Dependency',
+href: '/blog/IoT/cpp-production-firmware-esp32/02-oop-dependency-control',
+description: 'OOP Sebagai Alat Mengontrol Dependency (Bukan Gaya-Gayaan)',
+},
+{
+name: 'Object Lifecycle & Memory',
+href: '/blog/IoT/cpp-production-firmware-esp32/03-object-lifecycle-memory-discipline',
+description: 'Object Lifecycle & Memory Discipline di Embedded',
+},
+{
+name: 'Firmware Architecture',
+href: '/blog/IoT/cpp-production-firmware-esp32/04-layered-firmware-architecture',
+description:
+'Firmware Architecture Berbasis Class (Layered & Deterministic)',
+},
+{
+name: 'OOP + FreeRTOS',
+href: '/blog/IoT/cpp-production-firmware-esp32/05-freertos-deterministic-concurrency',
+description: 'OOP + FreeRTOS Tanpa Membunuh Determinism',
+},
+{
+name: 'Communication Module Design',
+href: '/blog/IoT/cpp-production-firmware-esp32/06-decoupled-communication-architecture',
+description:
+'Communication Module Design (WiFi, MQTT, OTA) yang Tidak Coupled',
+},
+{
+name: 'Production Reliability Design',
+href: '/blog/IoT/cpp-production-firmware-esp32/07-production-reliability-design',
+description: 'Production Reliability Design dengan C++',
+},
+{
+name: 'Anti-Pattern',
+href: '/blog/IoT/cpp-production-firmware-esp32/08-oop-anti-pattern-embedded',
+description: 'Anti-Pattern: Cara OOP Menghancurkan Embedded System',
+},
+]}
 />
 
 ---
@@ -432,6 +447,314 @@ Minimal harus ada:
 - backlog_depth
 - wifi_state
 - error_code
+
+---
+
+# 7️⃣ Reference Implementation (Minimal Project)
+
+Bagian ini menunjukkan bentuk minimal firmware yang **mematuhi seluruh rule Artikel 2–6**.
+
+Tujuannya bukan fitur lengkap, tetapi:
+
+```text
+melihat bagaimana rule diterapkan secara nyata
+```
+
+---
+
+## 7.1 Struktur File (Arduino Flat Constraint)
+
+```text
+IndustrialNode/
+
+IndustrialNode.ino
+
+app_control.cpp
+app_control.h
+
+svc_sensor.cpp
+svc_sensor.h
+svc_actuator.cpp
+svc_actuator.h
+svc_comm.cpp
+svc_comm.h
+
+drv_relay.cpp
+drv_relay.h
+
+sys_config.h
+sys_types.h
+```
+
+Semua file mengikuti:
+
+```text
+prefix = boundary layer
+```
+
+---
+
+## 7.2 Composition Root (R3, R5, R12)
+
+```cpp
+// IndustrialNode.ino
+
+#include "app_control.h"
+#include "svc_sensor.h"
+#include "svc_actuator.h"
+#include "svc_comm.h"
+#include "drv_relay.h"
+
+// Driver
+RelayDriver relay(5);
+
+// Service
+ActuatorService actuator(relay);
+SensorService sensor;
+CommManager comm;
+
+// Application
+ControlApp app(sensor, actuator, comm);
+
+// Task Wrapper
+ControlTask controlTask(app);
+CommTask commTask(comm);
+
+void setup() {
+    controlTask.start();
+    commTask.start();
+}
+
+void loop() {
+    // tidak digunakan
+}
+```
+
+Memenuhi:
+
+```text
+R3  → dependency injection
+R5  → static allocation
+R12 → single composition root
+```
+
+---
+
+## 7.3 Application Layer (app\_)
+
+```cpp
+// app_control.cpp
+
+void ControlApp::run()
+{
+    if (mode_ == AUTO)
+    {
+        float temp = sensor_.getTemperature();
+
+        if (temp > threshold_)
+            actuator_.on();
+        else
+            actuator_.off();
+    }
+}
+```
+
+Ciri:
+
+```text
+✔ decision system
+✔ tidak tahu hardware
+✔ tidak tahu MQTT
+```
+
+---
+
+## 7.4 Service Layer (svc\_)
+
+```cpp
+// svc_actuator.cpp
+
+void ActuatorService::on()
+{
+    relay_.set(true);
+}
+
+void ActuatorService::off()
+{
+    relay_.set(false);
+}
+```
+
+Ciri:
+
+```text
+✔ domain behavior
+✔ tidak tahu mode AUTO/MANUAL
+✔ tidak tahu task
+```
+
+---
+
+## 7.5 Driver Layer (drv\_)
+
+```cpp
+// drv_relay.cpp
+
+void RelayDriver::set(bool state)
+{
+    digitalWrite(pin_, state ? HIGH : LOW);
+}
+```
+
+Ciri:
+
+```text
+✔ pure hardware
+✔ tidak tahu logic
+✔ tidak tahu service
+```
+
+---
+
+## 7.6 Task Implementation (Artikel 5 → R13–R16)
+
+### ControlTask
+
+```cpp
+void ControlTask::run(void* param)
+{
+    while (true)
+    {
+        app_.run();
+        vTaskDelay(10);
+    }
+}
+```
+
+---
+
+### CommTask
+
+```cpp
+void CommTask::run(void* param)
+{
+    while (true)
+    {
+        comm_.run();
+        vTaskDelay(10);
+    }
+}
+```
+
+---
+
+## 7.7 ISR Pattern (R13)
+
+```cpp
+volatile bool buttonPressed = false;
+
+void IRAM_ATTR buttonISR()
+{
+    buttonPressed = true;
+}
+```
+
+Diproses di ControlTask:
+
+```cpp
+if (buttonPressed)
+{
+    buttonPressed = false;
+    app.handleButton();
+}
+```
+
+---
+
+## 7.8 Inter-Task Communication (R15, R16)
+
+```cpp
+struct Command {
+    bool relayOn;
+};
+
+QueueHandle_t commandQueue;
+```
+
+CommTask:
+
+```cpp
+xQueueSend(commandQueue, &cmd, 0);
+```
+
+ControlTask:
+
+```cpp
+xQueueReceive(commandQueue, &cmd, 0);
+app.handleCommand(cmd);
+```
+
+---
+
+## 7.9 Communication Boundary (Artikel 6 → R17–R21)
+
+```cpp
+// svc_comm.cpp
+
+void CommManager::run()
+{
+    handleStateMachine();
+
+    if (mqttMessageAvailable())
+    {
+        Command cmd = parseMessage();
+        enqueueCommand(cmd);
+    }
+}
+```
+
+Tidak pernah:
+
+```text
+❌ actuator.setRelay()
+❌ akses service lain langsung
+```
+
+---
+
+## 7.10 Execution Flow Final
+
+```text
+ControlTask → app_ → svc_ → drv_
+
+CommTask → svc_CommManager → queue → ControlTask
+```
+
+---
+
+## 7.11 Rule Coverage Mapping
+
+| Rule    | Implementasi               |
+| ------- | -------------------------- |
+| R1–R4   | dependency via constructor |
+| R5–R9   | static object di .ino      |
+| R10–R12 | prefix + DAG               |
+| R13–R16 | ISR notify + queue         |
+| R17–R21 | CommManager                |
+
+---
+
+## 7.12 Inti yang Harus Terlihat
+
+Project ini menunjukkan:
+
+```text
+tidak ada global mutable
+tidak ada singleton
+tidak ada task liar
+tidak ada callback bypass layer
+tidak ada dynamic allocation di control path
+```
 
 ---
 

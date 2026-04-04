@@ -41,8 +41,12 @@ summary: Artikel ini mengunci batas concurrency dalam firmware ESP32 berbasis Ar
     - [🔒 Rule 5 — No Shared Mutable Without Ownership](#-rule-5--no-shared-mutable-without-ownership)
   - [4. Implementation Pattern (ESP32 Arduino Context)](#4-implementation-pattern-esp32-arduino-context)
     - [4.1 Task Wrapper Class](#41-task-wrapper-class)
-    - [4.2 ISR → Queue Pattern](#42-isr--queue-pattern)
+    - [4.2 ISR → Queue / Notify Pattern](#42-isr--queue--notify-pattern)
     - [4.3 Queue Communication Pattern](#43-queue-communication-pattern)
+    - [4.4 Kenapa Harus Queue (Bukan Shared State)](#44--kenapa-harus-queue-bukan-shared-state)
+    - [4.5 Kenapa Harus Fixed Size \& Bounded](#45-kenapa-harus-fixed-size--bounded)
+    - [4.6 Hubungan dengan Layer](#46-hubungan-dengan-layer)
+    - [4.7 Ringkasan Implementation Pattern](#47-ringkasan-implementation-pattern)
   - [5. Constraint \& Embedded Impact](#5-constraint--embedded-impact)
     - [5.1 RAM Impact](#51-ram-impact)
     - [5.2 Stack Impact](#52-stack-impact)
@@ -139,57 +143,57 @@ tetap konsisten
 > Tidak ada boundary eksekusi yang dikunci.
 
 <ResourceBox
-  title="Artikel Terkait:"
-  items={[
-    {
-      name: 'Readme',
-      href: '/blog/IoT/cpp-production-firmware-esp32/README',
-      description: 'Readme - C++ for Production Firmware on ESP32',
-    },
-    {
-      name: 'ARCHITECTURE_RULES',
-      href: '/blog/IoT/cpp-production-firmware-esp32/ARCHITECTURE_RULES',
-      description:
-        'ARCHITECTURE_RULES - Production Firmware Discipline — ESP32 (Arduino Core)',
-    },
-    {
-      name: 'Firmware C di ESP32 Jadi Spaghetti',
-      href: '/blog/IoT/cpp-production-firmware-esp32/01-problem-firmware-spaghetti',
-      description: 'Kenapa Firmware C di ESP32 Jadi Spaghetti Setelah 6 Bulan?',
-    },
-    {
-      name: 'OOP Sebagai Alat Mengontrol Dependency',
-      href: '/blog/IoT/cpp-production-firmware-esp32/02-oop-dependency-control',
-      description: 'OOP Sebagai Alat Mengontrol Dependency (Bukan Gaya-Gayaan)',
-    },
-    {
-      name: 'Object Lifecycle & Memory',
-      href: '/blog/IoT/cpp-production-firmware-esp32/03-object-lifecycle-memory-discipline',
-      description: 'Object Lifecycle & Memory Discipline di Embedded',
-    },
-    {
-      name: 'Firmware Architecture',
-      href: '/blog/IoT/cpp-production-firmware-esp32/04-layered-firmware-architecture',
-      description:
-        'Firmware Architecture Berbasis Class (Layered & Deterministic)',
-    },
-    {
-      name: 'Communication Module Design',
-      href: '/blog/IoT/cpp-production-firmware-esp32/06-decoupled-communication-architecture',
-      description:
-        'Communication Module Design (WiFi, MQTT, OTA) yang Tidak Coupled',
-    },
-    {
-      name: 'Production Reliability Design',
-      href: '/blog/IoT/cpp-production-firmware-esp32/07-production-reliability-design',
-      description: 'Production Reliability Design dengan C++',
-    },
-    {
-      name: 'Anti-Pattern',
-      href: '/blog/IoT/cpp-production-firmware-esp32/08-oop-anti-pattern-embedded',
-      description: 'Anti-Pattern: Cara OOP Menghancurkan Embedded System',
-    },
-  ]}
+title="Artikel Terkait:"
+items={[
+{
+name: 'Readme',
+href: '/blog/IoT/cpp-production-firmware-esp32/README',
+description: 'Readme - C++ for Production Firmware on ESP32',
+},
+{
+name: 'ARCHITECTURE_RULES',
+href: '/blog/IoT/cpp-production-firmware-esp32/ARCHITECTURE_RULES',
+description:
+'ARCHITECTURE_RULES - Production Firmware Discipline — ESP32 (Arduino Core)',
+},
+{
+name: 'Firmware C di ESP32 Jadi Spaghetti',
+href: '/blog/IoT/cpp-production-firmware-esp32/01-problem-firmware-spaghetti',
+description: 'Kenapa Firmware C di ESP32 Jadi Spaghetti Setelah 6 Bulan?',
+},
+{
+name: 'OOP Sebagai Alat Mengontrol Dependency',
+href: '/blog/IoT/cpp-production-firmware-esp32/02-oop-dependency-control',
+description: 'OOP Sebagai Alat Mengontrol Dependency (Bukan Gaya-Gayaan)',
+},
+{
+name: 'Object Lifecycle & Memory',
+href: '/blog/IoT/cpp-production-firmware-esp32/03-object-lifecycle-memory-discipline',
+description: 'Object Lifecycle & Memory Discipline di Embedded',
+},
+{
+name: 'Firmware Architecture',
+href: '/blog/IoT/cpp-production-firmware-esp32/04-layered-firmware-architecture',
+description:
+'Firmware Architecture Berbasis Class (Layered & Deterministic)',
+},
+{
+name: 'Communication Module Design',
+href: '/blog/IoT/cpp-production-firmware-esp32/06-decoupled-communication-architecture',
+description:
+'Communication Module Design (WiFi, MQTT, OTA) yang Tidak Coupled',
+},
+{
+name: 'Production Reliability Design',
+href: '/blog/IoT/cpp-production-firmware-esp32/07-production-reliability-design',
+description: 'Production Reliability Design dengan C++',
+},
+{
+name: 'Anti-Pattern',
+href: '/blog/IoT/cpp-production-firmware-esp32/08-oop-anti-pattern-embedded',
+description: 'Anti-Pattern: Cara OOP Menghancurkan Embedded System',
+},
+]}
 />
 
 ---
@@ -197,6 +201,67 @@ tetap konsisten
 ## 2. Root Cause Analysis
 
 Concurrency chaos muncul dari 4 sumber utama.
+
+---
+
+Sebelum masuk ke sumber masalah, perlu dipahami bagaimana concurrency muncul pada firmware ini.
+
+Pada Artikel 4, struktur firmware sudah dikunci:
+
+```text id="fr4"
+app_ → svc_ → drv_
+```
+
+Struktur ini mengatur **alur pemanggilan fungsi**,
+tetapi tidak mengatur **konteks eksekusi**.
+
+Pada ESP32, kode tidak dijalankan dalam satu alur tunggal.
+
+Beberapa konteks eksekusi berjalan bersamaan:
+
+```text id="fr5"
+- ControlTask (menjalankan application)
+- Task internal WiFi / TCP-IP
+- Callback MQTT (dipanggil oleh network stack)
+- ISR (interrupt hardware)
+- loop() (task utama Arduino)
+```
+
+Semua konteks ini bisa memanggil:
+
+```text id="fr6"
+app_
+svc_
+```
+
+Tanpa kontrol, maka:
+
+```text id="fr7"
+lebih dari satu eksekusi bisa masuk ke layer yang sama
+pada waktu yang tidak terprediksi
+```
+
+Inilah yang disebut:
+
+```text id="fr8"
+concurrency
+```
+
+Masalah muncul bukan karena ada banyak task,
+tetapi karena:
+
+```text id="fr9"
+tidak ada aturan siapa yang boleh mengakses apa
+dan dari konteks mana
+```
+
+Akibatnya:
+
+- boundary layer dilanggar oleh eksekusi
+- beberapa eksekusi mengubah state yang sama
+- urutan eksekusi tidak deterministik
+
+Empat kasus berikut adalah bentuk paling umum dari pelanggaran tersebut.
 
 ---
 
@@ -210,9 +275,9 @@ void IRAM_ATTR buttonISR() {
 
 Masalah:
 
-- ISR preempt task lain.
-- Bisa race dengan ControlTask.
-- Bisa blocking jika tidak hati-hati.
+- ISR preempt task lain
+- Bisa race dengan ControlTask
+- Bisa blocking jika tidak hati-hati
 
 ISR bukan tempat logic.
 
@@ -230,8 +295,8 @@ Callback berjalan dalam konteks network loop.
 
 Jika ia mengontrol hardware langsung:
 
-- Tidak ada arbitration.
-- Tidak ada guard.
+- Tidak ada arbitration
+- Tidak ada guard
 
 ---
 
@@ -245,8 +310,8 @@ void ControlApp::run() {
 
 Jika TLS handshake terjadi:
 
-- Latency spike.
-- Watchdog reset.
+- Latency spike
+- Watchdog reset
 
 Control loop harus deterministic.
 
@@ -261,10 +326,6 @@ Race condition muncul sporadis.
 ---
 
 ### 🔎 Visualisasi Concurrency Tanpa Boundary
-
-![Image](https://www.allaboutcircuits.com/uploads/articles/introduction-to-concurrency-in-microcontrollers_PA_AAC_image1.jpg)
-
-![Image](https://www.digikey.com/maker-media/27ec7765-9631-44f2-b70c-34fb0d8881ef)
 
 Tanpa boundary:
 
@@ -356,6 +417,25 @@ Concurrency boundary terkunci.
 
 ## 4. Implementation Pattern (ESP32 Arduino Context)
 
+Bagian ini menunjukkan bagaimana **rule pada Artikel 5 diterapkan dalam kode nyata**.
+
+Pada titik ini:
+
+- Struktur layer sudah dikunci (Artikel 4)
+- Boundary eksekusi sudah didefinisikan (Artikel 5)
+
+Sehingga implementasi harus mengikuti:
+
+```text id="imp1"
+Task → app_ → svc_ → drv_
+```
+
+Semua pattern di bawah bertujuan menjaga agar:
+
+```text id="imp2"
+execution tidak melanggar boundary layer
+```
+
 ---
 
 ### 4.1 Task Wrapper Class
@@ -370,11 +450,50 @@ private:
 };
 ```
 
-`ControlTask` memanggil `app.run()` secara periodik.
+`ControlTask` adalah representasi dari **unit eksekusi (task)**
+yang bertanggung jawab menjalankan application.
+
+Hal penting yang harus diperhatikan:
+
+```text id="imp3"
+Task tidak berisi logic sistem
+Task hanya menjalankan application
+```
+
+Implementasi nyata biasanya:
+
+```cpp
+void ControlTask::run()
+{
+    while (true)
+    {
+        app_.run();
+        vTaskDelay(10);
+    }
+}
+```
+
+Di sini:
+
+- `ControlTask` → execution boundary
+- `ControlApp` → decision layer (app\_)
+
+Artinya:
+
+```text id="imp4"
+semua keputusan tetap berada di app_
+bukan di task
+```
+
+Jika logic dipindah ke dalam task:
+
+```text id="imp5"
+layering dari Artikel 4 akan rusak
+```
 
 ---
 
-### 4.2 ISR → Queue Pattern
+### 4.2 ISR → Queue / Notify Pattern
 
 ```cpp
 volatile bool buttonPressed = false;
@@ -384,7 +503,21 @@ void IRAM_ATTR buttonISR() {
 }
 ```
 
-Di ControlTask:
+ISR hanya melakukan:
+
+```text id="imp6"
+notify bahwa event terjadi
+```
+
+ISR tidak boleh:
+
+```text id="imp7"
+mengakses service
+mengontrol actuator
+melakukan logic
+```
+
+Pengolahan dilakukan di ControlTask:
 
 ```cpp
 if (buttonPressed) {
@@ -393,7 +526,29 @@ if (buttonPressed) {
 }
 ```
 
-ISR hanya notify.
+Namun dalam konteks layering yang benar:
+
+```text id="imp8"
+ControlTask tidak boleh langsung mengontrol driver
+```
+
+Seharusnya alur tetap:
+
+```text id="imp9"
+ISR → notify → Task → app_ → svc_ → drv_
+```
+
+Artinya contoh di atas secara konsep adalah:
+
+- ISR hanya memberi sinyal
+- Task menerima sinyal
+- Application yang memutuskan aksi
+
+Tujuan pattern ini:
+
+```text id="imp10"
+memisahkan interrupt context dari execution context utama
+```
 
 ---
 
@@ -407,6 +562,10 @@ struct Command {
 QueueHandle_t commandQueue;
 ```
 
+Queue digunakan untuk komunikasi antar task.
+
+Contoh:
+
 CommTask:
 
 ```cpp
@@ -419,9 +578,101 @@ ControlTask:
 xQueueReceive(commandQueue, &cmd, 0);
 ```
 
+Di sini:
+
+```text id="imp11"
+CommTask tidak mengontrol system langsung
+CommTask hanya mengirim command
+```
+
+Dan:
+
+```text id="imp12"
+ControlTask tetap menjadi satu-satunya yang menjalankan app_
+```
+
+Sehingga alur tetap konsisten:
+
+```text id="imp13"
+CommTask → queue → ControlTask → app_ → svc_ → drv_
+```
+
+---
+
+### 4.4 Kenapa Harus Queue (Bukan Shared State)
+
+Tanpa queue:
+
+```text id="imp14"
+dua task bisa mengubah state yang sama
+→ race condition
+```
+
+Dengan queue:
+
+```text id="imp15"
+satu arah komunikasi
+tidak ada akses langsung ke state
+```
+
+---
+
+### 4.5 Kenapa Harus Fixed Size & Bounded
+
+```text
 Fixed size.
 Bounded.
 Deterministic.
+```
+
+Artinya:
+
+- ukuran queue tetap
+- tidak ada alokasi dinamis
+- tidak tumbuh saat load tinggi
+
+Tanpa batas:
+
+```text id="imp16"
+queue bisa terus bertambah saat network down
+→ memory habis
+→ crash
+```
+
+Dengan bounded queue:
+
+```text id="imp17"
+data bisa di-drop
+tetapi sistem tetap hidup
+```
+
+---
+
+### 4.6 Hubungan dengan Layer
+
+Semua pattern di atas menjaga satu hal:
+
+```text id="imp18"
+tidak ada eksekusi yang langsung menyentuh svc_ atau drv_
+tanpa melalui app_
+```
+
+---
+
+### 4.7 Ringkasan Implementation Pattern
+
+```text id="imp19"
+Task → menjalankan app_
+ISR  → hanya notify
+Comm → hanya kirim data (queue)
+```
+
+Sehingga:
+
+```text id="imp20"
+semua perubahan state sistem terjadi di satu tempat:
+Application layer
+```
 
 ---
 
