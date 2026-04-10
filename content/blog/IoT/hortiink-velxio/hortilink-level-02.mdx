@@ -1,0 +1,853 @@
+---
+title: HortiLink Level 2 — Local Interaction
+date: '2026-04-08'
+tags:
+  [
+    'hortilink',
+    'level-2',
+    'local-interaction',
+    'manual-button-input',
+    'actuator-output-control',
+    'manual-override',
+    'esp32-c3',
+    'velxio',
+    'oop-kecil',
+    'firmware-layering',
+    'edge-node',
+  ]
+draft: false
+summary: Level 2 adalah kelanjutan langsung dari Level 1 dan berfokus pada interaksi lokal node HortiLink. Pada tahap ini engineer menambahkan satu class input untuk membaca tombol manual, satu class output untuk mengendalikan aktuator lokal, serta mulai memperkenalkan MANUAL_OVERRIDE sebagai mode operasional nyata. Node tetap berjalan di ESP32-C3 DevKit pada simulator Velxio dengan pendekatan yang sederhana, deterministik, dan konsisten dengan layering yang sudah dikunci - drv tahu hardware, svc tahu drv dan menyelesaikan logic domain, app hanya mengorkestrasi service.
+---
+
+# **_HortiLink Level 2 — Local Interaction_**
+
+---
+
+- [**_HortiLink Level 2 — Local Interaction_**](#hortilink-level-2--local-interaction)
+  - [Posisi Level 2 dalam Aliran Belajar HortiLink](#posisi-level-2-dalam-aliran-belajar-hortilink)
+  - [1. Fokus](#1-fokus)
+  - [2. Tujuan](#2-tujuan)
+  - [3. Feature yang Dikerjakan](#3-feature-yang-dikerjakan)
+  - [4. Platform](#4-platform)
+  - [5. Konsep Level 2](#5-konsep-level-2)
+  - [6. Mode yang Dipakai](#6-mode-yang-dipakai)
+    - [6.1 Pola status LED](#61-pola-status-led)
+    - [6.2 Interaksi tombol](#62-interaksi-tombol)
+  - [7. Struktur Layer](#7-struktur-layer)
+    - [7.1 `sys`](#71-sys)
+    - [7.2 `drv`](#72-drv)
+    - [7.3 `svc`](#73-svc)
+    - [7.4 `app`](#74-app)
+  - [8. Wiring untuk Simulator](#8-wiring-untuk-simulator)
+    - [Status LED](#status-led)
+    - [Manual button](#manual-button)
+    - [Actuator output](#actuator-output)
+  - [9. Sketch Level 2](#9-sketch-level-2)
+  - [10. Cara Kerja Firmware](#10-cara-kerja-firmware)
+    - [10.1 Saat board menyala](#101-saat-board-menyala)
+    - [10.2 Saat tombol ditekan](#102-saat-tombol-ditekan)
+    - [10.3 Saat loop berjalan](#103-saat-loop-berjalan)
+  - [11. Yang Dipelajari dari Level 2](#11-yang-dipelajari-dari-level-2)
+    - [11.1 Tambah 1 class input](#111-tambah-1-class-input)
+    - [11.2 Tambah 1 class output](#112-tambah-1-class-output)
+    - [11.3 Manual override menjadi logic domain di `svc`](#113-manual-override-menjadi-logic-domain-di-svc)
+    - [11.4 `app` tetap murni sebagai orchestrator](#114-app-tetap-murni-sebagai-orchestrator)
+  - [12. Output yang Diharapkan](#12-output-yang-diharapkan)
+    - [12.1 Serial Monitor](#121-serial-monitor)
+    - [12.2 Status LED GPIO8](#122-status-led-gpio8)
+    - [12.3 Actuator LED GPIO7](#123-actuator-led-gpio7)
+  - [13. Inti Level 2](#13-inti-level-2)
+
+---
+
+## Posisi Level 2 dalam Aliran Belajar HortiLink
+
+Di dalam README utama, HortiLink dibangun sebagai **single-project** yang bertumbuh per level. Setelah Level 1 memperkenalkan identitas node dan status runtime, maka Level 2 menjadi tahap pertama yang benar-benar menambahkan **interaksi lokal**.
+
+Sesuai build order yang sudah dikunci di README, Level 2 berada pada tahap:
+
+**Level 2 — Local Interaction**
+
+Fokus:
+
+- HN-03
+- HN-04
+- HN-07
+
+Tujuan:
+
+- tambah 1 class input
+- tambah 1 class output
+- mulai ada manual override
+
+Artinya, Level 2 tidak lagi hanya menampilkan status node, tetapi mulai memberi node HortiLink kemampuan untuk:
+
+- menerima aksi dari user lokal
+- mengendalikan output lokal
+- memiliki mode operasi manual yang nyata
+
+Karena project ini masih berjalan di **ESP32-C3 DevKit** pada **simulator Velxio**, maka Level 2 tetap harus tunduk pada batasan platform yang sudah dikunci sejak README dan Level 1: fitur paling aman untuk tahap ini tetap **GPIO digital**, **Serial/UART**, dan **timing berbasis `millis()`**.
+
+---
+
+## 1. Fokus
+
+- **HN-03** — Manual Button Input
+- **HN-04** — Actuator Output Control
+- **HN-07** — Manual Override Mode
+
+---
+
+## 2. Tujuan
+
+- tambah 1 class input
+- tambah 1 class output
+- mulai ada manual override
+
+---
+
+## 3. Feature yang Dikerjakan
+
+Feature yang dikerjakan pada Level 2 adalah:
+
+- **HN-03** Manual Button Input
+- **HN-04** Actuator Output Control
+- **HN-07** Manual Override Mode
+
+---
+
+## 4. Platform
+
+- **Board**: ESP32-C3 DevKit
+- **Simulator**: Velxio
+- **Status LED**: `GPIO8` (built-in LED)
+- **Manual button**: `GPIO4`
+- **Actuator output**: `GPIO7`
+
+Pada Level 2, aktuator belum dibuat sebagai relay sungguhan. Untuk kebutuhan simulator dan pembelajaran, aktuator direpresentasikan sebagai **LED eksternal** pada `GPIO7`. Ini sengaja dipilih agar HN-04 bisa dipelajari dengan aman dan tetap sesuai dengan kemampuan Velxio pada ESP32-C3.
+
+---
+
+## 5. Konsep Level 2
+
+Pada Level 2, node HortiLink mulai memiliki interaksi lokal sederhana tetapi nyata.
+
+Node sekarang melakukan hal-hal berikut:
+
+1. saat boot, node masuk mode `BOOTING`
+2. setelah boot selesai, node masuk mode `LOCAL_ONLY`
+3. node membaca tombol manual lokal
+4. saat tombol ditekan, node melakukan **manual override**
+5. manual override mengubah status node dan mengendalikan aktuator lokal
+6. node tetap menulis status ke Serial Monitor
+
+Dengan begitu, engineer mulai melihat bahwa node HortiLink bukan lagi hanya “menyala dan memberi status”, tetapi sudah mulai “menerima perintah lokal dan bereaksi terhadapnya”.
+
+Pada Level 2 ini, manual override dibuat sesederhana mungkin:
+
+- saat tombol ditekan dari mode `LOCAL_ONLY`, node masuk ke `MANUAL_OVERRIDE` dan aktuator dinyalakan
+- saat tombol ditekan lagi dari mode `MANUAL_OVERRIDE`, node kembali ke `LOCAL_ONLY` dan aktuator dimatikan
+
+Dengan desain ini, tiga feature Level 2 bisa dipelajari sekaligus:
+
+- tombol lokal sebagai input
+- aktuator lokal sebagai output
+- mode manual override sebagai keputusan operasional
+
+---
+
+## 6. Mode yang Dipakai
+
+Kita pakai 3 mode aktif pada Level 2:
+
+- `BOOTING`
+- `LOCAL_ONLY`
+- `MANUAL_OVERRIDE`
+
+### 6.1 Pola status LED
+
+- `BOOTING` → kedip cepat
+- `LOCAL_ONLY` → kedip lambat
+- `MANUAL_OVERRIDE` → nyala stabil
+
+Status LED tetap memakai built-in LED di `GPIO8`, sehingga Level 2 tetap konsisten dengan Level 1.
+
+### 6.2 Interaksi tombol
+
+Tombol manual bekerja seperti ini:
+
+- saat node masih `BOOTING`, penekanan tombol diabaikan
+- setelah masuk `LOCAL_ONLY`, tombol menjadi aktif
+- sekali tekan → `MANUAL_OVERRIDE` aktif, aktuator ON
+- tekan lagi → kembali ke `LOCAL_ONLY`, aktuator OFF
+
+Untuk menjaga perilaku tetap stabil, pembacaan tombol dibungkus dengan **debounce sederhana** di level driver.
+
+---
+
+## 7. Struktur Layer
+
+### 7.1 `sys`
+
+Berisi konfigurasi tetap:
+
+- pin status LED
+- pin tombol manual
+- pin aktuator
+- baudrate serial
+- interval loop
+- durasi boot
+- debounce tombol
+- pola status LED
+
+### 7.2 `drv`
+
+Berisi tiga class:
+
+- `StatusLed`
+- `ManualButton`
+- `ActuatorOutput`
+
+Tugas masing-masing:
+
+**`StatusLed`**
+
+- inisialisasi LED status
+- menyalakan / mematikan LED status
+
+**`ManualButton`**
+
+- membaca tombol manual lokal
+- melakukan debounce
+- menghasilkan event “button pressed”
+
+**`ActuatorOutput`**
+
+- menghidupkan dan mematikan output aktuator
+- menyimpan status output saat ini
+
+`drv` hanya tahu hardware dan tidak tahu logic domain.
+
+### 7.3 `svc`
+
+Pada Level 2, `svc` dipakai penuh melalui:
+
+- `LocalInteractionService`
+
+Tugas `svc` pada level ini:
+
+- mengetahui `drv` yang relevan untuk domain interaksi lokal
+- mengelola mode:
+  - `BOOTING`
+  - `LOCAL_ONLY`
+  - `MANUAL_OVERRIDE`
+- memutuskan kapan aktuator ON/OFF
+- memutuskan kapan status LED ON/OFF
+- memutuskan kapan mode berubah
+
+Di Level 2, semua logic domain interaksi lokal diselesaikan di `svc`.
+
+### 7.4 `app`
+
+`app` hanya berperan sebagai orchestrator:
+
+- memulai serial
+- memulai service
+- menjalankan service
+- melakukan logging
+- menjaga ritme runtime
+
+Dengan pembagian ini, `app` tidak memegang rule domain dan tidak menyentuh driver satu per satu untuk logic kontrol harian.
+
+---
+
+## 8. Wiring untuk Simulator
+
+Agar Level 2 bisa diuji di Velxio, wiring yang dipakai adalah:
+
+### Status LED
+
+- built-in LED board pada `GPIO8`
+
+### Manual button
+
+- satu kaki button → `GPIO4`
+- satu kaki button → `GND`
+
+Karena driver tombol memakai `INPUT_PULLUP`, maka wiring ini cukup sederhana dan tidak membutuhkan resistor eksternal untuk pull-up pada simulator.
+
+### Actuator output
+
+- `GPIO7 -> LED -> GND`
+
+Catatan penting:
+
+- pada simulator, bentuk ini cukup untuk validasi logika output
+- pada hardware nyata, **sangat disarankan** memakai resistor seri untuk LED
+- kalau di masa depan aktuator diganti relay, maka `GPIO7` tidak boleh langsung ke relay besar tanpa driver transistor atau modul relay yang sesuai
+
+---
+
+## 9. Sketch Level 2
+
+```cpp
+#include <Arduino.h>
+
+// =====================================================
+// sys -> configuration
+// =====================================================
+namespace sys {
+
+struct Config {
+  static constexpr uint8_t PIN_STATUS_LED    = 8;  // Built-in LED ESP32-C3 DevKit di Velxio
+  static constexpr uint8_t PIN_MANUAL_BUTTON = 4;  // Button ke GND, memakai INPUT_PULLUP
+  static constexpr uint8_t PIN_ACTUATOR      = 7;  // Dummy actuator LED
+
+  static constexpr uint32_t SERIAL_BAUD         = 115200;
+  static constexpr uint32_t APP_TICK_MS         = 20;
+  static constexpr uint32_t LOG_INTERVAL_MS     = 1000;
+  static constexpr uint32_t BOOTING_DURATION_MS = 3000;
+  static constexpr uint32_t BUTTON_DEBOUNCE_MS  = 40;
+
+  // Status LED patterns
+  static constexpr uint32_t BOOT_BLINK_MS  = 150;
+  static constexpr uint32_t LOCAL_BLINK_MS = 700;
+};
+
+}  // namespace sys
+
+// =====================================================
+// drv -> hardware boundary
+// =====================================================
+namespace drv {
+
+class StatusLed {
+public:
+  explicit StatusLed(uint8_t pin) : _pin(pin) {}
+
+  void begin() {
+    pinMode(_pin, OUTPUT);
+    off();
+  }
+
+  void set(bool on) {
+    digitalWrite(_pin, on ? HIGH : LOW);
+  }
+
+  void off() {
+    digitalWrite(_pin, LOW);
+  }
+
+private:
+  uint8_t _pin;
+};
+
+class ManualButton {
+public:
+  explicit ManualButton(uint8_t pin) : _pin(pin) {}
+
+  void begin() {
+    pinMode(_pin, INPUT_PULLUP);
+
+    bool pressed = rawPressed();
+    _lastRawPressed = pressed;
+    _stablePressed = pressed;
+    _pressedEvent = false;
+    _lastChangeMs = 0;
+  }
+
+  void update(uint32_t nowMs) {
+    bool raw = rawPressed();
+
+    if (raw != _lastRawPressed) {
+      _lastRawPressed = raw;
+      _lastChangeMs = nowMs;
+    }
+
+    if ((nowMs - _lastChangeMs) >= sys::Config::BUTTON_DEBOUNCE_MS) {
+      if (raw != _stablePressed) {
+        _stablePressed = raw;
+
+        if (_stablePressed) {
+          _pressedEvent = true;
+        }
+      }
+    }
+  }
+
+  bool wasPressed() {
+    if (_pressedEvent) {
+      _pressedEvent = false;
+      return true;
+    }
+    return false;
+  }
+
+private:
+  uint8_t _pin;
+  bool _lastRawPressed = false;
+  bool _stablePressed = false;
+  bool _pressedEvent = false;
+  uint32_t _lastChangeMs = 0;
+
+  bool rawPressed() const {
+    return digitalRead(_pin) == LOW;
+  }
+};
+
+class ActuatorOutput {
+public:
+  explicit ActuatorOutput(uint8_t pin) : _pin(pin) {}
+
+  void begin() {
+    pinMode(_pin, OUTPUT);
+    off();
+  }
+
+  void set(bool on) {
+    digitalWrite(_pin, on ? HIGH : LOW);
+    _isOn = on;
+  }
+
+  void off() {
+    set(false);
+  }
+
+  bool isOn() const {
+    return _isOn;
+  }
+
+private:
+  uint8_t _pin;
+  bool _isOn = false;
+};
+
+}  // namespace drv
+
+// =====================================================
+// svc -> domain logic + driver usage inside service
+// =====================================================
+namespace svc {
+
+enum class NodeMode : uint8_t {
+  BOOTING,
+  LOCAL_ONLY,
+  MANUAL_OVERRIDE
+};
+
+enum class ControlEvent : uint8_t {
+  NONE,
+  ENTERED_LOCAL_ONLY,
+  MANUAL_OVERRIDE_ENABLED,
+  MANUAL_OVERRIDE_DISABLED
+};
+
+const char* toString(NodeMode mode) {
+  switch (mode) {
+    case NodeMode::BOOTING:         return "BOOTING";
+    case NodeMode::LOCAL_ONLY:      return "LOCAL_ONLY";
+    case NodeMode::MANUAL_OVERRIDE: return "MANUAL_OVERRIDE";
+    default:                        return "UNKNOWN";
+  }
+}
+
+class LocalInteractionService {
+public:
+  LocalInteractionService(drv::StatusLed& drv_statusLed,
+                          drv::ManualButton& drv_manualButton,
+                          drv::ActuatorOutput& drv_actuator)
+    : _drv_statusLed(drv_statusLed),
+      _drv_manualButton(drv_manualButton),
+      _drv_actuator(drv_actuator) {}
+
+  void begin(uint32_t bootStartMs) {
+    _drv_statusLed.begin();
+    _drv_manualButton.begin();
+    _drv_actuator.begin();
+
+    _bootMs = bootStartMs;
+    _mode = NodeMode::BOOTING;
+    _lastEvent = ControlEvent::NONE;
+    _actuatorOn = false;
+  }
+
+  void run(uint32_t nowMs) {
+    _lastEvent = ControlEvent::NONE;
+
+    _drv_manualButton.update(nowMs);
+
+    if (_mode == NodeMode::BOOTING) {
+      _drv_manualButton.wasPressed();  // buang event saat boot
+
+      if ((nowMs - _bootMs) >= sys::Config::BOOTING_DURATION_MS) {
+        _mode = NodeMode::LOCAL_ONLY;
+        _actuatorOn = false;
+        _lastEvent = ControlEvent::ENTERED_LOCAL_ONLY;
+      }
+
+      applyOutputs(nowMs);
+      return;
+    }
+
+    if (_drv_manualButton.wasPressed()) {
+      if (_mode == NodeMode::LOCAL_ONLY) {
+        _mode = NodeMode::MANUAL_OVERRIDE;
+        _actuatorOn = true;
+        _lastEvent = ControlEvent::MANUAL_OVERRIDE_ENABLED;
+      } else if (_mode == NodeMode::MANUAL_OVERRIDE) {
+        _mode = NodeMode::LOCAL_ONLY;
+        _actuatorOn = false;
+        _lastEvent = ControlEvent::MANUAL_OVERRIDE_DISABLED;
+      }
+    }
+
+    applyOutputs(nowMs);
+  }
+
+  NodeMode mode() const {
+    return _mode;
+  }
+
+  const char* modeText() const {
+    return toString(_mode);
+  }
+
+  ControlEvent lastEvent() const {
+    return _lastEvent;
+  }
+
+  bool actuatorOn() const {
+    return _actuatorOn;
+  }
+
+private:
+  drv::StatusLed& _drv_statusLed;
+  drv::ManualButton& _drv_manualButton;
+  drv::ActuatorOutput& _drv_actuator;
+
+  NodeMode _mode = NodeMode::BOOTING;
+  uint32_t _bootMs = 0;
+  bool _actuatorOn = false;
+  ControlEvent _lastEvent = ControlEvent::NONE;
+
+  void applyOutputs(uint32_t nowMs) {
+    _drv_statusLed.set(statusLedState(nowMs));
+    _drv_actuator.set(_actuatorOn);
+  }
+
+  bool statusLedState(uint32_t nowMs) const {
+    switch (_mode) {
+      case NodeMode::BOOTING:
+        return ((nowMs / sys::Config::BOOT_BLINK_MS) % 2U) == 0U;
+
+      case NodeMode::LOCAL_ONLY:
+        return ((nowMs / sys::Config::LOCAL_BLINK_MS) % 2U) == 0U;
+
+      case NodeMode::MANUAL_OVERRIDE:
+        return true;
+    }
+
+    return false;
+  }
+};
+
+}  // namespace svc
+
+// =====================================================
+// app -> pure orchestrator
+// =====================================================
+namespace app {
+
+class FirmwareApp {
+public:
+  explicit FirmwareApp(svc::LocalInteractionService& svc_localInteractionService)
+    : _svc_localInteractionService(svc_localInteractionService) {}
+
+  void begin() {
+    Serial.begin(sys::Config::SERIAL_BAUD);
+    delay(100);
+
+    _svc_localInteractionService.begin(millis());
+
+    Serial.println();
+    Serial.println("=== HortiLink Level 2 ===");
+    Serial.println("Local Interaction");
+    Serial.println("Board  : ESP32-C3 DevKit");
+    Serial.println("Button : GPIO4 -> GND");
+    Serial.println("Actuator Output : GPIO7");
+    Serial.println("Mode   : BOOTING -> LOCAL_ONLY <-> MANUAL_OVERRIDE");
+    Serial.println("Action : tekan tombol untuk toggle MANUAL_OVERRIDE");
+    Serial.println();
+  }
+
+  void run() {
+    const uint32_t nowMs = millis();
+
+    _svc_localInteractionService.run(nowMs);
+
+    logEventIfAny();
+
+    if (nowMs - _lastLogMs >= sys::Config::LOG_INTERVAL_MS) {
+      _lastLogMs = nowMs;
+      logHeartbeat(nowMs);
+    }
+
+    delay(sys::Config::APP_TICK_MS);
+  }
+
+private:
+  svc::LocalInteractionService& _svc_localInteractionService;
+  uint32_t _lastLogMs = 0;
+
+  void logEventIfAny() {
+    switch (_svc_localInteractionService.lastEvent()) {
+      case svc::ControlEvent::ENTERED_LOCAL_ONLY:
+        Serial.print("[MODE] -> ");
+        Serial.println(_svc_localInteractionService.modeText());
+        break;
+
+      case svc::ControlEvent::MANUAL_OVERRIDE_ENABLED:
+        Serial.print("[MODE] -> ");
+        Serial.println(_svc_localInteractionService.modeText());
+        Serial.println("[ACTION] manual override ENABLED | actuator=ON");
+        break;
+
+      case svc::ControlEvent::MANUAL_OVERRIDE_DISABLED:
+        Serial.print("[MODE] -> ");
+        Serial.println(_svc_localInteractionService.modeText());
+        Serial.println("[ACTION] manual override DISABLED | actuator=OFF");
+        break;
+
+      case svc::ControlEvent::NONE:
+      default:
+        break;
+    }
+  }
+
+  void logHeartbeat(uint32_t nowMs) {
+    Serial.print("[HEARTBEAT] uptime=");
+    Serial.print(nowMs);
+    Serial.print(" ms | mode=");
+    Serial.print(_svc_localInteractionService.modeText());
+    Serial.print(" | actuator=");
+    Serial.println(_svc_localInteractionService.actuatorOn() ? "ON" : "OFF");
+  }
+};
+
+}  // namespace app
+
+// =====================================================
+// composition root
+// =====================================================
+drv::StatusLed drv_statusLed(sys::Config::PIN_STATUS_LED);
+drv::ManualButton drv_manualButton(sys::Config::PIN_MANUAL_BUTTON);
+drv::ActuatorOutput drv_actuator(sys::Config::PIN_ACTUATOR);
+
+svc::LocalInteractionService svc_localInteractionService(
+  drv_statusLed,
+  drv_manualButton,
+  drv_actuator
+);
+
+app::FirmwareApp app_firmware(svc_localInteractionService);
+
+// =====================================================
+// Arduino entry point
+// =====================================================
+void setup() {
+  app_firmware.begin();
+}
+
+void loop() {
+  app_firmware.run();
+}
+```
+
+---
+
+## 10. Cara Kerja Firmware
+
+### 10.1 Saat board menyala
+
+`setup()` memanggil:
+
+```cpp
+app_firmware.begin();
+```
+
+Di dalam `begin()`:
+
+- Serial dimulai
+- service interaksi lokal dimulai
+- service menginisialisasi driver yang dibutuhkannya
+- waktu boot disimpan
+- mode awal diatur ke `BOOTING`
+- informasi node dicetak ke Serial
+
+### 10.2 Saat tombol ditekan
+
+Setelah node masuk `LOCAL_ONLY`, tombol manual menjadi aktif.
+
+Perilakunya:
+
+- tekan sekali → `MANUAL_OVERRIDE` aktif, aktuator ON
+- tekan lagi → `MANUAL_OVERRIDE` nonaktif, kembali ke `LOCAL_ONLY`, aktuator OFF
+
+Dengan demikian, tombol lokal tidak hanya dibaca sebagai input, tetapi benar-benar mengubah mode operasional node.
+
+### 10.3 Saat loop berjalan
+
+`loop()` memanggil:
+
+```cpp
+app_firmware.run();
+```
+
+Di dalamnya:
+
+- waktu sekarang dibaca dengan `millis()`
+- app menjalankan service
+- service membaca tombol melalui driver
+- service memutuskan mode dan output
+- service menerapkan output ke LED status dan aktuator
+- app melakukan logging heartbeat dan event
+
+---
+
+## 11. Yang Dipelajari dari Level 2
+
+### 11.1 Tambah 1 class input
+
+Pada Level 2, class baru yang diperkenalkan adalah:
+
+```cpp
+drv::ManualButton
+```
+
+Class ini membungkus:
+
+- pin input
+- internal pull-up
+- debounce
+- event penekanan tombol
+
+Dengan begitu, pembacaan tombol tidak dilakukan mentah-mentah di luar domain service.
+
+### 11.2 Tambah 1 class output
+
+Pada Level 2, class output baru yang diperkenalkan adalah:
+
+```cpp
+drv::ActuatorOutput
+```
+
+Class ini membungkus:
+
+- pin output aktuator
+- status ON/OFF
+- method dasar untuk output fisik
+
+Dengan begitu, pengendalian aktuator tetap berada di boundary hardware.
+
+### 11.3 Manual override menjadi logic domain di `svc`
+
+Untuk pertama kalinya, HortiLink sekarang punya mode operasional lokal yang benar-benar dipicu oleh user:
+
+- `LOCAL_ONLY`
+- `MANUAL_OVERRIDE`
+
+Logic toggle ini sepenuhnya hidup di:
+
+```cpp
+svc::LocalInteractionService
+```
+
+Ini penting karena HN-07 bukan lagi sekadar istilah pada feature list, tetapi sudah diwujudkan sebagai perilaku firmware.
+
+### 11.4 `app` tetap murni sebagai orchestrator
+
+`FirmwareApp` pada Level 2 tidak memegang rule domain.
+
+`app` hanya:
+
+- memulai service
+- menjalankan service
+- logging
+- menjaga ritme runtime
+
+Ini membuat peran `app` tetap bersih.
+
+---
+
+## 12. Output yang Diharapkan
+
+### 12.1 Serial Monitor
+
+Contoh log yang diharapkan:
+
+```text
+=== HortiLink Level 2 ===
+Local Interaction
+Board  : ESP32-C3 DevKit
+Button : GPIO4 -> GND
+Actuator Output : GPIO7
+Mode   : BOOTING -> LOCAL_ONLY <-> MANUAL_OVERRIDE
+Action : tekan tombol untuk toggle MANUAL_OVERRIDE
+
+[HEARTBEAT] uptime=1000 ms | mode=BOOTING | actuator=OFF
+[HEARTBEAT] uptime=2000 ms | mode=BOOTING | actuator=OFF
+[MODE] -> LOCAL_ONLY
+[HEARTBEAT] uptime=4000 ms | mode=LOCAL_ONLY | actuator=OFF
+[MODE] -> MANUAL_OVERRIDE
+[ACTION] manual override ENABLED | actuator=ON
+[HEARTBEAT] uptime=7000 ms | mode=MANUAL_OVERRIDE | actuator=ON
+[MODE] -> LOCAL_ONLY
+[ACTION] manual override DISABLED | actuator=OFF
+```
+
+### 12.2 Status LED GPIO8
+
+- saat `BOOTING` → kedip cepat
+- saat `LOCAL_ONLY` → kedip lambat
+- saat `MANUAL_OVERRIDE` → nyala stabil
+
+### 12.3 Actuator LED GPIO7
+
+- saat `LOCAL_ONLY` → OFF
+- saat `MANUAL_OVERRIDE` → ON
+- saat override dimatikan → OFF kembali
+
+Dengan begitu, engineer bisa melihat dua lapisan output sekaligus:
+
+- **status LED** = identitas mode node
+- **actuator LED** = efek fisik dari override
+
+---
+
+## 13. Inti Level 2
+
+Level 2 ini bukan sekadar menambah tombol dan LED.
+
+Ini adalah tahap pertama ketika node HortiLink mulai benar-benar **berinteraksi** dengan user lokal.
+
+Pada Level 2, engineer belajar bahwa:
+
+- input lokal sebaiknya dibungkus dalam class sendiri
+- output lokal sebaiknya dibungkus dalam class sendiri
+- mode operasional bisa berubah karena aksi user
+- logic domain interaksi lokal sebaiknya diselesaikan di `svc`
+- `app` tetap hanya berfungsi sebagai pengatur alur runtime
+
+Dengan kata lain, Level 2 adalah jembatan penting antara:
+
+- node yang hanya punya identitas
+- dan node yang mulai punya **kontrol lokal nyata**
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

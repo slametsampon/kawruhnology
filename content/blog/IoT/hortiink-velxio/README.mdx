@@ -1,0 +1,1251 @@
+---
+title: README - HortiLink — Aliran Belajar
+date: '2026-04-08'
+tags:
+  [
+    'hortilink',
+    'smart-agriculture',
+    'esp32-c3',
+    'raspberry-pi-gateway',
+    'offline-first',
+    'edge-node',
+    'firmware-architecture',
+    'state-machine',
+    'oop-kecil',
+    'engineering-learning-flow',
+  ]
+draft: false
+summary: HortiLink dirancang sebagai sistem smart agriculture offline-first berbasis ESP32-C3 sebagai edge node dan Raspberry Pi sebagai gateway lokal. Aliran belajar dimulai dari pemahaman sistem, batasan nyata platform Velxio, konsep MVP, feature system, mode operasi, dan mapping layer firmware, lalu diturunkan ke definisi formal v0.1. Pendekatan ini menjaga pembelajaran tetap natural bagi engineer praktis - node harus hidup mandiri lebih dulu sebelum masuk ke gateway, logging, persistence, dan cloud. Struktur feature dibagi ke node, gateway, reliability, dan remote layer, dengan build order bertahap agar implementasi tetap deterministic, modular, scalable, dan selaras dengan prinsip single-project, offline-first, serta OOP kecil yang disiplin.
+---
+
+# **_README: HortiLink — Aliran Belajar_**
+
+---
+
+- [**_README: HortiLink — Aliran Belajar_**](#readme-hortilink--aliran-belajar)
+  - [Bagian 1 — Orientasi Sistem HortiLink](#bagian-1--orientasi-sistem-hortilink)
+    - [1.1 Definisi sistem HortiLink](#11-definisi-sistem-hortilink)
+    - [1.2 Prinsip desain HortiLink](#12-prinsip-desain-hortilink)
+    - [1.3 Definisi single-project HortiLink](#13-definisi-single-project-hortilink)
+    - [1.4 Functional scope awal yang perlu dikunci](#14-functional-scope-awal-yang-perlu-dikunci)
+  - [Bagian 2 — Platform Nyata dan Batasan Simulator](#bagian-2--platform-nyata-dan-batasan-simulator)
+    - [2.1 Board target: ESP32-C3 DevKit](#21-board-target-esp32-c3-devkit)
+    - [2.2 Pinout praktis yang relevan](#22-pinout-praktis-yang-relevan)
+    - [2.3 Spesifikasi simulator Velxio untuk ESP32-C3 DevKit](#23-spesifikasi-simulator-velxio-untuk-esp32-c3-devkit)
+    - [2.4 Batasan simulator yang sangat penting](#24-batasan-simulator-yang-sangat-penting)
+    - [2.5 Spesifikasi platform yang sebaiknya dipegang untuk HortiLink](#25-spesifikasi-platform-yang-sebaiknya-dipegang-untuk-hortilink)
+    - [2.6 Implikasi langsung ke desain belajar HortiLink](#26-implikasi-langsung-ke-desain-belajar-hortilink)
+    - [2.7 Spesifikasi kerja final yang direkomendasikan](#27-spesifikasi-kerja-final-yang-direkomendasikan)
+  - [Bagian 3 — MVP dan Cara Berpikir Engineering](#bagian-3--mvp-dan-cara-berpikir-engineering)
+    - [3.1 Definisi MVP](#31-definisi-mvp)
+    - [3.2 MVP dalam konteks HortiLink](#32-mvp-dalam-konteks-hortilink)
+    - [3.3 Cara mudah memahami MVP](#33-cara-mudah-memahami-mvp)
+    - [3.4 Definisi praktis MVP untuk project engineering](#34-definisi-praktis-mvp-untuk-project-engineering)
+    - [3.5 Bedanya dengan prototype](#35-bedanya-dengan-prototype)
+    - [3.6 MVP HortiLink menurut konteks yang sudah dikunci](#36-mvp-hortilink-menurut-konteks-yang-sudah-dikunci)
+    - [3.7 Apa itu MVP scope](#37-apa-itu-mvp-scope)
+    - [3.8 Analogi sederhana](#38-analogi-sederhana)
+    - [3.9 Definisi baku yang cocok untuk dokumen ini](#39-definisi-baku-yang-cocok-untuk-dokumen-ini)
+    - [3.10 Kesimpulan singkat](#310-kesimpulan-singkat)
+  - [Bagian 4 — Feature System HortiLink dari Sudut Pandang Operasional](#bagian-4--feature-system-hortilink-dari-sudut-pandang-operasional)
+    - [4.1 Tujuan sistem yang diterjemahkan menjadi fitur](#41-tujuan-sistem-yang-diterjemahkan-menjadi-fitur)
+    - [4.2 Fitur Node ESP32](#42-fitur-node-esp32)
+    - [4.3 Fitur Gateway Raspberry Pi](#43-fitur-gateway-raspberry-pi)
+    - [4.4 Fitur Offline-first dan Reliability](#44-fitur-offline-first-dan-reliability)
+    - [4.5 Fitur Cloud / Remote Layer](#45-fitur-cloud--remote-layer)
+    - [4.6 Feature list yang paling cocok untuk fase belajar](#46-feature-list-yang-paling-cocok-untuk-fase-belajar)
+  - [Bagian 5 — Mode Operasi Resmi HortiLink](#bagian-5--mode-operasi-resmi-hortilink)
+    - [5.1 Definisi mode operasi HortiLink](#51-definisi-mode-operasi-hortilink)
+    - [5.2 Kenapa mode operasi ini penting](#52-kenapa-mode-operasi-ini-penting)
+  - [Bagian 6 — Mapping ke Arsitektur Firmware](#bagian-6--mapping-ke-arsitektur-firmware)
+    - [6.1 `sys`](#61-sys)
+    - [6.2 `drv`](#62-drv)
+    - [6.3 `svc`](#63-svc)
+    - [6.4 `app`](#64-app)
+    - [6.5 Kenapa feature harus dipetakan ke layer firmware](#65-kenapa-feature-harus-dipetakan-ke-layer-firmware)
+  - [Bagian 7 — Urutan Implementasi Belajar yang Natural](#bagian-7--urutan-implementasi-belajar-yang-natural)
+    - [7.1 Urutan implementasi terbaik](#71-urutan-implementasi-terbaik)
+    - [7.2 Kesimpulan analisis](#72-kesimpulan-analisis)
+  - [Bagian 8 — Definisi Formal HortiLink v0.1](#bagian-8--definisi-formal-hortilink-v01)
+    - [8.1 HortiLink v0.1 — System Definition](#81-hortilink-v01--system-definition)
+    - [8.2 Layer Reference](#82-layer-reference)
+    - [8.3 HortiLink v0.1 — Feature Catalog](#83-hortilink-v01--feature-catalog)
+      - [A. Edge Node Features](#a-edge-node-features)
+      - [B. Gateway Features](#b-gateway-features)
+      - [C. Offline-First and Reliability Features](#c-offline-first-and-reliability-features)
+      - [D. Cloud / Remote Features](#d-cloud--remote-features)
+    - [8.4 Operation Modes](#84-operation-modes)
+    - [8.5 MVP Scope Recommendation](#85-mvp-scope-recommendation)
+    - [8.6 Learning-Oriented Build Order](#86-learning-oriented-build-order)
+    - [8.7 Feature-to-Layer Reading Example](#87-feature-to-layer-reading-example)
+
+---
+
+## Bagian 1 — Orientasi Sistem HortiLink
+
+Sebelum masuk ke board, simulator, atau rincian firmware, pembaca perlu memahami dulu bahwa **HortiLink adalah sistem**, bukan sekadar kumpulan eksperimen LED, button, sensor, atau relay. Karena itu, bagian orientasi sistem ditempatkan di awal agar seluruh keputusan teknis berikutnya tetap berada dalam satu cerita engineering yang sama.
+
+### 1.1 Definisi sistem HortiLink
+
+HortiLink didefinisikan sebagai:
+
+> **sistem edge-to-gateway untuk pertanian cerdas yang tetap bekerja secara lokal saat internet/gateway terganggu, lalu melakukan sinkronisasi saat koneksi kembali tersedia.**
+
+Dengan definisi itu, seluruh keputusan teknis menjadi selaras:
+
+- ESP32 = **edge node**
+- Raspberry Pi = **gateway lokal**
+- Cloud = **opsional / lapisan sinkronisasi**
+- desain utama = **offline-first**
+
+HortiLink adalah sistem smart agriculture untuk:
+
+- memantau kondisi lingkungan tanam
+- mengendalikan aktuator lokal
+- menyediakan operasi manual dan otomatis
+- tetap berfungsi tanpa internet
+- memakai Raspberry Pi sebagai gateway lokal ke cloud
+
+### 1.2 Prinsip desain HortiLink
+
+Agar sejak awal project tidak melebar dan tetap sehat secara arsitektur, HortiLink perlu dikunci dengan prinsip-prinsip berikut.
+
+**Offline-first**
+
+Node ESP32 tetap bekerja walau:
+
+- internet mati
+- Raspberry Pi mati
+- broker lokal tidak tersedia
+
+**Local autonomy**
+
+Keputusan dasar lapangan tetap bisa diambil di node:
+
+- baca sensor
+- baca tombol
+- jalankan relay/pompa/kipas
+- tampilkan status lokal
+
+**Gateway-centric networking**
+
+ESP32 tidak perlu bergantung langsung ke cloud.
+ESP32 berkomunikasi ke **Raspberry Pi**, lalu Pi yang menjadi penghubung ke jaringan luar.
+
+**Modular growth**
+
+Sistem harus bisa dimulai dari 1 node sederhana, lalu tumbuh ke:
+
+- banyak sensor
+- banyak aktuator
+- banyak node
+- dashboard lokal
+- sinkronisasi cloud
+
+### 1.3 Definisi single-project HortiLink
+
+Agar tetap sesuai keputusan Anda, HortiLink sebaiknya dipahami sebagai:
+
+> **satu project, banyak irisan implementasi, tetapi semua irisan tetap milik sistem yang sama**
+
+Artinya, kita tidak membuat “project LED”, “project button”, atau “project relay” secara terpisah. Yang kita bangun adalah:
+
+- **HortiLink Level 1**
+- **HortiLink Level 2**
+- **HortiLink Level 3**
+
+dan seterusnya.
+
+Dengan pendekatan ini, semua latihan tetap berada dalam satu narasi sistem yang utuh. Ini lebih sehat untuk pembelajaran engineer praktis karena setiap latihan langsung punya konteks operasional, bukan berdiri sendiri tanpa arah.
+
+### 1.4 Functional scope awal yang perlu dikunci
+
+Kalau definisi awal HortiLink ingin dibuat formal sejak awal, maka functional scope yang sehat adalah sebagai berikut:
+
+- ESP32-C3 sebagai edge node
+- Raspberry Pi sebagai gateway lokal
+- offline-first operation
+- local sensor reading
+- local actuator control
+- local manual override
+- local status indication
+- gateway telemetry exchange
+- local web dashboard on Raspberry Pi
+- optional cloud synchronization
+
+Ruang lingkup ini sudah cukup formal untuk dijadikan dasar roadmap teknis, namun tetap tidak membuat sistem menjadi terlalu besar di tahap awal.
+
+---
+
+## Bagian 2 — Platform Nyata dan Batasan Simulator
+
+Setelah sistem dipahami, baru masuk ke platform nyata. Ini penting karena seluruh strategi belajar HortiLink harus selaras dengan **board nyata** yang dipakai dan **kemampuan simulator** yang benar-benar tersedia. Dengan kata lain, design system harus selalu dibaca bersama design constraint-nya.
+
+### 2.1 Board target: ESP32-C3 DevKit
+
+Untuk board yang dirujuk oleh Espressif, acuan resminya adalah **ESP32-C3-DevKitM-1**, yaitu board entry-level berbasis **ESP32-C3-MINI-1**. Modulnya memakai **ESP32-C3FN4** dengan **flash 4 MB** tertanam, dan board ini memang ditujukan sebagai development board kecil untuk Wi-Fi + BLE.
+
+**Spesifikasi SoC ESP32-C3**
+
+ESP32-C3 adalah SoC **single-core 32-bit RISC-V** dengan clock **hingga 160 MHz**. Chip ini mendukung **2.4 GHz Wi-Fi 802.11b/g/n** dan **Bluetooth 5 Low Energy**, memiliki **384 KB ROM**, **400 KB SRAM** dengan **16 KB dipakai sebagai cache**, serta **8 KB RTC SRAM**.
+
+Di sisi periferal, ESP32-C3 menyediakan:
+
+- **22 GPIO**
+- **2 UART**
+- **3 SPI**
+- **I2C**
+- **I2S**
+- **USB Serial/JTAG**
+- **TWAI/CAN 2.0**
+- **LEDC hingga 6 channel**
+- **RMT 2 TX + 2 RX**
+- **2 ADC 12-bit** dengan total **hingga 6 channel**
+- sensor suhu internal
+
+**Fitur board ESP32-C3 DevKit**
+
+Board resminya memiliki:
+
+- **Micro-USB**
+- **Boot button**
+- **Reset button**
+- **USB-to-UART bridge** hingga **3 Mbps**
+- **5 V to 3.3 V LDO**
+- **Power LED 5V**
+- **RGB LED addressable di GPIO8**
+
+**Opsi catu daya**
+
+Board bisa diberi daya melalui:
+
+- **Micro-USB**
+- **pin 5V + GND**
+- **pin 3V3 + GND**
+
+### 2.2 Pinout praktis yang relevan
+
+**GPIO yang diekspos ke header board**
+
+Dari header J1 dan J3, pin yang dibawa keluar pada board ini adalah:
+
+**GPIO0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 18, 19, 20, 21**
+
+ditambah pin power dan reset.
+
+Keterangan penting:
+
+- GPIO20 adalah **U0RXD**
+- GPIO21 adalah **U0TXD**
+- GPIO18 adalah **USB_D-**
+- GPIO19 adalah **USB_D+**
+
+**Pin ADC**
+
+Untuk ESP32-C3, ADC yang valid adalah:
+
+- **ADC1:** GPIO0, GPIO1, GPIO2, GPIO3, GPIO4
+- **ADC2:** GPIO5
+
+Jadi untuk sensor analog di project HortiLink, pin praktisnya adalah:
+
+- **GPIO0–GPIO5**
+
+Karena itu, **GPIO34 tidak berlaku** di ESP32-C3.
+
+**Built-in LED**
+
+Pada board **ESP32-C3 DevKit** di Velxio, **built-in LED ada di GPIO8**. Pada board resmi Espressif, GPIO8 juga dipakai untuk **RGB LED addressable**.
+
+**Pin yang perlu hati-hati**
+
+**GPIO2, GPIO8, dan GPIO9** adalah **strapping pins**, yaitu pin yang ikut menentukan perilaku chip saat power-up atau reset. Untuk firmware belajar biasanya masih bisa dipakai, tetapi pemakaiannya harus sadar konteks boot.
+
+### 2.3 Spesifikasi simulator Velxio untuk ESP32-C3 DevKit
+
+Di Velxio, **ESP32-C3 DevKit** dijalankan sebagai board **RISC-V RV32IMC @ 160 MHz**. Dokumentasinya menyebut untuk ESP32-C3, engine produksinya memakai **QEMU backend** dengan library **`libqemu-riscv32`** dan machine **`esp32c3-picsimlab`**. Velxio juga menyatakan board ini menggunakan **22 GPIO (GPIO0–GPIO21)** dan FQBN Arduino-nya adalah **`esp32:esp32:esp32c3`**.
+
+Velxio sendiri menyediakan:
+
+- editor
+- serial monitor
+- workspace multi-file
+- kanvas komponen interaktif
+
+Untuk keseluruhan platform, dokumentasinya menyebut dukungan komponen interaktif 48+ serta kompilasi lewat `arduino-cli`.
+
+**Versi platform Arduino yang harus dianggap acuan**
+
+Untuk jalur emulasi ESP32-C3 di Velxio, basis yang dipakai adalah **arduino-esp32 2.0.17 / IDF 4.4.x**. Dokumentasi Velxio secara eksplisit menyebut **arduino-esp32 3.x tidak didukung** untuk jalur ini.
+
+Artinya, untuk sketch Arduino ESP32-C3 di Velxio, asumsi API yang aman adalah gaya **core 2.x**, bukan 3.x.
+
+### 2.4 Batasan simulator yang sangat penting
+
+Ini bagian paling penting untuk desain HortiLink di Velxio.
+
+Dokumentasi resmi Velxio untuk **RISC-V Emulation (ESP32-C3)** menyebut bahwa pada machine `esp32c3-picsimlab`, yang sudah diemulasikan dengan aman adalah:
+
+- **core CPU**
+- **GPIO**
+- **UART0**
+- **SPI flash**
+
+Tetapi beberapa periferal **belum diemulasikan**, yaitu:
+
+- **WiFi / BLE**
+- **LEDC / PWM**
+- **RMT / NeoPixel**
+- **ADC**
+- **hardware I2C / SPI**
+- **GPIO interrupts (`attachInterrupt`)**
+- **NVS / SPIFFS**
+
+Dokumentasi yang sama juga menyebut bahwa sketch Arduino tetap bisa **boot sampai `setup()` / `loop()`** dengan benar untuk kasus **GPIO dan UART**, tetapi sketch yang memakai **WiFi, LEDC, atau RMT** akan **boot namun periferalnya diam**. Karena ADC juga belum diemulasikan, input analog dari pot atau sensor analog di ESP32-C3 Velxio saat ini **tidak bisa dijadikan dasar validasi perilaku ADC**.
+
+### 2.5 Spesifikasi platform yang sebaiknya dipegang untuk HortiLink
+
+Kalau disederhanakan menjadi spesifikasi kerja yang benar-benar berguna untuk project, maka basis resminya adalah sebagai berikut.
+
+**Hardware target konseptual**
+
+- **MCU:** ESP32-C3 single-core RISC-V, up to 160 MHz
+- **Wireless:** 2.4 GHz Wi-Fi + BLE 5 LE
+- **Memory:** 384 KB ROM, 400 KB SRAM, 8 KB RTC SRAM
+- **Flash modul board:** 4 MB
+- **GPIO total chip:** 22 (GPIO0–GPIO21)
+- **ADC valid:** GPIO0–GPIO5
+- **Built-in LED board/simulator:** GPIO8
+- **UART0:** GPIO21 TX, GPIO20 RX
+
+**Simulator reality di Velxio**
+
+- **Board:** ESP32-C3 DevKit
+- **FQBN:** `esp32:esp32:esp32c3`
+- **Core Arduino acuan:** `esp32:esp32` **2.0.17**
+- **Yang bisa diandalkan untuk belajar awal:** GPIO digital + Serial/UART
+- **Yang belum bisa dijadikan basis simulasi:** WiFi, BLE, PWM, ADC, hardware I2C/SPI, interrupt GPIO, NVS/SPIFFS
+
+### 2.6 Implikasi langsung ke desain belajar HortiLink
+
+Dengan spesifikasi di atas, maka untuk **HortiLink di Velxio + ESP32-C3 DevKit**, fase awal yang paling realistis adalah:
+
+- **status LED**
+- **button input**
+- **state machine node**
+- **manual override**
+- **serial logging**
+- **scheduler cooperative berbasis `millis()`**
+
+Sedangkan fitur berikut sebaiknya dianggap **tahap berikutnya / board fisik / integrasi non-Velxio penuh**:
+
+- sensor analog asli
+- PWM brightness/control
+- WiFi/MQTT langsung dari ESP32-C3
+- interrupt-driven input
+- penyimpanan lokal via NVS/SPIFFS
+
+Alasannya bukan karena arsitekturnya salah, tetapi karena **simulator ESP32-C3 saat ini memang belum mengemulasikan periferal-periferal itu**.
+
+### 2.7 Spesifikasi kerja final yang direkomendasikan
+
+Untuk percakapan-percakapan berikutnya, spesifikasi acuan HortiLink sebaiknya dikunci seperti ini.
+
+**Platform firmware**
+
+- Board: **ESP32-C3 DevKit**
+- Environment: **Velxio**
+- Arduino core assumption: **2.0.17 / IDF 4.4.x**
+- Built-in LED: **GPIO8**
+- Serial: **UART0 GPIO21/20**
+- Safe digital GPIO for exercises: **GPIO0–10, 20, 21** dengan perhatian khusus pada **GPIO2/8/9** karena strapping
+- Analog-capable pins in real hardware: **GPIO0–GPIO5**
+- Simulator-safe feature set: **GPIO digital + UART + timing/state machine**
+
+---
+
+## Bagian 3 — MVP dan Cara Berpikir Engineering
+
+Sesudah sistem dan platform dipahami, barulah istilah **MVP** ditempatkan. Urutan ini penting agar MVP tidak dipahami secara abstrak. Dalam konteks engineer praktis, MVP bukan slogan startup, melainkan alat untuk menjaga batas scope, memastikan alur validasi teknis, dan mencegah project membesar sebelum fondasinya hidup.
+
+### 3.1 Definisi MVP
+
+MVP = **Minimum Viable Product**
+
+Artinya:
+
+> **versi paling kecil dari sistem yang sudah benar-benar bisa bekerja dan menunjukkan nilai utamanya.**
+
+Bukan versi lengkap.
+Bukan versi final.
+Tetapi juga **bukan mockup kosong**.
+
+MVP harus sudah:
+
+- punya fungsi inti
+- bisa diuji
+- bisa didemokan
+- bisa jadi dasar pengembangan berikutnya
+
+### 3.2 MVP dalam konteks HortiLink
+
+Kalau HortiLink adalah sistem smart agriculture yang besar, maka **MVP HortiLink** adalah:
+
+> **versi paling sederhana dari HortiLink yang sudah memperlihatkan identitas utamanya sebagai sistem edge node + gateway + offline-first**
+
+Jadi MVP bukan semua fitur yang kita impikan.
+MVP hanya fitur minimum yang cukup untuk membuktikan bahwa konsep HortiLink memang hidup.
+
+### 3.3 Cara mudah memahami MVP
+
+Misalnya target akhir HortiLink adalah:
+
+- baca banyak sensor
+- kendali banyak aktuator
+- dashboard lokal
+- MQTT gateway
+- cloud sync
+- notifikasi
+- histori
+- multi-node
+
+Maka **MVP** tidak perlu langsung memuat semuanya.
+
+MVP cukup menjawab:
+
+1. Apakah node ESP32 bisa bekerja?
+2. Apakah node bisa baca input dan mengendalikan output?
+3. Apakah node tetap jalan saat offline?
+4. Apakah gateway lokal bisa menerima status dasar?
+5. Apakah sistem ini sudah layak disebut “HortiLink”?
+
+Kalau jawabannya ya, maka itu sudah MVP.
+
+### 3.4 Definisi praktis MVP untuk project engineering
+
+Dalam engineering, MVP biasanya berarti:
+
+> **fitur minimum yang wajib ada agar sistem bisa dipakai untuk validasi arsitektur, validasi alur kerja, dan validasi nilai guna.**
+
+Jadi fungsi MVP ada tiga:
+
+- validasi ide
+- validasi desain teknis
+- validasi prioritas fitur
+
+### 3.5 Bedanya dengan prototype
+
+Ini bagian penting karena sering tercampur.
+
+**Prototype**
+
+Biasanya dibuat untuk mencoba ide.
+Bisa saja belum stabil, belum lengkap, bahkan kadang belum usable.
+
+**MVP**
+
+Sudah harus **punya alur kerja nyata** dan **memberi nilai nyata**, walaupun kecil.
+
+Jadi:
+
+- **prototype** = “apakah ide ini mungkin?”
+- **MVP** = “apakah sistem minimum ini sudah layak dipakai, didemokan, atau divalidasi?”
+
+### 3.6 MVP HortiLink menurut konteks yang sudah dikunci
+
+Saat daftar berikut ditulis:
+
+- HN-01 Node Boot Status
+- HN-02 Local Status Indicator
+- HN-03 Manual Button Input
+- HN-04 Actuator Output Control
+- HN-05 Sensor Data Acquisition
+- HN-06 Local Auto Rule Engine
+- HN-07 Manual Override Mode
+- HG-01 Local MQTT Broker
+- HG-03 Local Dashboard
+- HG-04 Command Relay
+- HG-05 Local Event Logging
+- HR-01 Local Autonomy
+- HR-02 Gateway Loss Tolerance
+- HR-03 Internet Loss Tolerance
+
+maksudnya adalah:
+
+> **sekumpulan fitur minimum yang menurut saya sudah cukup untuk menyebut HortiLink sebagai sistem nyata, bukan sekadar demo LED/sensor**
+
+Itulah yang disebut **MVP scope**.
+
+### 3.7 Apa itu MVP scope
+
+**MVP scope** adalah batas fitur minimum yang dipilih untuk versi pertama.
+
+Artinya:
+
+- fitur di dalam scope → dikerjakan dulu
+- fitur di luar scope → ditunda ke fase berikutnya
+
+Pembatasan ini penting agar project tidak melebar dan engineer tidak kehilangan arah implementasi.
+
+### 3.8 Analogi sederhana
+
+Kalau target akhir adalah “mobil lengkap”, maka:
+
+- prototype = mungkin hanya rangka dan mesin percobaan
+- MVP = mobil sederhana yang sudah bisa jalan, belok, dan direm dengan aman
+
+Belum mewah, belum lengkap, tetapi sudah membuktikan fungsi inti.
+
+Begitu juga dengan HortiLink.
+
+### 3.9 Definisi baku yang cocok untuk dokumen ini
+
+Supaya konsisten, definisi yang disarankan adalah sebagai berikut.
+
+**MVP HortiLink**
+
+> **Versi paling kecil dari HortiLink yang sudah mampu menjalankan fungsi inti node pertanian cerdas secara lokal, tetap beroperasi saat offline, dan berkomunikasi dasar dengan gateway lokal.**
+
+Definisi ini baik karena menekankan tiga identitas utama HortiLink:
+
+- **smart agriculture node**
+- **offline-first**
+- **gateway-based architecture**
+
+### 3.10 Kesimpulan singkat
+
+**MVP** adalah:
+
+> versi minimum yang sudah benar-benar berguna dan bisa memvalidasi sistem
+
+Untuk HortiLink, MVP berarti:
+
+> versi paling kecil yang sudah membuktikan bahwa ESP32 node, Raspberry Pi gateway, dan prinsip offline-first benar-benar bekerja
+
+---
+
+## Bagian 4 — Feature System HortiLink dari Sudut Pandang Operasional
+
+Setelah sistem, platform, dan cara berpikir MVP dipahami, langkah berikutnya adalah membaca HortiLink sebagai **sistem fitur yang hidup di lapangan**. Bagian ini penting untuk engineer praktis karena di sinilah HortiLink mulai berubah dari definisi konseptual menjadi daftar kemampuan operasional yang nyata. Dalam dokumen asli, feature list dibagi menjadi empat kelompok besar agar pembacaan sistem tetap jelas: Node, Gateway, Offline-first/Reliability, dan Cloud/Remote Layer.
+
+### 4.1 Tujuan sistem yang diterjemahkan menjadi fitur
+
+HortiLink adalah sistem smart agriculture untuk:
+
+- memantau kondisi lingkungan tanam
+- mengendalikan aktuator lokal
+- menyediakan operasi manual dan otomatis
+- tetap berfungsi tanpa internet
+- memakai Raspberry Pi sebagai gateway lokal ke cloud
+
+Tujuan sistem inilah yang kemudian diterjemahkan menjadi feature set yang lebih operasional. Dengan pendekatan ini, pembaca tidak melihat fitur sebagai daftar acak, tetapi sebagai turunan langsung dari tujuan sistem.
+
+### 4.2 Fitur Node ESP32
+
+Fitur pertama yang harus dibaca adalah fitur yang hidup langsung di perangkat lapangan, yaitu node ESP32. Ini penting karena pada fase belajar awal, fokus utama memang berada di node, bukan di cloud dan belum juga di gateway penuh.
+
+**Sensor acquisition**
+
+Node membaca data dari sensor, misalnya:
+
+- soil moisture
+- suhu udara
+- kelembapan udara
+- intensitas cahaya
+- level air tangki
+- flow sensor
+- pH atau EC jika nanti berkembang
+
+Fitur ini menunjukkan bahwa node bukan hanya pengendali output, tetapi juga sumber data utama dari kondisi proses atau kondisi lingkungan tanam.
+
+**Local actuator control**
+
+Node mengendalikan aktuator, misalnya:
+
+- pompa air
+- valve solenoid
+- kipas
+- grow light
+- buzzer/alarm
+- LED status
+
+Bagian ini menegaskan bahwa HortiLink bukan sekadar monitoring system. Node juga harus mampu melakukan aksi fisik di lapangan melalui aktuator.
+
+**Manual input**
+
+Node menerima input lokal:
+
+- push button mode
+- emergency stop
+- tombol manual ON/OFF aktuator
+- selector mode lokal
+
+Fitur ini penting untuk engineer praktis karena sistem lapangan yang sehat tidak boleh hanya bergantung pada remote command. Harus selalu ada jalur interaksi lokal yang sederhana dan jelas.
+
+**Local automation**
+
+Node menjalankan aturan otomatis lokal:
+
+- pompa aktif jika kelembapan tanah di bawah ambang
+- kipas aktif jika suhu tinggi
+- alarm aktif jika level air terlalu rendah
+- grow light aktif sesuai jadwal lokal
+
+Di titik ini HortiLink mulai mempunyai perilaku otonom. Artinya, node tidak hanya membaca dan menunggu perintah, tetapi mampu mengambil keputusan lokal berdasarkan rule yang telah ditentukan.
+
+**Local status indication**
+
+Node memberi status lewat indikator lokal:
+
+- booting
+- normal
+- offline-only
+- gateway connected
+- alert/fault
+- manual override active
+
+Indikasi status lokal adalah fitur kecil tetapi sangat penting. Dalam praktik engineering, status lokal yang jelas mempercepat troubleshooting, commissioning, dan validasi perilaku firmware.
+
+**Telemetry packaging**
+
+Node menyiapkan data status untuk dikirim ke gateway:
+
+- sensor readings
+- actuator states
+- mode status
+- alarm status
+- health/status node
+
+Fitur ini menutup rantai fungsi node. Setelah membaca, memutuskan, dan bertindak, node juga harus mampu merangkum kondisinya sendiri untuk dikirim ke gateway.
+
+### 4.3 Fitur Gateway Raspberry Pi
+
+Kelompok kedua adalah fitur yang hidup di gateway Raspberry Pi. Pada struktur HortiLink, gateway adalah inti sistem lokal yang menjembatani node dan lapisan yang lebih tinggi. Karena itu, gateway bukan tambahan kosmetik, tetapi bagian penting dari arsitektur.
+
+**Local MQTT broker**
+
+Raspberry Pi menjalankan broker lokal sebagai pusat komunikasi node.
+
+Fitur ini menjadikan Pi sebagai pusat pertukaran pesan di lingkungan lokal. Ini konsisten dengan prinsip gateway-centric networking yang sudah didefinisikan sebelumnya.
+
+**HMI / dashboard lokal**
+
+Pi menyediakan web UI lokal untuk:
+
+- melihat sensor
+- melihat status node
+- mengubah mode
+- mengirim command manual
+- melihat alarm
+
+Dengan demikian, Raspberry Pi bukan hanya router data, tetapi juga antarmuka operasional lokal yang bisa dipakai untuk observasi dan kontrol.
+
+**Device registry**
+
+Gateway menyimpan identitas node:
+
+- node id
+- lokasi node
+- jenis sensor/aktuator
+- status last seen
+
+Registry ini penting ketika sistem berkembang menjadi multi-node. Tanpa identitas dan struktur registry yang baik, sistem akan sulit dipelihara dan sulit diskalakan.
+
+**Command relay**
+
+Gateway meneruskan command dari HMI ke node ESP:
+
+- set mode auto/manual
+- ON/OFF pompa
+- reset alarm
+- ubah parameter threshold
+
+Fitur ini memperjelas peran gateway sebagai penghubung antara operator dan node. Node tetap fokus pada kontrol lokal, sedangkan gateway menjadi kanal distribusi perintah yang lebih tertata.
+
+**Local logging**
+
+Gateway menyimpan histori lokal:
+
+- data sensor periodik
+- event alarm
+- perubahan mode
+- perubahan status aktuator
+
+Bagi engineer, histori lokal adalah elemen penting untuk troubleshooting, evaluasi rule, dan penelusuran kejadian setelah gangguan.
+
+**Edge rules aggregation**
+
+Di level lebih lanjut, gateway bisa menjalankan aturan lintas-node:
+
+- koordinasi beberapa node
+- jadwal global
+- fallback strategy
+- notifikasi lokal
+
+Ini menunjukkan bahwa saat sistem bertumbuh, sebagian intelligence dapat dinaikkan ke level gateway tanpa menghilangkan local autonomy di level node.
+
+### 4.4 Fitur Offline-first dan Reliability
+
+Kelompok ketiga adalah fitur yang menjadi pembeda utama HortiLink, yaitu fitur offline-first dan reliability. Bagian ini tidak boleh dipandang sebagai pelengkap, karena justru inilah identitas sistem yang sejak awal dikunci.
+
+**Gateway loss tolerance**
+
+Jika Pi mati atau link putus:
+
+- node tetap berjalan mandiri
+- aktuator tetap mengikuti rule lokal
+- mode aman tetap aktif
+
+Artinya, kehilangan gateway tidak boleh mematikan operasi lokal. Ini adalah syarat minimum untuk sistem yang mengklaim dirinya offline-first.
+
+**Internet loss tolerance**
+
+Jika internet putus:
+
+- dashboard lokal tetap aktif
+- broker lokal tetap aktif
+- otomasi tetap aktif
+
+Dengan kata lain, cloud bukan fondasi operasi. Kehilangan internet hanya memutus lapisan jarak jauh, bukan menghentikan sistem lokal.
+
+**State persistence**
+
+State penting disimpan agar setelah restart sistem tidak “amnesia”, misalnya:
+
+- mode terakhir
+- threshold lokal
+- jadwal lokal
+- status override tertentu
+
+Persistensi state sangat penting dalam sistem kontrol. Tanpa ini, restart dapat menyebabkan perilaku tak konsisten atau hilangnya konteks operasi.
+
+**Sync after reconnect**
+
+Saat koneksi kembali:
+
+- data yang tertunda bisa disinkronkan
+- status terbaru dikirim
+- gateway/cloud mendapat update kondisi node
+
+Fitur ini menunjukkan bahwa offline-first bukan berarti mengabaikan sinkronisasi, tetapi justru mengelola keterlambatan sinkronisasi secara sadar.
+
+**Fault awareness**
+
+Sistem mampu membedakan kondisi:
+
+- sensor fault
+- node disconnect
+- gateway unavailable
+- internet unavailable
+- actuator failure indication
+
+Bagi engineer praktis, kemampuan membedakan jenis fault jauh lebih berharga daripada sekadar memberi lampu alarm umum. Ini mempercepat diagnosis dan mengurangi trial-and-error.
+
+### 4.5 Fitur Cloud / Remote Layer
+
+Kelompok keempat adalah cloud atau remote layer. Dalam dokumen asli dijelaskan dengan tegas bahwa lapisan ini **opsional**, bukan fondasi utama. Ini penting agar pembelajaran tidak terbalik urutannya.
+
+**Remote monitoring**
+
+Data gateway bisa diteruskan ke cloud untuk monitoring jarak jauh.
+
+**Notifications**
+
+Cloud atau gateway bisa mengirim notifikasi saat:
+
+- soil terlalu kering
+- tangki air kosong
+- suhu terlalu tinggi
+- node tidak merespons
+
+**Historical analytics**
+
+Data sensor bisa dipakai untuk:
+
+- tren kelembapan
+- pola penyiraman
+- performa harian
+- evaluasi konsumsi air
+
+**Multi-site scalability**
+
+Jika berkembang, satu akun bisa memantau beberapa lokasi atau kebun.
+
+Dengan penempatan ini, cloud dibaca sebagai lapisan ekspansi, bukan sebagai syarat agar sistem dianggap hidup. Itu konsisten dengan identitas HortiLink sebagai sistem yang harus tetap berjalan lokal.
+
+### 4.6 Feature list yang paling cocok untuk fase belajar
+
+Walaupun feature list HortiLink cukup lengkap, strategi belajar tidak boleh mencoba menghidupkan semuanya sekaligus. Karena itu, dokumen asli memilih **core feature** terlebih dahulu.
+
+**Core MVP HortiLink**
+
+1. Node punya **status LED**
+2. Node punya **button mode**
+3. Node membaca **1 sensor sederhana**
+4. Node mengendalikan **1 aktuator sederhana**
+5. Node punya **mode manual dan auto**
+6. Node bisa bekerja **tanpa Raspberry Pi**
+7. Jika gateway tersedia, node mengirim **telemetry dasar**
+
+Kalau inti ini sudah hidup, maka HortiLink sudah tidak abstrak lagi. Sistem sudah punya identitas, punya perilaku, dan bisa divalidasi.
+
+---
+
+## Bagian 5 — Mode Operasi Resmi HortiLink
+
+Sesudah feature system dipahami, pembaca perlu segera masuk ke mode operasi. Untuk engineer praktis, mode operasi adalah jembatan antara “fitur apa yang ada” dan “sistem berperilaku seperti apa”. Karena itu, mode operasi layak dipisahkan menjadi bab tersendiri.
+
+### 5.1 Definisi mode operasi HortiLink
+
+Agar project terasa nyata, HortiLink sejak awal disarankan mempunyai mode resmi berikut.
+
+**`BOOTING`**
+
+Node baru menyala dan sedang inisialisasi.
+
+**`LOCAL_ONLY`**
+
+Node berjalan mandiri tanpa gateway.
+
+**`GATEWAY_LINKED`**
+
+Node terhubung ke Raspberry Pi.
+
+**`AUTO_CONTROL`**
+
+Aktuator dikendalikan rule otomatis.
+
+**`MANUAL_OVERRIDE`**
+
+Aktuator dikendalikan manual oleh user lokal atau HMI.
+
+**`ALERT`**
+
+Ada kondisi abnormal, misalnya sensor fault atau level kritis.
+
+### 5.2 Kenapa mode operasi ini penting
+
+Mode-mode ini sangat penting karena nanti:
+
+- LED status bisa memvisualisasikan mode
+- HMI bisa menampilkan mode
+- firmware punya state machine yang jelas
+
+Dengan demikian, mode operasi bukan hanya label dokumentasi. Mode operasi adalah fondasi untuk visualisasi status, struktur state machine, dan disiplin perilaku firmware. Tanpa mode resmi, sistem akan cenderung sulit dibaca, sulit diuji, dan sulit diskalakan.
+
+---
+
+## Bagian 6 — Mapping ke Arsitektur Firmware
+
+Setelah mode operasi jelas, langkah berikutnya adalah mengaitkan feature list ke arsitektur firmware. Ini penting agar fitur tidak berhenti sebagai daftar konsep, tetapi benar-benar bisa diterjemahkan menjadi struktur implementasi yang rapi. Dalam dokumen asli, mapping ini dibuat ke empat layer firmware: `sys`, `drv`, `svc`, dan `app`.
+
+### 6.1 `sys`
+
+Layer `sys` menyimpan:
+
+- pin map
+- interval scan
+- threshold default
+- topic/key ID
+- node identity
+
+Secara praktis, `sys` adalah rumah untuk konfigurasi sistem yang relatif stabil dan dibutuhkan lintas fitur. Layer ini penting agar angka, pin, dan identitas tidak tercecer di banyak tempat.
+
+### 6.2 `drv`
+
+Layer `drv` menangani:
+
+- LED
+- button
+- relay
+- sensor hardware
+
+Layer ini menjadi batas yang sehat antara logika sistem dan detail hardware. Engineer jadi bisa mengganti atau memperluas perangkat tanpa merusak keseluruhan struktur logika.
+
+### 6.3 `svc`
+
+Layer `svc` menangani:
+
+- mode logic
+- rule automation
+- alarm logic
+- command interpretation
+- offline-first state decision
+
+Di sini keputusan sistem dijalankan. Dengan kata lain, `svc` adalah pusat logika perilaku HortiLink, terutama untuk automation dan state-based decision.
+
+### 6.4 `app`
+
+Layer `app` menangani:
+
+- urutan runtime
+- scheduling non-blocking
+- orkestrasi task
+- komunikasi antar-layer
+
+Layer ini penting karena walaupun logic dan driver sudah ada, sistem tetap perlu orkestrasi runtime yang disiplin. Dalam konteks HortiLink, bagian ini sangat relevan dengan pendekatan cooperative scheduler berbasis `millis()`.
+
+### 6.5 Kenapa feature harus dipetakan ke layer firmware
+
+Dokumen asli menegaskan bahwa mapping ini dibuat supaya feature list tidak berhenti di level ide. Setiap feature nantinya harus bisa dipetakan ke layer yang tepat. Dengan begitu, pembaca tidak hanya tahu “fitur apa yang dibuat”, tetapi juga tahu “fitur itu hidup di layer mana”. Ini sangat penting untuk menjaga OOP kecil, layering jelas, dan struktur project yang tetap bisa tumbuh tanpa berantakan.
+
+---
+
+## Bagian 7 — Urutan Implementasi Belajar yang Natural
+
+Setelah sistem, platform, MVP, feature system, mode operasi, dan mapping layer firmware dipahami, barulah urutan implementasi dibaca. Posisi ini sengaja diletakkan di akhir alur konseptual agar pembaca tidak langsung loncat ke coding tanpa memahami “apa yang sedang dibangun” dan “mengapa urutannya harus seperti itu”.
+
+### 7.1 Urutan implementasi terbaik
+
+Urutan implementasi terbaik menurut saya:
+
+1. **Status indication**
+2. **Manual input**
+3. **Actuator output**
+4. **Local mode logic**
+5. **Sensor integration**
+6. **Local automation**
+7. **Gateway connectivity**
+8. **Telemetry and commands**
+9. **Persistence**
+10. **Cloud sync**
+
+Jangan dibalik.
+Karena HortiLink harus hidup dulu sebagai node lokal, baru menjadi sistem jaringan.
+
+### 7.2 Kesimpulan analisis
+
+Analisis saya:
+
+- HortiLink sudah cukup kuat untuk dijadikan **frame belajar tunggal**
+- feature list harus dibagi menjadi **Node / Gateway / Offline-first / Cloud**
+- untuk pembelajaran firmware, fokus awal harus pada **Node ESP32-C3**
+- Raspberry Pi masuk sebagai **gateway tahap berikutnya**
+- cloud harus diposisikan sebagai **lapisan tambahan**, bukan fondasi sistem
+
+Dengan urutan ini, proses belajar menjadi lebih sehat: engineer lebih dulu memahami node yang deterministik dan otonom, baru naik ke komunikasi, persistence, dan lapisan remote.
+
+---
+
+## Bagian 8 — Definisi Formal HortiLink v0.1
+
+Bagian ini diposisikan sebagai **dokumen kerja formal** setelah bagian konseptual dipahami. Ia paling cocok dipakai sebagai dasar:
+
+- roadmap belajar
+- desain firmware ESP32-C3
+- desain gateway Raspberry Pi
+- pembagian scope MVP vs next phase
+
+Berikut **Feature List resmi HortiLink v0.1** yang bisa dipakai sebagai dasar:
+
+- roadmap belajar
+- desain firmware ESP32-C3
+- desain gateway Raspberry Pi
+- pembagian scope MVP vs next phase
+
+Saya buat formal, tetapi tetap selaras dengan strategi belajar yang sudah kita kunci: **single-project, offline-first, OOP kecil, layering jelas**.
+
+### 8.1 HortiLink v0.1 — System Definition
+
+> **Ringkasan**
+
+**HortiLink** adalah sistem smart agriculture berbasis **ESP32-C3 sebagai edge node** dan **Raspberry Pi sebagai gateway lokal**, dengan prinsip **offline-first**.
+
+> **Tujuan utama**
+
+Sistem harus mampu:
+
+- membaca kondisi lingkungan tanam
+- menerima input lokal
+- mengendalikan aktuator lokal
+- tetap bekerja walau gateway atau internet tidak tersedia
+- melakukan integrasi ke gateway dan cloud secara bertahap
+
+> **Arsitektur logis**
+
+**Edge Node**
+
+ESP32-C3 bertugas untuk:
+
+- sensor acquisition
+- local control
+- local safety/fallback
+- status indication
+- telemetry dasar
+
+**Gateway**
+
+Raspberry Pi bertugas untuk:
+
+- broker lokal
+- HMI lokal
+- pencatatan data
+- command relay
+- sinkronisasi ke cloud
+
+**Cloud**
+
+Cloud bertugas untuk:
+
+- monitoring jarak jauh
+- histori jangka panjang
+- notifikasi
+- multi-site expansion
+
+### 8.2 Layer Reference
+
+Agar kolom **Layer Impact** konsisten, kita pakai referensi ini.
+
+**Firmware Node (ESP32-C3)**
+
+- **sys** = konfigurasi, pin map, constants
+- **drv** = driver hardware
+- **svc** = business logic / rules
+- **app** = orchestration / scheduling / runtime flow
+
+**Gateway (Raspberry Pi)**
+
+- **broker** = MQTT broker / message routing
+- **api** = service layer / endpoint / business backend
+- **hmi** = web UI / dashboard
+- **store** = local storage / log / state
+- **sync** = sinkronisasi ke cloud
+
+**Priority Reference**
+
+- **P0** = wajib untuk MVP
+- **P1** = penting setelah MVP hidup
+- **P2** = pengembangan lanjut
+
+### 8.3 HortiLink v0.1 — Feature Catalog
+
+Tabel-tabel berikut dipertahankan sebagai katalog formal agar seluruh feature, prioritas, lokasi implementasi, dan layer impact tetap terbaca utuh.
+
+#### A. Edge Node Features
+
+| Feature ID | Feature Name             | Description                                                                    | Priority | Implemented In | Layer Impact       |
+| ---------- | ------------------------ | ------------------------------------------------------------------------------ | -------- | -------------- | ------------------ |
+| HN-01      | Node Boot Status         | Node menampilkan status saat boot dan siap operasi                             | P0       | ESP32-C3       | sys, drv, app      |
+| HN-02      | Local Status Indicator   | LED/status indicator menunjukkan mode node: booting, local-only, linked, alert | P0       | ESP32-C3       | sys, drv, svc, app |
+| HN-03      | Manual Button Input      | Tombol lokal untuk ubah mode atau trigger aksi manual                          | P0       | ESP32-C3       | sys, drv, svc, app |
+| HN-04      | Actuator Output Control  | Node mengendalikan output seperti relay/pump/light/fan                         | P0       | ESP32-C3       | sys, drv, svc, app |
+| HN-05      | Sensor Data Acquisition  | Node membaca minimal satu sensor lingkungan                                    | P0       | ESP32-C3       | sys, drv, svc, app |
+| HN-06      | Local Auto Rule Engine   | Rule lokal sederhana, misalnya sensor di bawah threshold mengaktifkan aktuator | P0       | ESP32-C3       | sys, svc, app      |
+| HN-07      | Manual Override Mode     | User lokal dapat memaksa aktuator ON/OFF tanpa menunggu gateway                | P0       | ESP32-C3       | svc, app           |
+| HN-08      | Node Health Reporting    | Node memiliki status internal: uptime, mode, last action, fault flag           | P1       | ESP32-C3       | svc, app           |
+| HN-09      | Alarm/Fault State        | Node mendeteksi kondisi fault dasar dan memberi indikasi lokal                 | P1       | ESP32-C3       | drv, svc, app      |
+| HN-10      | Persistent Local Config  | Threshold/mode dasar disimpan agar tidak hilang setelah restart                | P1       | ESP32-C3       | sys, svc, app      |
+| HN-11      | Telemetry Packaging      | Node membentuk payload status/sensor/actuator untuk dikirim ke gateway         | P1       | ESP32-C3       | svc, app           |
+| HN-12      | Command Reception        | Node menerima command dari gateway dan menerapkannya secara aman               | P1       | ESP32-C3       | svc, app           |
+| HN-13      | Multi-Sensor Expansion   | Node mendukung penambahan sensor tanpa ubah arsitektur inti                    | P2       | ESP32-C3       | sys, drv, svc, app |
+| HN-14      | Multi-Actuator Expansion | Node mendukung banyak output/aktuator                                          | P2       | ESP32-C3       | sys, drv, svc, app |
+
+#### B. Gateway Features
+
+| Feature ID | Feature Name             | Description                                                 | Priority | Implemented In | Layer Impact            |
+| ---------- | ------------------------ | ----------------------------------------------------------- | -------- | -------------- | ----------------------- |
+| HG-01      | Local MQTT Broker        | Gateway menyediakan broker lokal untuk komunikasi node      | P0       | Raspberry Pi   | broker                  |
+| HG-02      | Node Registry            | Gateway mengenali node, ID, lokasi, dan status terakhir     | P0       | Raspberry Pi   | api, store              |
+| HG-03      | Local Dashboard          | Dashboard lokal untuk melihat status node, sensor, aktuator | P0       | Raspberry Pi   | hmi, api                |
+| HG-04      | Command Relay            | Gateway meneruskan command dari dashboard ke node           | P0       | Raspberry Pi   | api, broker             |
+| HG-05      | Local Event Logging      | Gateway menyimpan event penting dan histori operasi         | P0       | Raspberry Pi   | store, api              |
+| HG-06      | Sensor Telemetry Storage | Gateway menyimpan data telemetry berkala dari node          | P1       | Raspberry Pi   | store, api              |
+| HG-07      | Alert Visualization      | Gateway menampilkan alarm/fault dari node di HMI lokal      | P1       | Raspberry Pi   | hmi, api, store         |
+| HG-08      | Local Config Management  | Gateway menyimpan parameter node yang dapat diubah dari HMI | P1       | Raspberry Pi   | api, store, hmi         |
+| HG-09      | Gateway Health Monitor   | Gateway memantau last seen node dan status konektivitas     | P1       | Raspberry Pi   | api, store, hmi         |
+| HG-10      | Multi-Node Coordination  | Gateway menangani banyak node dan agregasi status           | P2       | Raspberry Pi   | api, broker, hmi, store |
+| HG-11      | Schedule Service         | Gateway menyediakan jadwal operasi terpusat                 | P2       | Raspberry Pi   | api, store, hmi         |
+| HG-12      | Cross-Node Rule Engine   | Gateway menjalankan rule lintas node/lokasi                 | P2       | Raspberry Pi   | api, store              |
+
+#### C. Offline-First and Reliability Features
+
+| Feature ID | Feature Name              | Description                                                                   | Priority | Implemented In         | Layer Impact            |
+| ---------- | ------------------------- | ----------------------------------------------------------------------------- | -------- | ---------------------- | ----------------------- |
+| HR-01      | Local Autonomy            | Node tetap bekerja walau gateway tidak tersedia                               | P0       | ESP32-C3               | svc, app                |
+| HR-02      | Gateway Loss Tolerance    | Kehilangan gateway tidak menghentikan kontrol lokal                           | P0       | ESP32-C3, Raspberry Pi | svc, app, api           |
+| HR-03      | Internet Loss Tolerance   | Kehilangan internet tidak menghentikan operasi lokal                          | P0       | Raspberry Pi           | broker, api, hmi, store |
+| HR-04      | Safe Fallback Mode        | Saat fault/koneksi hilang, sistem masuk mode aman                             | P1       | ESP32-C3, Raspberry Pi | svc, app, api           |
+| HR-05      | Last Known State Recovery | Setelah restart, sistem memulihkan state penting terakhir                     | P1       | ESP32-C3, Raspberry Pi | store, svc, app         |
+| HR-06      | Deferred Sync Queue       | Data/event yang belum sempat terkirim disimpan dulu                           | P1       | Raspberry Pi           | store, sync             |
+| HR-07      | Reconnect and Resync      | Setelah koneksi pulih, data/status disinkronkan kembali                       | P1       | Raspberry Pi           | sync, api, store        |
+| HR-08      | Fault Classification      | Sistem membedakan sensor fault, gateway fault, internet fault, actuator fault | P2       | ESP32-C3, Raspberry Pi | svc, api, store         |
+| HR-09      | Audit Trail               | Semua perubahan mode/command penting tercatat                                 | P2       | Raspberry Pi           | store, api              |
+
+#### D. Cloud / Remote Features
+
+| Feature ID | Feature Name          | Description                                                  | Priority | Implemented In                  | Layer Impact   |
+| ---------- | --------------------- | ------------------------------------------------------------ | -------- | ------------------------------- | -------------- |
+| HC-01      | Remote Monitoring     | Data gateway dapat diakses dari luar jaringan lokal          | P1       | Cloud + Raspberry Pi            | sync, api      |
+| HC-02      | Notification Service  | Alarm penting dapat menghasilkan notifikasi jarak jauh       | P1       | Cloud + Raspberry Pi            | sync, api      |
+| HC-03      | Historical Analytics  | Data telemetry dipakai untuk tren dan analisis               | P2       | Cloud + Raspberry Pi            | sync, store    |
+| HC-04      | Remote Configuration  | Parameter tertentu bisa diubah dari remote secara terkontrol | P2       | Cloud + Raspberry Pi + ESP32-C3 | sync, api, svc |
+| HC-05      | Multi-Site Management | Banyak lokasi kebun dikelola dalam satu sistem               | P2       | Cloud                           | sync, api      |
+| HC-06      | User Access Control   | Hak akses operator/admin dibedakan                           | P2       | Cloud + Raspberry Pi            | api, hmi       |
+
+### 8.4 Operation Modes
+
+Agar semua feature punya bahasa runtime yang sama, saya sarankan HortiLink memakai mode berikut sebagai state resmi.
+
+| Mode ID | Mode Name       | Description                              |
+| ------- | --------------- | ---------------------------------------- |
+| HM-01   | BOOTING         | Node sedang startup dan inisialisasi     |
+| HM-02   | LOCAL_ONLY      | Node berjalan mandiri tanpa gateway      |
+| HM-03   | GATEWAY_LINKED  | Node terhubung ke gateway lokal          |
+| HM-04   | AUTO_CONTROL    | Aktuator dikendalikan rule otomatis      |
+| HM-05   | MANUAL_OVERRIDE | Aktuator dikendalikan manual             |
+| HM-06   | ALERT           | Node/gateway mendeteksi kondisi abnormal |
+| HM-07   | SAFE_MODE       | Sistem masuk fallback aman               |
+
+### 8.5 MVP Scope Recommendation
+
+Untuk menjaga HortiLink tetap konkret dan tidak terlalu melebar, saya rekomendasikan **MVP v0.1** hanya mencakup fitur ini:
+
+- **HN-01** Node Boot Status
+- **HN-02** Local Status Indicator
+- **HN-03** Manual Button Input
+- **HN-04** Actuator Output Control
+- **HN-05** Sensor Data Acquisition
+- **HN-06** Local Auto Rule Engine
+- **HN-07** Manual Override Mode
+- **HG-01** Local MQTT Broker
+- **HG-03** Local Dashboard
+- **HG-04** Command Relay
+- **HG-05** Local Event Logging
+- **HR-01** Local Autonomy
+- **HR-02** Gateway Loss Tolerance
+- **HR-03** Internet Loss Tolerance
+
+Ini cukup kecil untuk dipelajari, tetapi sudah benar-benar membentuk **HortiLink**.
+
+### 8.6 Learning-Oriented Build Order
+
+Supaya sesuai strategi belajar yang sudah dikunci, urutan implementasi yang saya sarankan adalah sebagai berikut.
+
+**Level 1 — Node Identity and Status**
+
+Fokus:
+
+- HN-01
+- HN-02
+
+Tujuan:
+
+- mengenalkan `sys`
+- mengenalkan 1 class `drv`
+- mengenalkan `app`
+- mulai pakai state mode
+
+**Level 2 — Local Interaction**
+
+Fokus:
+
+- HN-03
+- HN-04
+- HN-07
+
+Tujuan:
+
+- tambah 1 class input
+- tambah 1 class output
+- mulai ada manual override
+
+**Level 3 — Sensor and Rule**
+
+Fokus:
+
+- HN-05
+- HN-06
+- HN-09
+
+Tujuan:
+
+- sensor acquisition
+- service logic
+- auto control
+
+**Level 4 — Runtime Discipline**
+
+Fokus:
+
+- HN-08
+- HN-10
+- HR-04
+
+Tujuan:
+
+- state persistence
+- health/fault
+- cooperative concurrency
+
+**Level 5 — Gateway Integration**
+
+Fokus:
+
+- HG-01
+- HG-03
+- HG-04
+- HG-05
+
+Tujuan:
+
+- node-to-gateway communication
+- local dashboard
+- logging
+
+**Level 6 — Offline-First Reliability**
+
+Fokus:
+
+- HR-01
+- HR-02
+- HR-05
+- HR-06
+- HR-07
+
+Tujuan:
+
+- recoverability
+- resync
+- resilience
+
+**Level 7 — Remote Layer**
+
+Fokus:
+
+- HC-01
+- HC-02
+
+Tujuan:
+
+- optional cloud extension
+
+### 8.7 Feature-to-Layer Reading Example
+
+Agar nanti gampang saat desain firmware, cara bacanya seperti ini.
+
+**Contoh HN-02 Local Status Indicator**
+
+- **sys**: simpan pin LED dan timing blink
+- **drv**: class `StatusLed`
+- **svc**: aturan pola LED untuk tiap mode
+- **app**: panggil update LED secara periodik
+
+**Contoh HN-06 Local Auto Rule Engine**
+
+- **sys**: simpan threshold default
+- **drv**: baca sensor, tulis aktuator
+- **svc**: aturan keputusan auto
+- **app**: jalankan evaluasi rule per interval
+
+**Urutan belajar akhirnya, dalam satu kalimat**
+
+**Platform dan batasan kerja dulu → istilah MVP dulu → definisi konseptual HortiLink → functional scope dan feature groups → core MVP dan mode operasi → mapping layer firmware → definisi formal dan feature catalog → MVP scope → build order implementasi.**
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini disusun sebagai materi edukasi dan
+  referensi umum berdasarkan berbagai sumber pustaka, praktik lapangan, serta
+  bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
+  dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
+</small>

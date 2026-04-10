@@ -1,0 +1,976 @@
+---
+title: HortiLink Level 3 — Sensor and Rule
+date: '2026-04-08'
+tags:
+  [
+    'hortilink',
+    'level-3',
+    'sensor-and-rule',
+    'sensor-acquisition',
+    'local-auto-rule-engine',
+    'alarm-fault-state',
+    'esp32-c3',
+    'velxio',
+    'firmware-layering',
+    'edge-node',
+  ]
+draft: false
+summary: Level 3 adalah kelanjutan langsung dari Level 2 dan berfokus pada akuisisi sensor, rule engine lokal, dan alarm/fault state. Pada tahap ini engineer mulai menambahkan driver sensor lingkungan, memindahkan keputusan kontrol ke service, dan membiarkan app murni menjadi orchestrator. Karena target platform adalah ESP32-C3 DevKit di simulator Velxio, Level 3 menggunakan sensor lingkungan digital proxy agar perilaku sensor, rule, dan fault state tetap dapat diuji secara realistis di simulator.
+---
+
+# **_HortiLink Level 3 — Sensor and Rule_**
+
+---
+
+- [**_HortiLink Level 3 — Sensor and Rule_**](#hortilink-level-3--sensor-and-rule)
+  - [Posisi Level 3 dalam Aliran Belajar HortiLink](#posisi-level-3-dalam-aliran-belajar-hortilink)
+  - [1. Fokus](#1-fokus)
+  - [2. Tujuan](#2-tujuan)
+  - [3. Feature yang Dikerjakan](#3-feature-yang-dikerjakan)
+  - [4. Platform](#4-platform)
+  - [5. Konsep Level 3](#5-konsep-level-3)
+  - [6. Mode yang Dipakai](#6-mode-yang-dipakai)
+    - [6.1 Pola status LED](#61-pola-status-led)
+    - [6.2 Rule otomatis lokal](#62-rule-otomatis-lokal)
+    - [6.3 Alarm/Fault State](#63-alarmfault-state)
+  - [7. Struktur Layer](#7-struktur-layer)
+    - [7.1 `sys`](#71-sys)
+    - [7.2 `drv`](#72-drv)
+    - [7.3 `svc`](#73-svc)
+    - [7.4 `app`](#74-app)
+  - [8. Wiring untuk Simulator](#8-wiring-untuk-simulator)
+    - [Status LED](#status-led)
+    - [Sensor lingkungan digital proxy](#sensor-lingkungan-digital-proxy)
+    - [Fault simulation input](#fault-simulation-input)
+    - [Actuator output](#actuator-output)
+  - [9. Sketch Level 3](#9-sketch-level-3)
+  - [10. Cara Kerja Firmware](#10-cara-kerja-firmware)
+    - [10.1 Saat board menyala](#101-saat-board-menyala)
+    - [10.2 Saat sensor mendeteksi kondisi dry](#102-saat-sensor-mendeteksi-kondisi-dry)
+    - [10.3 Saat sensor fault aktif](#103-saat-sensor-fault-aktif)
+    - [10.4 Saat loop berjalan](#104-saat-loop-berjalan)
+  - [11. Yang Dipelajari dari Level 3](#11-yang-dipelajari-dari-level-3)
+    - [11.1 Sensor acquisition dibungkus di `drv`](#111-sensor-acquisition-dibungkus-di-drv)
+    - [11.2 Rule engine diselesaikan di `svc`](#112-rule-engine-diselesaikan-di-svc)
+    - [11.3 Fault state menjadi bagian dari service domain](#113-fault-state-menjadi-bagian-dari-service-domain)
+    - [11.4 `app` tetap murni sebagai orchestrator](#114-app-tetap-murni-sebagai-orchestrator)
+  - [12. Output yang Diharapkan](#12-output-yang-diharapkan)
+    - [12.1 Serial Monitor](#121-serial-monitor)
+    - [12.2 Status LED GPIO8](#122-status-led-gpio8)
+    - [12.3 Actuator LED GPIO7](#123-actuator-led-gpio7)
+  - [13. Inti Level 3](#13-inti-level-3)
+
+---
+
+## Posisi Level 3 dalam Aliran Belajar HortiLink
+
+Di dalam README utama, HortiLink dibangun sebagai **single-project** yang bertumbuh per level. Setelah Level 1 memperkenalkan identitas node dan status runtime, dan Level 2 memperkenalkan interaksi lokal, maka Level 3 menjadi tahap ketika node mulai benar-benar membaca kondisi lingkungan dan mengambil keputusan otomatis berdasarkan data sensor.
+
+Sesuai build order yang sudah dikunci di README, Level 3 berada pada tahap:
+
+**Level 3 — Sensor and Rule**
+
+Fokus:
+
+- HN-05
+- HN-06
+- HN-09
+
+Tujuan:
+
+- sensor acquisition
+- service logic
+
+Artinya, Level 3 bukan lagi node yang hanya memiliki identitas dan kontrol manual, tetapi node yang mulai:
+
+- membaca minimal satu sensor lingkungan
+- menjalankan rule otomatis lokal
+- memiliki alarm/fault state dasar
+
+Karena target platform tetap **ESP32-C3 DevKit** pada **simulator Velxio**, maka Level 3 didesain agar tetap testable pada simulator. Untuk itu, sensor lingkungan pada level ini direpresentasikan sebagai **digital environment sensor proxy**, sehingga pola akuisisi sensor, rule engine, dan fault handling tetap bisa diuji tanpa bergantung pada periferal analog.
+
+---
+
+## 1. Fokus
+
+- **HN-05** — Sensor Data Acquisition
+- **HN-06** — Local Auto Rule Engine
+- **HN-09** — Alarm/Fault State
+
+---
+
+## 2. Tujuan
+
+- sensor acquisition
+- service logic
+
+---
+
+## 3. Feature yang Dikerjakan
+
+Feature yang dikerjakan pada Level 3 adalah:
+
+- **HN-05** Sensor Data Acquisition  
+  Node membaca minimal satu sensor lingkungan.
+
+- **HN-06** Local Auto Rule Engine  
+  Rule lokal sederhana, misalnya sensor mendeteksi kondisi dry lalu mengaktifkan aktuator.
+
+- **HN-09** Alarm/Fault State  
+  Node mendeteksi kondisi fault dasar dan memberi indikasi lokal.
+
+---
+
+## 4. Platform
+
+- **Board**: ESP32-C3 DevKit
+- **Simulator**: Velxio
+- **Status LED**: `GPIO8` (built-in LED)
+- **Sensor lingkungan digital proxy**: `GPIO5`
+- **Fault simulation input**: `GPIO6`
+- **Actuator output**: `GPIO7`
+
+Pada Level 3, sensor lingkungan belum dibuat sebagai sensor analog penuh. Untuk kebutuhan simulator dan pembelajaran layering, sensor direpresentasikan sebagai **digital soil sensor proxy** pada `GPIO5`. Input ini mewakili kondisi sederhana:
+
+- sensor aktif → `DRY`
+- sensor tidak aktif → `WET/NORMAL`
+
+Selain itu, untuk memvalidasi **HN-09 Alarm/Fault State**, digunakan satu input fault simulasi pada `GPIO6`. Dengan cara ini, akuisisi sensor, rule engine lokal, dan alarm state tetap bisa diuji secara nyata di Velxio.
+
+---
+
+## 5. Konsep Level 3
+
+Pada Level 3, node HortiLink mulai memiliki perilaku otomatis berbasis sensor.
+
+Node sekarang melakukan hal-hal berikut:
+
+1. saat boot, node masuk mode `BOOTING`
+2. setelah boot selesai, node masuk mode normal monitoring
+3. node membaca satu sensor lingkungan digital proxy
+4. jika sensor mendeteksi kondisi dry, rule lokal mengaktifkan aktuator
+5. jika sensor kembali normal, aktuator dimatikan
+6. jika fault sensor terdeteksi, node masuk mode `ALERT`
+7. node memberi indikasi lokal lewat LED status dan Serial Monitor
+
+Dengan begitu, engineer mulai melihat bentuk yang lebih nyata dari edge node HortiLink:
+
+- ada data lingkungan masuk
+- ada rule lokal yang memproses data
+- ada output otomatis yang mengikuti hasil rule
+- ada kondisi fault yang mengubah perilaku sistem
+
+---
+
+## 6. Mode yang Dipakai
+
+Kita pakai 4 mode aktif pada Level 3:
+
+- `BOOTING`
+- `MONITORING`
+- `AUTO_ACTIVE`
+- `ALERT`
+
+### 6.1 Pola status LED
+
+- `BOOTING` → kedip cepat
+- `MONITORING` → kedip lambat
+- `AUTO_ACTIVE` → nyala stabil
+- `ALERT` → kedip dua kali berulang
+
+### 6.2 Rule otomatis lokal
+
+Rule lokal Level 3 dibuat sederhana dan jelas:
+
+- jika sensor lingkungan menunjukkan `DRY` dan tidak ada fault, aktuator **ON**
+- jika sensor kembali normal dan tidak ada fault, aktuator **OFF**
+
+Dengan demikian, Level 3 memperkenalkan bentuk paling awal dari **auto control**.
+
+### 6.3 Alarm/Fault State
+
+Fault dasar diperlakukan sebagai kondisi prioritas tertinggi.
+
+Perilakunya:
+
+- jika fault sensor aktif, node masuk `ALERT`
+- saat `ALERT`, aktuator dipaksa **OFF**
+- LED status masuk pola alert
+- setelah fault hilang, node kembali ke:
+  - `AUTO_ACTIVE` jika sensor masih `DRY`
+  - `MONITORING` jika sensor sudah normal
+
+Ini membuat Level 3 sekaligus memperkenalkan ide penting bahwa **fault state mengalahkan auto rule normal**.
+
+---
+
+## 7. Struktur Layer
+
+### 7.1 `sys`
+
+Berisi konfigurasi tetap:
+
+- pin status LED
+- pin sensor lingkungan
+- pin fault simulasi
+- pin aktuator
+- baudrate serial
+- interval loop
+- durasi boot
+- debounce input
+- pola status LED
+
+### 7.2 `drv`
+
+Berisi class boundary hardware:
+
+- `StatusLed`
+- `DigitalSoilSensor`
+- `ActuatorOutput`
+
+Tugas masing-masing:
+
+**`StatusLed`**
+
+- inisialisasi LED status
+- menerima ON/OFF dari service
+
+**`DigitalSoilSensor`**
+
+- membaca sensor lingkungan digital proxy
+- membaca input fault simulasi
+- melakukan debounce input
+
+**`ActuatorOutput`**
+
+- menghidupkan dan mematikan output aktuator
+- menyimpan status output saat ini
+
+### 7.3 `svc`
+
+Berisi service domain:
+
+- definisi mode node
+- rule engine lokal
+- keputusan ON/OFF aktuator
+- keputusan ON/OFF status LED
+- penentuan alarm/fault state
+- penggunaan `drv` yang relevan untuk domain sensor dan aktuator
+
+Di Level 3, `svc` menjadi unit domain yang menyelesaikan:
+
+- pembacaan sensor
+- keputusan kontrol otomatis
+- keputusan fault state
+- penerapan output ke driver
+
+### 7.4 `app`
+
+Berisi orchestration:
+
+- memulai service
+- menjalankan service
+- logging ke serial
+- menjaga ritme runtime
+
+Dengan pembagian ini, `app` tidak memuat logic rule atau keputusan kontrol.
+
+---
+
+## 8. Wiring untuk Simulator
+
+Agar Level 3 bisa diuji di Velxio, wiring yang dipakai adalah:
+
+### Status LED
+
+- built-in LED board pada `GPIO8`
+
+### Sensor lingkungan digital proxy
+
+- satu kaki switch/button → `GPIO5`
+- satu kaki switch/button → `GND`
+
+Input ini mewakili kondisi sensor:
+
+- aktif → `DRY`
+- tidak aktif → `NORMAL`
+
+### Fault simulation input
+
+- satu kaki switch/button → `GPIO6`
+- satu kaki switch/button → `GND`
+
+Input ini dipakai untuk memvalidasi feature HN-09:
+
+- aktif → `FAULT`
+- tidak aktif → `NO FAULT`
+
+### Actuator output
+
+- `GPIO7 -> LED -> GND`
+
+Catatan penting:
+
+- pada simulator, bentuk ini cukup untuk validasi logika output
+- pada hardware nyata, **sangat disarankan** memakai resistor seri untuk LED
+- pada board nyata di masa depan, sensor digital proxy ini bisa diganti dengan sensor lingkungan yang lebih realistis tanpa mengubah pola layering
+
+---
+
+## 9. Sketch Level 3
+
+```cpp
+#include <Arduino.h>
+
+// =====================================================
+// sys -> configuration
+// =====================================================
+namespace sys {
+
+struct Config {
+  static constexpr uint8_t PIN_STATUS_LED   = 8;  // Built-in LED ESP32-C3 DevKit di Velxio
+  static constexpr uint8_t PIN_SENSOR_DRY   = 5;  // Digital soil sensor proxy
+  static constexpr uint8_t PIN_SENSOR_FAULT = 6;  // Fault simulation input
+  static constexpr uint8_t PIN_ACTUATOR     = 7;  // Dummy actuator LED
+
+  static constexpr uint32_t SERIAL_BAUD         = 115200;
+  static constexpr uint32_t APP_TICK_MS         = 20;
+  static constexpr uint32_t LOG_INTERVAL_MS     = 1000;
+  static constexpr uint32_t BOOTING_DURATION_MS = 3000;
+  static constexpr uint32_t INPUT_DEBOUNCE_MS   = 40;
+
+  // Status LED patterns
+  static constexpr uint32_t BOOT_BLINK_MS  = 150;
+  static constexpr uint32_t LOCAL_BLINK_MS = 700;
+  static constexpr uint32_t ALERT_STEP_MS  = 120;
+};
+
+}  // namespace sys
+
+// =====================================================
+// drv -> hardware boundary
+// =====================================================
+namespace drv {
+
+class StatusLed {
+public:
+  explicit StatusLed(uint8_t pin) : _pin(pin) {}
+
+  void begin() {
+    pinMode(_pin, OUTPUT);
+    off();
+  }
+
+  void set(bool on) {
+    digitalWrite(_pin, on ? HIGH : LOW);
+  }
+
+  void off() {
+    digitalWrite(_pin, LOW);
+  }
+
+private:
+  uint8_t _pin;
+};
+
+class DigitalSoilSensor {
+public:
+  DigitalSoilSensor(uint8_t dryPin, uint8_t faultPin)
+    : _dryPin(dryPin), _faultPin(faultPin) {}
+
+  void begin() {
+    pinMode(_dryPin, INPUT_PULLUP);
+    pinMode(_faultPin, INPUT_PULLUP);
+
+    initChannel(_dryChannel, rawDry());
+    initChannel(_faultChannel, rawFault());
+  }
+
+  void update(uint32_t nowMs) {
+    updateChannel(_dryChannel, rawDry(), nowMs);
+    updateChannel(_faultChannel, rawFault(), nowMs);
+  }
+
+  bool isDry() const {
+    return _dryChannel.stableState;
+  }
+
+  bool hasFault() const {
+    return _faultChannel.stableState;
+  }
+
+private:
+  struct DebouncedChannel {
+    bool lastRawState = false;
+    bool stableState = false;
+    uint32_t lastChangeMs = 0;
+  };
+
+  uint8_t _dryPin;
+  uint8_t _faultPin;
+  DebouncedChannel _dryChannel;
+  DebouncedChannel _faultChannel;
+
+  bool rawDry() const {
+    return digitalRead(_dryPin) == LOW;
+  }
+
+  bool rawFault() const {
+    return digitalRead(_faultPin) == LOW;
+  }
+
+  void initChannel(DebouncedChannel& channel, bool initialState) {
+    channel.lastRawState = initialState;
+    channel.stableState = initialState;
+    channel.lastChangeMs = 0;
+  }
+
+  void updateChannel(DebouncedChannel& channel, bool rawState, uint32_t nowMs) {
+    if (rawState != channel.lastRawState) {
+      channel.lastRawState = rawState;
+      channel.lastChangeMs = nowMs;
+    }
+
+    if ((nowMs - channel.lastChangeMs) >= sys::Config::INPUT_DEBOUNCE_MS) {
+      channel.stableState = rawState;
+    }
+  }
+};
+
+class ActuatorOutput {
+public:
+  explicit ActuatorOutput(uint8_t pin) : _pin(pin) {}
+
+  void begin() {
+    pinMode(_pin, OUTPUT);
+    off();
+  }
+
+  void set(bool on) {
+    digitalWrite(_pin, on ? HIGH : LOW);
+    _isOn = on;
+  }
+
+  void off() {
+    set(false);
+  }
+
+  bool isOn() const {
+    return _isOn;
+  }
+
+private:
+  uint8_t _pin;
+  bool _isOn = false;
+};
+
+}  // namespace drv
+
+// =====================================================
+// svc -> domain logic + driver usage inside service
+// =====================================================
+namespace svc {
+
+enum class NodeMode : uint8_t {
+  BOOTING,
+  MONITORING,
+  AUTO_ACTIVE,
+  ALERT
+};
+
+enum class RuleEvent : uint8_t {
+  NONE,
+  ENTERED_MONITORING,
+  AUTO_RULE_ACTIVATED,
+  AUTO_RULE_CLEARED,
+  FAULT_ENTERED,
+  FAULT_CLEARED
+};
+
+const char* toString(NodeMode mode) {
+  switch (mode) {
+    case NodeMode::BOOTING:     return "BOOTING";
+    case NodeMode::MONITORING:  return "MONITORING";
+    case NodeMode::AUTO_ACTIVE: return "AUTO_ACTIVE";
+    case NodeMode::ALERT:       return "ALERT";
+    default:                    return "UNKNOWN";
+  }
+}
+
+class SensorRuleService {
+public:
+  SensorRuleService(drv::StatusLed& drv_statusLed,
+                    drv::DigitalSoilSensor& drv_soilSensor,
+                    drv::ActuatorOutput& drv_actuator)
+    : _drv_statusLed(drv_statusLed),
+      _drv_soilSensor(drv_soilSensor),
+      _drv_actuator(drv_actuator) {}
+
+  void begin(uint32_t bootStartMs) {
+    _drv_statusLed.begin();
+    _drv_soilSensor.begin();
+    _drv_actuator.begin();
+
+    _bootMs = bootStartMs;
+    _mode = NodeMode::BOOTING;
+    _lastEvent = RuleEvent::NONE;
+  }
+
+  void run(uint32_t nowMs) {
+    _lastEvent = RuleEvent::NONE;
+
+    _drv_soilSensor.update(nowMs);
+
+    const bool sensorDry = _drv_soilSensor.isDry();
+    const bool sensorFault = _drv_soilSensor.hasFault();
+
+    updateMode(nowMs, sensorDry, sensorFault);
+    applyOutputs(nowMs);
+  }
+
+  NodeMode mode() const {
+    return _mode;
+  }
+
+  const char* modeText() const {
+    return toString(_mode);
+  }
+
+  RuleEvent lastEvent() const {
+    return _lastEvent;
+  }
+
+  bool actuatorOn() const {
+    return _mode == NodeMode::AUTO_ACTIVE;
+  }
+
+  bool sensorDry() const {
+    return _drv_soilSensor.isDry();
+  }
+
+  bool sensorFault() const {
+    return _drv_soilSensor.hasFault();
+  }
+
+private:
+  drv::StatusLed& _drv_statusLed;
+  drv::DigitalSoilSensor& _drv_soilSensor;
+  drv::ActuatorOutput& _drv_actuator;
+
+  NodeMode _mode = NodeMode::BOOTING;
+  uint32_t _bootMs = 0;
+  RuleEvent _lastEvent = RuleEvent::NONE;
+
+  void updateMode(uint32_t nowMs, bool sensorDry, bool sensorFault) {
+    if (_mode == NodeMode::BOOTING) {
+      if ((nowMs - _bootMs) < sys::Config::BOOTING_DURATION_MS) {
+        return;
+      }
+
+      if (sensorFault) {
+        _mode = NodeMode::ALERT;
+        _lastEvent = RuleEvent::FAULT_ENTERED;
+      } else if (sensorDry) {
+        _mode = NodeMode::AUTO_ACTIVE;
+        _lastEvent = RuleEvent::AUTO_RULE_ACTIVATED;
+      } else {
+        _mode = NodeMode::MONITORING;
+        _lastEvent = RuleEvent::ENTERED_MONITORING;
+      }
+      return;
+    }
+
+    if (sensorFault) {
+      if (_mode != NodeMode::ALERT) {
+        _mode = NodeMode::ALERT;
+        _lastEvent = RuleEvent::FAULT_ENTERED;
+      }
+      return;
+    }
+
+    if (_mode == NodeMode::ALERT && !sensorFault) {
+      if (sensorDry) {
+        _mode = NodeMode::AUTO_ACTIVE;
+      } else {
+        _mode = NodeMode::MONITORING;
+      }
+      _lastEvent = RuleEvent::FAULT_CLEARED;
+      return;
+    }
+
+    if (sensorDry) {
+      if (_mode != NodeMode::AUTO_ACTIVE) {
+        _mode = NodeMode::AUTO_ACTIVE;
+        _lastEvent = RuleEvent::AUTO_RULE_ACTIVATED;
+      }
+    } else {
+      if (_mode != NodeMode::MONITORING) {
+        _mode = NodeMode::MONITORING;
+        _lastEvent = RuleEvent::AUTO_RULE_CLEARED;
+      }
+    }
+  }
+
+  void applyOutputs(uint32_t nowMs) {
+    _drv_statusLed.set(statusLedState(nowMs));
+    _drv_actuator.set(actuatorOn());
+  }
+
+  bool statusLedState(uint32_t nowMs) const {
+    switch (_mode) {
+      case NodeMode::BOOTING:
+        return ((nowMs / sys::Config::BOOT_BLINK_MS) % 2U) == 0U;
+
+      case NodeMode::MONITORING:
+        return ((nowMs / sys::Config::LOCAL_BLINK_MS) % 2U) == 0U;
+
+      case NodeMode::AUTO_ACTIVE:
+        return true;
+
+      case NodeMode::ALERT: {
+        const uint8_t phase = (nowMs / sys::Config::ALERT_STEP_MS) % 6U;
+        return (phase == 0U || phase == 1U);
+      }
+    }
+
+    return false;
+  }
+};
+
+}  // namespace svc
+
+// =====================================================
+// app -> pure orchestrator
+// =====================================================
+namespace app {
+
+class FirmwareApp {
+public:
+  explicit FirmwareApp(svc::SensorRuleService& svc_sensorRuleService)
+    : _svc_sensorRuleService(svc_sensorRuleService) {}
+
+  void begin() {
+    Serial.begin(sys::Config::SERIAL_BAUD);
+    delay(100);
+
+    _svc_sensorRuleService.begin(millis());
+
+    Serial.println();
+    Serial.println("=== HortiLink Level 3 ===");
+    Serial.println("Sensor and Rule");
+    Serial.println("Board : ESP32-C3 DevKit");
+    Serial.println("Sensor Dry   : GPIO5 -> GND");
+    Serial.println("Sensor Fault : GPIO6 -> GND");
+    Serial.println("Actuator Out : GPIO7");
+    Serial.println("Mode  : BOOTING -> MONITORING -> AUTO_ACTIVE / ALERT");
+    Serial.println();
+  }
+
+  void run() {
+    const uint32_t nowMs = millis();
+
+    _svc_sensorRuleService.run(nowMs);
+
+    logEventIfAny();
+
+    if (nowMs - _lastLogMs >= sys::Config::LOG_INTERVAL_MS) {
+      _lastLogMs = nowMs;
+      logHeartbeat(nowMs);
+    }
+
+    delay(sys::Config::APP_TICK_MS);
+  }
+
+private:
+  svc::SensorRuleService& _svc_sensorRuleService;
+  uint32_t _lastLogMs = 0;
+
+  void logEventIfAny() {
+    switch (_svc_sensorRuleService.lastEvent()) {
+      case svc::RuleEvent::ENTERED_MONITORING:
+        Serial.print("[MODE] -> ");
+        Serial.println(_svc_sensorRuleService.modeText());
+        break;
+
+      case svc::RuleEvent::AUTO_RULE_ACTIVATED:
+        Serial.print("[MODE] -> ");
+        Serial.println(_svc_sensorRuleService.modeText());
+        Serial.println("[RULE] sensor=DRY | actuator=ON");
+        break;
+
+      case svc::RuleEvent::AUTO_RULE_CLEARED:
+        Serial.print("[MODE] -> ");
+        Serial.println(_svc_sensorRuleService.modeText());
+        Serial.println("[RULE] sensor=NORMAL | actuator=OFF");
+        break;
+
+      case svc::RuleEvent::FAULT_ENTERED:
+        Serial.print("[MODE] -> ");
+        Serial.println(_svc_sensorRuleService.modeText());
+        Serial.println("[ALARM] sensor fault detected | actuator=OFF");
+        break;
+
+      case svc::RuleEvent::FAULT_CLEARED:
+        Serial.print("[MODE] -> ");
+        Serial.println(_svc_sensorRuleService.modeText());
+        Serial.println("[ALARM] sensor fault cleared");
+        break;
+
+      case svc::RuleEvent::NONE:
+      default:
+        break;
+    }
+  }
+
+  void logHeartbeat(uint32_t nowMs) {
+    Serial.print("[HEARTBEAT] uptime=");
+    Serial.print(nowMs);
+    Serial.print(" ms | mode=");
+    Serial.print(_svc_sensorRuleService.modeText());
+    Serial.print(" | sensor=");
+    Serial.print(_svc_sensorRuleService.sensorDry() ? "DRY" : "NORMAL");
+    Serial.print(" | fault=");
+    Serial.print(_svc_sensorRuleService.sensorFault() ? "YES" : "NO");
+    Serial.print(" | actuator=");
+    Serial.println(_svc_sensorRuleService.actuatorOn() ? "ON" : "OFF");
+  }
+};
+
+}  // namespace app
+
+// =====================================================
+// composition root
+// =====================================================
+drv::StatusLed drv_statusLed(sys::Config::PIN_STATUS_LED);
+drv::DigitalSoilSensor drv_soilSensor(
+  sys::Config::PIN_SENSOR_DRY,
+  sys::Config::PIN_SENSOR_FAULT
+);
+drv::ActuatorOutput drv_actuator(sys::Config::PIN_ACTUATOR);
+
+svc::SensorRuleService svc_sensorRuleService(
+  drv_statusLed,
+  drv_soilSensor,
+  drv_actuator
+);
+
+app::FirmwareApp app_firmware(svc_sensorRuleService);
+
+// =====================================================
+// Arduino entry point
+// =====================================================
+void setup() {
+  app_firmware.begin();
+}
+
+void loop() {
+  app_firmware.run();
+}
+```
+
+---
+
+## 10. Cara Kerja Firmware
+
+### 10.1 Saat board menyala
+
+`setup()` memanggil:
+
+```cpp
+app_firmware.begin();
+```
+
+Di dalam `begin()`:
+
+- Serial dimulai
+- service sensor-rule dimulai
+- service menginisialisasi driver yang dibutuhkannya
+- informasi node dicetak ke Serial
+
+### 10.2 Saat sensor mendeteksi kondisi dry
+
+Jika sensor lingkungan digital proxy aktif, maka service menganggap kondisi lingkungan sebagai `DRY`.
+
+Perilakunya:
+
+- mode pindah ke `AUTO_ACTIVE`
+- aktuator dinyalakan
+- status LED menyala stabil
+- serial log mencatat bahwa rule aktif
+
+### 10.3 Saat sensor fault aktif
+
+Jika input fault simulasi aktif, maka service menganggap sensor sedang fault.
+
+Perilakunya:
+
+- mode pindah ke `ALERT`
+- aktuator dipaksa OFF
+- status LED masuk pola alert
+- serial log mencatat fault state
+
+### 10.4 Saat loop berjalan
+
+`loop()` memanggil:
+
+```cpp
+app_firmware.run();
+```
+
+Di dalamnya:
+
+- waktu sekarang dibaca dengan `millis()`
+- app menjalankan service
+- service membaca sensor melalui driver
+- service menghitung keputusan mode dan output
+- service menerapkan output ke driver
+- app hanya melakukan logging dan mengatur ritme runtime
+
+---
+
+## 11. Yang Dipelajari dari Level 3
+
+### 11.1 Sensor acquisition dibungkus di `drv`
+
+Pada Level 3, driver baru yang diperkenalkan adalah:
+
+```cpp
+drv::DigitalSoilSensor
+```
+
+Driver ini membungkus:
+
+- input sensor lingkungan digital proxy
+- input fault simulasi
+- debounce input
+
+Dengan begitu, pembacaan sensor tetap berada di hardware boundary.
+
+### 11.2 Rule engine diselesaikan di `svc`
+
+Pada Level 3, `svc` memegang peran utama:
+
+```cpp
+svc::SensorRuleService
+```
+
+Service ini bertugas:
+
+- membaca status driver yang relevan
+- menentukan mode node
+- memutuskan kapan aktuator ON/OFF
+- memutuskan kapan LED status ON/OFF
+- memutuskan kapan node masuk `ALERT`
+
+Di sinilah inti HN-06 mulai terlihat.
+
+### 11.3 Fault state menjadi bagian dari service domain
+
+Feature HN-09 tidak diletakkan di `drv` dan tidak diletakkan di `app`.
+
+`drv` hanya membaca bahwa fault input aktif atau tidak.
+`svc` yang memutuskan bahwa kondisi itu berarti:
+
+- node harus masuk `ALERT`
+- aktuator harus dimatikan
+- output lokal harus berubah
+
+Ini adalah pemisahan yang penting.
+
+### 11.4 `app` tetap murni sebagai orchestrator
+
+Pada Level 3, `app` tidak menghitung rule dan tidak menyimpan state machine domain.
+
+`app` hanya:
+
+- memulai service
+- menjalankan service
+- logging
+- mengatur ritme runtime
+
+Dengan begitu, layering tetap konsisten.
+
+---
+
+## 12. Output yang Diharapkan
+
+### 12.1 Serial Monitor
+
+Contoh log yang diharapkan:
+
+```text
+=== HortiLink Level 3 ===
+Sensor and Rule
+Board : ESP32-C3 DevKit
+Sensor Dry   : GPIO5 -> GND
+Sensor Fault : GPIO6 -> GND
+Actuator Out : GPIO7
+Mode  : BOOTING -> MONITORING -> AUTO_ACTIVE / ALERT
+
+[HEARTBEAT] uptime=1000 ms | mode=BOOTING | sensor=NORMAL | fault=NO | actuator=OFF
+[HEARTBEAT] uptime=2000 ms | mode=BOOTING | sensor=NORMAL | fault=NO | actuator=OFF
+[MODE] -> MONITORING
+[HEARTBEAT] uptime=4000 ms | mode=MONITORING | sensor=NORMAL | fault=NO | actuator=OFF
+[MODE] -> AUTO_ACTIVE
+[RULE] sensor=DRY | actuator=ON
+[HEARTBEAT] uptime=7000 ms | mode=AUTO_ACTIVE | sensor=DRY | fault=NO | actuator=ON
+[MODE] -> ALERT
+[ALARM] sensor fault detected | actuator=OFF
+```
+
+### 12.2 Status LED GPIO8
+
+- saat `BOOTING` → kedip cepat
+- saat `MONITORING` → kedip lambat
+- saat `AUTO_ACTIVE` → nyala stabil
+- saat `ALERT` → kedip dua kali berulang
+
+### 12.3 Actuator LED GPIO7
+
+- saat `MONITORING` → OFF
+- saat `AUTO_ACTIVE` → ON
+- saat `ALERT` → OFF
+
+Dengan begitu, engineer bisa melihat hubungan yang jelas antara:
+
+- kondisi sensor
+- keputusan service
+- mode node
+- output aktuator
+- indikator lokal
+
+---
+
+## 13. Inti Level 3
+
+Level 3 ini bukan sekadar menambah sensor.
+
+Ini adalah tahap ketika node HortiLink mulai benar-benar menunjukkan perilaku dasar edge automation:
+
+- membaca kondisi lingkungan
+- memutuskan tindakan otomatis
+- mengubah mode operasi
+- mendeteksi fault
+- memberi indikasi lokal
+
+Pada Level 3, engineer mulai melihat bentuk penuh layering HortiLink yang sekarang dikunci:
+
+- `drv` tahu hardware
+- `svc` tahu `drv` dan menyelesaikan logic domain
+- `app` hanya mengorkestrasi service
+- `sys` menjaga semua konfigurasi tetap terkumpul
+
+Dengan kata lain, Level 3 adalah jembatan antara:
+
+- node yang hanya punya interaksi lokal
+- dan node yang mulai punya **kontrol otomatis lokal yang berbasis sensor**
+
+---
+
+<small>
+  **_Catatan Penyusunan_** Artikel ini merupakan kelanjutan langsung dari Level 2
+  dan ditulis khusus sebagai dokumen pengembangan untuk Level 3 pada platform
+  ESP32-C3 DevKit di simulator Velxio. Isi level ini disusun agar tetap konsisten
+  dengan README utama HortiLink, single-project learning flow, dan standar
+  layering yang sudah dikunci: `sys`, `drv`, `svc`, `app`.
+</small>
