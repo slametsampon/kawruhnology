@@ -15,12 +15,11 @@ draft: false
 summary: Rancangan kebun “Gumuk” di Gambiran dibagi menjadi empat zona mengikuti kontur - puncak untuk tandon, semai, dan reset plot; cincin atas untuk cabai; cincin tengah untuk fase legum; cincin luar untuk semangka mini; serta parit luar diperkuat vetiver atau serai. Rotasi dilakukan antar zona produksi - cabai–legum–semangka, dengan kacang panjang sebagai opsi agresif berarus kas lebih aktif, atau kacang tanah sebagai opsi defensif berbiaya lebih ringan. Companion plant berupa marigold, kenikir, wijen, dan bunga matahari ditanam sebagai border permanen. Secara ekonomi, motor utama usaha adalah cabai dan semangka, sedangkan legum menyeimbangkan risiko, biaya, dan kesehatan lahan dengan dukungan irigasi tetes per zona.
 ---
 
-# **_Panduan Praktis Rotasi Hortikultura, Tanaman Pendamping, dan Analisis Ekonomis_**
+# **_Panduan Praktis Rotasi Hortikultura, Tanaman Pendamping, dan Analisis Ekonomis Berbasis Waktu_**
 
 ---
 
-- [**_Panduan Praktis Rotasi Hortikultura, Tanaman Pendamping, dan Analisis Ekonomis_**](#panduan-praktis-rotasi-hortikultura-tanaman-pendamping-dan-analisis-ekonomis)
-  - [Lahan Tegalan Bertingkat “Gumuk” – Desa Gambiran, Kecamatan Gambiran, Banyuwangi](#lahan-tegalan-bertingkat-gumuk--desa-gambiran-kecamatan-gambiran-banyuwangi)
+- [**_Panduan Praktis Rotasi Hortikultura, Tanaman Pendamping, dan Analisis Ekonomis Berbasis Waktu_**](#panduan-praktis-rotasi-hortikultura-tanaman-pendamping-dan-analisis-ekonomis-berbasis-waktu)
 - [1. Tujuan sistem kebun](#1-tujuan-sistem-kebun)
 - [2. Pembagian zona lahan](#2-pembagian-zona-lahan)
   - [Zona 1 – Puncak](#zona-1--puncak)
@@ -59,8 +58,11 @@ summary: Rancangan kebun “Gumuk” di Gambiran dibagi menjadi empat zona mengi
 - [10. Potensi ekonomis kebun](#10-potensi-ekonomis-kebun)
   - [Model A – lebih agresif](#model-a--lebih-agresif)
   - [Model B – lebih aman](#model-b--lebih-aman)
+- [10A. Definisi “Musim” dalam Analisis Ekonomi](#10a-definisi-musim-dalam-analisis-ekonomi)
 - [11. Asumsi simulasi usaha](#11-asumsi-simulasi-usaha)
   - [Asumsi hasil dan harga kerja](#asumsi-hasil-dan-harga-kerja)
+- [11A. Umur Tanam, Pola Panen, dan Arus Kas](#11a-umur-tanam-pola-panen-dan-arus-kas)
+- [11B. Implikasi Waktu terhadap Keputusan Komoditas](#11b-implikasi-waktu-terhadap-keputusan-komoditas)
 - [12. Biaya tunai dan biaya penuh](#12-biaya-tunai-dan-biaya-penuh)
   - [Biaya tunai](#biaya-tunai)
   - [Biaya penuh](#biaya-penuh)
@@ -75,6 +77,16 @@ summary: Rancangan kebun “Gumuk” di Gambiran dibagi menjadi empat zona mengi
     - [Tenaga kerja keluarga](#tenaga-kerja-keluarga-1)
     - [Biaya penuh](#biaya-penuh-2)
 - [14. Perbandingan ekonomi dua model](#14-perbandingan-ekonomi-dua-model)
+- [14A. Perbandingan Ekonomi Berbasis Waktu](#14a-perbandingan-ekonomi-berbasis-waktu)
+- [14B. Perputaran Modal per Tahun](#14b-perputaran-modal-per-tahun)
+  - [Estimasi tahunan konservatif](#estimasi-tahunan-konservatif)
+  - [Estimasi tahunan normal](#estimasi-tahunan-normal)
+- [14C. Kalender Arus Kas dalam 1 Musim Paket](#14c-kalender-arus-kas-dalam-1-musim-paket)
+- [14D. Indikator Keputusan Ekonomi yang Perlu Ditambahkan](#14d-indikator-keputusan-ekonomi-yang-perlu-ditambahkan)
+  - [Contoh pembacaan Model A](#contoh-pembacaan-model-a)
+  - [Contoh pembacaan Model B](#contoh-pembacaan-model-b)
+- [14E. Kesimpulan Tambahan Setelah Memasukkan Faktor Waktu](#14e-kesimpulan-tambahan-setelah-memasukkan-faktor-waktu)
+- [14F. Matriks Keputusan Komoditas Berdasarkan Waktu](#14f-matriks-keputusan-komoditas-berdasarkan-waktu)
 - [15. Makna bisnis dari tabel tersebut](#15-makna-bisnis-dari-tabel-tersebut)
   - [Cabai](#cabai)
   - [Semangka mini](#semangka-mini)
@@ -88,9 +100,9 @@ summary: Rancangan kebun “Gumuk” di Gambiran dibagi menjadi empat zona mengi
 
 ---
 
-## Lahan Tegalan Bertingkat “Gumuk” – Desa Gambiran, Kecamatan Gambiran, Banyuwangi
+**Lahan Tegalan Bertingkat “Gumuk” – Desa Gambiran, Kecamatan Gambiran, Banyuwangi**
 
-Lahan ini berbentuk **teras bertingkat melingkar** seperti Gumuk, dengan kondisi utama sebagai berikut:
+Lahan ini berbentuk **teras bertingkat melingkar** seperti gumuk, dengan kondisi utama sebagai berikut:
 
 - puncak ukuran **10 x 10 m**
 - di bawah puncak ada **teras melingkar lebar 4 m**
@@ -101,9 +113,9 @@ Lahan ini berbentuk **teras bertingkat melingkar** seperti Gumuk, dengan kondisi
 - **akses masuk** dari **pojok timur-utara**
 - sistem air menggunakan **irigasi tetes**
 
-Bentuk seperti ini tidak cocok dikelola dengan petakan kotak biasa. Sistem yang paling tepat adalah **budidaya per zona melingkar mengikuti kontur**, dengan rotasi tanaman antarzona, border tanaman pendamping permanen, dan distribusi air per sabuk.
-
 ![Terraced-farm-with-drip-irrigation](/static/images/agri/Terraced-farm-with-drip-irrigation.png)
+
+Bentuk seperti ini tidak cocok dikelola dengan petakan kotak biasa. Sistem yang paling tepat adalah **budidaya per zona melingkar mengikuti kontur**, dengan rotasi tanaman antarzona, border tanaman pendamping permanen, dan distribusi air per sabuk.
 
 ---
 
@@ -198,16 +210,18 @@ Susunan tetap kebun adalah sebagai berikut:
 
 Dengan susunan ini, kebun mempunyai keseimbangan antara:
 
-- tanaman bernilai tinggi,
-- tanaman penyangga,
-- tanaman pemulih,
-- dan elemen konservasi.
+- tanaman bernilai tinggi
+- tanaman penyangga
+- tanaman pemulih
+- dan elemen konservasi
 
 ---
 
 # 4. Rotasi tanaman
 
 Rotasi dilakukan pada **Zona 2, 3, dan 4**, sedangkan **Zona 1 tetap sebagai area utilitas dan reset plot**.
+
+Dalam dokumen ini, istilah **Musim 1, Musim 2, dan Musim 3** berarti **urutan rotasi zona**, bukan selalu berarti 1 tahun kalender. Satu musim usaha paket diperkirakan berlangsung sekitar **6 bulan**, mengikuti komoditas dengan siklus terpanjang yaitu cabai. Karena itu, rotasi penuh tiga posisi idealnya dibaca sebagai rencana **±18 bulan** bila dijalankan berurutan penuh, atau lebih cepat bila sebagian zona ditanam secara tumpang-sisip dan bertahap.
 
 ## Opsi rotasi A – fase legum memakai kacang panjang
 
@@ -437,6 +451,32 @@ Dalam simulasi kerja kita, saya memakai pendekatan konservatif dengan dua model:
 
 ---
 
+# 10A. Definisi “Musim” dalam Analisis Ekonomi
+
+Dalam tulisan ini, istilah **musim** harus dibedakan menjadi tiga pengertian:
+
+| Istilah                   | Arti                                                                  | Fungsi dalam analisis                                        |
+| ------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------ |
+| **Musim tanam komoditas** | Lama satu komoditas dari tanam sampai panen utama                     | Dipakai untuk menghitung umur panen dan arus kas per tanaman |
+| **Musim usaha paket**     | Lama satu paket kombinasi tanaman sampai komoditas terpanjang selesai | Dipakai untuk menghitung laba per paket                      |
+| **Tahun usaha**           | Periode 12 bulan kalender                                             | Dipakai untuk menghitung target tahunan dan evaluasi rotasi  |
+
+Untuk kebun gumuk ini, **1 musim usaha paket ditetapkan = ±6 bulan**.
+
+Alasannya, dalam satu paket terdapat beberapa tanaman dengan umur berbeda:
+
+- semangka mini relatif cepat
+- kacang panjang dan kacang tanah sedang
+- cabai paling panjang karena panennya bertahap
+
+Dengan demikian, simulasi ekonomi sebelumnya harus dibaca sebagai:
+
+> **Simulasi laba per 1 musim usaha paket = ±6 bulan**, bukan laba bulanan dan bukan laba tahunan.
+
+Ini penting karena tanpa satuan waktu, angka laba tidak cukup membantu pengambilan keputusan. Laba Rp1.980.000 akan punya makna berbeda bila diperoleh dalam 2 bulan, 6 bulan, atau 12 bulan. Karena itu, setiap analisis ekonomi berikutnya selalu dibaca dengan dasar **durasi musim usaha paket ±6 bulan**.
+
+---
+
 # 11. Asumsi simulasi usaha
 
 Angka berikut adalah **simulasi kerja**, bukan pembukuan riil lapangan. Tujuannya untuk membantu keputusan.
@@ -449,6 +489,51 @@ Angka berikut adalah **simulasi kerja**, bukan pembukuan riil lapangan. Tujuanny
 | Semangka mini  |    480 m² |       900 kg |   Rp4.500/kg | Rp4.050.000 |
 | Kacang panjang |    352 m² |       220 kg |   Rp5.500/kg | Rp1.210.000 |
 | Kacang tanah   |    352 m² |        65 kg |  Rp20.000/kg | Rp1.300.000 |
+
+---
+
+# 11A. Umur Tanam, Pola Panen, dan Arus Kas
+
+Setiap komoditas dalam paket usaha memiliki waktu panen berbeda. Ini penting karena memengaruhi:
+
+- kapan modal keluar
+- kapan uang mulai masuk
+- berapa lama lahan terkunci
+- dan berapa kali modal bisa diputar dalam 1 tahun
+
+| Komoditas                 |                    Perkiraan umur panen / awal panen | Pola panen                       | Dampak terhadap arus kas                                    |
+| ------------------------- | ---------------------------------------------------: | -------------------------------- | ----------------------------------------------------------- |
+| **Cabai rawit**           |        mulai sekitar bulan ke-4, lalu panen bertahap | bertahap/berulang                | uang masuk paling lama, tetapi juga biaya perawatan panjang |
+| **Semangka mini**         |                                           ±60–70 HST | panen relatif serentak           | uang masuk cepat dan besar sekaligus                        |
+| **Kacang panjang**        |           ±40–70 HST, tergantung varietas dan sistem | panen bertahap                   | arus kas cepat, tetapi butuh tenaga panen berulang          |
+| **Kacang tanah**          |                                          ±90–100 HST | panen serentak                   | biaya kerja lebih ringan, uang masuk sekaligus              |
+| **Ubi jalar**             | ±3,5–4,5 bulan, tergantung varietas dan tujuan pasar | panen serentak/bertahap terbatas | cocok sebagai penyangga pangan-kas                          |
+| **Jahe/kunyit/temulawak** |                                  umumnya ±8–12 bulan | panen bongkar                    | lebih cocok sebagai komoditas menengah, bukan kas cepat     |
+
+Dengan demikian, setiap tanaman tidak hanya dinilai dari **berapa hasilnya**, tetapi juga dari **kapan hasil itu masuk ke kas**.
+
+---
+
+# 11B. Implikasi Waktu terhadap Keputusan Komoditas
+
+Dengan memasukkan satuan waktu, peran tiap komoditas menjadi lebih jelas.
+
+| Komoditas          | Kekuatan ekonomi                       | Kelemahan ekonomi                              | Posisi dalam kebun              |
+| ------------------ | -------------------------------------- | ---------------------------------------------- | ------------------------------- |
+| **Cabai**          | laba bisa tinggi, panen berulang       | biaya panjang, risiko harga tinggi             | mesin laba utama                |
+| **Semangka mini**  | cepat panen, volume besar              | harga bisa jatuh saat panen raya               | penopang omzet cepat            |
+| **Kacang panjang** | kas masuk cepat dan bertahap           | tenaga kerja panen tinggi                      | penyangga cashflow              |
+| **Kacang tanah**   | biaya lebih ringan                     | kas masuk lebih lambat daripada kacang panjang | fase defensif dan pemulih tanah |
+| **Ubi jalar**      | relatif aman, baik untuk penutup tanah | harga per kg tidak setinggi cabai              | rotasi pangan-kas               |
+| **Jahe/kunyit**    | nilai tinggi dan cocok semi-naungan    | modal tertahan lama                            | komoditas menengah/tahunan      |
+
+Implikasi praktisnya:
+
+- bila butuh uang cepat, jangan hanya mengandalkan cabai;
+- bila tenaga kerja terbatas, kacang panjang perlu dibatasi;
+- bila ingin biaya lebih ringan, kacang tanah lebih nyaman;
+- bila ingin konservasi tanah sekaligus hasil, ubi jalar bisa masuk;
+- bila ingin nilai menengah jangka panjang, jahe dan kunyit ditempatkan pada zona semi-naungan.
 
 ---
 
@@ -483,6 +568,7 @@ Jadi ini adalah **full cost sederhana**, belum termasuk:
 ### Nilai tenaga kerja keluarga
 
 Saya pakai pendekatan:
+
 **HOK keluarga × Rp80.000/HOK**
 
 ---
@@ -556,6 +642,163 @@ Dari sini terlihat bahwa:
 
 ---
 
+# 14A. Perbandingan Ekonomi Berbasis Waktu
+
+Karena **1 musim usaha paket = ±6 bulan**, maka laba pada tabel sebelumnya perlu dibaca sebagai laba selama 6 bulan.
+
+| Komponen                    | Model A: Cabai + Semangka + Kacang Panjang | Model B: Cabai + Semangka + Kacang Tanah |
+| --------------------------- | -----------------------------------------: | ---------------------------------------: |
+| Omzet kotor per musim paket |                               Rp11.260.000 |                             Rp11.350.000 |
+| Biaya tunai per musim paket |                                Rp5.200.000 |                              Rp5.000.000 |
+| Biaya penuh per musim paket |                                Rp9.280.000 |                              Rp8.680.000 |
+| Laba tunai per musim paket  |                                Rp6.060.000 |                              Rp6.350.000 |
+| Laba penuh per musim paket  |                                Rp1.980.000 |                              Rp2.670.000 |
+| Durasi musim paket          |                                    6 bulan |                                  6 bulan |
+| **Laba tunai per bulan**    |                     **±Rp1.010.000/bulan** |                   **±Rp1.058.000/bulan** |
+| **Laba penuh per bulan**    |                       **±Rp330.000/bulan** |                     **±Rp445.000/bulan** |
+
+Dengan cara baca ini, terlihat bahwa Model B tidak hanya lebih hemat biaya, tetapi juga memberi **laba penuh bulanan lebih baik** pada asumsi yang digunakan.
+
+Namun Model A tetap lebih menarik bila yang dicari adalah **arus kas aktif**, karena kacang panjang bisa mulai menghasilkan lebih cepat dan bertahap.
+
+---
+
+# 14B. Perputaran Modal per Tahun
+
+Karena satu paket usaha dihitung **±6 bulan**, secara teori kebun dapat menjalankan:
+
+> **2 musim usaha paket per tahun**
+
+Namun praktiknya tidak selalu persis 2 kali penuh, karena:
+
+- ada jeda olah tanah
+- sanitasi tanaman
+- perbaikan bedengan
+- hujan ekstrem
+- sulam
+- dan rotasi komoditas
+
+Maka untuk pengambilan keputusan, gunakan dua skenario:
+
+| Skenario        | Arti                      | Cocok untuk                                |
+| --------------- | ------------------------- | ------------------------------------------ |
+| **Konservatif** | 1,5 musim paket per tahun | tahun pertama, masih banyak koreksi teknis |
+| **Normal**      | 2 musim paket per tahun   | setelah kebun stabil dan irigasi lancar    |
+
+## Estimasi tahunan konservatif
+
+| Model   | Laba penuh per musim | Faktor musim/tahun | Estimasi laba penuh/tahun |
+| ------- | -------------------: | -----------------: | ------------------------: |
+| Model A |          Rp1.980.000 |                1,5 |               Rp2.970.000 |
+| Model B |          Rp2.670.000 |                1,5 |               Rp4.005.000 |
+
+## Estimasi tahunan normal
+
+| Model   | Laba penuh per musim | Faktor musim/tahun | Estimasi laba penuh/tahun |
+| ------- | -------------------: | -----------------: | ------------------------: |
+| Model A |          Rp1.980.000 |                  2 |               Rp3.960.000 |
+| Model B |          Rp2.670.000 |                  2 |               Rp5.340.000 |
+
+Catatan penting: angka tahunan ini hanya untuk **blok simulasi horti awal**, bukan seluruh potensi ekonomi kebun gumuk setelah tanaman tahunan, jahe, kunyit, serai, pisang, durian, manggis, dan kelapa ikut produktif.
+
+---
+
+# 14C. Kalender Arus Kas dalam 1 Musim Paket
+
+Agar mudah dibaca secara bisnis, satu musim 6 bulan dapat digambarkan seperti ini:
+
+| Bulan musim | Kegiatan utama                                                  | Arus kas keluar |                  Arus kas masuk |
+| ----------- | --------------------------------------------------------------- | --------------: | ------------------------------: |
+| Bulan 1     | olah tanah, benih, pupuk dasar, mulsa, tanam                    |          tinggi |                       belum ada |
+| Bulan 2     | pemeliharaan awal, ajir, penyulaman, pengendalian OPT           |   sedang–tinggi | mulai dari sayur cepat bila ada |
+| Bulan 3     | panen semangka / awal kacang panjang                            |          sedang |                     mulai masuk |
+| Bulan 4     | panen kacang tanah / panen lanjutan kacang panjang / awal cabai |          sedang |                          sedang |
+| Bulan 5     | panen cabai bertahap                                            |          sedang |                          tinggi |
+| Bulan 6     | panen cabai lanjutan, evaluasi, sanitasi                        |          sedang |                   sedang–tinggi |
+
+Dengan pola ini, keputusan pentingnya adalah:
+
+- bila butuh **uang masuk cepat**, Model A lebih nyaman karena kacang panjang memberi panen bertahap;
+- bila ingin **biaya lebih ringan dan kerja lebih tenang**, Model B lebih nyaman karena kacang tanah tidak membutuhkan panen berulang;
+- bila ingin memperkuat tanah dan menekan erosi, sisipkan **ubi jalar** pada ring luar sebagai penutup tanah sekaligus komoditas jual.
+
+---
+
+# 14D. Indikator Keputusan Ekonomi yang Perlu Ditambahkan
+
+Agar keputusan usaha lebih tajam, jangan hanya melihat omzet dan laba. Tambahkan indikator berikut:
+
+| Indikator          | Rumus                                      | Fungsi                            |
+| ------------------ | ------------------------------------------ | --------------------------------- |
+| **Laba per musim** | omzet - biaya                              | melihat untung satu siklus        |
+| **Laba per bulan** | laba per musim ÷ durasi musim              | membandingkan dengan usaha lain   |
+| **ROI tunai**      | laba tunai ÷ biaya tunai                   | menilai efisiensi uang keluar     |
+| **ROI penuh**      | laba penuh ÷ biaya penuh                   | menilai kelayakan ekonomi riil    |
+| **Payback period** | biaya tunai ÷ kas masuk rata-rata bulanan  | melihat berapa lama modal kembali |
+| **Cash gap**       | bulan keluar biaya - bulan mulai kas masuk | mengukur kebutuhan modal kerja    |
+
+## Contoh pembacaan Model A
+
+| Indikator            |             Nilai |
+| -------------------- | ----------------: |
+| Biaya tunai          |       Rp5.200.000 |
+| Laba tunai           |       Rp6.060.000 |
+| Durasi musim         |           6 bulan |
+| Laba tunai per bulan |      ±Rp1.010.000 |
+| ROI tunai            | ±116,5% per musim |
+| Laba penuh per bulan |        ±Rp330.000 |
+
+## Contoh pembacaan Model B
+
+| Indikator            |             Nilai |
+| -------------------- | ----------------: |
+| Biaya tunai          |       Rp5.000.000 |
+| Laba tunai           |       Rp6.350.000 |
+| Durasi musim         |           6 bulan |
+| Laba tunai per bulan |      ±Rp1.058.000 |
+| ROI tunai            | ±127,0% per musim |
+| Laba penuh per bulan |        ±Rp445.000 |
+
+Dari indikator ini, Model B terlihat lebih kuat dari sisi efisiensi biaya, sedangkan Model A tetap unggul dari sisi **kelincahan arus kas**.
+
+---
+
+# 14E. Kesimpulan Tambahan Setelah Memasukkan Faktor Waktu
+
+Setelah satuan waktu dimasukkan, kesimpulan ekonomi berubah menjadi lebih tajam:
+
+1. **Satu musim usaha paket harus didefinisikan sebagai ±6 bulan**, karena cabai menjadi komoditas dengan siklus terpanjang dalam paket.
+2. **Semangka memberi kas cepat** sekitar bulan ke-3.
+3. **Kacang panjang memberi kas lebih cepat dan bertahap**, tetapi menyerap tenaga kerja lebih besar.
+4. **Kacang tanah memberi kas lebih lambat**, tetapi biaya dan tenaga lebih ringan.
+5. **Cabai menjadi sumber kas utama bulan ke-4 sampai ke-6**, tetapi paling sensitif terhadap harga dan gangguan OPT.
+6. **Model B lebih baik secara laba penuh per bulan**, sedangkan **Model A lebih baik untuk cashflow aktif**.
+7. Untuk tahun pertama gumuk, gunakan target **1,5 musim efektif**, bukan langsung 2 musim penuh, karena masih ada pekerjaan konservasi, koreksi irigasi, dan adaptasi layout.
+
+---
+
+# 14F. Matriks Keputusan Komoditas Berdasarkan Waktu
+
+| Tujuan keputusan             | Pilihan lebih cocok       | Alasan                               |
+| ---------------------------- | ------------------------- | ------------------------------------ |
+| Uang masuk tercepat          | kacang panjang / semangka | panen lebih awal                     |
+| Laba utama                   | cabai                     | nilai jual tinggi dan panen berulang |
+| Biaya lebih ringan           | kacang tanah              | tidak perlu ajir, panen serentak     |
+| Penutup tanah dan konservasi | ubi jalar                 | menutup permukaan tanah              |
+| Margin menengah panjang      | jahe/kunyit               | nilai tinggi, cocok semi-naungan     |
+| Tahun pertama gumuk          | model bertahap            | konservasi dan irigasi masih diuji   |
+
+Dengan matriks ini, aspek ekonomi tidak hanya menjawab **“untung berapa?”**, tetapi juga:
+
+- **untung itu dalam berapa lama?**
+- **uang masuk kapan?**
+- **modal tertahan berapa bulan?**
+- **komoditas mana yang cocok untuk kas cepat?**
+- **komoditas mana yang cocok untuk stabilitas tanah?**
+- **model mana yang lebih aman untuk tahun pertama?**
+
+---
+
 # 15. Makna bisnis dari tabel tersebut
 
 ## Cabai
@@ -567,9 +810,13 @@ Cabai adalah **mesin laba utama**, tetapi juga komoditas paling sensitif terhada
 - hama dan penyakit
 - biaya pemeliharaan
 
+Dalam konteks waktu, cabai bukan komoditas yang langsung mengembalikan modal sejak awal. Cabai lebih tepat dipahami sebagai **sumber laba utama pada fase akhir musim paket**, terutama bulan ke-4 sampai bulan ke-6.
+
 ## Semangka mini
 
 Semangka adalah **penyangga omzet paling sehat**. Nilainya tidak setinggi cabai per kilogram, tetapi volume hasilnya besar dan perannya penting dalam total pendapatan kebun.
+
+Dari sisi waktu, semangka memberi keuntungan karena panennya relatif cepat. Ia membantu menutup sebagian kebutuhan kas sebelum cabai masuk fase panen utama.
 
 ## Kacang panjang
 
@@ -580,6 +827,8 @@ Kacang panjang berfungsi sebagai **penyangga arus kas yang aktif**, tetapi:
 - panennya berulang
 - marginnya tidak selalu kuat
 
+Dari sisi waktu, kacang panjang cocok untuk petani yang ingin uang masuk lebih cepat dan lebih sering, tetapi harus siap dengan tenaga panen dan perawatan lebih intensif.
+
 ## Kacang tanah
 
 Kacang tanah lebih cocok sebagai:
@@ -588,6 +837,8 @@ Kacang tanah lebih cocok sebagai:
 - komoditas pengaman
 - blok pemulih lahan
 - penyeimbang sistem usaha
+
+Dari sisi waktu, kacang tanah tidak seaktif kacang panjang dalam menghasilkan kas mingguan, tetapi lebih nyaman dari sisi kerja, biaya, dan pengelolaan risiko.
 
 ---
 
@@ -619,23 +870,37 @@ Model ini cocok bila:
 - ingin sistem yang lebih tenang
 - tetap ingin kebun sehat secara rotasi
 
+Bila keputusan dilihat dari **waktu pengembalian uang**, Model A lebih cocok untuk petani yang membutuhkan kas masuk lebih cepat karena kacang panjang dapat dipanen bertahap. Bila keputusan dilihat dari **laba penuh per bulan dan beban kerja**, Model B lebih menarik karena kacang tanah menekan biaya dan tenaga kerja.
+
+Untuk tahun pertama kebun gumuk, target ekonomis sebaiknya tidak langsung memakai asumsi 2 musim penuh per tahun, tetapi memakai asumsi konservatif **1,5 musim efektif per tahun**.
+
 ---
 
 # 17. Rekomendasi praktis untuk kebun ini
 
-Kalau dilihat dari bentuk lahan, tenaga kerja, dan tujuan usaha, maka susunan yang paling logis adalah:
+Kalau dilihat dari bentuk lahan, tenaga kerja, tujuan usaha, dan satuan waktu pengembalian modal, maka susunan yang paling logis adalah:
 
 - **Puncak**: tandon, filter, venturi, semai, reset plot
-- **Cincin atas**: cabai
+- **Cincin atas**: cabai atau jahe merah/emprit
 - **Cincin tengah**: fase legum
   pilih salah satu: kacang panjang atau kacang tanah
-- **Cincin luar**: semangka mini
+- **Cincin luar**: semangka mini, melon mini, atau ubi jalar
 - **Parit**: vetiver atau serai
 - **Border permanen**: marigold, kenikir, wijen, bunga matahari terbatas
 
 Secara teknis, ini aman.
 Secara agronomis, ini sehat.
 Secara ekonomis, ini masuk akal.
+Secara waktu, model ini juga lebih mudah dibaca karena dibagi ke dalam **musim usaha ±6 bulan**.
+
+Untuk tahun pertama, pendekatan yang paling aman adalah:
+
+- jangan mengejar 2 musim penuh dulu;
+- pakai asumsi **1,5 musim efektif**;
+- fokus pada stabilitas konservasi gumuk;
+- uji performa irigasi;
+- evaluasi komoditas yang paling cepat menghasilkan kas;
+- lalu perbaiki rotasi pada tahun kedua.
 
 ---
 
@@ -649,6 +914,25 @@ Dan jika dipilih dengan benar:
 
 - **kacang panjang** memberi karakter usaha yang lebih agresif
 - **kacang tanah** memberi karakter usaha yang lebih aman
+
+Setelah faktor waktu dimasukkan, kesimpulan akhirnya menjadi lebih lengkap:
+
+- Model A cocok untuk **cashflow aktif**
+- Model B cocok untuk **laba penuh bulanan yang lebih nyaman**
+- semangka penting untuk **kas cepat**
+- cabai tetap menjadi **mesin laba utama**
+- ubi jalar bisa menjadi **penutup tanah sekaligus komoditas jual**
+- jahe/kunyit cocok sebagai **komoditas menengah-panjang**
+- dan tahun pertama gumuk sebaiknya dihitung sebagai **fase pembangunan sistem**, bukan hanya fase panen.
+
+Dengan begitu, kebun tidak hanya dinilai dari **berapa omzetnya**, tetapi juga dari:
+
+- kapan uang keluar,
+- kapan uang masuk,
+- berapa lama modal tertahan,
+- berapa laba per bulan,
+- berapa musim efektif per tahun,
+- dan seberapa aman sistem ini dijalankan pada gumuk yang masih dalam tahap penataan.
 
 ---
 
