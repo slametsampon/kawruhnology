@@ -68,6 +68,23 @@ summary: Mermaid diagram adalah metode membuat diagram menggunakan teks sederhan
   - [Tahap 4 — Warna](#tahap-4--warna)
   - [Tahap 5 — Subgraph](#tahap-5--subgraph)
 - [Kesimpulan](#kesimpulan)
+- [Apendix Advanced: Bentuk Node pada Mermaid Diagram](#apendix-advanced-bentuk-node-pada-mermaid-diagram)
+  - [A.1. Mengapa Bentuk Node Penting?](#a1-mengapa-bentuk-node-penting)
+  - [A.2. Bentuk Node Dasar yang Sering Dipakai](#a2-bentuk-node-dasar-yang-sering-dipakai)
+  - [A.3. Contoh Semua Bentuk Node Dasar](#a3-contoh-semua-bentuk-node-dasar)
+  - [A.4. Node Lingkaran](#a4-node-lingkaran)
+  - [A.5. Node Diamond untuk Decision Point](#a5-node-diamond-untuk-decision-point)
+  - [A.6. Node Database untuk Log, Historian, dan Catatan Batch](#a6-node-database-untuk-log-historian-dan-catatan-batch)
+  - [A.7. Node Segitiga untuk Warning atau Risiko](#a7-node-segitiga-untuk-warning-atau-risiko)
+  - [A.8. Standar Makna Bentuk untuk Artikel Teknis](#a8-standar-makna-bentuk-untuk-artikel-teknis)
+  - [A.9. Kombinasi Bentuk dan Warna](#a9-kombinasi-bentuk-dan-warna)
+  - [A.10. Contoh Advanced untuk Pembiakan PGPM](#a10-contoh-advanced-untuk-pembiakan-pgpm)
+  - [A.11. Catatan Kompatibilitas](#a11-catatan-kompatibilitas)
+  - [A.12. Rekomendasi Pemakaian Advanced Shapes](#a12-rekomendasi-pemakaian-advanced-shapes)
+  - [Tahap 1 — Bentuk Aman](#tahap-1--bentuk-aman)
+  - [Tahap 2 — Bentuk Menengah](#tahap-2--bentuk-menengah)
+  - [Tahap 3 — Bentuk Advanced](#tahap-3--bentuk-advanced)
+  - [A.13. Kesimpulan Apendix](#a13-kesimpulan-apendix)
 
 ---
 
@@ -1042,6 +1059,399 @@ Setelah lima tahap ini dikuasai, penulis sudah cukup kuat untuk membuat diagram 
 Mermaid diagram adalah cara praktis membuat diagram menggunakan teks di dalam artikel Markdown atau MDX. Untuk beginner, jenis diagram yang paling mudah dipelajari adalah flowchart. Dengan memahami node, panah, decision point, line break, warna, dan subgraph, penulis dapat membuat diagram yang cukup kuat untuk dokumentasi teknis.
 
 Dalam artikel engineering, Mermaid sangat membantu menjelaskan proses, hubungan sistem, alur troubleshooting, risiko, dan keputusan teknis. Kekuatan utamanya adalah mudah ditulis, mudah direvisi, dan cocok untuk project berbasis Next.js, Contentlayer, serta dokumentasi modern berbasis Git.
+
+---
+
+# Apendix Advanced: Bentuk Node pada Mermaid Diagram
+
+## A.1. Mengapa Bentuk Node Penting?
+
+Pada Mermaid diagram, node tidak harus selalu berbentuk kotak. Mermaid mendukung beberapa bentuk node seperti kotak, rounded rectangle, lingkaran, belah ketupat, database, hexagon, parallelogram, trapezoid, dan pada versi baru juga mendukung bentuk khusus seperti segitiga.
+
+Bentuk node sebaiknya tidak digunakan hanya untuk estetika. Dalam dokumentasi teknis, bentuk node harus memiliki makna. Misalnya, kotak untuk proses, belah ketupat untuk keputusan, lingkaran untuk start/end, database untuk penyimpanan data, dan segitiga untuk warning atau titik perhatian khusus.
+
+Dengan standar bentuk yang konsisten, pembaca akan lebih cepat memahami struktur proses, alur keputusan, dan titik kritis dalam diagram.
+
+---
+
+## A.2. Bentuk Node Dasar yang Sering Dipakai
+
+Berikut beberapa bentuk node yang umum digunakan dalam Mermaid flowchart.
+
+| Bentuk              | Syntax                            | Kegunaan Umum                       |
+| ------------------- | --------------------------------- | ----------------------------------- |
+| Kotak               | `A[Proses]`                       | Proses biasa                        |
+| Rounded rectangle   | `A(Proses)`                       | Proses ringan atau tahap umum       |
+| Stadium / terminal  | `A([Start / End])`                | Awal atau akhir proses              |
+| Subroutine          | `A[[Subroutine]]`                 | Prosedur atau fungsi terpisah       |
+| Database / cylinder | `A[(Database)]`                   | Data, log, historian, catatan batch |
+| Lingkaran           | `A((Circle))`                     | Titik awal, titik akhir, junction   |
+| Double circle       | `A(((Final)))`                    | Final state atau output utama       |
+| Diamond             | `A{Decision}`                     | Keputusan / decision point          |
+| Hexagon             | `A{{Preparation}}`                | Persiapan atau kondisi khusus       |
+| Parallelogram       | `A[/Input Output/]`               | Input/output                        |
+| Trapezoid           | `A[/Manual Process\]`             | Proses manual                       |
+| Segitiga            | `A@{ shape: tri, label: "Risk" }` | Warning, risk, atau titik perhatian |
+
+---
+
+## A.3. Contoh Semua Bentuk Node Dasar
+
+Gunakan contoh berikut untuk memahami bentuk-bentuk node utama.
+
+````mdx
+```mermaid id="advanced-node-shapes-01"
+flowchart TD
+    A[Kotak / Proses Biasa]
+    B(Rounded Rectangle)
+    C([Stadium / Terminal])
+    D[[Subroutine]]
+    E[(Database / Log Data)]
+    F((Lingkaran))
+    G{Decision / Keputusan}
+    H{{Hexagon / Preparation}}
+    I[/Input Output/]
+    J[\Input Output Alt\]
+    K[/Manual Process\]
+    L[\Manual Process Alt/]
+    M(((Double Circle / Final)))
+
+    A --> B --> C --> D --> E --> F --> G --> H --> I --> J --> K --> L --> M
+```
+````
+
+**Gambar A.1.** Contoh bentuk node dasar pada Mermaid flowchart.
+
+---
+
+## A.4. Node Lingkaran
+
+Node lingkaran ditulis dengan dua pasang tanda kurung:
+
+```mdx
+A((Teks))
+```
+
+Contoh:
+
+````mdx
+```mermaid id="advanced-circle-node-01"
+flowchart TD
+    A((Mulai))
+    B[Persiapan Media]
+    C[Inokulasi Starter]
+    D((Selesai))
+
+    A --> B --> C --> D
+```
+````
+
+**Gambar A.2.** Penggunaan node lingkaran untuk menandai awal dan akhir proses.
+
+Node lingkaran cocok digunakan untuk:
+
+| Penggunaan      | Contoh         |
+| --------------- | -------------- |
+| Start           | `Mulai`        |
+| End             | `Selesai`      |
+| Junction        | `Titik Gabung` |
+| Titik referensi | `Checkpoint`   |
+
+---
+
+## A.5. Node Diamond untuk Decision Point
+
+Node decision menggunakan tanda kurung kurawal:
+
+```mdx
+A{Pertanyaan?}
+```
+
+Contoh:
+
+````mdx
+```mermaid id="advanced-decision-node-01"
+flowchart TD
+    A[Mulai Pemeriksaan] --> B{Data Lengkap?}
+    B -->|Ya| C[Analisis Data]
+    B -->|Tidak| D[Lengkapi Data Lapangan]
+    D --> B
+    C --> E[Kesimpulan Awal]
+```
+````
+
+**Gambar A.3.** Node diamond digunakan untuk decision point.
+
+Dalam artikel teknis, node decision sangat penting karena menunjukkan titik berpikir kritis. Contoh pertanyaan yang cocok ditulis sebagai decision point:
+
+```text
+Apakah alarm tersedia?
+Apakah data trend cukup?
+Apakah pH masih dalam range?
+Apakah aerasi mencukupi?
+Apakah kontaminasi terindikasi?
+Apakah tindakan koreksi berhasil?
+```
+
+---
+
+## A.6. Node Database untuk Log, Historian, dan Catatan Batch
+
+Node database menggunakan bentuk cylinder:
+
+```mdx
+A[(Database)]
+```
+
+Contoh:
+
+````mdx
+```mermaid id="advanced-database-node-01"
+flowchart TD
+    A[Pengukuran pH Harian] --> B[(Log Batch Fermentasi)]
+    C[Pengukuran Bau dan Warna] --> B
+    D[Pengukuran Suhu] --> B
+    B --> E[Evaluasi Mutu Produk]
+```
+````
+
+**Gambar A.4.** Node database digunakan untuk catatan batch atau data monitoring.
+
+Untuk artikel engineering, bentuk database cocok untuk:
+
+| Konteks         | Contoh Node            |
+| --------------- | ---------------------- |
+| Fermentasi      | `Log Batch Fermentasi` |
+| Maintenance     | `Historian Data`       |
+| Instrumentasi   | `Alarm Log`            |
+| IoT             | `Sensor Database`      |
+| Quality Control | `QC Record`            |
+
+---
+
+## A.7. Node Segitiga untuk Warning atau Risiko
+
+Pada Mermaid versi baru, beberapa bentuk tambahan bisa ditulis dengan format:
+
+```mdx
+A@{ shape: tri, label: "Teks" }
+```
+
+Contoh:
+
+````mdx
+```mermaid id="advanced-triangle-node-01"
+flowchart TD
+    A[Proses Pembiakan] --> B{Kontrol Proses Memadai?}
+    B -->|Tidak| C@{ shape: tri, label: "Risiko Kontaminasi" }
+    B -->|Ya| D[Produk Lebih Stabil]
+```
+````
+
+**Gambar A.5.** Node segitiga dapat digunakan sebagai simbol warning atau risiko.
+
+Jika bentuk segitiga tidak tampil di project lokal, kemungkinan versi Mermaid yang digunakan belum mendukung expanded node shape. Dalam kondisi tersebut, gunakan alternatif yang lebih aman:
+
+````mdx
+```mermaid id="advanced-triangle-alternative-01"
+flowchart TD
+    A[Proses Pembiakan] --> B{Kontrol Proses Memadai?}
+    B -->|Tidak| C["⚠️ Risiko Kontaminasi"]
+    B -->|Ya| D[Produk Lebih Stabil]
+```
+````
+
+**Gambar A.6.** Alternatif penulisan warning jika bentuk segitiga belum didukung.
+
+---
+
+## A.8. Standar Makna Bentuk untuk Artikel Teknis
+
+Agar konsisten, gunakan standar bentuk berikut.
+
+| Bentuk            | Makna Teknis          | Contoh Penggunaan                      |
+| ----------------- | --------------------- | -------------------------------------- |
+| Kotak             | Proses atau aktivitas | `Persiapan Media`, `Inokulasi Starter` |
+| Rounded rectangle | Aktivitas umum        | `Pemeriksaan Awal`                     |
+| Stadium           | Start / end           | `Mulai`, `Selesai`                     |
+| Diamond           | Decision point        | `Metode Terkontrol?`                   |
+| Database          | Data / catatan        | `Log Batch`, `Historian`               |
+| Lingkaran         | Junction / checkpoint | `Checkpoint QC`                        |
+| Double circle     | Final output          | `Produk Siap Aplikasi`                 |
+| Hexagon           | Persiapan khusus      | `Sterilisasi Wadah`                    |
+| Parallelogram     | Input / output        | `Input Data`, `Output Laporan`         |
+| Trapezoid         | Proses manual         | `Pemeriksaan Visual`                   |
+| Segitiga          | Risiko / warning      | `Risiko Kontaminasi`                   |
+
+Standar ini penting agar diagram tidak membingungkan pembaca. Jika dalam satu artikel diamond berarti keputusan, maka jangan gunakan diamond untuk proses biasa.
+
+---
+
+## A.9. Kombinasi Bentuk dan Warna
+
+Bentuk node dapat dikombinasikan dengan warna. Ini sangat berguna untuk membedakan proses normal, decision point, risiko, dan output akhir.
+
+Contoh:
+
+````mdx
+```mermaid id="advanced-shape-color-01"
+flowchart TD
+    A((Mulai))
+    B[Persiapan Starter]
+    C[(Log Batch)]
+    D{Metode Terkontrol?}
+    E@{ shape: tri, label: "Risiko Kontaminasi" }
+    F[Bioreactor Terkontrol]
+    G(((Produk PGPM Stabil)))
+
+    A --> B
+    B --> C
+    C --> D
+    D -->|Tidak| E
+    D -->|Ya| F
+    F --> G
+
+    classDef start fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e,stroke-width:2px;
+    classDef process fill:#dcfce7,stroke:#16a34a,color:#14532d,stroke-width:2px;
+    classDef data fill:#f3e8ff,stroke:#9333ea,color:#581c87,stroke-width:2px;
+    classDef decision fill:#fef9c3,stroke:#ca8a04,color:#713f12,stroke-width:2px;
+    classDef risk fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px;
+    classDef output fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,stroke-width:3px;
+
+    class A start;
+    class B,F process;
+    class C data;
+    class D decision;
+    class E risk;
+    class G output;
+```
+````
+
+**Gambar A.7.** Kombinasi bentuk dan warna untuk memperjelas makna teknis diagram.
+
+---
+
+## A.10. Contoh Advanced untuk Pembiakan PGPM
+
+Contoh berikut menggunakan kombinasi node start, proses, data log, decision point, warning, dan output final.
+
+````mdx
+```mermaid id="advanced-pgpm-process-01"
+flowchart TD
+    A((Mulai))
+    B[Siapkan Starter Mikroba]
+    C[Siapkan Media Nutrisi]
+    D[Sanitasi Wadah]
+    E[(Catatan Batch Awal)]
+
+    F{Starter dan Media Sesuai?}
+    G@{ shape: tri, label: "Risiko Populasi Mikroba Tidak Stabil" }
+    H[Inokulasi ke Bioreactor]
+    I[Kontrol Aerasi / Kelembapan]
+    J[(Log Monitoring Harian)]
+    K{Parameter Stabil?}
+    L@{ shape: tri, label: "Risiko Kontaminasi / Fermentasi Gagal" }
+    M[Panen Produk]
+    N(((PGPM Siap Aplikasi)))
+
+    A --> B
+    A --> C
+    A --> D
+    B --> E
+    C --> E
+    D --> E
+    E --> F
+
+    F -->|Tidak| G
+    F -->|Ya| H
+
+    H --> I
+    I --> J
+    J --> K
+
+    K -->|Tidak| L
+    K -->|Ya| M
+    M --> N
+
+    classDef start fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e,stroke-width:2px;
+    classDef process fill:#dcfce7,stroke:#16a34a,color:#14532d,stroke-width:2px;
+    classDef data fill:#f3e8ff,stroke:#9333ea,color:#581c87,stroke-width:2px;
+    classDef decision fill:#fef9c3,stroke:#ca8a04,color:#713f12,stroke-width:2px;
+    classDef risk fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px;
+    classDef output fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,stroke-width:3px;
+
+    class A start;
+    class B,C,D,H,I,M process;
+    class E,J data;
+    class F,K decision;
+    class G,L risk;
+    class N output;
+```
+````
+
+**Gambar A.8.** Contoh advanced flowchart untuk pembiakan PGPM dengan kombinasi bentuk, warna, decision point, dan node risiko.
+
+---
+
+## A.11. Catatan Kompatibilitas
+
+Tidak semua bentuk node selalu didukung oleh semua versi Mermaid. Bentuk dasar seperti kotak, lingkaran, diamond, database, parallelogram, dan subroutine umumnya aman digunakan. Bentuk baru seperti segitiga dengan syntax `@{ shape: tri }` membutuhkan versi Mermaid yang lebih baru.
+
+Jika diagram tidak muncul, lakukan pengecekan berikut:
+
+| Gejala                           | Kemungkinan Penyebab                            | Solusi                              |
+| -------------------------------- | ----------------------------------------------- | ----------------------------------- |
+| Diagram error pada node segitiga | Versi Mermaid belum mendukung expanded shape    | Gunakan node kotak dengan ikon `⚠️` |
+| Diagram tampil sebagai teks      | Renderer MDX belum mengenali `language-mermaid` | Periksa `MDXComponents.tsx`         |
+| Warna tidak muncul               | `classDef` atau `class` salah tulis             | Periksa nama class dan node ID      |
+| Node terlalu panjang             | Label terlalu padat                             | Gunakan `<br/>`                     |
+| Diagram sulit dibaca             | Terlalu banyak node                             | Pecah menjadi beberapa diagram      |
+
+---
+
+## A.12. Rekomendasi Pemakaian Advanced Shapes
+
+Untuk beginner yang mulai masuk tahap advanced, gunakan bentuk node secara bertahap.
+
+## Tahap 1 — Bentuk Aman
+
+Gunakan dulu bentuk berikut:
+
+```text
+Kotak       : A[Proses]
+Lingkaran  : A((Start))
+Diamond    : A{Decision}
+Database   : A[(Data)]
+```
+
+## Tahap 2 — Bentuk Menengah
+
+Tambahkan:
+
+```text
+Subroutine     : A[[Prosedur]]
+Parallelogram  : A[/Input Output/]
+Double circle  : A(((Final)))
+```
+
+## Tahap 3 — Bentuk Advanced
+
+Gunakan jika renderer sudah mendukung:
+
+```text
+Triangle       : A@{ shape: tri, label: "Risk" }
+Flipped triangle: A@{ shape: flip-tri, label: "Extract" }
+```
+
+Jangan terlalu banyak memakai bentuk berbeda dalam satu diagram. Untuk artikel teknis, 4–6 bentuk sudah cukup.
+
+---
+
+## A.13. Kesimpulan Apendix
+
+Mermaid tidak hanya mendukung kotak dan panah. Mermaid juga dapat digunakan untuk membuat node berbentuk lingkaran, diamond, database, parallelogram, subroutine, hexagon, trapezoid, double circle, dan pada versi baru juga segitiga. Namun, bentuk node harus digunakan secara konsisten dan memiliki makna teknis.
+
+Untuk dokumentasi engineering, bentuk node yang paling penting adalah kotak untuk proses, diamond untuk keputusan, database untuk data, lingkaran untuk start/end, dan segitiga atau node warning untuk risiko. Jika dikombinasikan dengan warna, diagram Mermaid dapat menjadi alat visual yang kuat untuk menjelaskan proses, risiko, kontrol, dan output teknis.
 
 ---
 
