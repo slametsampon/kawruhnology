@@ -232,6 +232,20 @@ flowchart TD
     I --> O
     J --> O
     N --> P[PGPM Lebih Layak Digunakan]
+
+    classDef input fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e,stroke-width:2px;
+    classDef decision fill:#fef9c3,stroke:#ca8a04,color:#713f12,stroke-width:2px;
+    classDef bad fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:2px;
+    classDef good fill:#dcfce7,stroke:#16a34a,color:#14532d,stroke-width:2px;
+    classDef risk fill:#fecaca,stroke:#991b1b,color:#7f1d1d,stroke-width:3px;
+    classDef result fill:#dbeafe,stroke:#2563eb,color:#1e3a8a,stroke-width:3px;
+
+    class A,B,C,D input;
+    class E decision;
+    class F,H,I,J,O bad;
+    class G,K,L,M,N good;
+    class O risk;
+    class P result;
 ```
 
 **Keterangan gambar:** Kebutuhan PGPM yang meningkat mendorong petani memperbanyak mikroba sendiri. Bila proses dilakukan tanpa kontrol, risiko kontaminasi dan perubahan komposisi mikroba sangat tinggi. Bioreactor sederhana diperlukan agar proses pembiakan lebih tertib, higienis, dan sesuai karakter mikroba.
