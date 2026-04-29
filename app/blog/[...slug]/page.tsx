@@ -1,9 +1,5 @@
 // app/blog/[...slug]/page.tsx
 
-import 'css/prism.css';
-import 'katex/dist/katex.css';
-
-// import { MDXComponents } from '@/components/mdx/MDXComponents'
 import PageTitle from '@/components/PageTitle';
 import { MDXComponents } from '@/components/mdx/MDXComponents';
 import { MDXLayoutRenderer } from 'pliny/mdx-components';
