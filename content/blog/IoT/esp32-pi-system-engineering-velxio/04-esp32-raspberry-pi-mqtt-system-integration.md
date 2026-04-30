@@ -2,19 +2,18 @@
 title: README - C++ Firmware Engineering Foundations for ESP32
 date: '2026-04-08'
 tags:
-[
-'esp32',
-'firmware-foundation',
-'embedded-systems',
-'freertos-model',
-'memory-discipline',
-'layered-architecture',
-'communication-state',
-'reliability-thinking',
-]
+  [
+    'esp32',
+    'firmware-foundation',
+    'embedded-systems',
+    'freertos-model',
+    'memory-discipline',
+    'layered-architecture',
+    'communication-state',
+    'reliability-thinking',
+  ]
 draft: false
 summary: Foundation Track membangun mental model sistemik sebelum masuk disiplin firmware produksi pada ESP32 berbasis Arduino. Seri ini tidak mengajarkan sintaks C++, tetapi membedah realitas eksekusi FreeRTOS, stack per task, heap global, object lifetime, layering 3-level, state machine komunikasi, serta reliability thinking. Tujuannya adalah membentuk pola pikir engineer agar memahami interaksi concurrency, memory, dan komunikasi sebelum aturan produksi dikunci. Foundation menjawab “mengapa” di balik setiap keputusan arsitektur. Dengan pemahaman ini, transisi ke seri Production menjadi logis, terstruktur, dan tidak terasa sebagai pembatasan tanpa alasan teknis.
-
 ---
 
 Baik — ini artikel yang paling rawan “keluar jalur”, jadi saya jaga dengan ketat:
