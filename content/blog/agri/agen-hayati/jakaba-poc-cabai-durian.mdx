@@ -65,6 +65,10 @@ summary: JAKABA, POC, dan PGPM adalah input pertanian berbasis mikroba dan bahan
     - [5. Dosis Berlebihan Dapat Merusak Tanaman](#5-dosis-berlebihan-dapat-merusak-tanaman)
     - [6. Produk Berbau Busuk Tidak Layak Dipakai](#6-produk-berbau-busuk-tidak-layak-dipakai)
     - [7. Tetap Perlu Uji Kecil](#7-tetap-perlu-uji-kecil)
+  - [1.12 Realitas Teknis: MOL, JAKABA, dan POC Tidak Terstandar](#112-realitas-teknis-mol-jakaba-dan-poc-tidak-terstandar)
+    - [Masalah Uji Fitotoksik](#masalah-uji-fitotoksik)
+    - [Posisi Agribisnis yang Disarankan](#posisi-agribisnis-yang-disarankan)
+    - [Kesimpulan Teknis](#kesimpulan-teknis)
   - [Ringkasan Bab 1](#ringkasan-bab-1)
 - [2. Formulasi, Fermentasi, dan Penyimpanan JAKABA 10 Liter](#2-formulasi-fermentasi-dan-penyimpanan-jakaba-10-liter)
   - [2.1 Prinsip Dasar Pembuatan JAKABA](#21-prinsip-dasar-pembuatan-jakaba)
@@ -126,7 +130,7 @@ summary: JAKABA, POC, dan PGPM adalah input pertanian berbasis mikroba dan bahan
     - [3.8.7 Sistem Fermentasi MOL](#387-sistem-fermentasi-mol)
     - [Ilustrasi 3.6. Fermentasi MOL](#ilustrasi-36-fermentasi-mol)
     - [3.8.8 Kondisi Fermentasi MOL](#388-kondisi-fermentasi-mol)
-    - [3.8.9 Tanda MOL Berhasil](#389-tanda-mol-berhasil)
+    - [3.8.9 Tanda MOL Indikator awal fermentasi layak uji](#389-tanda-mol-indikator-awal-fermentasi-layak-uji)
     - [3.8.10 Tanda MOL Gagal](#3810-tanda-mol-gagal)
     - [3.8.11 Penyaringan dan Penyimpanan MOL](#3811-penyaringan-dan-penyimpanan-mol)
     - [Prosedur Penyaringan](#prosedur-penyaringan)
@@ -146,7 +150,7 @@ summary: JAKABA, POC, dan PGPM adalah input pertanian berbasis mikroba dan bahan
   - [3.10 Durasi Fermentasi POC](#310-durasi-fermentasi-poc)
     - [Tahapan Fermentasi](#tahapan-fermentasi)
     - [Catatan Khusus Bahan Ikan](#catatan-khusus-bahan-ikan)
-  - [3.11 Tanda POC Berhasil](#311-tanda-poc-berhasil)
+  - [3.11 Tanda POC Indikator awal fermentasi layak uji](#311-tanda-poc-indikator-awal-fermentasi-layak-uji)
     - [Uji Kematangan Sederhana](#uji-kematangan-sederhana)
   - [3.12 Tanda POC Gagal](#312-tanda-poc-gagal)
     - [Penyebab Umum Kegagalan](#penyebab-umum-kegagalan)
@@ -386,9 +390,45 @@ Dalam konteks tersebut, **JAKABA**, **POC**, **MOL**, dan **PGPM/PGPR** menjadi 
 
 JAKABA lebih tepat dilihat sebagai **biostimulan berbasis mikroba lokal**. POC lebih tepat dilihat sebagai **pupuk organik cair atau larutan hasil fermentasi bahan organik**. MOL lebih tepat dilihat sebagai **starter mikroba lokal atau bioaktivator**. Sementara PGPM/PGPR adalah istilah ilmiah untuk **kelompok mikroorganisme fungsional** yang mampu membantu pertumbuhan tanaman melalui berbagai mekanisme biologis.
 
+```mermaid id="diagram-risiko-mol-poc-jakaba-tidak-standar"
+flowchart TD
+    A[MOL / JAKABA / POC Tidak Terstandar] --> B[Komposisi Mikroba Tidak Diketahui]
+    A --> C[Populasi Mikroba Tidak Terukur]
+    A --> D[pH dan EC Tidak Stabil]
+    A --> E[Kandungan Hara Tidak Pasti]
+    A --> F[Mutu Antarbatch Berbeda]
+
+    B --> G[Risiko Mikroba Tidak Relevan atau Kontaminan]
+    C --> H[Efektivitas Tidak Konsisten]
+    D --> I[Risiko Akar Stres]
+    E --> J[Tidak Bisa Menggantikan Pupuk Utama]
+    F --> K[Setiap Batch Harus Diuji]
+
+    G --> L[Tidak Layak Jadi Input Utama Komersial]
+    H --> L
+    I --> L
+    J --> L
+    K --> L
+
+    L --> M[Hanya untuk Pendukung Terbatas]
+    L --> N[Utamakan Produk Mikroba Teknis]
+
+    classDef source fill:#fee2e2,stroke:#dc2626,color:#7f1d1d,stroke-width:3px;
+    classDef risk fill:#fff7ed,stroke:#ea580c,color:#7c2d12,stroke-width:2px;
+    classDef impact fill:#fef3c7,stroke:#d97706,color:#78350f,stroke-width:2px;
+    classDef decision fill:#dcfce7,stroke:#16a34a,color:#14532d,stroke-width:3px;
+
+    class A source;
+    class B,C,D,E,F,G,H,I,J,K risk;
+    class L impact;
+    class M,N decision;
+```
+
 Perbedaan ini penting karena kesalahan memahami fungsi produk dapat menyebabkan kesalahan aplikasi. Misalnya, JAKABA sering dianggap sebagai pengganti penuh pupuk NPK, padahal kekuatan utamanya bukan pada kandungan hara makro, melainkan pada aktivitas mikroba dan dukungan terhadap ekosistem rizosfer. Demikian juga POC tidak selalu kaya hara; kualitasnya sangat tergantung pada bahan baku, proses fermentasi, kematangan produk, dan cara penyimpanan. MOL juga sering disalahpahami sebagai pupuk cair, padahal fungsi utamanya adalah **membiakkan dan menyediakan mikroba aktif** untuk membantu fermentasi, dekomposisi, dan aktivasi bahan organik.
 
 Dalam konteks regulasi, pupuk organik, pupuk hayati, dan pembenah tanah di Indonesia termasuk kelompok produk yang memiliki pengaturan terkait pendaftaran, mutu, efektivitas, dan pengawasan. Permentan No. 1 Tahun 2019 mengatur pendaftaran pupuk organik, pupuk hayati, dan pembenah tanah, sedangkan Kepmentan No. 261/KPTS/SR.310/M/4/2019 memuat persyaratan teknis minimal untuk kelompok produk tersebut. Ini menunjukkan bahwa input berbasis organik dan mikroba tetap perlu dilihat secara teknis, bukan sekadar berdasarkan klaim manfaat. ([Database Peraturan | JDIH BPK][1])
+
+> **_Sikap teknis artikel ini adalah bahwa MOL, JAKABA, dan POC tidak terstandar tidak boleh dijadikan input utama dalam budidaya cabai komersial. Ketiganya dapat digunakan sebagai pendukung terbatas, tetapi hanya setelah melalui penyaringan mutu sederhana dan uji kecil. Untuk program utama mikroba, nutrisi, dan pengendalian OPT, lebih aman menggunakan produk teknis yang memiliki identitas, fungsi, dosis, mutu, dan masa simpan yang jelas._**
 
 <ResourceBox
   title="Artikel Terkait:"
@@ -1030,6 +1070,78 @@ Sebelum digunakan pada tanaman utama, JAKABA, POC, dan MOL harus diuji terlebih 
 
 ---
 
+## 1.12 Realitas Teknis: MOL, JAKABA, dan POC Tidak Terstandar
+
+MOL, JAKABA, dan POC buatan sendiri memiliki kelemahan utama, yaitu **tidak terstandar**. Artinya, komposisi mikroba, jumlah mikroba hidup, pH, EC, kandungan hara, stabilitas produk, keamanan akar, dan efektivitas lapangan tidak dapat dipastikan tanpa pengujian.
+
+Dalam praktik lapangan, banyak petani menilai keberhasilan fermentasi hanya dari aroma. Produk dianggap berhasil jika tidak berbau busuk, berbau asam segar, atau mirip tape. Indikator ini berguna sebagai penyaringan awal, tetapi **tidak cukup untuk menyatakan produk aman dan efektif**.
+
+```mdx
+Tidak bau busuk
+≠ pasti aman
+
+Tidak bau busuk
+≠ pasti mengandung mikroba baik
+
+Tidak bau busuk
+≠ pasti mengandung PGPM
+
+Tidak bau busuk
+≠ pasti cocok untuk akar cabai
+
+Tidak bau busuk
+≠ pasti layak diaplikasikan luas
+```
+
+Produk fermentasi yang tidak berbau busuk tetap dapat memiliki masalah, misalnya:
+
+- mikroba fungsionalnya rendah,
+- mikroba dominan tidak diketahui,
+- pH terlalu ekstrem,
+- EC atau salinitas terlalu tinggi,
+- mengandung metabolit yang menekan akar,
+- mengandung kontaminan yang tidak terdeteksi dari aroma,
+- mutu antarbatch tidak konsisten.
+
+Sebaliknya, produk yang berbau busuk, berbau bangkai, berbau amonia tajam, berbau telur busuk, berlendir hitam berlebihan, atau mengandung belatung harus langsung dianggap **tidak layak digunakan pada tanaman utama**.
+
+### Masalah Uji Fitotoksik
+
+Secara teknis, setiap batch MOL, JAKABA, dan POC perlu diuji kecil sebelum digunakan. Namun, kebutuhan uji ini juga menunjukkan kelemahan besar produk tidak terstandar.
+
+```mdx
+Jika setiap batch berbeda,
+maka setiap batch harus diuji.
+
+Jika setiap batch harus diuji,
+maka aplikasi tidak bisa langsung dilakukan.
+
+Jika aplikasi tidak bisa langsung dilakukan,
+sementara umur simpan pendek,
+maka produk tersebut tidak cocok menjadi input utama sistem produksi komersial.
+```
+
+Karena itu, dalam budidaya cabai komersial, MOL, JAKABA, dan POC tidak terstandar **tidak layak dijadikan tulang punggung program mikroba atau nutrisi**. Produk tersebut hanya dapat digunakan sebagai input pendukung terbatas setelah uji kecil, dan sebaiknya tidak diaplikasikan pada fase kritis seperti semai, pindah tanam awal, pembungaan, atau pemulihan tanaman stres berat.
+
+### Posisi Agribisnis yang Disarankan
+
+| Input                               | Posisi Teknis                               |
+| ----------------------------------- | ------------------------------------------- |
+| PGPM/PGPR teknis                    | Layak sebagai input utama mikroba           |
+| _Trichoderma_ teknis                | Layak untuk media, kompos, dan tanah        |
+| _Bacillus/Pseudomonas_ teknis       | Layak untuk akar dan rizosfer               |
+| _Beauveria_, _Metarhizium_, Bt, NPV | Layak untuk target hama tertentu            |
+| MOL tidak terstandar                | Bukan input utama, hanya pendukung terbatas |
+| JAKABA tidak terstandar             | Bukan input utama, hanya pendukung terbatas |
+| POC tidak terstandar                | Bukan pupuk utama, hanya tambahan terbatas  |
+| Produk viral tanpa data teknis      | Sebaiknya dihindari untuk aplikasi luas     |
+
+### Kesimpulan Teknis
+
+Dalam sistem cabai terpadu, input yang memiliki identitas mikroba, fungsi, dosis, masa simpan, dan mutu yang jelas lebih layak dijadikan dasar program. MOL, JAKABA, dan POC dapat digunakan sebagai bahan pendukung berbiaya rendah, tetapi tidak boleh menggantikan produk mikroba teknis, pupuk utama, agens hayati teruji, atau pestisida selektif.
+
+---
+
 ## Ringkasan Bab 1
 
 JAKABA, POC, MOL, dan PGPM saling berkaitan, tetapi tidak sama. **JAKABA** adalah fermentasi berbasis air cucian beras dan mikroba lokal yang lebih tepat diposisikan sebagai biostimulan rizosfer. **POC** adalah pupuk organik cair hasil fermentasi bahan organik yang berfungsi sebagai sumber hara tambahan dan bahan organik terlarut. **MOL** adalah Mikroorganisme Lokal yang berfungsi sebagai starter mikroba, bioaktivator, dan dekomposer untuk membantu pembuatan POC, kompos, bokashi, serta aktivasi bahan organik. **PGPM/PGPR** adalah kelompok mikroba fungsional yang dapat membantu pertumbuhan tanaman melalui mekanisme biologis seperti fiksasi nitrogen, pelarutan fosfat, produksi fitohormon, dan penekanan patogen.
@@ -1046,6 +1158,11 @@ Dalam sistem agribisnis, JAKABA, POC, dan MOL sebaiknya digunakan sebagai bagian
 ---
 
 # 2. Formulasi, Fermentasi, dan Penyimpanan JAKABA 10 Liter
+
+```mdx
+Catatan penting:
+Formula dalam bab ini disajikan sebagai contoh edukatif dan percobaan terbatas, bukan sebagai standar produksi komersial. Karena JAKABA, MOL, dan POC buatan sendiri tidak memiliki komposisi mikroba, CFU, pH, EC, kandungan hara, dan stabilitas yang terukur, produk hasil fermentasi tidak boleh langsung digunakan secara luas pada tanaman produksi. Setiap batch harus dianggap berbeda dan perlu diuji kecil terlebih dahulu.
+```
 
 ## 2.1 Prinsip Dasar Pembuatan JAKABA
 
@@ -1213,6 +1330,11 @@ Dalam sistem agribisnis, JAKABA, POC, dan MOL sebaiknya digunakan sebagai bagian
 ---
 
 # 3. Formulasi, Fermentasi, dan Penyimpanan POC 10 Liter
+
+```mdx
+Catatan penting:
+Formula dalam bab ini disajikan sebagai contoh edukatif dan percobaan terbatas, bukan sebagai standar produksi komersial. Karena JAKABA, MOL, dan POC buatan sendiri tidak memiliki komposisi mikroba, CFU, pH, EC, kandungan hara, dan stabilitas yang terukur, produk hasil fermentasi tidak boleh langsung digunakan secara luas pada tanaman produksi. Setiap batch harus dianggap berbeda dan perlu diuji kecil terlebih dahulu.
+```
 
 ## 3.1 Prinsip Dasar Pembuatan POC
 
@@ -1900,11 +2022,11 @@ Jika fermentor ditutup rapat tanpa pelepasan gas, tekanan dapat meningkat. Karen
 
 ---
 
-### 3.8.9 Tanda MOL Berhasil
+### 3.8.9 Tanda MOL Indikator awal fermentasi layak uji
 
 MOL yang berhasil memiliki tanda fermentasi yang stabil dan tidak busuk.
 
-| Parameter   | Ciri MOL Berhasil                                |
+| Parameter   | Ciri MOL Indikator awal fermentasi layak uji     |
 | ----------- | ------------------------------------------------ |
 | Aroma       | Asam-manis fermentasi, mirip tape                |
 | Warna       | Cokelat muda sampai cokelat tua                  |
@@ -2164,19 +2286,19 @@ POC dengan limbah ikan membutuhkan waktu lebih panjang. Jika pada hari ke-14 mas
 
 ---
 
-## 3.11 Tanda POC Berhasil
+## 3.11 Tanda POC Indikator awal fermentasi layak uji
 
-POC yang berhasil memiliki tanda fermentasi yang relatif stabil. Indikatornya bukan hanya warna, tetapi juga aroma, gas, endapan, dan respons tanaman.
+POC yang Indikator awal fermentasi layak uji memiliki tanda fermentasi yang relatif stabil. Indikatornya bukan hanya warna, tetapi juga aroma, gas, endapan, dan respons tanaman.
 
-| Parameter   | Ciri POC Berhasil                        |
-| ----------- | ---------------------------------------- |
-| Aroma       | Fermentasi seperti tape/asam segar       |
-| Bau busuk   | Tidak ada bau bangkai                    |
-| Warna       | Cokelat tua sampai kehitaman             |
-| Gas         | Mulai berkurang setelah fase aktif       |
-| Ampas       | Mengendap                                |
-| Belatung    | Tidak ada                                |
-| Uji tanaman | Tidak menyebabkan layu pada dosis rendah |
+| Parameter   | Ciri POC Indikator awal fermentasi layak uji |
+| ----------- | -------------------------------------------- |
+| Aroma       | Fermentasi seperti tape/asam segar           |
+| Bau busuk   | Tidak ada bau bangkai                        |
+| Warna       | Cokelat tua sampai kehitaman                 |
+| Gas         | Mulai berkurang setelah fase aktif           |
+| Ampas       | Mengendap                                    |
+| Belatung    | Tidak ada                                    |
+| Uji tanaman | Tidak menyebabkan layu pada dosis rendah     |
 
 Aroma POC yang baik biasanya asam, manis-asam, atau menyerupai tape. Pada POC ikan, aroma khas bahan ikan mungkin masih ada, tetapi tidak boleh berbau bangkai menyengat.
 
