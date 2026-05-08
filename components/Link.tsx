@@ -6,27 +6,31 @@ import type { AnchorHTMLAttributes } from 'react';
 
 type AnchorProps = AnchorHTMLAttributes<HTMLAnchorElement>;
 
-const CustomLink = ({ href, ...rest }: AnchorProps) => {
-  if (!href) {
-    return <a {...rest} />;
-  }
+const CustomLink = ({ href = '', children, ...rest }: AnchorProps) => {
+  const isInternalLink = href.startsWith('/');
+  const isAnchorLink = href.startsWith('#');
 
-  const isInternal = href.startsWith('/');
-  const isAnchor = href.startsWith('#');
-
-  if (isInternal) {
+  if (isInternalLink) {
     return (
       <Link href={href} {...rest}>
-        {rest.children}
+        {children}
       </Link>
     );
   }
 
-  if (isAnchor) {
-    return <a href={href} {...rest} />;
+  if (isAnchorLink) {
+    return (
+      <a href={href} {...rest}>
+        {children}
+      </a>
+    );
   }
 
-  return <a href={href} target="_blank" rel="noopener noreferrer" {...rest} />;
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" {...rest}>
+      {children}
+    </a>
+  );
 };
 
 export default CustomLink;
