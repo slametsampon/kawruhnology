@@ -1,0 +1,293 @@
+---
+title: Cara Menampilkan Gambar pada File MDX
+date: '2025-10-10'
+tags: ['mdx', 'nextjs', 'image', 'documentation']
+draft: false
+summary: 'Panduan singkat menampilkan gambar pada file MDX menggunakan path public Next.js, lengkap dengan template untuk artikel teknis, entertainment, promosi, dan galeri.'
+---
+
+- [Cara Menampilkan Gambar pada File MDX](#cara-menampilkan-gambar-pada-file-mdx)
+  - [1. Cara Paling Sederhana](#1-cara-paling-sederhana)
+  - [2. Template Gambar dengan Caption](#2-template-gambar-dengan-caption)
+  - [3. Template Artikel Teknis](#3-template-artikel-teknis)
+  - [4. Template Entertainment](#4-template-entertainment)
+  - [5. Template Promosi Produk](#5-template-promosi-produk)
+  - [6. Template Galeri Gambar](#6-template-galeri-gambar)
+  - [7. Template Before After](#7-template-before-after)
+  - [8. Template Gambar Bisa Diklik](#8-template-gambar-bisa-diklik)
+  - [9. Template Gambar dengan Sumber](#9-template-gambar-dengan-sumber)
+  - [10. Kesimpulan](#10-kesimpulan)
+
+---
+
+# Cara Menampilkan Gambar pada File MDX
+
+Dalam proyek berbasis **Next.js + MDX**, gambar yang berada di folder `public` dapat dipanggil langsung menggunakan path URL dari root website.
+
+Contoh struktur file:
+
+```txt
+public/
+└── static/
+    └── images/
+        └── agri/
+            └── design-mesin-arang-sekam.png
+```
+
+Maka gambar tersebut dapat dipanggil di file MDX seperti ini:
+
+```mdx
+<img
+  src="/static/images/agri/design-mesin-arang-sekam.png"
+  alt="Design mesin arang sekam"
+/>
+```
+
+> Jangan gunakan `import` untuk gambar dari folder `public`. Gunakan langsung path `/static/images/...`.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'Panduan Markdown',
+      href: '/blog/markdown/github-markdown-guide',
+    },
+    {
+      name: 'Panduan Penulisan Formula Matematika dalam Block Markdown',
+      href: '/blog/markdown/math-formula-guide',
+    },
+    {
+      name: 'Panduan Beginner: Menulis Mermaid Diagram untuk Dokumentasi Teknis',
+      href: '/blog/markdown/mermaid-diagram-guide',
+    },
+  ]}
+/>
+
+---
+
+## 1. Cara Paling Sederhana
+
+Gunakan syntax Markdown standar jika hanya ingin menampilkan gambar tanpa styling tambahan.
+
+```mdx
+![Design mesin arang sekam](/static/images/agri/design-mesin-arang-sekam.png)
+```
+
+Cocok untuk artikel sederhana, catatan ringan, atau dokumentasi cepat.
+
+---
+
+## 2. Template Gambar dengan Caption
+
+Gunakan `<figure>` dan `<figcaption>` jika gambar membutuhkan keterangan.
+
+```mdx
+<figure>
+  <img
+    src="/static/images/agri/design-mesin-arang-sekam.png"
+    alt="Design mesin arang sekam"
+  />
+  <figcaption>
+    Design mesin arang sekam untuk proses pembakaran biomassa pertanian.
+  </figcaption>
+</figure>
+```
+
+Format ini cocok untuk artikel teknis karena gambar memiliki konteks yang jelas.
+
+---
+
+## 3. Template Artikel Teknis
+
+Template ini cocok untuk dokumentasi engineering, safety, maintenance, pertanian, mesin, proyek, atau tutorial teknis.
+
+```mdx
+<figure className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
+  <img
+    src="/static/images/agri/design-mesin-arang-sekam.png"
+    alt="Design mesin arang sekam"
+    className="rounded-md"
+  />
+  <figcaption className="mt-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+    Gambar 1. Design mesin arang sekam dengan ruang bakar dan sistem cerobong.
+  </figcaption>
+  <small className="block text-xs text-slate-500 dark:text-slate-400">
+    Catatan teknis: pastikan dimensi, material, dan arah aliran udara
+    disesuaikan dengan kebutuhan lapangan.
+  </small>
+</figure>
+```
+
+Gunakan template ini jika gambar berfungsi sebagai bagian dari penjelasan teknis.
+
+---
+
+## 4. Template Entertainment
+
+Template ini cocok untuk artikel hiburan, review film, musik, game, event, atau lifestyle.
+
+```mdx
+<figure className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+  <img
+    src="/static/images/entertainment/contoh-event.png"
+    alt="Suasana event hiburan"
+    className="w-full rounded-t-xl"
+  />
+  <figcaption className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+    Momen terbaik dari acara ini adalah suasana panggung yang hidup dan
+    interaksi penonton yang sangat antusias.
+  </figcaption>
+</figure>
+```
+
+Template ini memberi tampilan lebih ringan, visual, dan cocok untuk artikel yang mengutamakan suasana.
+
+---
+
+## 5. Template Promosi Produk
+
+Template ini cocok untuk landing artikel, promosi produk, UMKM, katalog, atau penawaran jasa.
+
+```mdx
+<figure className="rounded-xl border border-cyan-200 bg-cyan-50 p-4 shadow-sm dark:border-cyan-800 dark:bg-slate-900">
+  <img
+    src="/static/images/products/contoh-produk.png"
+    alt="Produk unggulan"
+    className="rounded-lg"
+  />
+  <figcaption className="mt-3 text-base font-semibold text-slate-800 dark:text-slate-100">
+    Produk unggulan dengan desain praktis, efisien, dan siap digunakan untuk
+    kebutuhan harian.
+  </figcaption>
+  <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+    Cocok untuk pengguna yang membutuhkan solusi sederhana namun tetap
+    fungsional.
+  </p>
+</figure>
+```
+
+Template ini dapat digunakan untuk menonjolkan nilai jual produk atau layanan.
+
+---
+
+## 6. Template Galeri Gambar
+
+Gunakan grid jika ingin menampilkan beberapa gambar sekaligus.
+
+```mdx
+<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+  <figure>
+    <img
+      src="/static/images/agri/morphologi-cabai-rawit.png"
+      alt="Morphologi cabai rawit"
+    />
+    <figcaption>Morphologi cabai rawit.</figcaption>
+  </figure>
+
+  <figure>
+    <img
+      src="/static/images/agri/morphologi-cabai-besar.png"
+      alt="Morphologi cabai besar"
+    />
+    <figcaption>Morphologi cabai besar.</figcaption>
+  </figure>
+</div>
+```
+
+Template ini cocok untuk membandingkan dua gambar atau membuat galeri ringkas.
+
+---
+
+## 7. Template Before After
+
+Template ini cocok untuk membandingkan kondisi awal dan akhir.
+
+```mdx
+<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+  <figure>
+    <img
+      src="/static/images/agri/kondisi-awal.png"
+      alt="Kondisi awal"
+    />
+    <figcaption>
+      Kondisi awal sebelum dilakukan perbaikan atau perlakuan.
+    </figcaption>
+  </figure>
+
+  <figure>
+    <img
+      src="/static/images/agri/kondisi-setelah.png"
+      alt="Kondisi setelah perbaikan"
+    />
+    <figcaption>
+      Kondisi setelah dilakukan perbaikan, treatment, atau optimasi.
+    </figcaption>
+  </figure>
+</div>
+```
+
+Gunakan untuk artikel perbandingan, studi kasus, troubleshooting, atau laporan progres.
+
+---
+
+## 8. Template Gambar Bisa Diklik
+
+Jika ingin gambar bisa dibuka dalam ukuran penuh, bungkus gambar dengan `<a>`.
+
+```mdx
+<figure>
+  <a
+    href="/static/images/agri/design-mesin-arang-sekam.png"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    <img
+      src="/static/images/agri/design-mesin-arang-sekam.png"
+      alt="Design mesin arang sekam"
+    />
+  </a>
+  <figcaption>Klik gambar untuk membuka ukuran penuh di tab baru.</figcaption>
+</figure>
+```
+
+Template ini cocok untuk diagram, gambar teknis, layout mesin, wiring, P&ID, atau gambar detail lainnya.
+
+---
+
+## 9. Template Gambar dengan Sumber
+
+Gunakan `<small>` atau `<cite>` jika ingin menambahkan sumber gambar.
+
+```mdx
+<figure>
+  <img src="/static/images/agri/contoh-gambar.png" alt="Contoh gambar teknis" />
+  <figcaption>Contoh gambar teknis untuk menjelaskan konsep utama.</figcaption>
+  <small>
+    Sumber: dokumentasi internal / referensi teknis / observasi lapangan.
+  </small>
+</figure>
+```
+
+Ini penting untuk artikel riset, dokumentasi teknis, edukasi, atau artikel berbasis referensi.
+
+---
+
+## 10. Kesimpulan
+
+Untuk menampilkan gambar pada file MDX di Next.js, cara paling aman adalah meletakkan file gambar di folder `public`, lalu memanggilnya menggunakan path URL.
+
+Contoh:
+
+```mdx
+<img src="/static/images/agri/nama-file-gambar.png" alt="Deskripsi gambar" />
+```
+
+Gunakan:
+
+- `![alt](path)` untuk gambar sederhana
+- `<img />` untuk kontrol lebih fleksibel
+- `<figure>` dan `<figcaption>` untuk artikel teknis
+- `<div className="grid ...">` untuk galeri
+- `<a><img /></a>` jika gambar perlu dibuka ukuran penuh
+
+Dengan pola ini, gambar lebih mudah dikelola, artikel lebih rapi, dan file MDX tetap nyaman dibaca.
