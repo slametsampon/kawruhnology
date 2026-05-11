@@ -23,117 +23,115 @@ _Pendekatan utama untuk hidroponik dan fertigasi substrat, dengan catatan adapta
 
 - [**_Model Formula Hara Cabai Berbasis Laju Serapan dan Batas Jenuh Respons per Fase Organ_**](#model-formula-hara-cabai-berbasis-laju-serapan-dan-batas-jenuh-respons-per-fase-organ)
 - [1. Pendahuluan: Dari Rasio Akumulasi ke Formula Hara](#1-pendahuluan-dari-rasio-akumulasi-ke-formula-hara)
-- [N:P:K:Ca:Mg](#npkcamg)
 - [2. Asumsi Sistem Budidaya dan Batas Model](#2-asumsi-sistem-budidaya-dan-batas-model)
-  - [2.1 Asumsi Utama Artikel](#21-asumsi-utama-artikel)
-  - [2.2 Hidroponik dan Fertigasi Substrat sebagai Fokus Utama](#22-hidroponik-dan-fertigasi-substrat-sebagai-fokus-utama)
-  - [2.3 Posisi Lahan Tanah dalam Artikel Ini](#23-posisi-lahan-tanah-dalam-artikel-ini)
-  - [2.4 Rumus Pembeda Hidroponik dan Lahan](#24-rumus-pembeda-hidroponik-dan-lahan)
-  - [2.5 Batas Model](#25-batas-model)
+  - [2.1 Fokus Utama Artikel](#21-fokus-utama-artikel)
+  - [2.2 Hidroponik dan Fertigasi Substrat](#22-hidroponik-dan-fertigasi-substrat)
+  - [2.3 Posisi Lahan Tanah](#23-posisi-lahan-tanah)
+  - [2.4 Batas Model](#24-batas-model)
 - [3. Dasar Biologis dari Artikel Sebelumnya](#3-dasar-biologis-dari-artikel-sebelumnya)
-  - [3.1 Akumulasi Hara Tanaman](#31-akumulasi-hara-tanaman)
-  - [3.2 Laju Akumulasi Hara](#32-laju-akumulasi-hara)
-  - [3.3 Perubahan Akumulasi per Fase](#33-perubahan-akumulasi-per-fase)
+  - [3.1 Hara yang Tersimpan di Tanaman](#31-hara-yang-tersimpan-di-tanaman)
+  - [3.2 Kebutuhan Harian Tanaman](#32-kebutuhan-harian-tanaman)
+  - [3.3 Tambahan Hara per Fase](#33-tambahan-hara-per-fase)
   - [3.4 Rasio Hara per Fase](#34-rasio-hara-per-fase)
-  - [3.5 Fungsi Bab Ini dalam Artikel Kedua](#35-fungsi-bab-ini-dalam-artikel-kedua)
 - [4. Laju Serapan dan Kebutuhan Konsentrasi Hara](#4-laju-serapan-dan-kebutuhan-konsentrasi-hara)
-  - [4.1 Laju Akumulasi sebagai Kebutuhan Biologis](#41-laju-akumulasi-sebagai-kebutuhan-biologis)
-  - [4.2 Serapan Air sebagai Pembawa Hara](#42-serapan-air-sebagai-pembawa-hara)
-  - [4.3 Efisiensi Serapan sebagai Koreksi Akar dan Sistem](#43-efisiensi-serapan-sebagai-koreksi-akar-dan-sistem)
-  - [4.4 Contoh Makna Perhitungan](#44-contoh-makna-perhitungan)
-  - [4.5 Alur Konversi dari Laju Akumulasi ke Konsentrasi](#45-alur-konversi-dari-laju-akumulasi-ke-konsentrasi)
+  - [4.1 Kebutuhan Harian Tanaman](#41-kebutuhan-harian-tanaman)
+  - [4.2 Air sebagai Kendaraan Hara](#42-air-sebagai-kendaraan-hara)
+  - [4.3 Efisiensi Serapan Akar](#43-efisiensi-serapan-akar)
+  - [4.4 Mengubah Kebutuhan Harian Menjadi Konsentrasi Larutan](#44-mengubah-kebutuhan-harian-menjadi-konsentrasi-larutan)
+  - [4.5 Contoh Lapangan](#45-contoh-lapangan)
+  - [4.6 Alur Praktis Bab 4](#46-alur-praktis-bab-4)
 - [5. Respons Akar dan Batas Jenuh Hara](#5-respons-akar-dan-batas-jenuh-hara)
-  - [5.1 Serapan Hara Tidak Linear](#51-serapan-hara-tidak-linear)
-  - [5.2 Model Serapan Akar](#52-model-serapan-akar)
-  - [5.3 Respons Relatif terhadap Konsentrasi](#53-respons-relatif-terhadap-konsentrasi)
-  - [5.4 Titik Jenuh 90% dan 95%](#54-titik-jenuh-90-dan-95)
-  - [5.5 Batas Jenuh Bukan Titik Toksik](#55-batas-jenuh-bukan-titik-toksik)
+  - [5.1 Lebih Pekat Tidak Selalu Lebih Baik](#51-lebih-pekat-tidak-selalu-lebih-baik)
+  - [5.2 Cara Membaca Respons Akar](#52-cara-membaca-respons-akar)
+  - [5.3 Respons Relatif: Membaca Titik Efektif](#53-respons-relatif-membaca-titik-efektif)
+  - [5.4 Titik Jenuh Praktis](#54-titik-jenuh-praktis)
+  - [5.5 Batas Jenuh Bukan Keracunan](#55-batas-jenuh-bukan-keracunan)
   - [5.6 Visualisasi Zona Respons Hara](#56-visualisasi-zona-respons-hara)
 - [6. Batas Jenuh per Unsur dan Fase Organ](#6-batas-jenuh-per-unsur-dan-fase-organ)
-  - [6.1 Mengapa Batas Jenuh Harus Dibaca per Unsur?](#61-mengapa-batas-jenuh-harus-dibaca-per-unsur)
-  - [6.2 Nitrogen: Cukup untuk Tajuk, Tidak Berlebih pada Fase Buah](#62-nitrogen-cukup-untuk-tajuk-tidak-berlebih-pada-fase-buah)
-  - [6.3 Fosfor: Kecil secara Massa, Cepat Mencapai Zona Tidak Responsif](#63-fosfor-kecil-secara-massa-cepat-mencapai-zona-tidak-responsif)
-  - [6.4 Kalium: Penting untuk Buah, tetapi Bisa Menekan Ca dan Mg](#64-kalium-penting-untuk-buah-tetapi-bisa-menekan-ca-dan-mg)
-  - [6.5 Kalsium: Respons Dipengaruhi Transpirasi dan Distribusi Organ](#65-kalsium-respons-dipengaruhi-transpirasi-dan-distribusi-organ)
-  - [6.6 Magnesium: Penopang Fotosintesis saat Fase Buah](#66-magnesium-penopang-fotosintesis-saat-fase-buah)
-  - [6.7 Dominansi Organ pada Setiap Fase](#67-dominansi-organ-pada-setiap-fase)
-  - [6.8 Respons Fase-Organ terhadap Konsentrasi Hara](#68-respons-fase-organ-terhadap-konsentrasi-hara)
+  - [6.1 Tidak Semua Unsur Punya Respons yang Sama](#61-tidak-semua-unsur-punya-respons-yang-sama)
+  - [6.2 Nitrogen: Penting, tetapi Jangan Berlebihan](#62-nitrogen-penting-tetapi-jangan-berlebihan)
+  - [6.3 Fosfor: Sedikit, tetapi Tetap Penting](#63-fosfor-sedikit-tetapi-tetap-penting)
+  - [6.4 Kalium: Penting untuk Buah, tetapi Harus Seimbang](#64-kalium-penting-untuk-buah-tetapi-harus-seimbang)
+  - [6.5 Kalsium: Bukan Hanya Soal Ada di Larutan](#65-kalsium-bukan-hanya-soal-ada-di-larutan)
+  - [6.6 Magnesium: Menjaga Daun Tetap Menjadi Mesin Fotosintesis](#66-magnesium-menjaga-daun-tetap-menjadi-mesin-fotosintesis)
+  - [6.7 Titik Jenuh Juga Dipengaruhi Organ yang Sedang Dominan](#67-titik-jenuh-juga-dipengaruhi-organ-yang-sedang-dominan)
+  - [6.8 Respons Fase-Organ](#68-respons-fase-organ)
   - [6.9 Visualisasi Hubungan Unsur, Organ, dan Batas Jenuh](#69-visualisasi-hubungan-unsur-organ-dan-batas-jenuh)
   - [6.10 Kesimpulan Bab 6](#610-kesimpulan-bab-6)
 - [7. Formula Target Konsentrasi N, P, K, Ca, Mg](#7-formula-target-konsentrasi-n-p-k-ca-mg)
-  - [7.1 Posisi Formula Target dalam Model](#71-posisi-formula-target-dalam-model)
-  - [7.2 Makna Struktur `min` dan `max`](#72-makna-struktur-min-dan-max)
-  - [7.3 Tiga Zona Keputusan Formula](#73-tiga-zona-keputusan-formula)
-    - [Zona 1 — Defisiensi Potensial](#zona-1--defisiensi-potensial)
-    - [Zona 2 — Zona Respons Efektif](#zona-2--zona-respons-efektif)
-    - [Zona 3 — Zona Jenuh](#zona-3--zona-jenuh)
-  - [7.4 Formula Vektor per Fase](#74-formula-vektor-per-fase)
+  - [7.1 Inti Formula Target](#71-inti-formula-target)
+  - [7.2 Cara Membaca `min` dan `max`](#72-cara-membaca-min-dan-max)
+  - [7.3 Tiga Zona Keputusan](#73-tiga-zona-keputusan)
+    - [Zona 1 — Terlalu Rendah](#zona-1--terlalu-rendah)
+    - [Zona 2 — Zona Efektif](#zona-2--zona-efektif)
+    - [Zona 3 — Melewati Batas Jenuh](#zona-3--melewati-batas-jenuh)
+  - [7.4 Target Konsentrasi per Fase](#74-target-konsentrasi-per-fase)
   - [7.5 Formula Target Nitrogen](#75-formula-target-nitrogen)
   - [7.6 Formula Target Fosfor](#76-formula-target-fosfor)
   - [7.7 Formula Target Kalium](#77-formula-target-kalium)
   - [7.8 Formula Target Kalsium](#78-formula-target-kalsium)
   - [7.9 Formula Target Magnesium](#79-formula-target-magnesium)
-  - [7.10 Tabel Ringkas Formula per Unsur](#710-tabel-ringkas-formula-per-unsur)
-  - [7.11 Contoh Kerangka Perhitungan Satu Fase](#711-contoh-kerangka-perhitungan-satu-fase)
-  - [7.12 Apa yang Dilakukan Jika `C_req` Melebihi `C_sat`?](#712-apa-yang-dilakukan-jika-c_req-melebihi-c_sat)
-  - [7.13 Status Formula Target: Biologis, Bukan Resep Pupuk Final](#713-status-formula-target-biologis-bukan-resep-pupuk-final)
+  - [7.10 Ringkasan Formula per Unsur](#710-ringkasan-formula-per-unsur)
+  - [7.11 Contoh Perhitungan Satu Unsur](#711-contoh-perhitungan-satu-unsur)
+  - [7.12 Jika Kebutuhan Melebihi Batas Jenuh](#712-jika-kebutuhan-melebihi-batas-jenuh)
+  - [7.13 Status Formula Target](#713-status-formula-target)
   - [7.14 Diagram Keputusan Formula Target](#714-diagram-keputusan-formula-target)
   - [7.15 Kesimpulan Bab 7](#715-kesimpulan-bab-7)
 - [8. Koreksi Antagonisme dan Unsur Pembatas](#8-koreksi-antagonisme-dan-unsur-pembatas)
-  - [8.1 Mengapa Antagonisme Harus Masuk Model?](#81-mengapa-antagonisme-harus-masuk-model)
-  - [8.2 Antagonisme K terhadap Ca](#82-antagonisme-k-terhadap-ca)
-  - [8.3 Antagonisme K dan Ca terhadap Mg](#83-antagonisme-k-dan-ca-terhadap-mg)
-  - [8.4 Konsentrasi Terkoreksi Antagonisme](#84-konsentrasi-terkoreksi-antagonisme)
+  - [8.1 Mengapa Target Konsentrasi Perlu Dikoreksi?](#81-mengapa-target-konsentrasi-perlu-dikoreksi)
+  - [8.2 K Tinggi Bisa Menekan Ca](#82-k-tinggi-bisa-menekan-ca)
+  - [8.3 K dan Ca Bisa Menekan Mg](#83-k-dan-ca-bisa-menekan-mg)
+  - [8.4 Konsentrasi Efektif, Bukan Sekadar Konsentrasi di Tandon](#84-konsentrasi-efektif-bukan-sekadar-konsentrasi-di-tandon)
   - [8.5 Koreksi Tidak Selalu Berarti Menambah Unsur](#85-koreksi-tidak-selalu-berarti-menambah-unsur)
-  - [8.6 Respons Multi-Hara](#86-respons-multi-hara)
-- [8.7 Ilustrasi Unsur Pembatas](#87-ilustrasi-unsur-pembatas)
-- [8.8 Implikasi Praktis untuk Formula Hidroponik/Fertigasi](#88-implikasi-praktis-untuk-formula-hidroponikfertigasi)
-- [8.9 Kesimpulan Bab 8](#89-kesimpulan-bab-8)
+  - [8.6 Unsur Pembatas: Bottleneck Pertumbuhan](#86-unsur-pembatas-bottleneck-pertumbuhan)
+  - [8.7 Ilustrasi Unsur Pembatas](#87-ilustrasi-unsur-pembatas)
+  - [8.8 Alur Koreksi Setelah Target Konsentrasi](#88-alur-koreksi-setelah-target-konsentrasi)
+  - [8.9 Kesimpulan Bab 8](#89-kesimpulan-bab-8)
 - [9. Adaptasi untuk Lahan Tanah dan Strategi Pemupukan](#9-adaptasi-untuk-lahan-tanah-dan-strategi-pemupukan)
-  - [9.1 Perbedaan Kunci: Hidroponik vs Lahan Tanah](#91-perbedaan-kunci-hidroponik-vs-lahan-tanah)
+  - [9.1 Hidroponik dan Lahan Tanah Berbeda Cara Kerjanya](#91-hidroponik-dan-lahan-tanah-berbeda-cara-kerjanya)
   - [9.2 Kebutuhan Tanaman Tetap Sama](#92-kebutuhan-tanaman-tetap-sama)
   - [9.3 Formula Adaptasi untuk Lahan Tanah](#93-formula-adaptasi-untuk-lahan-tanah)
-  - [9.4 Makna Setiap Komponen Formula Lahan](#94-makna-setiap-komponen-formula-lahan)
-    - [9.4.1 Kenaikan Akumulasi Tanaman](#941-kenaikan-akumulasi-tanaman)
-    - [9.4.2 Suplai Hara Tersedia dari Tanah](#942-suplai-hara-tersedia-dari-tanah)
-    - [9.4.3 Mineralisasi Bahan Organik](#943-mineralisasi-bahan-organik)
-    - [9.4.4 Kontribusi Pupuk Organik](#944-kontribusi-pupuk-organik)
-    - [9.4.5 Kehilangan Hara](#945-kehilangan-hara)
-    - [9.4.6 Imobilisasi dan Fiksasi](#946-imobilisasi-dan-fiksasi)
-    - [9.4.7 Recovery Efficiency](#947-recovery-efficiency)
-  - [9.5 Parameter Tanah yang Wajib Masuk](#95-parameter-tanah-yang-wajib-masuk)
+  - [9.4 Cara Membaca Komponen Formula Lahan](#94-cara-membaca-komponen-formula-lahan)
+    - [Kebutuhan tanaman](#kebutuhan-tanaman-1)
+    - [Suplai tanah](#suplai-tanah-1)
+    - [Mineralisasi bahan organik](#mineralisasi-bahan-organik)
+    - [Kontribusi pupuk organik](#kontribusi-pupuk-organik)
+    - [Kehilangan hara](#kehilangan-hara)
+    - [Fiksasi dan imobilisasi](#fiksasi-dan-imobilisasi)
+    - [Efisiensi pupuk](#efisiensi-pupuk)
+  - [9.5 Data Tanah yang Wajib Masuk](#95-data-tanah-yang-wajib-masuk)
   - [9.6 Strategi Pemupukan Lahan Berdasarkan Fase](#96-strategi-pemupukan-lahan-berdasarkan-fase)
   - [9.7 Ilustrasi Adaptasi Hidroponik dan Lahan](#97-ilustrasi-adaptasi-hidroponik-dan-lahan)
   - [9.8 Batas Bab Ini](#98-batas-bab-ini)
   - [9.9 Kesimpulan Bab 9](#99-kesimpulan-bab-9)
 - [10. Validasi Formula dan Protokol Data Praktisi](#10-validasi-formula-dan-protokol-data-praktisi)
-  - [10.1 Mengapa Formula Harus Divalidasi?](#101-mengapa-formula-harus-divalidasi)
+  - [10.1 EC Penting, tetapi Tidak Cukup](#101-ec-penting-tetapi-tidak-cukup)
   - [10.2 Apa yang Harus Divalidasi?](#102-apa-yang-harus-divalidasi)
     - [10.2.1 Validasi Larutan](#1021-validasi-larutan)
     - [10.2.2 Validasi Akar](#1022-validasi-akar)
     - [10.2.3 Validasi Organ Tanaman](#1023-validasi-organ-tanaman)
-  - [10.3 Data Minimal untuk Hidroponik dan Fertigasi Substrat](#103-data-minimal-untuk-hidroponik-dan-fertigasi-substrat)
-  - [10.4 Protokol Pengamatan Praktis](#104-protokol-pengamatan-praktis)
+  - [10.3 Data Minimal untuk Praktisi Hidroponik/Fertigasi](#103-data-minimal-untuk-praktisi-hidroponikfertigasi)
+  - [10.4 Cara Menghitung Serapan Air](#104-cara-menghitung-serapan-air)
   - [10.5 Validasi Akumulasi Hara](#105-validasi-akumulasi-hara)
   - [10.6 Metrik Validasi](#106-metrik-validasi)
-    - [10.6.1 RMSE](#1061-rmse)
-    - [10.6.2 MAPE](#1062-mape)
-    - [10.6.3 Bias](#1063-bias)
-  - [10.7 Validasi Organ](#107-validasi-organ)
+    - [RMSE](#rmse)
+    - [MAPE](#mape)
+    - [Bias](#bias)
+  - [10.7 Validasi Organ secara Praktis](#107-validasi-organ-secara-praktis)
     - [Akar](#akar)
     - [Daun](#daun)
     - [Batang](#batang)
     - [Bunga](#bunga)
     - [Buah](#buah)
   - [10.8 Keputusan Validasi Formula](#108-keputusan-validasi-formula)
-  - [10.9 Parameter yang Paling Sering Perlu Dikoreksi](#109-parameter-yang-paling-sering-perlu-dikoreksi)
+  - [10.9 Jika Formula Tidak Sesuai, Apa yang Dicek?](#109-jika-formula-tidak-sesuai-apa-yang-dicek)
   - [10.10 Kesimpulan Bab 10](#1010-kesimpulan-bab-10)
 - [11. Kesimpulan](#11-kesimpulan)
-  - [11.1 Formula Utama Artikel](#111-formula-utama-artikel)
+  - [11.1 Rumus Utama Artikel](#111-rumus-utama-artikel)
   - [11.2 Fokus Utama: Hidroponik dan Fertigasi Substrat](#112-fokus-utama-hidroponik-dan-fertigasi-substrat)
   - [11.3 Batas Jenuh Mencegah Overfeeding](#113-batas-jenuh-mencegah-overfeeding)
-  - [11.4 Formula Harus Dikoreksi oleh Antagonisme](#114-formula-harus-dikoreksi-oleh-antagonisme)
-  - [11.5 Unsur Pembatas Menentukan Respons Fase](#115-unsur-pembatas-menentukan-respons-fase)
+  - [11.4 Formula Harus Seimbang, Bukan Sekadar Cukup](#114-formula-harus-seimbang-bukan-sekadar-cukup)
+  - [11.5 Cari Unsur Pembatas](#115-cari-unsur-pembatas)
   - [11.6 Validasi Wajib](#116-validasi-wajib)
   - [11.7 Alur Akhir Model](#117-alur-akhir-model)
   - [11.8 Kesimpulan Tajam](#118-kesimpulan-tajam)
@@ -142,7 +140,7 @@ _Pendekatan utama untuk hidroponik dan fertigasi substrat, dengan catatan adapta
 
 # 1. Pendahuluan: Dari Rasio Akumulasi ke Formula Hara
 
-Artikel sebelumnya telah membangun model untuk membaca kebutuhan relatif hara cabai dari sisi tanaman. Model tersebut dimulai dari berat kering organ, kemudian menghitung akumulasi hara, lalu menurunkannya menjadi rasio N:P:K:Ca:Mg per fase pertumbuhan.
+Artikel sebelumnya telah membahas cara membaca kebutuhan hara cabai dari sisi tanaman. Caranya bukan dimulai dari dosis pupuk atau angka ppm, tetapi dari apa yang benar-benar dibangun tanaman: akar, batang, daun, bunga, dan buah.
 
 <ResourceBox
   title="Artikel Terkait:"
@@ -170,59 +168,45 @@ Artikel sebelumnya telah membangun model untuk membaca kebutuhan relatif hara ca
   ]}
 />
 
-Alur artikel pertama dapat diringkas sebagai berikut:
+Artikel pertama menghasilkan rasio akumulasi hara:
 
 $$
 \boxed{
-Berat\ kering\ organ
+N:P:K:Ca:Mg
+}
+$$
+
+Rasio itu menjawab pertanyaan:
+
+> Pada fase tertentu, unsur apa yang paling banyak dibangun tanaman?
+
+Namun, rasio akumulasi belum otomatis menjadi formula nutrisi. Rasio akumulasi hanya menunjukkan **perbandingan hara yang masuk ke tubuh tanaman**, bukan langsung menunjukkan **berapa ppm atau mg/L yang harus diberikan di larutan**.
+
+Contoh:
+
+$$
+\boxed{
+N:P:K:Ca:Mg = 1:0.10:1.10:0.40:0.19
+}
+$$
+
+Artinya, pada fase tersebut tanaman mengakumulasi K sekitar 1,10 kali terhadap N, Ca sekitar 0,40 kali terhadap N, dan Mg sekitar 0,19 kali terhadap N.
+
+Tetapi angka itu **bukan berarti larutan nutrisi harus dibuat persis dengan rasio yang sama**.
+
+Agar menjadi formula hara, rasio tersebut harus diterjemahkan lagi menjadi:
+
+$$
+\boxed{
+tambahan\ hara\ per\ fase
 \rightarrow
-Akumulasi\ hara
+kebutuhan\ hara\ per\ hari
 \rightarrow
-Rasio\ N:P:K:Ca:Mg\ per\ fase
+target\ konsentrasi\ larutan
 }
 $$
 
-Rasio tersebut menjawab pertanyaan penting:
-
-> Pada fase tertentu, unsur mana yang lebih banyak diakumulasi tanaman?
-
-Namun rasio akumulasi belum sama dengan formula nutrisi. Rasio akumulasi hanya menjelaskan **perbandingan hara yang dibangun ke dalam tubuh tanaman**, bukan langsung menjelaskan **berapa konsentrasi hara yang harus disediakan dalam larutan**.
-
-Sebagai contoh, jika model menunjukkan rasio:
-
-$$
-\begin{aligned}
-N:P:K:Ca:Mg &= 1:0.10:1.10:0.40:0.19
-\end{aligned}
-$$
-
-maka maknanya adalah:
-
-> Pada fase tersebut, tanaman mengakumulasi K sekitar 1.10 kali terhadap N, Ca sekitar 0.40 kali terhadap N, dan seterusnya.
-
-Tetapi rasio itu belum otomatis berarti larutan harus dibuat dengan rasio yang sama. Untuk menjadi formula hara, rasio akumulasi harus diterjemahkan lebih lanjut melalui laju serapan, volume air yang diserap, efisiensi serapan, dan batas respons tanaman terhadap konsentrasi hara.
-
-Artikel kedua ini masuk ke tahap tersebut.
-
-Fokusnya adalah mengubah:
-
-$$
-\boxed{
-rasio\ akumulasi
-}
-$$
-
-menjadi:
-
-$$
-\boxed{
-target\ konsentrasi\ hara
-}
-$$
-
-khususnya untuk sistem yang hara utamanya dikendalikan melalui larutan, yaitu **hidroponik dan fertigasi substrat**.
-
-Secara ringkas, transisi model artikel kedua adalah:
+Dalam istilah teknis, alurnya adalah:
 
 $$
 \boxed{
@@ -234,44 +218,34 @@ C_{target,j,\phi}
 }
 $$
 
-Keterangan:
+Agar lebih mudah dibaca, gunakan arti lapangannya seperti ini:
 
-| Simbol              | Arti                                                |
-| ------------------- | --------------------------------------------------- |
-| $\Delta A_j$        | kenaikan akumulasi unsur $j$ selama fase            |
-| $\bar{U}_{j,\phi}$  | rata-rata laju akumulasi unsur $j$ pada fase $\phi$ |
-| $C_{target,j,\phi}$ | target konsentrasi unsur $j$ pada fase $\phi$       |
+| Istilah teknis      | Bahasa lapangan                                 |
+| ------------------- | ----------------------------------------------- |
+| $\Delta A_j$        | tambahan hara selama satu fase                  |
+| $\bar{U}_{j,\phi}$  | kebutuhan hara rata-rata per hari pada fase itu |
+| $C_{target,j,\phi}$ | target konsentrasi unsur dalam larutan          |
 
-Dengan:
-
-$$
-j=N,\ P,\ K,\ Ca,\ Mg
-$$
-
-dan:
-
-$$
-\phi=vegetatif,\ generatif,\ pembesaran\ buah,\ panen
-$$
-
-Artikel ini tidak lagi berhenti pada pertanyaan:
+Dengan demikian, artikel ini tidak berhenti pada pertanyaan:
 
 > Berapa rasio N:P:K:Ca:Mg yang diakumulasi tanaman?
 
-Tetapi bergerak ke pertanyaan berikutnya:
+Tetapi melangkah ke pertanyaan yang lebih praktis:
 
-> Berapa konsentrasi hara yang layak disediakan agar laju akumulasi tersebut tercapai, tanpa melewati batas jenuh respons tanaman?
+> Berapa konsentrasi hara yang layak diberikan agar kebutuhan tanaman terpenuhi, tanpa melewati batas jenuh respons?
 
-Alur artikel kedua dapat digambarkan sebagai berikut:
+Fokus artikel ini adalah **hidroponik dan fertigasi substrat**, karena pada dua sistem ini hara bisa dikendalikan lewat larutan.
+
+Alurnya:
 
 ```mermaid
 flowchart TD
-    A["Artikel 1<br/>Rasio akumulasi<br/>N:P:K:Ca:Mg"] --> B["Kenaikan akumulasi<br/>Delta A_j"]
-    B --> C["Laju akumulasi fase<br/>Ubar_j,phi"]
-    C --> D["Serapan air<br/>Q_w"]
-    D --> E["Konsentrasi kebutuhan<br/>C_req,j,phi"]
-    E --> F["Batas jenuh respons<br/>C_sat,j,phi"]
-    F --> G["Target konsentrasi<br/>C_target,j,phi"]
+    A["Artikel sebelumnya<br/>Rasio N:P:K:Ca:Mg"] --> B["Tambahan hara<br/>selama fase"]
+    B --> C["Kebutuhan hara<br/>per hari"]
+    C --> D["Serapan air<br/>per tanaman"]
+    D --> E["Kebutuhan konsentrasi<br/>larutan"]
+    E --> F["Batas jenuh<br/>respons tanaman"]
+    F --> G["Target konsentrasi<br/>hara"]
 
     classDef sumber fill:#E8F5E9,stroke:#2E7D32,stroke-width:1.5px,color:#1B5E20;
     classDef proses fill:#E3F2FD,stroke:#1565C0,stroke-width:1.5px,color:#0D47A1;
@@ -284,15 +258,9 @@ flowchart TD
     class G hasil;
 ```
 
-Tujuan akhirnya bukan mencari konsentrasi setinggi mungkin. Formula hara yang baik bukan formula yang paling pekat, tetapi formula yang:
+Pesan utamanya sederhana:
 
-1. memenuhi laju akumulasi tanaman,
-2. tetap berada di zona respons efektif,
-3. tidak melewati titik jenuh,
-4. tidak mendorong antagonisme antarhara,
-5. dan dapat divalidasi dari pertumbuhan organ tanaman.
-
-Dengan demikian, artikel ini membangun jembatan dari fisiologi tanaman menuju formula hara yang lebih terukur.
+> Formula nutrisi yang baik bukan yang paling pekat, tetapi yang cukup untuk kebutuhan tanaman dan masih berada di zona respons efektif.
 
 [**Kembali ke Atas**](#model-formula-hara-cabai-berbasis-laju-serapan-dan-batas-jenuh-respons-per-fase-organ)
 
@@ -300,17 +268,17 @@ Dengan demikian, artikel ini membangun jembatan dari fisiologi tanaman menuju fo
 
 # 2. Asumsi Sistem Budidaya dan Batas Model
 
-## 2.1 Asumsi Utama Artikel
+## 2.1 Fokus Utama Artikel
 
-Asumsi utama artikel ini adalah:
+Artikel ini difokuskan pada sistem budidaya yang haranya diberikan lewat larutan, yaitu:
 
 $$
 \boxed{
-model\ utama = hidroponik\ dan\ fertigasi\ substrat
+hidroponik\ dan\ fertigasi\ substrat
 }
 $$
 
-Yang termasuk dalam ruang lingkup utama artikel ini adalah sistem budidaya di mana hara diberikan terutama dalam bentuk larutan, misalnya:
+Contohnya:
 
 - NFT,
 - DFT,
@@ -318,7 +286,7 @@ Yang termasuk dalam ruang lingkup utama artikel ini adalah sistem budidaya di ma
 - fertigasi cocopeat,
 - fertigasi rockwool,
 - fertigasi perlite,
-- greenhouse substrat semi-inert.
+- greenhouse dengan media substrat.
 
 <figure>
   <img
@@ -331,31 +299,43 @@ Yang termasuk dalam ruang lingkup utama artikel ini adalah sistem budidaya di ma
   </figcaption>
 </figure>
 
-Pada sistem seperti ini, unsur hara dapat dikontrol melalui konsentrasi larutan. Karena itu, variabel seperti:
+Pada sistem seperti ini, hara dapat dikontrol lewat:
 
-$$
-C_{req,j,\phi}
-$$
+- konsentrasi larutan,
+- EC,
+- pH,
+- volume siraman,
+- frekuensi fertigasi,
+- drainase,
+- kualitas air baku,
+- dan kondisi akar.
 
-dan:
+<figure>
+  <img
+    src="/static/images/agri/penyerapan-hara-ke-organ.png"
+    alt="Penyerapan hara ke organ tanaman"
+  />
+  <figcaption>
+    Penyerapan hara dari akar menuju organ tanaman seperti batang, daun, bunga,
+    dan buah.
+  </figcaption>
+</figure>
 
-$$
-C_{target,j,\phi}
-$$
+Secara biologis, prosesnya tetap sama pada semua sistem budidaya:
 
-menjadi relevan.
-
-Dalam hidroponik dan fertigasi substrat, akar menyerap air dan hara dari larutan atau zona substrat yang dialiri larutan. Hara kemudian dibawa ke tajuk, daun melakukan fotosintesis, dan hasil fotosintesis digunakan untuk membentuk jaringan akar, batang, daun, bunga, dan buah.
-
-Secara biologis, proses dasarnya tetap sama:
+1. akar menyerap air dan unsur hara,
+2. air dan hara dibawa ke tajuk,
+3. daun menangkap cahaya dan CO₂,
+4. fotosintesis menghasilkan energi dan asimilat,
+5. asimilat digunakan untuk membentuk akar, batang, daun, bunga, dan buah.
 
 ```mermaid
 flowchart TD
-    A["Larutan / zona akar<br/>mengandung hara"] --> B["Akar menyerap<br/>air dan unsur hara"]
-    B --> C["Hara dan air<br/>bergerak ke tajuk"]
-    C --> D["Daun menerima<br/>air, hara, CO2, cahaya"]
+    A["Zona akar<br/>air + hara"] --> B["Akar menyerap<br/>air dan unsur hara"]
+    B --> C["Air dan hara<br/>naik ke tajuk"]
+    C --> D["Daun menerima<br/>cahaya + CO2"]
     D --> E["Fotosintesis"]
-    E --> F["Asimilat / energi kimia"]
+    E --> F["Energi + asimilat"]
     F --> G["Pembentukan organ<br/>akar, batang, daun,<br/>bunga, buah"]
 
     classDef akar fill:#E8F5E9,stroke:#2E7D32,stroke-width:1.5px,color:#1B5E20;
@@ -369,15 +349,23 @@ flowchart TD
     class F,G hasil;
 ```
 
-Dari sisi tanaman, kebutuhan biologis tetap dibaca dari akumulasi hara. Namun dari sisi sistem budidaya, cara menyediakan hara berbeda.
+Jadi, dari sisi tanaman, kebutuhan haranya tetap sama: tanaman butuh N, P, K, Ca, dan Mg untuk membangun jaringan.
 
-Karena artikel ini membahas formula konsentrasi, maka fokus utamanya adalah sistem yang memang dapat dikendalikan dengan konsentrasi larutan.
+Yang berbeda adalah **cara menyediakan hara**.
 
 ---
 
-## 2.2 Hidroponik dan Fertigasi Substrat sebagai Fokus Utama
+## 2.2 Hidroponik dan Fertigasi Substrat
 
-Pada hidroponik dan fertigasi substrat, hara disediakan dalam larutan. Karena itu, model formula hara dapat dinyatakan sebagai target konsentrasi:
+Pada hidroponik dan fertigasi substrat, hara tersedia dalam larutan. Karena itu, keluaran model ini adalah:
+
+$$
+\boxed{
+target\ konsentrasi\ hara
+}
+$$
+
+atau secara teknis:
 
 $$
 \boxed{
@@ -385,145 +373,104 @@ C_{target,j,\phi}
 }
 $$
 
-Keterangan:
+Agar tidak membingungkan, baca simbol tersebut sebagai:
 
-| Simbol              | Arti                                          |
-| ------------------- | --------------------------------------------- |
-| $C_{target,j,\phi}$ | target konsentrasi unsur $j$ pada fase $\phi$ |
-| $j$                 | N, P, K, Ca, Mg                               |
-| $\phi$              | fase pertumbuhan                              |
+> target konsentrasi unsur hara tertentu pada fase tertentu.
 
-Dalam sistem ini, strategi suplai hara dikendalikan melalui:
+Contoh makna lapangan:
 
-- konsentrasi unsur,
-- EC,
-- pH,
-- volume larutan yang diberikan,
-- frekuensi fertigasi,
-- drainase,
-- kualitas air baku,
-- dan kondisi akar.
+| Unsur | Pertanyaan praktis                          |
+| ----- | ------------------------------------------- |
+| N     | berapa target N pada fase ini?              |
+| P     | berapa target P yang cukup, tidak berlebih? |
+| K     | berapa target K tanpa menekan Ca dan Mg?    |
+| Ca    | berapa target Ca yang masih efektif?        |
+| Mg    | berapa target Mg agar daun tetap aktif?     |
 
-Model hidroponik/fertigasi berangkat dari prinsip:
+Pada hidroponik, pertanyaannya bukan hanya:
+
+> Berapa gram pupuk dimasukkan?
+
+Tetapi lebih tepat:
+
+> Berapa konsentrasi unsur yang perlu tersedia dalam larutan agar tanaman bisa menyerap sesuai kebutuhannya?
+
+Prinsip sederhananya:
 
 $$
 \boxed{
-hara\ yang\ masuk\ ke\ tanaman
+hara\ yang\ masuk
 \approx
-konsentrasi\ hara
+konsentrasi\ larutan
 \times
-volume\ air\ yang\ diserap
+air\ yang\ diserap
 \times
-efisiensi\ serapan
+efisiensi\ akar
 }
 $$
 
-Maka, jika tanaman memerlukan laju akumulasi unsur tertentu sebesar:
+Dengan bahasa lapangan:
 
-$$
-\bar{U}_{j,\phi}
-$$
-
-target konsentrasi harus mempertimbangkan serapan air:
-
-$$
-\bar{Q}_{w,\phi}
-$$
-
-dan efisiensi serapan:
-
-$$
-\eta_{j,\phi}
-$$
-
-Ini berbeda dari pendekatan dosis pupuk konvensional. Pada hidroponik, pertanyaannya bukan hanya:
-
-> Berapa gram pupuk diberikan?
-
-Tetapi:
-
-> Berapa konsentrasi unsur yang perlu tersedia dalam larutan agar tanaman dapat mencapai laju akumulasi hara tertentu?
-
-Itulah alasan artikel ini menggunakan satuan seperti:
-
-$$
-mg/L
-$$
-
-atau:
-
-$$
-mmol/L
-$$
-
-untuk model konsentrasi.
+> Kalau tanaman minum banyak, konsentrasi bisa lebih rendah. Kalau tanaman minum sedikit, konsentrasi yang sama belum tentu cukup.
 
 ---
 
-## 2.3 Posisi Lahan Tanah dalam Artikel Ini
+## 2.3 Posisi Lahan Tanah
 
-Lahan tanah tidak menjadi fokus utama artikel ini. Lahan tanah hanya dibahas sebagai **adaptasi**, karena tanah bukan media inert dan tidak dapat diperlakukan seperti larutan hidroponik.
+Lahan tanah **bukan fokus utama artikel ini**. Lahan hanya dibahas sebagai pembanding dan adaptasi.
 
-Pada lahan tanah, hara tidak hanya berada di larutan tanah. Hara juga berada dalam:
+Alasannya sederhana: tanah bukan larutan hidroponik.
 
-- koloid tanah,
-- bahan organik,
-- mineral tanah,
-- kompleks jerapan,
-- biomassa mikroba,
-- dan bentuk yang dapat terfiksasi atau tercuci.
+Di tanah, hara bisa:
 
-Karena itu, model hidroponik:
+- tersedia di larutan tanah,
+- menempel di koloid tanah,
+- terikat bahan organik,
+- terfiksasi mineral,
+- dilepas oleh mikroba,
+- tercuci air,
+- atau tertahan karena pH tidak sesuai.
 
-$$
-\boxed{
-C_{target,j,\phi}
-}
-$$
+Karena itu, model konsentrasi larutan tidak bisa langsung diterapkan ke lahan tanah.
 
-tidak bisa langsung diterapkan pada lahan tanah.
-
-Untuk lahan tanah, output model lebih tepat berupa:
+Untuk hidroponik, keluaran model adalah:
 
 $$
 \boxed{
-F_{j,\phi}
+C_{target}
 }
 $$
 
-Keterangan:
+yaitu target konsentrasi larutan.
 
-| Simbol       | Arti                                       |
-| ------------ | ------------------------------------------ |
-| $F_{j,\phi}$ | kebutuhan pupuk unsur $j$ pada fase $\phi$ |
+Untuk lahan tanah, keluaran model lebih cocok berupa:
 
-Dalam konteks lahan, strategi suplai hara harus mempertimbangkan kesuburan tanah, antara lain:
+$$
+\boxed{
+F_{pupuk}
+}
+$$
 
-- pH tanah,
-- C-organik,
-- N tersedia,
-- P tersedia,
-- K-dd,
-- Ca-dd,
-- Mg-dd,
-- KTK/CEC,
-- tekstur,
-- kelembapan,
-- dan salinitas tanah.
+yaitu kebutuhan pupuk yang sudah dikoreksi oleh kondisi tanah.
 
-Dengan demikian, hubungan hidroponik dan lahan dapat diringkas sebagai berikut:
+Ringkasnya:
+
+| Sistem                          | Output utama                     | Bahasa praktis                     |
+| ------------------------------- | -------------------------------- | ---------------------------------- |
+| Hidroponik / fertigasi substrat | target konsentrasi larutan       | berapa mg/L atau ppm unsur         |
+| Lahan tanah                     | kebutuhan pupuk terkoreksi tanah | berapa pupuk setelah melihat tanah |
 
 ```mermaid
 flowchart TD
-    A["Kebutuhan biologis tanaman<br/>A_j, U_j, Delta A_j"] --> B{"Sistem budidaya"}
+    A["Kebutuhan tanaman<br/>tetap sama"] --> B{"Sistem budidaya"}
 
     B --> C["Hidroponik /<br/>fertigasi substrat"]
-    C --> D["Hara dikontrol sebagai<br/>konsentrasi larutan"]
-    D --> E["Output model:<br/>C_target,j,phi"]
+    C --> D["Hara dikontrol<br/>melalui larutan"]
+    D --> E["Output:<br/>target konsentrasi"]
 
     B --> F["Lahan tanah"]
     F --> G["Hara dipengaruhi<br/>kesuburan tanah"]
-    G --> H["Output model:<br/>F_j,phi"]
+    G --> H["Output:<br/>strategi pupuk"]
 
     classDef pusat fill:#E8F5E9,stroke:#2E7D32,stroke-width:1.5px,color:#1B5E20;
     classDef pilih fill:#FFF8E1,stroke:#F9A825,stroke-width:1.5px,color:#5D4037;
@@ -536,71 +483,38 @@ flowchart TD
     class F,G,H tanah;
 ```
 
-Poin pentingnya:
+Poin penting:
 
 $$
 \boxed{
 kebutuhan\ tanaman\ sama,
-strategi\ suplai\ hara\ berbeda
+cara\ menyediakan\ hara\ berbeda
 }
 $$
-
-Tanaman tetap menyerap N, P, K, Ca, dan Mg untuk membentuk jaringan. Tetapi cara menyediakan hara pada hidroponik berbeda dari lahan tanah.
 
 ---
 
-## 2.4 Rumus Pembeda Hidroponik dan Lahan
+## 2.4 Batas Model
 
-Untuk hidroponik dan fertigasi substrat, output utama artikel ini adalah:
+Agar artikel ini tidak melebar, batasnya harus jelas.
 
-$$
-\boxed{
-C_{target,j,\phi}
-}
-$$
+| Komponen           | Posisi dalam artikel            |
+| ------------------ | ------------------------------- |
+| Hidroponik         | fokus utama                     |
+| Fertigasi substrat | fokus utama                     |
+| Lahan tanah        | adaptasi, bukan fokus utama     |
+| Berat kering organ | dirujuk dari artikel sebelumnya |
+| Rasio akumulasi    | titik awal                      |
+| Kebutuhan harian   | dasar formula                   |
+| Target konsentrasi | output utama                    |
+| Dosis pupuk lahan  | dibahas terbatas                |
+| Kesuburan tanah    | syarat adaptasi lahan           |
 
-Artinya, model berusaha menentukan target konsentrasi unsur hara dalam larutan pada fase tertentu.
-
-Sedangkan untuk lahan tanah, outputnya bukan konsentrasi larutan, tetapi kebutuhan pupuk fase:
-
-$$
-\boxed{
-F_{j,\phi}
-}
-$$
-
-Secara konseptual:
-
-| Sistem                          | Output model        | Makna                               |
-| ------------------------------- | ------------------- | ----------------------------------- |
-| Hidroponik / fertigasi substrat | $C_{target,j,\phi}$ | target konsentrasi unsur di larutan |
-| Lahan tanah                     | $F_{j,\phi}$        | kebutuhan pupuk terkoreksi tanah    |
-
-Karena itu, artikel ini harus dibaca dengan batas berikut:
+Batas paling penting:
 
 > Artikel ini bukan artikel rekomendasi pupuk lahan. Artikel ini adalah model konsentrasi hara untuk sistem yang dikontrol melalui larutan.
 
-Lahan tanah tetap penting, tetapi membutuhkan submodel tersendiri yang memperhitungkan kesuburan tanah dan efisiensi pemupukan.
-
----
-
-## 2.5 Batas Model
-
-Batas model artikel ini adalah sebagai berikut:
-
-| Komponen           | Status dalam artikel                  |
-| ------------------ | ------------------------------------- |
-| Hidroponik         | fokus utama                           |
-| Fertigasi substrat | fokus utama                           |
-| Lahan tanah        | adaptasi, bukan fokus utama           |
-| Berat kering organ | dirujuk dari artikel pertama          |
-| Rasio akumulasi    | titik awal                            |
-| Laju akumulasi     | dasar formula                         |
-| Konsentrasi target | output utama                          |
-| Dosis pupuk lahan  | hanya dibahas sebagai adaptasi        |
-| Kesuburan tanah    | dibahas sebagai syarat adaptasi lahan |
-
-Dengan batas ini, artikel menjadi lebih tajam. Pembaca tidak dibawa ke dua model yang berbeda secara bersamaan. Model utama tetap konsentrasi hara untuk hidroponik/fertigasi, sedangkan lahan tanah ditempatkan sebagai konteks pembanding dan adaptasi.
+Dengan batas ini, artikel tetap tajam dan tidak mencampur dua dunia yang berbeda: **formula larutan** dan **rekomendasi pupuk tanah**.
 
 [**Kembali ke Atas**](#model-formula-hara-cabai-berbasis-laju-serapan-dan-batas-jenuh-respons-per-fase-organ)
 
@@ -608,15 +522,11 @@ Dengan batas ini, artikel menjadi lebih tajam. Pembaca tidak dibawa ke dua model
 
 # 3. Dasar Biologis dari Artikel Sebelumnya
 
-Artikel kedua ini tidak mengulang seluruh pembahasan model berat kering. Artikel pertama sudah membangun dasar bahwa kebutuhan relatif hara tanaman dapat dihitung dari berat kering organ dan kadar hara jaringan.
+Artikel ini tidak mengulang seluruh model berat kering. Yang dibawa hanya intinya: tanaman membangun organ, organ menyimpan hara, lalu dari situ kita membaca kebutuhan harian.
 
-Yang perlu dibawa ke artikel kedua hanya empat persamaan inti.
+## 3.1 Hara yang Tersimpan di Tanaman
 
----
-
-## 3.1 Akumulasi Hara Tanaman
-
-Persamaan dasar akumulasi hara adalah:
+Pada artikel sebelumnya, akumulasi hara dihitung dari:
 
 $$
 \boxed{
@@ -624,25 +534,34 @@ A_j(t)=\sum_o W_o(t)C_{j,o}(t)
 }
 $$
 
-Keterangan:
+Untuk pembaca lapangan, rumus itu cukup dibaca seperti ini:
 
-| Simbol       | Arti                                   |
-| ------------ | -------------------------------------- |
-| $A_j(t)$     | akumulasi unsur hara $j$ pada umur $t$ |
-| $W_o(t)$     | berat kering organ $o$ pada umur $t$   |
-| $C_{j,o}(t)$ | kadar unsur hara $j$ pada organ $o$    |
-| $o$          | akar, batang, daun, bunga, buah        |
-| $j$          | N, P, K, Ca, Mg                        |
+$$
+\boxed{
+\text{hara tersimpan} = \text{berat kering organ} \times \text{kadar hara organ}
+}
+$$
 
-Persamaan ini menunjukkan bahwa kebutuhan hara tanaman tidak dimulai dari larutan, tetapi dari jaringan tanaman yang sedang dibangun.
+Artinya:
 
-Jika tanaman membangun daun, maka hara yang masuk ke daun harus dihitung. Jika tanaman membangun buah, maka hara yang masuk ke buah juga harus dihitung. Dengan demikian, akumulasi hara adalah pembacaan biologis atas proses pembentukan organ.
+- hara di daun dihitung dari berat kering daun dan kadar hara daun,
+- hara di batang dihitung dari berat kering batang dan kadar hara batang,
+- hara di buah dihitung dari berat kering buah dan kadar hara buah,
+- begitu juga akar dan bunga.
+
+Jadi kebutuhan hara tidak ditebak dari pupuk yang diberikan, tetapi dibaca dari hara yang benar-benar masuk ke tubuh tanaman.
 
 ---
 
-## 3.2 Laju Akumulasi Hara
+## 3.2 Kebutuhan Harian Tanaman
 
-Akumulasi total hanya menunjukkan berapa hara yang sudah tersimpan sampai umur tertentu. Untuk menyusun formula hara, yang lebih penting adalah laju akumulasi:
+Total hara tersimpan belum cukup untuk membuat formula nutrisi.
+
+Yang lebih penting adalah:
+
+> Berapa hara yang sedang dibutuhkan tanaman per hari?
+
+Secara teknis, ini disebut laju akumulasi:
 
 $$
 \boxed{
@@ -650,32 +569,33 @@ U_j(t)=\frac{dA_j(t)}{dt}
 }
 $$
 
-Keterangan:
-
-| Simbol   | Arti                                   |
-| -------- | -------------------------------------- |
-| $U_j(t)$ | laju akumulasi unsur $j$ pada umur $t$ |
-| $A_j(t)$ | akumulasi unsur $j$ pada umur $t$      |
-
-Satuan umum:
+Namun untuk praktisi, cukup pahami begini:
 
 $$
 \boxed{
-mg/tanaman/hari
+\text{kebutuhan harian} = \text{pertambahan hara tanaman per hari}
 }
 $$
 
-Laju akumulasi menjawab pertanyaan:
+Contoh sederhana:
 
-> Berapa banyak unsur hara yang sedang ditambahkan ke dalam tanaman per hari?
+Jika dalam 20 hari tanaman menambah K sebesar 1.000 mg per tanaman, maka kebutuhan rata-rata K adalah:
 
-Inilah titik awal artikel kedua. Formula nutrisi tidak disusun dari total akumulasi, tetapi dari laju akumulasi.
+$$
+\boxed{
+1000/20=50\ mg/tanaman/hari
+}
+$$
+
+Angka seperti inilah yang akan diterjemahkan menjadi target konsentrasi larutan.
 
 ---
 
-## 3.3 Perubahan Akumulasi per Fase
+## 3.3 Tambahan Hara per Fase
 
-Untuk membaca kebutuhan hara per fase, digunakan perubahan akumulasi antara awal dan akhir fase:
+Untuk menghitung kebutuhan per fase, kita cukup membandingkan hara di awal dan akhir fase.
+
+Secara teknis:
 
 $$
 \boxed{
@@ -683,42 +603,42 @@ $$
 }
 $$
 
-Keterangan:
-
-| Simbol       | Arti                                     |
-| ------------ | ---------------------------------------- |
-| $\Delta A_j$ | kenaikan akumulasi unsur $j$ selama fase |
-| $A_j(t_1)$   | akumulasi unsur $j$ pada awal fase       |
-| $A_j(t_2)$   | akumulasi unsur $j$ pada akhir fase      |
-
-Dari sini dapat dihitung rata-rata laju akumulasi fase:
+Dalam bahasa lapangan:
 
 $$
-\boxed{
-\begin{aligned}
-\bar{U}_{j,\phi} &= \frac{\Delta A_j}{t_2-t_1}
-\end{aligned}
+{
+	\text{tambahan hara} = 	ext{hara akhir fase} - 	ext{hara awal fase}
 }
 $$
 
-atau:
+Misalnya:
+
+- awal fase pembesaran buah: tanaman menyimpan 3.000 mg K,
+- akhir fase pembesaran buah: tanaman menyimpan 5.000 mg K.
+
+Maka tambahan K selama fase itu:
 
 $$
 \boxed{
-\begin{aligned}
-\bar{U}_{j,\phi} &= \frac{A_j(t_2)-A_j(t_1)}
-{t_2-t_1}
-\end{aligned}
+5000-3000=2000\ mg/tanaman
 }
 $$
 
-Persamaan ini penting karena formula hara per fase harus mengikuti kebutuhan fase, bukan kebutuhan rata-rata seluruh umur tanaman.
+Jika fase berlangsung 40 hari, maka kebutuhan rata-rata:
+
+$$
+\boxed{
+2000/40=50\ mg/tanaman/hari
+}
+$$
+
+Inilah titik awal formula hara.
 
 ---
 
 ## 3.4 Rasio Hara per Fase
 
-Artikel sebelumnya menghasilkan rasio hara per fase sebagai:
+Artikel sebelumnya menghasilkan rasio:
 
 $$
 \boxed{
@@ -727,32 +647,21 @@ Rasio\ fase=
 }
 $$
 
-atau dalam bentuk lengkap:
+Dalam bahasa sederhana:
 
-$$
-\boxed{
-Rasio\ fase=
-\Delta A_N:
-\Delta A_P:
-\Delta A_K:
-\Delta A_{Ca}:
-\Delta A_{Mg}
-}
-$$
+> Rasio fase menunjukkan unsur mana yang paling banyak ditambahkan tanaman selama fase tersebut.
 
-Rasio ini menunjukkan struktur kebutuhan relatif tanaman pada fase tersebut.
-
-Namun artikel kedua tidak berhenti pada rasio. Artikel kedua menggunakan rasio dan laju akumulasi sebagai dasar untuk membangun formula konsentrasi.
+Namun artikel ini tidak berhenti pada rasio. Rasio tersebut akan diterjemahkan menjadi target konsentrasi larutan.
 
 Alurnya:
 
 ```mermaid
 flowchart TD
-    A["Akumulasi hara<br/>A_j(t)"] --> B["Perubahan fase<br/>Delta A_j"]
-    B --> C["Rasio fase<br/>Delta N:Delta P:Delta K:<br/>Delta Ca:Delta Mg"]
-    B --> D["Laju fase<br/>Ubar_j,phi"]
-    D --> E["Konsentrasi kebutuhan<br/>C_req,j,phi"]
-    E --> F["Target konsentrasi<br/>C_target,j,phi"]
+    A["Hara tersimpan<br/>di tanaman"] --> B["Tambahan hara<br/>selama fase"]
+    B --> C["Rasio hara fase<br/>N:P:K:Ca:Mg"]
+    B --> D["Kebutuhan hara<br/>per hari"]
+    D --> E["Kebutuhan konsentrasi<br/>larutan"]
+    E --> F["Target konsentrasi<br/>nutrisi"]
 
     classDef dasar fill:#E8F5E9,stroke:#2E7D32,stroke-width:1.5px,color:#1B5E20;
     classDef fase fill:#E3F2FD,stroke:#1565C0,stroke-width:1.5px,color:#0D47A1;
@@ -765,53 +674,23 @@ flowchart TD
     class F hasil;
 ```
 
----
+Hubungan dua artikel menjadi seperti ini:
 
-## 3.5 Fungsi Bab Ini dalam Artikel Kedua
-
-Bab ini berfungsi sebagai jembatan. Tujuannya bukan mengulang artikel pertama, tetapi menegaskan titik awal artikel kedua.
-
-Artikel pertama berhenti pada:
-
-$$
-\boxed{
-\Delta A_N:\Delta A_P:\Delta A_K:\Delta A_{Ca}:\Delta A_{Mg}
-}
-$$
-
-Artikel kedua mulai dari:
-
-$$
-\boxed{
-\bar{U}_{j,\phi}
-}
-$$
-
-lalu mengubahnya menjadi:
-
-$$
-\boxed{
-C_{target,j,\phi}
-}
-$$
-
-Dengan demikian, hubungan dua artikel menjadi jelas:
-
-| Artikel         | Fokus                           | Output                           |
-| --------------- | ------------------------------- | -------------------------------- |
-| Artikel pertama | berat kering dan akumulasi hara | rasio N:P:K:Ca:Mg per fase       |
-| Artikel kedua   | laju serapan dan batas jenuh    | target konsentrasi hara per fase |
+| Artikel         | Fokus                            | Output                           |
+| --------------- | -------------------------------- | -------------------------------- |
+| Artikel pertama | berat kering dan akumulasi hara  | rasio N:P:K:Ca:Mg per fase       |
+| Artikel kedua   | kebutuhan harian dan batas jenuh | target konsentrasi hara per fase |
 
 Kesimpulan Bab 3:
 
 $$
 \boxed{
 artikel\ kedua\ tidak\ dimulai\ dari\ ppm,
-tetapi\ dari\ laju\ akumulasi\ hara\ tanaman
+tetapi\ dari\ kebutuhan\ harian\ tanaman
 }
 $$
 
-Inilah pembeda utama model ini dari pendekatan formula nutrisi yang hanya berbasis angka umum atau resep tetap.
+Itulah pembeda utama dari pendekatan formula nutrisi yang hanya mengandalkan resep tetap.
 
 [**Kembali ke Atas**](#model-formula-hara-cabai-berbasis-laju-serapan-dan-batas-jenuh-respons-per-fase-organ)
 
@@ -819,93 +698,108 @@ Inilah pembeda utama model ini dari pendekatan formula nutrisi yang hanya berbas
 
 # 4. Laju Serapan dan Kebutuhan Konsentrasi Hara
 
-## 4.1 Laju Akumulasi sebagai Kebutuhan Biologis
+Bab sebelumnya menegaskan bahwa artikel ini tidak dimulai dari angka ppm, tetapi dari kebutuhan tanaman. Sekarang kita masuk ke pertanyaan praktis:
 
-Artikel sebelumnya telah menghasilkan akumulasi hara tanaman:
+> Kalau tanaman butuh hara sekian mg per hari, berapa konsentrasi yang harus tersedia di larutan?
 
-$$
-A_j(t)
-$$
+Untuk menjawabnya, ada tiga hal yang harus dibaca bersama:
 
-dengan:
-
-$$
-j=N,\ P,\ K,\ Ca,\ Mg
-$$
-
-Namun untuk menyusun formula hara, yang lebih penting bukan hanya total akumulasi, melainkan **laju akumulasi**. Total akumulasi menjawab:
-
-> Berapa hara yang sudah tersimpan di tanaman?
-
-Sedangkan laju akumulasi menjawab:
-
-> Berapa hara yang sedang ditambahkan tanaman per hari pada fase tertentu?
-
-Untuk fase pertumbuhan $\phi$, dari umur $t_1$ sampai $t_2$, rata-rata laju akumulasi unsur $j$ dihitung sebagai:
-
-$$
-\boxed{
-\begin{aligned}
-\bar{U}_{j,\phi} &= \frac{A_j(t_2)-A_j(t_1)}
-{t_2-t_1}
-\end{aligned}
-}
-$$
-
-Keterangan:
-
-| Simbol             | Arti                                                |
-| ------------------ | --------------------------------------------------- |
-| $\bar{U}_{j,\phi}$ | rata-rata laju akumulasi unsur $j$ pada fase $\phi$ |
-| $A_j(t_1)$         | akumulasi unsur $j$ pada awal fase                  |
-| $A_j(t_2)$         | akumulasi unsur $j$ pada akhir fase                 |
-| $t_1$              | umur awal fase                                      |
-| $t_2$              | umur akhir fase                                     |
-| $\phi$             | fase pertumbuhan                                    |
-
-Satuan:
-
-$$
-\boxed{
-\bar{U}_{j,\phi}=mg/tanaman/hari
-}
-$$
-
-Jika pada fase pembesaran buah tanaman menambah akumulasi K sebesar 2.000 mg/tanaman selama 40 hari, maka:
-
-$$
-\begin{aligned}
-\bar{U}_{K,\phi} &= \frac{2000}{40}
-\end{aligned}
-$$
-
-$$
-\boxed{
-\bar{U}_{K,\phi}=50\ mg/tanaman/hari
-}
-$$
-
-Angka ini adalah kebutuhan biologis tanaman terhadap K pada fase tersebut. Namun angka ini belum menjadi konsentrasi larutan. Untuk menjadi konsentrasi, kita harus mengetahui berapa banyak air yang diserap tanaman.
+1. berapa hara yang sedang dibutuhkan tanaman per hari;
+2. berapa air yang diserap tanaman per hari;
+3. seberapa efisien akar menyerap hara dari larutan.
 
 ---
 
-## 4.2 Serapan Air sebagai Pembawa Hara
+## 4.1 Kebutuhan Harian Tanaman
 
-Dalam hidroponik dan fertigasi substrat, hara masuk ke tanaman bersama air. Maka hubungan dasarnya adalah:
+Tanaman tidak membutuhkan hara dalam jumlah yang sama setiap hari. Saat tanaman masih kecil, kebutuhannya rendah. Saat tajuk membesar, bunga muncul, dan buah mengisi, kebutuhannya naik.
+
+Karena itu, kita perlu menghitung **kebutuhan hara rata-rata per hari pada setiap fase**.
+
+Secara teknis:
 
 $$
 \boxed{
-\begin{aligned}
-hara\ terserap &= konsentrasi\ hara
-\times
-volume\ air\ terserap
-\end{aligned}
+\bar{U}_{j,\phi} =
+\frac{A_j(t_2)-A_j(t_1)}
+{t_2-t_1}
 }
 $$
 
-Jika tanaman menyerap air lebih banyak, konsentrasi hara yang dibutuhkan untuk memenuhi laju akumulasi tertentu bisa lebih rendah. Sebaliknya, jika tanaman menyerap air sedikit, konsentrasi larutan harus lebih tinggi untuk menyediakan jumlah hara yang sama.
+Agar mudah dibaca, artinya seperti ini:
 
-Serapan air rata-rata pada fase $\phi$ dinyatakan sebagai:
+$$
+\boxed{
+kebutuhan\ hara\ per\ hari =
+\frac{
+hara\ akhir\ fase -
+hara\ awal\ fase
+}
+{jumlah\ hari\ fase}
+}
+$$
+
+Keterangan praktis:
+
+| Simbol teknis      | Bahasa lapangan                         |
+| ------------------ | --------------------------------------- |
+| $A_j(t_1)$         | hara yang sudah tersimpan di awal fase  |
+| $A_j(t_2)$         | hara yang sudah tersimpan di akhir fase |
+| $t_2-t_1$          | lama fase, dalam hari                   |
+| $\bar{U}_{j,\phi}$ | kebutuhan hara rata-rata per hari       |
+| $j$                | unsur hara: N, P, K, Ca, atau Mg        |
+| $\phi$             | fase tanaman                            |
+
+Contoh sederhana:
+
+Jika selama fase pembesaran buah tanaman menambah K sebesar:
+
+$$
+2000\ mg/tanaman
+$$
+
+dan fase itu berlangsung:
+
+$$
+40\ hari
+$$
+
+maka kebutuhan K rata-rata:
+
+$$
+\boxed{
+2000/40=50\ mg/tanaman/hari
+}
+$$
+
+Artinya, pada fase itu tanaman rata-rata perlu membangun sekitar **50 mg K per tanaman per hari**.
+
+Angka ini belum menjadi ppm larutan. Ini baru kebutuhan biologis tanaman.
+
+---
+
+## 4.2 Air sebagai Kendaraan Hara
+
+Dalam hidroponik dan fertigasi substrat, hara masuk bersama air. Jadi, tanaman tidak hanya “makan hara”, tetapi juga harus “minum air” agar hara bisa masuk.
+
+Prinsipnya sederhana:
+
+$$
+\boxed{
+\text{hara masuk} = \text{konsentrasi larutan} \times \text{air yang diserap}
+}
+$$
+
+Artinya, dua tanaman dengan kebutuhan hara yang sama bisa membutuhkan konsentrasi larutan yang berbeda.
+
+Misalnya:
+
+- tanaman A butuh 50 mg K per hari dan menyerap 1 liter air;
+- tanaman B butuh 50 mg K per hari tetapi hanya menyerap 0,5 liter air.
+
+Tanaman B membutuhkan larutan lebih pekat, karena air yang masuk lebih sedikit.
+
+Secara teknis, serapan air rata-rata ditulis:
 
 $$
 \boxed{
@@ -913,7 +807,15 @@ $$
 }
 $$
 
-dengan satuan:
+Namun untuk praktisi, cukup dibaca sebagai:
+
+$$
+\boxed{
+air\ yang\ diserap\ tanaman\ per\ hari
+}
+$$
+
+Satuannya:
 
 $$
 \boxed{
@@ -921,24 +823,17 @@ L/tanaman/hari
 }
 $$
 
-Hubungan sederhana antara laju akumulasi dan konsentrasi adalah:
-
-$$
-\boxed{
-\begin{aligned}
-C_{req,j,\phi} &= \frac{\bar{U}_{j,\phi}}
-{\bar{Q}_{w,\phi}}
-\end{aligned}
-}
-$$
-
-Namun dalam praktik, tidak semua hara yang tersedia dalam larutan langsung masuk dan menjadi akumulasi tanaman. Karena itu diperlukan faktor efisiensi serapan.
+Jika akar sehat dan air terserap baik, konsentrasi bisa lebih efisien. Jika tanaman sulit menyerap air, menaikkan ppm belum tentu menyelesaikan masalah.
 
 ---
 
-## 4.3 Efisiensi Serapan sebagai Koreksi Akar dan Sistem
+## 4.3 Efisiensi Serapan Akar
 
-Efisiensi serapan unsur $j$ pada fase $\phi$ dinyatakan sebagai:
+Tidak semua hara yang ada di larutan langsung masuk ke tanaman. Ada hara yang tertinggal di drainase, ada yang tidak terserap karena pH kurang tepat, ada yang terganggu oleh antagonisme ion, dan ada juga yang tidak masuk karena akar lemah.
+
+Karena itu, kita perlu faktor **efisiensi serapan**.
+
+Secara teknis:
 
 $$
 \boxed{
@@ -946,147 +841,159 @@ $$
 }
 $$
 
-Nilainya berada pada rentang:
+Secara praktis, ini berarti:
 
 $$
 \boxed{
-0<\eta_{j,\phi}\leq1
+bagian\ hara\ yang\ benar-benar\ efektif\ diserap\ tanaman
 }
 $$
+
+Nilainya berada antara 0 dan 1.
 
 Jika:
 
 $$
-\eta_{j,\phi}=1
+\eta=1
 $$
 
-maka seluruh hara yang tersedia secara efektif dapat digunakan untuk mendukung akumulasi tanaman.
+berarti penyerapan sangat ideal.
 
 Jika:
 
 $$
-\eta_{j,\phi}<1
+\eta=0.8
 $$
 
-maka sebagian hara tidak masuk ke tanaman atau tidak berkontribusi langsung terhadap akumulasi, misalnya karena:
+berarti sekitar 80% hara efektif mendukung akumulasi tanaman.
 
-- akar belum optimal,
-- suhu larutan tidak ideal,
-- oksigen terlarut rendah,
-- pH tidak sesuai,
-- antagonisme antar-ion,
-- drainase tinggi,
-- atau sistem fertigasi tidak merata.
-
-Maka konsentrasi kebutuhan unsur $j$ pada fase $\phi$ ditulis sebagai:
+Jika:
 
 $$
-\boxed{
-\begin{aligned}
-C_{req,j,\phi} &= \frac{\bar{U}_{j,\phi}}
-{\bar{Q}_{w,\phi}\eta_{j,\phi}}
-\end{aligned}
-}
+\eta=0.5
 $$
 
-Keterangan:
+berarti hanya sekitar 50% yang efektif. Dalam kondisi seperti ini, masalahnya sering bukan kurang pupuk, tetapi akar atau sistem serapan yang tidak optimal.
 
-| Simbol             | Arti                                             |
-| ------------------ | ------------------------------------------------ |
-| $C_{req,j,\phi}$   | konsentrasi kebutuhan unsur $j$ pada fase $\phi$ |
-| $\bar{U}_{j,\phi}$ | rata-rata laju akumulasi unsur $j$               |
-| $\bar{Q}_{w,\phi}$ | rata-rata serapan air per tanaman                |
-| $\eta_{j,\phi}$    | efisiensi serapan unsur $j$                      |
+Efisiensi serapan bisa turun karena:
 
-Satuan:
-
-$$
-\boxed{
-C_{req,j,\phi}=mg/L
-}
-$$
+- akar kurang sehat,
+- oksigen rendah,
+- suhu larutan terlalu tinggi atau terlalu rendah,
+- pH keluar dari zona ideal,
+- EC terlalu tinggi,
+- drainase terlalu besar,
+- antagonisme antarhara,
+- distribusi fertigasi tidak merata.
 
 ---
 
-## 4.4 Contoh Makna Perhitungan
+## 4.4 Mengubah Kebutuhan Harian Menjadi Konsentrasi Larutan
 
-Misal pada fase tertentu:
+Sekarang kebutuhan harian, serapan air, dan efisiensi serapan digabung.
 
-$$
-\bar{U}_{K,\phi}=50\ mg/tanaman/hari
-$$
-
-Serapan air:
+Secara teknis:
 
 $$
-\bar{Q}_{w,\phi}=0.5\ L/tanaman/hari
+\boxed{
+C_{req,j,\phi} =
+\frac{\bar{U}_{j,\phi}}
+{\bar{Q}_{w,\phi}\eta_{j,\phi}}
+}
 $$
 
-Efisiensi serapan:
+Dalam bahasa lapangan:
 
 $$
-\eta_{K,\phi}=0.8
+\boxed{
+konsentrasi\ kebutuhan =
+\frac{
+kebutuhan\ hara\ per\ hari
+}
+{
+air\ yang\ diserap\ per\ hari
+\times
+efisiensi\ serapan
+}
+}
 $$
+
+Keterangan praktis:
+
+| Simbol teknis      | Bahasa lapangan                        |
+| ------------------ | -------------------------------------- |
+| $C_{req,j,\phi}$   | konsentrasi yang dibutuhkan di larutan |
+| $\bar{U}_{j,\phi}$ | kebutuhan hara per hari                |
+| $\bar{Q}_{w,\phi}$ | air yang diserap per tanaman per hari  |
+| $\eta_{j,\phi}$    | efisiensi serapan akar/sistem          |
+
+Satuan konsentrasi:
+
+$$
+\boxed{
+mg/L
+}
+$$
+
+atau dalam praktik sering dibaca sebagai ppm unsur.
+
+---
+
+## 4.5 Contoh Lapangan
+
+Misalnya pada fase pembesaran buah:
+
+- tanaman perlu K sebanyak 50 mg/tanaman/hari;
+- air yang diserap 0,5 L/tanaman/hari;
+- efisiensi serapan K diperkirakan 80%.
 
 Maka:
 
 $$
-\begin{aligned}
-C_{req,K,\phi} &= \frac{50}
-{0.5\times0.8}
-\end{aligned}
+C_{req,K} = \frac{50}{0.5\times0.8}
 $$
 
 $$
-\begin{aligned}
-C_{req,K,\phi} &= \frac{50}{0.4}
-\end{aligned}
+C_{req,K} = \frac{50}{0.4}
 $$
 
 $$
 \boxed{
-C_{req,K,\phi}=125\ mg/L
+C_{req,K}=125\ mg/L
 }
 $$
 
-Artinya, untuk memenuhi laju akumulasi K sebesar 50 mg/tanaman/hari, dengan serapan air 0.5 L/tanaman/hari dan efisiensi 80%, sistem membutuhkan sekitar 125 mg K/L.
+Artinya, agar kebutuhan K 50 mg/tanaman/hari terpenuhi, larutan perlu menyediakan sekitar **125 mg K/L**, dengan asumsi air terserap 0,5 L/hari dan efisiensi 80%.
 
-Jika serapan air naik menjadi:
-
-$$
-\bar{Q}_{w,\phi}=1.0\ L/tanaman/hari
-$$
-
-dengan laju akumulasi dan efisiensi sama, maka:
+Sekarang bayangkan kebutuhan K tetap sama, tetapi tanaman menyerap air 1 L/hari.
 
 $$
-\begin{aligned}
-C_{req,K,\phi} &= \frac{50}
-{1.0\times0.8}
-\end{aligned}
+C_{req,K} = \frac{50}{1.0\times0.8}
 $$
 
 $$
 \boxed{
-C_{req,K,\phi}=62.5\ mg/L
+C_{req,K}=62.5\ mg/L
 }
 $$
 
-Kesimpulannya:
+Kesimpulannya jelas:
 
-> Dua tanaman dengan kebutuhan hara sama bisa membutuhkan konsentrasi larutan berbeda bila serapan airnya berbeda.
+> Kebutuhan hara sama, tetapi konsentrasi larutan bisa berbeda karena serapan air berbeda.
+
+Ini penting untuk praktisi. Saat cuaca mendung, suhu rendah, atau akar lemah, tanaman bisa menyerap air lebih sedikit. Dalam kondisi seperti itu, respons tanaman terhadap larutan tidak bisa disamakan dengan hari panas dan terang.
 
 ---
 
-## 4.5 Alur Konversi dari Laju Akumulasi ke Konsentrasi
+## 4.6 Alur Praktis Bab 4
 
 ```mermaid id="bab4-laju-konsentrasi"
 flowchart TD
-    A["Akumulasi hara<br/>A_j(t)"] --> B["Kenaikan fase<br/>A_j(t2)-A_j(t1)"]
-    B --> C["Laju akumulasi<br/>Ubar_j,phi"]
-    C --> D["Serapan air<br/>Qbar_w,phi"]
-    D --> E["Efisiensi serapan<br/>eta_j,phi"]
-    E --> F["Konsentrasi kebutuhan<br/>C_req,j,phi"]
+    A["Hara tersimpan<br/>di tanaman"] --> B["Tambahan hara<br/>selama fase"]
+    B --> C["Kebutuhan hara<br/>per hari"]
+    C --> D["Air yang diserap<br/>per tanaman"]
+    D --> E["Efisiensi akar<br/>dan sistem"]
+    E --> F["Konsentrasi kebutuhan<br/>larutan"]
 
     classDef data fill:#E8F5E9,stroke:#2E7D32,stroke-width:1.5px,color:#1B5E20;
     classDef proses fill:#E3F2FD,stroke:#1565C0,stroke-width:1.5px,color:#0D47A1;
@@ -1099,23 +1006,17 @@ flowchart TD
     class F hasil;
 ```
 
-Diagram ini menunjukkan bahwa konsentrasi hara tidak muncul langsung dari rasio. Konsentrasi hara muncul setelah laju akumulasi dikoreksi oleh serapan air dan efisiensi serapan.
-
-Maka hubungan inti Bab 4 adalah:
+Kesimpulan Bab 4:
 
 $$
 \boxed{
-akumulasi\ hara
-\rightarrow
-laju\ akumulasi
-\rightarrow
-serapan\ air
-\rightarrow
-konsentrasi\ kebutuhan
+konsentrasi\ larutan
+tidak\ hanya\ ditentukan\ oleh\ kebutuhan\ hara,
+tetapi\ juga\ oleh\ air\ yang\ diserap\ dan\ efisiensi\ akar
 }
 $$
 
-Namun, konsentrasi kebutuhan belum tentu menjadi konsentrasi target akhir. Mengapa? Karena akar memiliki batas respons. Setelah konsentrasi tertentu, penambahan hara tidak lagi meningkatkan serapan secara berarti. Di sinilah konsep batas jenuh diperlukan.
+Namun konsentrasi kebutuhan belum tentu menjadi konsentrasi final. Sebab akar punya batas respons. Setelah titik tertentu, menambah konsentrasi tidak lagi memberi tambahan hasil yang berarti.
 
 [**Kembali ke Atas**](#model-formula-hara-cabai-berbasis-laju-serapan-dan-batas-jenuh-respons-per-fase-organ)
 
@@ -1123,145 +1024,107 @@ Namun, konsentrasi kebutuhan belum tentu menjadi konsentrasi target akhir. Menga
 
 # 5. Respons Akar dan Batas Jenuh Hara
 
-## 5.1 Serapan Hara Tidak Linear
+## 5.1 Lebih Pekat Tidak Selalu Lebih Baik
 
-Dalam sistem hidroponik dan fertigasi substrat, mudah sekali menganggap bahwa semakin tinggi konsentrasi larutan, semakin tinggi pula serapan hara. Anggapan ini tidak tepat.
+Dalam hidroponik dan fertigasi, kesalahan umum adalah menganggap bahwa kalau tanaman kurang respons, larutan harus dibuat lebih pekat.
 
-Serapan hara oleh akar tidak naik terus secara linear. Pada konsentrasi rendah, penambahan hara dapat meningkatkan serapan secara nyata. Namun ketika konsentrasi meningkat, respons akar mulai melambat. Pada titik tertentu, akar mendekati kapasitas maksimum. Setelah itu, penambahan konsentrasi hanya memberi tambahan respons kecil.
+Kadang benar, tetapi sering juga salah.
 
-Pola ini dapat diringkas menjadi tiga zona:
+Akar tidak menyerap hara secara tak terbatas. Pada konsentrasi rendah, penambahan hara bisa meningkatkan serapan. Tetapi setelah titik tertentu, akar mulai mendekati kapasitasnya. Saat itu, larutan yang lebih pekat hanya memberi tambahan respons kecil, bahkan bisa memicu stres atau ketidakseimbangan hara.
 
-| Zona    | Kondisi                                  | Respons tanaman                            |
-| ------- | ---------------------------------------- | ------------------------------------------ |
-| Rendah  | konsentrasi belum cukup                  | serapan meningkat tajam jika hara ditambah |
-| Efektif | konsentrasi cukup dan respons masih baik | zona kerja ideal                           |
-| Jenuh   | konsentrasi tinggi                       | tambahan hara memberi respons kecil        |
+Pola responsnya dapat dibagi menjadi tiga zona:
 
-Karena itu, formula hara tidak boleh hanya mengejar:
+| Zona    | Kondisi                                           | Makna lapangan                       |
+| ------- | ------------------------------------------------- | ------------------------------------ |
+| Kurang  | konsentrasi terlalu rendah                        | tanaman bisa defisiensi              |
+| Efektif | konsentrasi cukup                                 | respons tanaman masih baik           |
+| Jenuh   | konsentrasi terlalu tinggi untuk respons tambahan | tambah hara, hasil hampir tidak naik |
 
-$$
-C_{req,j,\phi}
-$$
+Pesan utamanya:
 
-tetapi harus membandingkannya dengan batas respons tanaman.
+> Target nutrisi sebaiknya berada di zona efektif, bukan mengejar zona paling pekat.
 
 ---
 
-## 5.2 Model Serapan Akar
+## 5.2 Cara Membaca Respons Akar
 
-Serapan unsur $j$ pada konsentrasi $C_j$ dapat ditulis sebagai fungsi jenuh:
+Secara teknis, respons serapan akar dapat ditulis:
 
 $$
 \boxed{
-\begin{aligned}
-S_j(C_j,t) &= S_{max,j}(t)
+S_j(C_j,t) =
+S_{max,j}(t)
 \frac{C_j}
 {K_{m,j}(t)+C_j}
-\end{aligned}
 }
 $$
 
-Keterangan:
-
-| Simbol         | Arti                                                       |
-| -------------- | ---------------------------------------------------------- |
-| $S_j(C_j,t)$   | laju serapan unsur $j$ pada konsentrasi $C_j$ dan umur $t$ |
-| $S_{max,j}(t)$ | kapasitas maksimum serapan unsur $j$                       |
-| $C_j$          | konsentrasi unsur $j$ di larutan                           |
-| $K_{m,j}(t)$   | konsentrasi saat respons mencapai 50% maksimum             |
-| $t$            | umur tanaman                                               |
-
-Fungsi ini menunjukkan bahwa saat $C_j$ rendah, peningkatan konsentrasi akan meningkatkan serapan secara nyata. Namun saat $C_j$ sudah jauh lebih besar daripada $K_{m,j}$, serapan mendekati $S_{max,j}$.
-
-Dengan kata lain:
+Untuk pembaca lapangan, tidak perlu terpaku pada nama variabelnya. Baca maknanya saja:
 
 $$
 \boxed{
-C_j\ naik
-\not\Rightarrow
-S_j\ naik\ tanpa\ batas
+serapan\ hara
+naik\ saat\ konsentrasi\ naik,
+tetapi\ kenaikannya\ makin\ lama\ makin\ melambat
+}
+$$
+
+Artinya, respons akar seperti kurva yang awalnya naik cepat, lalu mulai mendatar.
+
+Jika konsentrasi masih rendah, penambahan hara terasa besar efeknya. Tetapi jika konsentrasi sudah tinggi, penambahan hara tidak lagi memberi hasil sebanding.
+
+Secara sederhana:
+
+$$
+\boxed{
+ppm\ naik
+\neq
+serapan\ naik\ terus
 }
 $$
 
 ---
 
-## 5.3 Respons Relatif terhadap Konsentrasi
+## 5.3 Respons Relatif: Membaca Titik Efektif
 
-Agar lebih mudah dibaca, respons serapan dapat dinyatakan sebagai respons relatif:
+Agar mudah memahami titik jenuh, kita gunakan konsep respons relatif.
+
+Secara teknis:
 
 $$
 \boxed{
-\begin{aligned}
-R_j(C_j) &= \frac{C_j}
+R_j(C_j) =
+\frac{C_j}
 {K_{m,j}+C_j}
-\end{aligned}
 }
 $$
 
-Nilai respons relatif berada antara 0 dan 1:
+Secara praktis, rumus ini membaca:
 
 $$
 \boxed{
-0<R_j(C_j)<1
+berapa\ persen\ respons\ serapan\ dibanding\ kemampuan\ maksimum\ akar
 }
 $$
 
-Jika:
+Contohnya:
 
-$$
-R_j(C_j)=0.5
-$$
+| Respons relatif | Makna praktis                                |
+| --------------: | -------------------------------------------- |
+|             50% | akar baru mencapai setengah respons maksimum |
+|             90% | respons sudah sangat tinggi                  |
+|             95% | respons hampir maksimum                      |
+|            >95% | tambahan konsentrasi biasanya kurang efisien |
 
-maka respons serapan berada pada 50% dari maksimum.
-
-Jika:
-
-$$
-R_j(C_j)=0.9
-$$
-
-maka respons serapan berada pada 90% dari maksimum.
-
-Jika:
-
-$$
-R_j(C_j)=0.95
-$$
-
-maka respons serapan berada pada 95% dari maksimum.
-
-Ini penting karena formula hara sebaiknya tidak memaksa konsentrasi naik jauh melewati zona 90–95% respons. Di atas zona itu, tambahan konsentrasi umumnya semakin tidak efisien.
+Jadi, jika suatu unsur sudah berada di respons 90–95%, menambah konsentrasi lagi biasanya tidak banyak membantu.
 
 ---
 
-## 5.4 Titik Jenuh 90% dan 95%
+## 5.4 Titik Jenuh Praktis
 
-Dari persamaan respons relatif:
+Dalam model ini, titik jenuh praktis dibaca pada respons 90–95%.
 
-$$
-\begin{aligned}
-R_j(C_j) &= \frac{C_j}
-{K_{m,j}+C_j}
-\end{aligned}
-$$
-
-kita dapat menghitung titik ketika respons mencapai 90%.
-
-Jika:
-
-$$
-R_j(C_j)=0.90
-$$
-
-maka:
-
-$$
-0.90=
-\frac{C_{90,j}}
-{K_{m,j}+C_{90,j}}
-$$
-
-Sehingga:
+Untuk respons 90%:
 
 $$
 \boxed{
@@ -1272,46 +1135,60 @@ $$
 Untuk respons 95%:
 
 $$
-0.95=
-\frac{C_{95,j}}
-{K_{m,j}+C_{95,j}}
-$$
-
-Sehingga:
-
-$$
 \boxed{
 C_{95,j}=19K_{m,j}
 }
 $$
 
-Maknanya:
+Agar tidak terlalu akademis, cukup pahami begini:
 
-| Konsentrasi | Respons relatif |
-| ----------- | --------------: |
-| $K_{m,j}$   |             50% |
-| $9K_{m,j}$  |             90% |
-| $19K_{m,j}$ |             95% |
+| Titik       | Arti lapangan                                  |
+| ----------- | ---------------------------------------------- |
+| 50% respons | tanaman masih sangat merespons penambahan hara |
+| 90% respons | tanaman sudah mendekati respons maksimum       |
+| 95% respons | tambahan hara mulai sangat tidak efisien       |
 
-Zona antara 90% dan 95% dapat dipahami sebagai zona jenuh praktis. Tanaman masih merespons, tetapi tambahan respons sudah semakin kecil.
-
----
-
-## 5.5 Batas Jenuh Bukan Titik Toksik
-
-Hal penting yang harus dibedakan:
+Maka batas jenuh praktis berada di sekitar:
 
 $$
 \boxed{
-batas\ jenuh\neq batas\ toksik
+90\%-95\%\ respons
 }
 $$
 
-Batas jenuh adalah titik ketika penambahan konsentrasi tidak lagi memberi respons berarti.
+Di atas itu, menaikkan konsentrasi lebih sering memperbesar risiko dibanding memperbesar hasil.
 
-Batas toksik adalah titik ketika konsentrasi mulai merusak tanaman, menekan pertumbuhan, atau menyebabkan ketidakseimbangan ion.
+---
 
-Urutannya adalah:
+## 5.5 Batas Jenuh Bukan Keracunan
+
+Ini perlu ditegaskan.
+
+$$
+\boxed{
+jenuh\ bukan\ toksik
+}
+$$
+
+Batas jenuh adalah titik ketika tanaman **hampir tidak memberi respons tambahan** walaupun konsentrasi dinaikkan.
+
+Batas toksik adalah titik ketika konsentrasi mulai merusak tanaman.
+
+Urutannya:
+
+$$
+\boxed{
+minimum
+<
+optimal
+<
+jenuh
+<
+toksik
+}
+$$
+
+Atau secara teknis:
 
 $$
 \boxed{
@@ -1319,16 +1196,20 @@ C_{min}<C_{opt}<C_{sat}<C_{tox}
 }
 $$
 
-Keterangan:
+Bahasa lapangannya:
 
-| Simbol    | Arti                                             |
-| --------- | ------------------------------------------------ |
-| $C_{min}$ | konsentrasi minimum untuk menghindari defisiensi |
-| $C_{opt}$ | zona konsentrasi optimal                         |
-| $C_{sat}$ | batas jenuh respons                              |
-| $C_{tox}$ | batas risiko toksik atau gangguan serius         |
+| Zona    | Makna                              |
+| ------- | ---------------------------------- |
+| Minimum | cukup untuk mencegah defisiensi    |
+| Optimal | tanaman merespons baik             |
+| Jenuh   | tambahan hara hampir tidak berguna |
+| Toksik  | tanaman mulai terganggu            |
 
-Dengan demikian, target formula hara tidak seharusnya mendekati $C_{tox}$. Target yang baik berada di zona cukup sampai efektif, dan tidak perlu melewati $C_{sat}$.
+Kesalahan yang harus dihindari:
+
+> Mengira bahwa selama belum toksik, konsentrasi masih layak dinaikkan.
+
+Padahal sebelum toksik, tanaman bisa sudah melewati titik jenuh. Di fase ini, tambahan hara tidak efisien dan bisa memicu antagonisme.
 
 ---
 
@@ -1336,14 +1217,14 @@ Dengan demikian, target formula hara tidak seharusnya mendekati $C_{tox}$. Targe
 
 ```mermaid id="bab5-zona-respons"
 flowchart TD
-    A["C_min<br/>batas minimum"] --> B["C_opt<br/>zona efektif"]
-    B --> C["C_sat<br/>respons mulai jenuh"]
-    C --> D["C_tox<br/>risiko toksik"]
+    A["Minimum<br/>mencegah defisiensi"] --> B["Optimal<br/>zona kerja terbaik"]
+    B --> C["Jenuh<br/>tambahan respons kecil"]
+    C --> D["Toksik<br/>risiko gangguan tanaman"]
 
-    A1["Defisiensi<br/>jika terlalu rendah"] --> A
-    B1["Serapan meningkat<br/>dan efisien"] --> B
-    C1["Tambahan hara<br/>respons kecil"] --> C
-    D1["Risiko stres,<br/>toksik, antagonisme"] --> D
+    A1["Terlalu rendah:<br/>tanaman kekurangan"] --> A
+    B1["Cukup:<br/>serapan efisien"] --> B
+    C1["Terlalu tinggi untuk respons:<br/>hasil tidak naik banyak"] --> C
+    D1["Berbahaya:<br/>stres, toksik,<br/>antagonisme berat"] --> D
 
     classDef rendah fill:#FFEBEE,stroke:#C62828,stroke-width:1.5px,color:#B71C1C;
     classDef optimal fill:#E8F5E9,stroke:#2E7D32,stroke-width:1.5px,color:#1B5E20;
@@ -1356,11 +1237,25 @@ flowchart TD
     class D,D1 toksik;
 ```
 
-Poin tajam Bab 5:
+Kesimpulan Bab 5:
 
-> Batas jenuh bukan toksik. Batas jenuh adalah titik ketika tambahan konsentrasi tidak lagi memberi respons berarti.
+$$
+\boxed{
+batas\ jenuh\ adalah\ batas\ efisiensi,
+bukan\ batas\ keracunan
+}
+$$
 
-Karena itu, jika konsentrasi sudah mendekati jenuh, menaikkan hara bukan lagi strategi yang efisien. Pada kondisi tersebut, perbaikan sebaiknya diarahkan pada faktor lain, seperti kesehatan akar, oksigen terlarut, suhu larutan, keseimbangan ion, dan distribusi air.
+Jika larutan sudah mendekati zona jenuh, perbaikan sebaiknya tidak langsung menaikkan ppm. Cek dulu:
+
+- akar,
+- air,
+- pH,
+- EC,
+- suhu larutan,
+- oksigen,
+- drainase,
+- dan keseimbangan antarhara.
 
 [**Kembali ke Atas**](#model-formula-hara-cabai-berbasis-laju-serapan-dan-batas-jenuh-respons-per-fase-organ)
 
@@ -1368,13 +1263,21 @@ Karena itu, jika konsentrasi sudah mendekati jenuh, menaikkan hara bukan lagi st
 
 # 6. Batas Jenuh per Unsur dan Fase Organ
 
-## 6.1 Mengapa Batas Jenuh Harus Dibaca per Unsur?
+## 6.1 Tidak Semua Unsur Punya Respons yang Sama
 
-Setiap unsur hara memiliki fungsi fisiologis dan pola akumulasi yang berbeda. Karena itu, batas jenuh tidak boleh dianggap sama untuk semua unsur.
+N, P, K, Ca, dan Mg tidak bisa diperlakukan sama. Masing-masing punya fungsi berbeda, masuk ke organ berbeda, dan bisa mencapai titik jenuh pada kondisi yang berbeda.
 
-Formula hara yang hanya menaikkan seluruh unsur secara bersamaan berisiko tidak efisien. Bisa saja satu unsur masih dibutuhkan, tetapi unsur lain sudah mendekati jenuh. Bisa juga satu unsur menjadi pembatas, sedangkan unsur lain ditambahkan berlebih tanpa memberi respons.
+Karena itu, formula yang hanya menaikkan semua unsur secara bersamaan tidak tajam.
 
-Dalam model ini, setiap unsur harus dibaca secara terpisah:
+Prinsipnya:
+
+$$
+\boxed{
+setiap\ unsur\ punya\ batas\ efektifnya\ sendiri
+}
+$$
+
+Secara teknis:
 
 $$
 \boxed{
@@ -1382,76 +1285,63 @@ C_{sat,N}\neq C_{sat,P}\neq C_{sat,K}\neq C_{sat,Ca}\neq C_{sat,Mg}
 }
 $$
 
-Begitu juga responsnya:
+Namun untuk praktisi, cukup pahami:
+
+> N, P, K, Ca, dan Mg tidak selalu perlu dinaikkan bersama-sama. Lihat unsur mana yang benar-benar dibutuhkan, dan unsur mana yang sudah mendekati jenuh.
+
+---
+
+## 6.2 Nitrogen: Penting, tetapi Jangan Berlebihan
+
+Nitrogen penting untuk:
+
+- daun,
+- tajuk,
+- klorofil,
+- protein,
+- pertumbuhan vegetatif.
+
+Pada fase vegetatif, N sangat penting karena tanaman sedang membangun daun dan batang.
+
+Tetapi saat tanaman sudah masuk pembesaran buah, N tetap perlu dikendalikan. Jika terlalu tinggi, tanaman bisa terlalu rimbun, tajuk terlalu kuat, dan alokasi ke buah terganggu.
+
+Bahasa lapangannya:
+
+> N harus cukup untuk menjaga daun tetap aktif, tetapi jangan sampai tanaman sibuk membuat daun saat seharusnya mengisi buah.
+
+Prinsipnya:
 
 $$
 \boxed{
-R_N(C_N)\neq R_P(C_P)\neq R_K(C_K)\neq R_{Ca}(C_{Ca})\neq R_{Mg}(C_{Mg})
+N\ cukup\ untuk\ source,
+tetapi\ tidak\ mendorong\ vegetatif\ berlebihan
 }
 $$
 
 ---
 
-## 6.2 Nitrogen: Cukup untuk Tajuk, Tidak Berlebih pada Fase Buah
+## 6.3 Fosfor: Sedikit, tetapi Tetap Penting
 
-Nitrogen berhubungan kuat dengan:
+Fosfor biasanya dibutuhkan dalam jumlah lebih kecil dibanding N dan K. Namun P tetap penting untuk:
 
-- pertumbuhan daun,
-- sintesis protein,
-- pembentukan klorofil,
-- aktivitas fotosintesis,
-- pemeliharaan tajuk.
-
-Pada fase vegetatif, respons terhadap N biasanya penting karena tanaman sedang membangun daun dan batang. Namun pada fase pembesaran buah dan panen intensif, N tetap dibutuhkan tetapi tidak boleh berlebihan.
-
-Jika N terlalu tinggi saat tanaman berbuah, risiko yang mungkin muncul adalah:
-
-- vegetatif berlebih,
-- tajuk terlalu rimbun,
-- alokasi ke buah terganggu,
-- jaringan lebih lunak,
-- keseimbangan dengan K, Ca, dan Mg terganggu.
-
-Jadi untuk N, batas jenuh harus dibaca terhadap fase. Target N pada fase vegetatif tidak harus sama dengan target N pada fase pembesaran buah.
-
-Secara model:
-
-$$
-\boxed{
-C_{sat,N,vegetatif}
-\neq
-C_{sat,N,buah}
-}
-$$
-
----
-
-## 6.3 Fosfor: Kecil secara Massa, Cepat Mencapai Zona Tidak Responsif
-
-Fosfor sering memiliki akumulasi total lebih kecil dibanding N dan K. Namun P tetap penting untuk:
-
+- akar,
 - energi,
-- ATP,
 - pembelahan sel,
-- pertumbuhan akar,
 - pembungaan awal,
 - metabolisme.
 
-Karena jumlah kebutuhannya relatif kecil, P perlu dikelola hati-hati. Penambahan P berlebih tidak selalu memberi respons pertumbuhan yang setara.
+Kesalahan umum adalah dua ekstrem:
 
-Dalam model formula hara, P tidak boleh diabaikan, tetapi juga tidak perlu dinaikkan tanpa dasar respons. Jika kebutuhan akumulasi P rendah dan respons sudah mendekati jenuh, tambahan P tidak akan efisien.
+1. mengabaikan P karena jumlahnya kecil;
+2. menaikkan P terlalu tinggi karena dianggap penting untuk akar dan bunga.
 
-Secara praktis:
+Keduanya kurang tepat.
 
-$$
-\boxed{
-P\ kecil\ secara\ jumlah
-\neq
-P\ tidak\ penting
-}
-$$
+Bahasa lapangannya:
 
-Namun:
+> P memang kecil secara jumlah, tetapi tidak boleh diabaikan. Namun P juga tidak perlu tinggi tanpa alasan.
+
+Prinsipnya:
 
 $$
 \boxed{
@@ -1463,208 +1353,174 @@ $$
 
 ---
 
-## 6.4 Kalium: Penting untuk Buah, tetapi Bisa Menekan Ca dan Mg
+## 6.4 Kalium: Penting untuk Buah, tetapi Harus Seimbang
 
-Kalium berperan besar dalam:
+Kalium sangat penting untuk:
 
-- regulasi stomata,
-- tekanan osmotik,
+- pengaturan air,
+- stomata,
 - transport gula,
 - pengisian buah,
-- kualitas buah,
-- keseimbangan air sel.
+- kualitas buah.
 
-Pada fase buah, K sering menjadi unsur dominan secara akumulasi. Namun K juga merupakan kation yang dapat berkompetisi dengan Ca dan Mg.
+Saat buah mulai menjadi organ utama, K biasanya naik perannya. Tetapi K juga harus dikendalikan karena bisa menekan Ca dan Mg.
 
-Jika K dinaikkan terlalu tinggi, potensi gangguan yang perlu diperhatikan adalah:
+Jika K terlalu dominan, risiko yang muncul:
 
-- serapan Ca menurun,
-- serapan Mg menurun,
-- risiko ketidakseimbangan K:Ca:Mg,
-- gangguan kualitas jaringan,
-- daun menunjukkan gejala defisiensi Mg,
-- buah rentan masalah yang terkait distribusi Ca.
+- Ca menjadi kurang efektif,
+- Mg tertekan,
+- daun bisa menunjukkan gejala kekurangan Mg,
+- jaringan buah bisa bermasalah karena Ca tidak terdistribusi baik,
+- keseimbangan K:Ca:Mg terganggu.
 
-Maka batas jenuh K tidak hanya dibaca dari respons K terhadap buah, tetapi juga dari dampaknya terhadap Ca dan Mg.
+Bahasa lapangannya:
 
-Secara model:
+> K penting untuk buah, tetapi K yang terlalu dominan bisa membuat Ca dan Mg kalah.
 
-$$
-\boxed{
-C_{sat,K}
-}
-$$
-
-harus dikoreksi oleh:
+Prinsipnya:
 
 $$
 \boxed{
-K:Ca:Mg
+K\ tinggi\ harus\ tetap\ seimbang\ dengan\ Ca\ dan\ Mg
 }
 $$
-
-Artinya, K tinggi bukan masalah jika masih berada pada zona respons efektif dan tidak menekan unsur lain. Namun K tinggi menjadi masalah jika sudah melewati batas respons atau menurunkan efektivitas Ca dan Mg.
 
 ---
 
-## 6.5 Kalsium: Respons Dipengaruhi Transpirasi dan Distribusi Organ
+## 6.5 Kalsium: Bukan Hanya Soal Ada di Larutan
 
-Kalsium memiliki karakter berbeda dari N dan K. Ca relatif kurang mobile di dalam tanaman dan banyak bergerak mengikuti aliran transpirasi.
+Kalsium penting untuk:
 
-Karena itu, respons Ca tidak selalu meningkat hanya karena konsentrasi Ca dalam larutan dinaikkan. Serapan dan distribusi Ca juga dipengaruhi oleh:
+- dinding sel,
+- kekuatan jaringan,
+- pucuk muda,
+- kualitas buah,
+- stabilitas jaringan.
 
-- transpirasi,
+Namun Ca berbeda dari K. Kalsium tidak mudah dipindahkan ulang di dalam tanaman. Ca banyak bergerak mengikuti aliran air dan transpirasi.
+
+Karena itu, menaikkan Ca di larutan belum tentu otomatis membuat Ca sampai ke buah.
+
+Distribusi Ca dipengaruhi oleh:
+
+- akar sehat atau tidak,
+- air terserap cukup atau tidak,
 - kelembapan udara,
 - VPD,
-- aliran air,
-- kesehatan akar,
+- transpirasi,
 - suhu akar,
-- pertumbuhan daun,
-- pertumbuhan buah,
-- kompetisi dengan K dan NH₄.
+- K terlalu tinggi atau tidak,
+- NH₄ terlalu tinggi atau tidak.
 
-Pada fase buah, masalah Ca sering bukan hanya ketersediaan di larutan, tetapi distribusi ke organ target. Jika buah memiliki transpirasi rendah, Ca bisa lebih banyak bergerak ke daun dibanding ke buah.
+Bahasa lapangannya:
 
-Karena itu, untuk Ca:
+> Masalah Ca sering bukan hanya “Ca kurang”, tetapi “Ca tidak sampai ke organ yang membutuhkan”.
 
-$$
-\boxed{
-C_{req,Ca}
-}
-$$
-
-tidak otomatis sama dengan:
+Prinsipnya:
 
 $$
 \boxed{
-Ca\ yang\ efektif\ sampai\ ke\ buah
+Ca\ adalah\ masalah\ konsentrasi\ dan\ distribusi
 }
 $$
-
-Maka batas jenuh Ca perlu dibaca bersama faktor transpirasi dan organ dominan.
 
 ---
 
-## 6.6 Magnesium: Penopang Fotosintesis saat Fase Buah
+## 6.6 Magnesium: Menjaga Daun Tetap Menjadi Mesin Fotosintesis
 
 Magnesium penting untuk:
 
 - klorofil,
 - fotosintesis,
-- aktivasi enzim,
-- metabolisme energi,
-- fungsi daun aktif.
+- enzim,
+- daun aktif.
 
-Saat tanaman masuk fase buah, perhatian sering terlalu besar pada K. Padahal buah membutuhkan asimilat dari daun. Jika Mg tidak cukup, daun dapat kehilangan kapasitas fotosintesis, sehingga pengisian buah juga terganggu.
+Saat fase buah, perhatian sering tertuju ke K. Itu wajar, karena buah memang membutuhkan K. Tetapi buah tidak mengisi dirinya sendiri. Buah membutuhkan hasil fotosintesis dari daun.
 
-Mg juga dapat tertekan jika K terlalu tinggi. Karena itu, batas Mg tidak boleh dibaca sendiri, tetapi harus dilihat dalam konteks:
+Jika Mg kurang, daun melemah. Jika daun melemah, buah juga terganggu.
 
-$$
-\boxed{
-K:Ca:Mg
-}
-$$
+Bahasa lapangannya:
 
-Pada fase panen intensif, Mg tetap penting karena tanaman harus mempertahankan daun sebagai source.
+> Buah adalah tujuan, tetapi daun adalah pabriknya. Mg menjaga pabrik itu tetap bekerja.
 
-Secara praktis:
+Prinsipnya:
 
 $$
 \boxed{
 buah\ sebagai\ sink
-membutuhkan\ daun\ sebagai\ source
+tetap\ bergantung\ pada\ daun\ sebagai\ source
 }
 $$
 
-dan daun sebagai source membutuhkan Mg.
+Karena itu, saat K naik, Mg harus tetap dijaga.
 
 ---
 
-## 6.7 Dominansi Organ pada Setiap Fase
+## 6.7 Titik Jenuh Juga Dipengaruhi Organ yang Sedang Dominan
 
-Batas jenuh tidak hanya berbeda antarunsur, tetapi juga berbeda antar fase karena organ yang dominan tumbuh berubah.
+Batas jenuh tidak hanya berbeda antarunsur. Batas itu juga dipengaruhi fase tanaman.
 
-Untuk membaca dominansi organ, digunakan bobot:
+Fase berbeda berarti organ dominan juga berbeda.
+
+| Fase            | Organ dominan       | Implikasi nutrisi                         |
+| --------------- | ------------------- | ----------------------------------------- |
+| Establishment   | akar dan daun muda  | jangan terlalu pekat, akar masih sensitif |
+| Vegetatif       | daun dan batang     | N, Ca, Mg penting                         |
+| Generatif awal  | bunga dan buah muda | transisi, K dan Ca mulai kritis           |
+| Pembesaran buah | buah                | K penting, tetapi Ca dan Mg tetap dijaga  |
+| Panen intensif  | buah + daun aktif   | keseimbangan buah dan tajuk               |
+
+Secara teknis, dominansi organ dapat dihitung:
 
 $$
 \boxed{
-\begin{aligned}
-\omega_{o,\phi} &= \frac{\Delta W_o}
+\omega_{o,\phi} =
+\frac{\Delta W_o}
 {\sum_o \Delta W_o}
-\end{aligned}
 }
 $$
 
-Keterangan:
-
-| Simbol              | Arti                                        |
-| ------------------- | ------------------------------------------- |
-| $\omega_{o,\phi}$   | dominansi organ $o$ pada fase $\phi$        |
-| $\Delta W_o$        | kenaikan berat kering organ $o$ selama fase |
-| $\sum_o \Delta W_o$ | total kenaikan berat kering seluruh organ   |
-| $o$                 | akar, batang, daun, bunga, buah             |
-
-Jika:
-
-$$
-\omega_{buah,\phi}
-$$
-
-besar, maka fase tersebut didominasi pembentukan buah.
-
-Jika:
-
-$$
-\omega_{daun,\phi}+\omega_{batang,\phi}
-$$
-
-besar, maka fase tersebut didominasi pembentukan tajuk.
-
-Contoh interpretasi:
-
-| Fase            | Organ dominan       | Makna                                              |
-| --------------- | ------------------- | -------------------------------------------------- |
-| Establishment   | akar dan daun muda  | akar sensitif, kebutuhan hara rendah tetapi kritis |
-| Vegetatif       | daun dan batang     | N, Ca, Mg penting untuk tajuk                      |
-| Generatif awal  | bunga dan buah muda | transisi sink                                      |
-| Pembesaran buah | buah                | K penting, tetapi Ca dan Mg tetap harus dijaga     |
-| Panen intensif  | buah + daun aktif   | keseimbangan source-sink                           |
-
----
-
-## 6.8 Respons Fase-Organ terhadap Konsentrasi Hara
-
-Untuk menggabungkan unsur dan fase organ, respons unsur $j$ pada fase $\phi$ dapat ditulis sebagai:
+Untuk praktisi, artinya sederhana:
 
 $$
 \boxed{
-\begin{aligned}
-R_{j,\phi}(C_j) &= \sum_o
+\text{organ dominan} = \text{organ yang paling banyak bertambah pada fase itu}
+}
+$$
+
+Jika buah paling banyak bertambah, maka fase itu didominasi buah. Jika daun dan batang paling banyak bertambah, fase itu didominasi tajuk.
+
+---
+
+## 6.8 Respons Fase-Organ
+
+Secara teknis, respons hara per fase dapat ditulis:
+
+$$
+\boxed{
+R_{j,\phi}(C_j) =
+\sum_o
 \omega_{o,\phi}
 \frac{C_j}
 {K_{m,j,o}+C_j}
-\end{aligned}
 }
 $$
 
-Keterangan:
-
-| Simbol            | Arti                                       |
-| ----------------- | ------------------------------------------ |
-| $R_{j,\phi}(C_j)$ | respons fase $\phi$ terhadap unsur $j$     |
-| $\omega_{o,\phi}$ | bobot dominansi organ $o$ pada fase $\phi$ |
-| $K_{m,j,o}$       | parameter respons unsur $j$ pada organ $o$ |
-| $C_j$             | konsentrasi unsur $j$                      |
-
-Persamaan ini menunjukkan bahwa respons hara pada fase tertentu merupakan gabungan dari organ-organ yang sedang tumbuh. Jika fase didominasi buah, maka respons buah memiliki bobot besar. Jika fase didominasi daun, maka respons daun memiliki bobot besar.
-
-Dengan demikian:
+Namun untuk artikel praktisi, makna utamanya adalah:
 
 $$
 \boxed{
-titik\ jenuh\ harus\ dibaca\ terhadap\ organ\ yang\ sedang\ dominan\ tumbuh
+respons\ hara\ harus\ dibaca\ sesuai\ organ\ yang\ sedang\ tumbuh
 }
 $$
+
+Contoh:
+
+- kalau fase didominasi daun, maka respons N, Ca, dan Mg pada daun penting;
+- kalau fase didominasi buah, maka K penting, tetapi Ca dan Mg tetap tidak boleh jatuh;
+- kalau fase establishment, akar masih sensitif, sehingga larutan terlalu pekat bisa merugikan.
+
+Jadi, titik jenuh tidak boleh dibaca sebagai angka tunggal untuk semua fase.
 
 ---
 
@@ -1672,10 +1528,10 @@ $$
 
 ```mermaid id="bab6-unsur-organ"
 flowchart TD
-    A["Fase pertumbuhan"] --> B["Organ dominan<br/>omega_o,phi"]
-    B --> C["Unsur yang dibutuhkan<br/>N, P, K, Ca, Mg"]
-    C --> D["Respons unsur-organ<br/>R_j,phi(C_j)"]
-    D --> E["Batas jenuh fase<br/>C_sat,j,phi"]
+    A["Fase tanaman"] --> B["Organ yang dominan<br/>bertambah"]
+    B --> C["Unsur utama yang<br/>perlu dijaga"]
+    C --> D["Cek respons unsur<br/>pada organ tersebut"]
+    D --> E["Tentukan batas efektif<br/>sebelum jenuh"]
 
     A1["Vegetatif"] --> B1["Daun + batang"]
     A2["Pembesaran buah"] --> B2["Buah dominan"]
@@ -1696,51 +1552,57 @@ flowchart TD
     class E hasil;
 ```
 
-Diagram ini menegaskan bahwa batas jenuh bukan angka tunggal yang berdiri sendiri. Batas jenuh harus dibaca dari kombinasi:
+Diagram ini menegaskan bahwa batas jenuh harus dibaca dari kombinasi:
 
 $$
 \boxed{
-unsur
-+
-fase
-+
-organ\ dominan
+fase +
+organ\ dominan +
+unsur\ hara
 }
 $$
+
+Bukan dari ppm umum yang dipakai sama sepanjang musim.
 
 ---
 
 ## 6.10 Kesimpulan Bab 6
 
-Bab ini menegaskan bahwa setiap unsur memiliki karakter respons yang berbeda.
+Setiap unsur punya peran dan batas efektif yang berbeda.
 
-Nitrogen penting untuk tajuk, tetapi tidak boleh berlebihan saat buah dominan. Fosfor kecil secara jumlah, tetapi penting secara fungsi. Kalium kuat pada fase buah, tetapi bisa menekan Ca dan Mg. Kalsium sangat dipengaruhi transpirasi dan distribusi organ. Magnesium menjaga fotosintesis, terutama ketika tanaman harus mempertahankan daun aktif selama fase produksi.
+- N menjaga tajuk, tetapi bisa berlebihan saat buah dominan.
+- P kecil secara jumlah, tetapi penting untuk akar, energi, dan fase generatif.
+- K penting untuk buah, tetapi bisa menekan Ca dan Mg.
+- Ca penting untuk jaringan, tetapi distribusinya sangat dipengaruhi air dan transpirasi.
+- Mg menjaga daun tetap aktif sebagai mesin fotosintesis.
 
-Maka formula hara tidak cukup hanya menghitung:
+Karena itu, formula nutrisi tidak cukup hanya bertanya:
 
-$$
-C_{req,j,\phi}
-$$
+> Berapa konsentrasi yang dibutuhkan?
 
-Formula hara harus juga mempertimbangkan:
+Tetapi juga harus bertanya:
 
-$$
-C_{sat,j,\phi}
-$$
+> Apakah konsentrasi itu masih berada di zona respons efektif, atau sudah melewati batas jenuh?
 
-yang dibaca dari respons unsur terhadap organ dominan pada fase tersebut.
-
-Prinsip tajamnya:
+Kesimpulan tajamnya:
 
 $$
 \boxed{
 konsentrasi\ yang\ cukup
-belum\ tentu\ konsentrasi\ yang\ tepat,
-jika\ sudah\ melewati\ titik\ jenuh\ respons
+belum\ tentu\ tepat
+jika\ sudah\ melewati\ titik\ jenuh
 }
 $$
 
-Bab berikutnya akan menyusun semua komponen ini ke dalam formula utama artikel:
+Bab berikutnya menyusun semua prinsip ini menjadi formula utama:
+
+$$
+\boxed{
+target\ konsentrasi\ hara
+}
+$$
+
+atau secara teknis:
 
 $$
 \boxed{
@@ -1754,115 +1616,112 @@ $$
 
 # 7. Formula Target Konsentrasi N, P, K, Ca, Mg
 
-Bab ini adalah inti artikel. Sampai Bab 6, kita sudah membangun tiga komponen utama:
+Bab ini adalah inti artikel.
 
-1. laju akumulasi hara tanaman;
-2. kebutuhan konsentrasi berdasarkan serapan air;
-3. batas jenuh respons akar dan organ dominan.
+Sampai titik ini, kita sudah punya tiga informasi penting:
 
-Sekarang ketiganya disatukan menjadi formula target konsentrasi hara.
+1. **berapa hara yang dibutuhkan tanaman per hari**;
+2. **berapa air yang diserap tanaman per hari**;
+3. **batas kapan tambahan hara tidak lagi memberi respons berarti**.
 
-Tujuan formula ini bukan mencari konsentrasi larutan setinggi mungkin, tetapi mencari konsentrasi yang:
+Sekarang ketiganya digabung menjadi satu pertanyaan praktis:
 
-- cukup untuk memenuhi laju akumulasi tanaman;
-- tidak lebih rendah dari batas minimum;
-- tidak melewati batas jenuh respons;
-- tetap aman dari risiko toksik;
-- dapat dibaca per unsur dan per fase.
+> Berapa konsentrasi N, P, K, Ca, dan Mg yang sebaiknya tersedia di larutan pada fase tertentu?
 
-Prinsip tajamnya:
+Jawaban artikel ini bukan:
 
-> Formula yang baik bukan konsentrasi tertinggi, tetapi konsentrasi yang memenuhi kebutuhan tanpa melewati zona respons efektif.
+> Buat larutan setinggi mungkin.
+
+Tetapi:
+
+> Buat larutan yang cukup, efektif, dan tidak melewati batas jenuh respons tanaman.
 
 ---
 
-## 7.1 Posisi Formula Target dalam Model
+## 7.1 Inti Formula Target
 
-Formula target berada setelah kita menghitung:
-
-$$
-\bar{U}_{j,\phi}
-$$
-
-dan:
-
-$$
-C_{req,j,\phi}
-$$
-
-Dari Bab 4:
+Pada Bab 4, kita sudah menghitung **konsentrasi kebutuhan**:
 
 $$
 \boxed{
-\begin{aligned}
-C_{req,j,\phi} &= \frac{\bar{U}_{j,\phi}}
+C_{req,j,\phi} =
+\frac{\bar{U}_{j,\phi}}
 {\bar{Q}_{w,\phi}\eta_{j,\phi}}
-\end{aligned}
 }
 $$
 
-Konsentrasi tersebut adalah **konsentrasi kebutuhan teoritis** berdasarkan laju akumulasi, serapan air, dan efisiensi serapan.
-
-Namun:
-
-$$
-C_{req,j,\phi}
-$$
-
-belum otomatis menjadi target akhir. Nilai tersebut harus dibatasi oleh:
-
-$$
-C_{min,j}
-$$
-
-$$
-C_{sat,j,\phi}
-$$
-
-$$
-C_{tox,j}-m_j
-$$
-
-Maka formula target konsentrasi disusun sebagai:
+Agar mudah dibaca, artinya:
 
 $$
 \boxed{
-\begin{aligned}
-C_{target,j,\phi} &= \min
+konsentrasi\ kebutuhan =
+\frac{
+kebutuhan\ hara\ per\ hari
+}
+{
+air\ yang\ diserap
+\times
+efisiensi\ serapan
+}
+}
+$$
+
+Tetapi angka ini belum boleh langsung menjadi target akhir.
+
+Mengapa?
+
+Karena konsentrasi harus tetap dibatasi oleh tiga pagar:
+
+1. **jangan terlalu rendah**, agar tidak defisiensi;
+2. **jangan melewati batas jenuh**, karena tambahan hara sudah tidak efisien;
+3. **jangan mendekati toksik**, agar tanaman tidak stres.
+
+Maka formula targetnya adalah:
+
+$$
+\boxed{
+C_{target,j,\phi} =
+\min
 \left[
 C_{sat,j,\phi},
 C_{tox,j}-m_j,
 \max(C_{min,j},C_{req,j,\phi})
 \right]
-\end{aligned}
 }
 $$
 
-Keterangan:
+Agar lebih mudah, baca seperti ini:
 
-| Simbol              | Arti                                             |
-| ------------------- | ------------------------------------------------ |
-| $C_{target,j,\phi}$ | target konsentrasi unsur $j$ pada fase $\phi$    |
-| $C_{req,j,\phi}$    | konsentrasi kebutuhan berdasarkan laju akumulasi |
-| $C_{min,j}$         | batas minimum agar tidak defisiensi              |
-| $C_{sat,j,\phi}$    | batas jenuh respons unsur $j$ pada fase $\phi$   |
-| $C_{tox,j}$         | batas risiko toksik unsur $j$                    |
-| $m_j$               | margin keamanan dari batas toksik                |
-| $j$                 | N, P, K, Ca, Mg                                  |
-| $\phi$              | fase pertumbuhan                                 |
+$$
+\boxed{
+\text{target konsentrasi} = \text{angka kebutuhan yang cukup, aman, dan tidak melewati batas jenuh}
+}
+$$
 
-Secara alur:
+Keterangan praktis:
+
+| Simbol teknis       | Bahasa lapangan                                            |
+| ------------------- | ---------------------------------------------------------- |
+| $C_{target,j,\phi}$ | target konsentrasi unsur pada fase tertentu                |
+| $C_{req,j,\phi}$    | konsentrasi yang dibutuhkan dari hitungan kebutuhan harian |
+| $C_{min,j}$         | batas bawah agar tidak defisiensi                          |
+| $C_{sat,j,\phi}$    | batas jenuh; di atas ini tambahan hara kurang respons      |
+| $C_{tox,j}$         | batas risiko toksik                                        |
+| $m_j$               | jarak aman dari batas toksik                               |
+| $j$                 | unsur: N, P, K, Ca, Mg                                     |
+| $\phi$              | fase tanaman                                               |
+
+Alurnya:
 
 ```mermaid id="bab7-formula-utama"
 flowchart TD
-    A["Laju akumulasi<br/>Ubar_j,phi"] --> B["Serapan air<br/>Qbar_w,phi"]
-    B --> C["Efisiensi serapan<br/>eta_j,phi"]
-    C --> D["Konsentrasi kebutuhan<br/>C_req,j,phi"]
-    D --> E["Batas minimum<br/>C_min,j"]
-    E --> F["Pilih nilai cukup<br/>max(C_min, C_req)"]
-    F --> G["Batas jenuh respons<br/>C_sat,j,phi"]
-    G --> H["Batas toksik aman<br/>C_tox,j - m_j"]
-    H --> I["Target konsentrasi<br/>C_target,j,phi"]
+    A["Kebutuhan hara<br/>per hari"] --> B["Air yang diserap<br/>per tanaman"]
+    B --> C["Efisiensi akar<br/>dan sistem"]
+    C --> D["Konsentrasi kebutuhan<br/>C_req"]
+    D --> E["Cek batas minimum<br/>agar tidak defisiensi"]
+    E --> F["Cek batas jenuh<br/>respons tanaman"]
+    F --> G["Cek batas toksik<br/>dengan margin aman"]
+    G --> H["Target konsentrasi<br/>C_target"]
 
     classDef data fill:#E8F5E9,stroke:#2E7D32,stroke-width:1.5px,color:#1B5E20;
     classDef hitung fill:#E3F2FD,stroke:#1565C0,stroke-width:1.5px,color:#0D47A1;
@@ -1870,18 +1729,22 @@ flowchart TD
     classDef hasil fill:#F3E5F5,stroke:#6A1B9A,stroke-width:1.5px,color:#4A148C;
 
     class A,B,C data;
-    class D,F hitung;
-    class E,G,H batas;
-    class I hasil;
+    class D hitung;
+    class E,F,G batas;
+    class H hasil;
 ```
+
+Pesan praktisnya:
+
+> Konsentrasi target bukan sekadar hasil hitung kebutuhan, tetapi hasil keputusan antara kebutuhan, batas minimum, batas jenuh, dan batas aman.
 
 ---
 
-## 7.2 Makna Struktur `min` dan `max`
+## 7.2 Cara Membaca `min` dan `max`
 
-Formula ini memiliki dua lapisan penting.
+Rumus di atas tampak akademis karena ada `min` dan `max`. Padahal logikanya sederhana.
 
-Pertama, bagian:
+Bagian ini:
 
 $$
 \boxed{
@@ -1889,27 +1752,35 @@ $$
 }
 $$
 
-berfungsi sebagai **lantai kecukupan**.
+artinya:
 
-Artinya, target tidak boleh lebih rendah dari batas minimum. Jika kebutuhan hasil hitung terlalu rendah, konsentrasi tetap dijaga minimal agar tidak terjadi defisiensi.
+> Ambil angka yang lebih besar antara batas minimum dan kebutuhan hitung.
+
+Tujuannya agar konsentrasi tidak terlalu rendah.
+
+Jika hasil hitung kebutuhan lebih rendah dari batas minimum, tetap gunakan batas minimum.
 
 Contoh:
 
-Jika:
+$$
+C_{req}=40\ mg/L
+$$
 
 $$
-C_{req,j,\phi}<C_{min,j}
+C_{min}=60\ mg/L
 $$
 
 maka:
 
 $$
 \boxed{
-\max(C_{min,j},C_{req,j,\phi})=C_{min,j}
+target\ awal=60\ mg/L
 }
 $$
 
-Kedua, bagian:
+Karena kalau pakai 40 mg/L, tanaman berisiko kekurangan.
+
+Bagian berikutnya:
 
 $$
 \boxed{
@@ -1922,36 +1793,37 @@ C_{tox,j}-m_j,
 }
 $$
 
-berfungsi sebagai **atap keamanan dan efisiensi**.
+artinya:
 
-Artinya, target tidak boleh melewati batas jenuh respons dan tidak boleh mendekati batas toksik.
+> Ambil angka yang paling aman dari batas jenuh dan batas toksik.
 
-Jadi formula ini bekerja dengan prinsip:
+Tujuannya agar konsentrasi tidak terlalu tinggi.
+
+Jadi, cara kerja rumus ini adalah:
 
 $$
 \boxed{
-cukup\ dari\ bawah,
-dibatasi\ dari\ atas
+jaga\ dari\ bawah,
+batasi\ dari\ atas
 }
 $$
 
-Secara sederhana:
+Ringkasnya:
 
-| Kondisi                           | Keputusan formula                  |
-| --------------------------------- | ---------------------------------- |
-| $C_{req}<C_{min}$                 | pakai $C_{min}$                    |
-| $C_{min}\leq C_{req}\leq C_{sat}$ | pakai $C_{req}$                    |
-| $C_{req}>C_{sat}$                 | batasi di $C_{sat}$                |
-| $C_{req}>C_{tox}-m$               | batasi di zona aman                |
-| $C_{sat}>C_{tox}-m$               | batas toksik aman lebih menentukan |
+| Kondisi                                | Keputusan                |
+| -------------------------------------- | ------------------------ |
+| kebutuhan hitung terlalu rendah        | naikkan ke batas minimum |
+| kebutuhan hitung masih di zona efektif | pakai angka kebutuhan    |
+| kebutuhan hitung melewati batas jenuh  | batasi di batas jenuh    |
+| kebutuhan hitung mendekati toksik      | batasi di zona aman      |
 
 ---
 
-## 7.3 Tiga Zona Keputusan Formula
+## 7.3 Tiga Zona Keputusan
 
-Formula target harus dibaca melalui tiga zona keputusan.
+Formula ini bisa dibaca melalui tiga zona.
 
-### Zona 1 — Defisiensi Potensial
+### Zona 1 — Terlalu Rendah
 
 Jika:
 
@@ -1961,7 +1833,7 @@ C_{req,j,\phi}<C_{min,j}
 }
 $$
 
-maka tanaman mungkin masih membutuhkan konsentrasi minimum untuk menjaga fungsi dasar unsur tersebut.
+maka konsentrasi hasil hitung terlalu rendah.
 
 Keputusan:
 
@@ -1971,13 +1843,15 @@ C_{target,j,\phi}=C_{min,j}
 }
 $$
 
-Maknanya:
+Makna lapangan:
 
-> Walaupun laju akumulasi fase terlihat rendah, unsur tersebut tetap harus tersedia pada batas minimum agar fungsi fisiologis tidak terganggu.
+> Walaupun kebutuhan fase tampak rendah, unsur tetap harus tersedia minimal agar tanaman tidak defisiensi.
+
+Contoh: P atau Mg bisa tampak kecil secara jumlah, tetapi tetap tidak boleh kosong atau terlalu rendah.
 
 ---
 
-### Zona 2 — Zona Respons Efektif
+### Zona 2 — Zona Efektif
 
 Jika:
 
@@ -1987,7 +1861,7 @@ C_{min,j}\leq C_{req,j,\phi}\leq C_{sat,j,\phi}
 }
 $$
 
-maka kebutuhan tanaman masih berada dalam zona respons efektif.
+maka kebutuhan masih berada di zona efektif.
 
 Keputusan:
 
@@ -1997,15 +1871,15 @@ C_{target,j,\phi}=C_{req,j,\phi}
 }
 $$
 
-Maknanya:
+Makna lapangan:
 
-> Konsentrasi dihitung langsung dari laju akumulasi, serapan air, dan efisiensi serapan.
+> Angka hasil hitung boleh dipakai karena masih berada dalam rentang yang tanaman respons dengan baik.
 
-Ini adalah zona kerja terbaik.
+Ini zona terbaik.
 
 ---
 
-### Zona 3 — Zona Jenuh
+### Zona 3 — Melewati Batas Jenuh
 
 Jika:
 
@@ -2015,7 +1889,7 @@ C_{req,j,\phi}>C_{sat,j,\phi}
 }
 $$
 
-maka kebutuhan hitung sudah melebihi batas respons efektif.
+maka kebutuhan hitung sudah melewati batas efektif.
 
 Keputusan:
 
@@ -2025,7 +1899,7 @@ C_{target,j,\phi}=C_{sat,j,\phi}
 }
 $$
 
-atau, jika batas toksik aman lebih rendah:
+atau jika batas toksik aman lebih rendah:
 
 $$
 \boxed{
@@ -2033,51 +1907,77 @@ C_{target,j,\phi}=C_{tox,j}-m_j
 }
 $$
 
-Maknanya:
+Makna lapangan:
 
-> Masalahnya tidak lagi diselesaikan dengan menaikkan konsentrasi. Yang perlu diperiksa adalah akar, air, lingkungan, antagonisme, atau parameter model.
+> Jangan langsung menaikkan ppm. Tanaman mungkin sudah tidak mampu merespons tambahan konsentrasi.
 
-Ini adalah bagian penting. Jika kebutuhan hitung melebihi titik jenuh, menaikkan konsentrasi bukan solusi utama.
+Pada kondisi ini, yang harus diperiksa adalah:
+
+- akar,
+- serapan air,
+- pH,
+- EC,
+- suhu larutan,
+- oksigen,
+- antagonisme hara,
+- drainase,
+- dan kondisi lingkungan.
 
 ---
 
-## 7.4 Formula Vektor per Fase
+## 7.4 Target Konsentrasi per Fase
 
-Pada satu fase pertumbuhan, formula target tidak hanya dihitung untuk satu unsur. Formula harus dihitung untuk seluruh unsur utama:
-
-$$
-j=N,\ P,\ K,\ Ca,\ Mg
-$$
-
-Maka target konsentrasi fase ditulis sebagai vektor:
+Dalam satu fase, kita tidak hanya menghitung satu unsur. Kita menghitung lima unsur utama:
 
 $$
 \boxed{
-\begin{aligned}
-\mathbf{C}_{target,\phi} &= [
+N,\ P,\ K,\ Ca,\ Mg
+}
+$$
+
+Maka formula fase ditulis sebagai:
+
+$$
+\boxed{
+\mathbf{C}_{target,\phi} =
+[
 C_{N,\phi},
 C_{P,\phi},
 C_{K,\phi},
 C_{Ca,\phi},
 C_{Mg,\phi}
 ]
-\end{aligned}
 }
 $$
 
-Keterangan:
+Baca sederhananya:
 
-| Komponen      | Arti                                   |
-| ------------- | -------------------------------------- |
-| $C_{N,\phi}$  | target konsentrasi N pada fase $\phi$  |
-| $C_{P,\phi}$  | target konsentrasi P pada fase $\phi$  |
-| $C_{K,\phi}$  | target konsentrasi K pada fase $\phi$  |
-| $C_{Ca,\phi}$ | target konsentrasi Ca pada fase $\phi$ |
-| $C_{Mg,\phi}$ | target konsentrasi Mg pada fase $\phi$ |
+$$
+\boxed{
+formula\ fase =
+[
+target\ N,
+target\ P,
+target\ K,
+target\ Ca,
+target\ Mg
+]
+}
+$$
 
-Vektor ini adalah bentuk awal formula nutrisi fase.
+Contoh bahasa lapangan:
 
-Namun vektor ini masih merupakan **target biologis-konsentrasi**, belum formula pupuk teknis. Artinya, ini belum menghitung jenis garam pupuk, kompatibilitas larutan A-B, kelarutan, atau komposisi air baku.
+| Unsur | Pertanyaan yang dijawab                                         |
+| ----- | --------------------------------------------------------------- |
+| N     | berapa N agar daun tetap aktif, tetapi tidak terlalu vegetatif? |
+| P     | berapa P yang cukup untuk akar, energi, dan bunga?              |
+| K     | berapa K untuk buah tanpa menekan Ca dan Mg?                    |
+| Ca    | berapa Ca yang cukup dan masih bisa terdistribusi?              |
+| Mg    | berapa Mg agar daun tetap kuat berfotosintesis?                 |
+
+Jadi keluaran Bab 7 bukan resep pupuk A-B, tetapi **target unsur**.
+
+Resep pupuk teknis masih membutuhkan tahap lain: memilih garam pupuk, menghitung kandungan unsur, memisahkan larutan A dan B, serta menyesuaikan air baku.
 
 ---
 
@@ -2087,14 +1987,13 @@ Untuk nitrogen:
 
 $$
 \boxed{
-\begin{aligned}
-C_{target,N,\phi} &= \min
+C_{target,N,\phi} =
+\min
 \left[
 C_{sat,N,\phi},
 C_{tox,N}-m_N,
 \max(C_{min,N},C_{req,N,\phi})
 \right]
-\end{aligned}
 }
 $$
 
@@ -2102,35 +2001,28 @@ Dengan:
 
 $$
 \boxed{
-\begin{aligned}
-C_{req,N,\phi} &= \frac{\bar{U}_{N,\phi}}
+C_{req,N,\phi} =
+\frac{\bar{U}_{N,\phi}}
 {\bar{Q}_{w,\phi}\eta_{N,\phi}}
-\end{aligned}
 }
 $$
 
-Interpretasi:
+Makna praktisnya:
 
-- Jika N terlalu rendah, daun dan tajuk dapat melemah.
-- Jika N cukup, tanaman mampu mempertahankan klorofil, protein, dan pertumbuhan.
-- Jika N terlalu tinggi, terutama saat buah dominan, tanaman dapat terdorong terlalu vegetatif.
+- N diperlukan untuk daun, klorofil, protein, dan tajuk.
+- Pada fase vegetatif, N sangat penting.
+- Pada fase buah, N tetap perlu, tetapi tidak boleh mendorong tanaman terlalu vegetatif.
 
-Pada fase vegetatif, nilai:
-
-$$
-C_{target,N,\phi}
-$$
-
-dapat lebih tinggi karena daun dan batang sedang aktif dibangun. Pada fase pembesaran buah, N tetap diperlukan, tetapi targetnya harus dikendalikan agar tidak mengganggu alokasi ke buah.
-
-Prinsip untuk N:
+Prinsip lapangan:
 
 $$
 \boxed{
-N\ harus\ cukup\ untuk\ mempertahankan\ source,
-tetapi\ tidak\ berlebih\ sampai\ menekan\ sink\ buah
+N\ harus\ cukup\ untuk\ menjaga\ daun,
+tetapi\ jangan\ berlebih\ sampai\ tanaman\ sibuk\ membuat\ tajuk
 }
 $$
+
+Jika tanaman terlalu rimbun, ruas panjang, bunga mudah rontok, atau buah lambat mengisi, target N perlu dievaluasi.
 
 ---
 
@@ -2140,14 +2032,13 @@ Untuk fosfor:
 
 $$
 \boxed{
-\begin{aligned}
-C_{target,P,\phi} &= \min
+C_{target,P,\phi} =
+\min
 \left[
 C_{sat,P,\phi},
 C_{tox,P}-m_P,
 \max(C_{min,P},C_{req,P,\phi})
 \right]
-\end{aligned}
 }
 $$
 
@@ -2155,39 +2046,28 @@ Dengan:
 
 $$
 \boxed{
-\begin{aligned}
-C_{req,P,\phi} &= \frac{\bar{U}_{P,\phi}}
+C_{req,P,\phi} =
+\frac{\bar{U}_{P,\phi}}
 {\bar{Q}_{w,\phi}\eta_{P,\phi}}
-\end{aligned}
 }
 $$
 
-Interpretasi:
+Makna praktisnya:
 
-- P penting untuk akar, energi, pembelahan sel, dan fase generatif awal.
-- Akumulasi P biasanya lebih kecil dibanding N dan K.
-- P berlebih tidak selalu menghasilkan respons pertumbuhan yang sebanding.
+- P penting untuk akar, energi, pembelahan sel, dan pembungaan awal.
+- Kebutuhan P secara jumlah biasanya lebih kecil dari N dan K.
+- P tidak perlu dinaikkan tinggi tanpa alasan.
 
-Karena itu, P harus cukup, tetapi tidak perlu dipaksa tinggi tanpa dasar laju akumulasi.
-
-Prinsip untuk P:
+Prinsip lapangan:
 
 $$
 \boxed{
-P\ kecil\ secara\ massa,
-tetapi\ penting\ secara\ fungsi
+P\ kecil\ bukan\ berarti\ tidak\ penting,
+tetapi\ P\ penting\ bukan\ berarti\ harus\ tinggi
 }
 $$
 
-dan:
-
-$$
-\boxed{
-P\ penting
-\neq
-P\ harus\ tinggi
-}
-$$
+Jika P sudah cukup, menaikkannya lagi belum tentu membuat akar atau bunga bertambah lebih baik.
 
 ---
 
@@ -2197,14 +2077,13 @@ Untuk kalium:
 
 $$
 \boxed{
-\begin{aligned}
-C_{target,K,\phi} &= \min
+C_{target,K,\phi} =
+\min
 \left[
 C_{sat,K,\phi},
 C_{tox,K}-m_K,
 \max(C_{min,K},C_{req,K,\phi})
 \right]
-\end{aligned}
 }
 $$
 
@@ -2212,45 +2091,28 @@ Dengan:
 
 $$
 \boxed{
-\begin{aligned}
-C_{req,K,\phi} &= \frac{\bar{U}_{K,\phi}}
+C_{req,K,\phi} =
+\frac{\bar{U}_{K,\phi}}
 {\bar{Q}_{w,\phi}\eta_{K,\phi}}
-\end{aligned}
 }
 $$
 
-Interpretasi:
+Makna praktisnya:
 
-- K penting untuk stomata, tekanan osmotik, transport gula, dan pembesaran buah.
-- K sering tinggi pada fase generatif dan buah.
-- Namun K berlebih dapat menekan Ca dan Mg.
+- K penting untuk stomata, keseimbangan air, transport gula, dan pengisian buah.
+- Saat buah mulai dominan, kebutuhan K biasanya meningkat.
+- Tetapi K tidak boleh dinaikkan tanpa melihat Ca dan Mg.
 
-Karena itu, target K tidak cukup hanya mengikuti:
-
-$$
-C_{req,K,\phi}
-$$
-
-Target K juga harus memperhatikan:
-
-$$
-C_{sat,K,\phi}
-$$
-
-dan pada Bab 8 akan dikoreksi oleh hubungan:
-
-$$
-K:Ca:Mg
-$$
-
-Prinsip untuk K:
+Prinsip lapangan:
 
 $$
 \boxed{
 K\ penting\ untuk\ buah,
-tetapi\ K\ tinggi\ tidak\ boleh\ mengorbankan\ Ca\ dan\ Mg
+tetapi\ K\ terlalu\ dominan\ bisa\ membuat\ Ca\ dan\ Mg\ kalah
 }
 $$
+
+Jika K terlalu tinggi, tanaman bisa terlihat “cukup pupuk”, tetapi Ca dan Mg menjadi tidak efektif. Akibatnya, kualitas jaringan dan daun bisa terganggu.
 
 ---
 
@@ -2260,14 +2122,13 @@ Untuk kalsium:
 
 $$
 \boxed{
-\begin{aligned}
-C_{target,Ca,\phi} &= \min
+C_{target,Ca,\phi} =
+\min
 \left[
 C_{sat,Ca,\phi},
 C_{tox,Ca}-m_{Ca},
 \max(C_{min,Ca},C_{req,Ca,\phi})
 \right]
-\end{aligned}
 }
 $$
 
@@ -2275,44 +2136,40 @@ Dengan:
 
 $$
 \boxed{
-\begin{aligned}
-C_{req,Ca,\phi} &= \frac{\bar{U}_{Ca,\phi}}
+C_{req,Ca,\phi} =
+\frac{\bar{U}_{Ca,\phi}}
 {\bar{Q}_{w,\phi}\eta_{Ca,\phi}}
-\end{aligned}
 }
 $$
 
-Interpretasi:
+Makna praktisnya:
 
-- Ca penting untuk dinding sel, kekuatan jaringan, dan integritas organ muda.
-- Ca tidak selalu mudah dialirkan ke buah karena mobilitasnya rendah.
-- Distribusi Ca sangat dipengaruhi aliran air dan transpirasi.
+- Ca penting untuk dinding sel, jaringan muda, pucuk, dan kualitas buah.
+- Ca tidak mudah dipindahkan ulang di dalam tanaman.
+- Ca sangat bergantung pada aliran air dan transpirasi.
 
-Maka formula Ca harus dibaca lebih hati-hati daripada sekadar menaikkan konsentrasi Ca.
+Jadi, jika Ca bermasalah, penyebabnya belum tentu Ca di larutan kurang.
 
-Jika:
+Bisa jadi:
 
-$$
-C_{req,Ca,\phi}>C_{sat,Ca,\phi}
-$$
+- akar tidak sehat,
+- air tidak cukup masuk,
+- VPD tidak sesuai,
+- kelembapan terlalu tinggi,
+- K terlalu dominan,
+- NH₄ terlalu tinggi,
+- atau distribusi Ca ke buah lemah.
 
-maka menaikkan Ca di larutan belum tentu menyelesaikan masalah. Bisa jadi faktor pembatasnya adalah:
-
-- aliran transpirasi,
-- VPD,
-- kelembapan,
-- kesehatan akar,
-- suhu larutan,
-- atau kompetisi dengan K dan NH₄.
-
-Prinsip untuk Ca:
+Prinsip lapangan:
 
 $$
 \boxed{
-Ca\ bukan\ hanya\ masalah\ konsentrasi,
-tetapi\ juga\ masalah\ distribusi
+Ca\ bukan\ hanya\ soal\ konsentrasi,
+tetapi\ juga\ soal\ distribusi
 }
 $$
+
+Menaikkan Ca di larutan belum tentu efektif jika aliran air dan akar tidak mendukung.
 
 ---
 
@@ -2322,14 +2179,13 @@ Untuk magnesium:
 
 $$
 \boxed{
-\begin{aligned}
-C_{target,Mg,\phi} &= \min
+C_{target,Mg,\phi} =
+\min
 \left[
 C_{sat,Mg,\phi},
 C_{tox,Mg}-m_{Mg},
 \max(C_{min,Mg},C_{req,Mg,\phi})
 \right]
-\end{aligned}
 }
 $$
 
@@ -2337,88 +2193,90 @@ Dengan:
 
 $$
 \boxed{
-\begin{aligned}
-C_{req,Mg,\phi} &= \frac{\bar{U}_{Mg,\phi}}
+C_{req,Mg,\phi} =
+\frac{\bar{U}_{Mg,\phi}}
 {\bar{Q}_{w,\phi}\eta_{Mg,\phi}}
-\end{aligned}
 }
 $$
 
-Interpretasi:
+Makna praktisnya:
 
-- Mg penting untuk klorofil dan fotosintesis.
-- Mg mendukung daun sebagai source.
-- Mg dapat tertekan jika K terlalu tinggi.
+- Mg penting untuk klorofil.
+- Mg menjaga daun tetap aktif berfotosintesis.
+- Mg dapat terganggu jika K terlalu tinggi.
 
-Pada fase buah, Mg tidak boleh diabaikan. Buah membutuhkan asimilat, dan asimilat berasal dari daun. Daun membutuhkan Mg untuk menjaga fotosintesis.
+Saat tanaman berbuah, Mg tetap penting. Buah membutuhkan hasil fotosintesis, dan fotosintesis berlangsung di daun.
 
-Prinsip untuk Mg:
+Prinsip lapangan:
 
 $$
 \boxed{
-buah\ sebagai\ sink
-tetap\ bergantung\ pada\ daun\ sebagai\ source
+buah\ adalah\ tujuan,
+tetapi\ daun\ adalah\ pabriknya
 }
 $$
 
-dan daun sebagai source membutuhkan Mg.
+Mg menjaga pabrik itu tetap bekerja.
 
 ---
 
-## 7.10 Tabel Ringkas Formula per Unsur
+## 7.10 Ringkasan Formula per Unsur
 
-| Unsur | Formula target       | Fokus fisiologis             | Risiko jika berlebih                       |
-| ----- | -------------------- | ---------------------------- | ------------------------------------------ |
-| N     | $C_{target,N,\phi}$  | tajuk, klorofil, protein     | vegetatif berlebih                         |
-| P     | $C_{target,P,\phi}$  | energi, akar, pembelahan sel | respons tambahan kecil                     |
-| K     | $C_{target,K,\phi}$  | stomata, gula, buah          | menekan Ca dan Mg                          |
-| Ca    | $C_{target,Ca,\phi}$ | dinding sel, jaringan muda   | tidak selalu efektif jika distribusi buruk |
-| Mg    | $C_{target,Mg,\phi}$ | klorofil, fotosintesis       | terganggu oleh K tinggi                    |
+| Unsur | Fungsi utama                                     | Catatan praktis                                            |
+| ----- | ------------------------------------------------ | ---------------------------------------------------------- |
+| N     | daun, tajuk, klorofil, protein                   | cukup, tetapi jangan berlebih saat buah dominan            |
+| P     | akar, energi, pembelahan sel, bunga awal         | kecil secara jumlah, tetapi tetap penting                  |
+| K     | air, stomata, transport gula, buah               | penting untuk buah, tetapi harus seimbang dengan Ca dan Mg |
+| Ca    | dinding sel, pucuk, jaringan muda, kualitas buah | masalah Ca sering soal distribusi, bukan hanya konsentrasi |
+| Mg    | klorofil, fotosintesis, daun aktif               | penting agar daun tetap menjadi source                     |
 
-Tabel ini menegaskan bahwa formula target harus dibaca per unsur. Tidak ada satu unsur yang bisa dinaikkan tanpa mempertimbangkan unsur lain dan fase pertumbuhan.
+Tabel ini membantu pembaca lapangan memahami bahwa formula target tidak boleh dibaca sebagai “semua unsur dinaikkan bersama”.
+
+Setiap unsur harus punya alasan.
 
 ---
 
-## 7.11 Contoh Kerangka Perhitungan Satu Fase
+## 7.11 Contoh Perhitungan Satu Unsur
 
-Misal fase pembesaran buah memiliki data berikut untuk unsur K:
-
-$$
-\bar{U}_{K,\phi}=50\ mg/tanaman/hari
-$$
+Misalnya pada fase pembesaran buah, kebutuhan K adalah:
 
 $$
-\bar{Q}_{w,\phi}=0.5\ L/tanaman/hari
+50\ mg/tanaman/hari
+$$
+
+Serapan air:
+
+$$
+0.5\ L/tanaman/hari
+$$
+
+Efisiensi serapan K:
+
+$$
+80\%
+$$
+
+Maka konsentrasi kebutuhan K:
+
+$$
+C_{req,K} =
+\frac{50}{0.5\times0.8}
 $$
 
 $$
-\eta_{K,\phi}=0.8
+C_{req,K} = 125\ \text{mg/L}
 $$
 
-Maka:
-
-$$
-\begin{aligned}
-C_{req,K,\phi} &= \frac{50}{0.5\times0.8}
-\end{aligned}
-$$
-
-$$
-\boxed{
-C_{req,K,\phi}=125\ mg/L
-}
-$$
-
-Misal batas minimum K:
+Misalnya batas minimum K:
 
 $$
 C_{min,K}=80\ mg/L
 $$
 
-batas jenuh fase:
+batas jenuh K:
 
 $$
-C_{sat,K,\phi}=160\ mg/L
+C_{sat,K}=160\ mg/L
 $$
 
 batas toksik aman:
@@ -2430,139 +2288,115 @@ $$
 Maka:
 
 $$
-\begin{aligned}
-C_{target,K,\phi} &= \min
+C_{target,K} =
+\min
 [
 160,\ 220,\ \max(80,\ 125)
 ]
-\end{aligned}
 $$
 
+Langkahnya:
+
 $$
-\begin{aligned}
-C_{target,K,\phi} &= \min
-[
-160,\ 220,\ 125
-]
-\end{aligned}
+\max(80,\ 125)=125
 $$
+
+lalu:
+
+$$
+\min(160,\ 220,\ 125)=125
+$$
+
+Jadi:
 
 $$
 \boxed{
-C_{target,K,\phi}=125\ mg/L
+C_{target,K}=125\ mg/L
 }
 $$
 
-Artinya, kebutuhan K berada dalam zona efektif.
+Artinya, target K 125 mg/L masih berada dalam zona efektif.
 
-Namun jika hasil hitung:
+---
+
+## 7.12 Jika Kebutuhan Melebihi Batas Jenuh
+
+Sekarang gunakan contoh lain.
+
+Misalnya hasil hitung kebutuhan K:
 
 $$
-C_{req,K,\phi}=190\ mg/L
+C_{req,K}=190\ mg/L
 $$
 
-maka:
+Tetapi batas jenuh K:
 
 $$
-\begin{aligned}
-C_{target,K,\phi} &= \min
+C_{sat,K}=160\ mg/L
+$$
+
+dan batas toksik aman:
+
+$$
+C_{tox,K}-m_K=220\ mg/L
+$$
+
+Maka:
+
+$$
+C_{target,K} =
+\min
 [
 160,\ 220,\ \max(80,\ 190)
 ]
-\end{aligned}
 $$
 
+Langkahnya:
+
 $$
-\begin{aligned}
-C_{target,K,\phi} &= \min
-[
-160,\ 220,\ 190
-]
-\end{aligned}
+\max(80,\ 190)=190
 $$
+
+lalu:
+
+$$
+\min(160,\ 220,\ 190)=160
+$$
+
+Jadi:
 
 $$
 \boxed{
-C_{target,K,\phi}=160\ mg/L
+C_{target,K}=160\ mg/L
 }
 $$
 
-Artinya, target dibatasi pada batas jenuh. Menaikkan K di atas 160 mg/L tidak dianggap strategi utama karena respons sudah mendekati jenuh.
+Artinya, target K dibatasi di 160 mg/L karena sudah mencapai batas jenuh.
+
+Pesan penting:
+
+> Kalau kebutuhan hitung lebih tinggi dari batas jenuh, jangan langsung menaikkan ppm. Cari pembatasnya.
+
+Yang perlu dicek:
+
+| Kemungkinan pembatas | Pertanyaan lapangan                        |
+| -------------------- | ------------------------------------------ |
+| Serapan air rendah   | apakah tanaman cukup minum?                |
+| Akar lemah           | apakah akar putih aktif dan sehat?         |
+| Oksigen rendah       | apakah larutan kurang aerasi?              |
+| Suhu larutan tinggi  | apakah akar stres?                         |
+| pH tidak sesuai      | apakah hara tersedia?                      |
+| Antagonisme          | apakah K menekan Ca/Mg?                    |
+| Beban buah tinggi    | apakah akar mampu mengejar kebutuhan buah? |
+| Cahaya kurang        | apakah daun cukup menghasilkan asimilat?   |
+
+Kondisi ini penting karena sering kali masalahnya bukan “pupuk kurang”, tetapi “tanaman tidak mampu menyerap lebih banyak”.
 
 ---
 
-## 7.12 Apa yang Dilakukan Jika `C_req` Melebihi `C_sat`?
+## 7.13 Status Formula Target
 
-Kondisi penting:
-
-$$
-\boxed{
-C_{req,j,\phi}>C_{sat,j,\phi}
-}
-$$
-
-Ini tidak boleh langsung diterjemahkan menjadi:
-
-> Naikkan konsentrasi hara sampai kebutuhan terpenuhi.
-
-Justru kondisi ini memberi sinyal bahwa sistem memiliki pembatas lain.
-
-Kemungkinan penyebab:
-
-| Penyebab                    | Penjelasan                              |
-| --------------------------- | --------------------------------------- |
-| Serapan air rendah          | tanaman tidak membawa cukup hara masuk  |
-| Akar kurang aktif           | luas akar atau kesehatan akar membatasi |
-| Oksigen rendah              | akar tidak mampu menyerap optimal       |
-| Suhu larutan tidak ideal    | metabolisme akar terganggu              |
-| pH tidak sesuai             | ketersediaan unsur terganggu            |
-| Antagonisme ion             | unsur lain menekan serapan              |
-| Beban buah tinggi           | kebutuhan melebihi kapasitas akar       |
-| VPD/transpirasi tidak tepat | terutama memengaruhi Ca                 |
-
-Jika:
-
-$$
-C_{req,j,\phi}>C_{sat,j,\phi}
-$$
-
-maka strategi yang lebih tepat adalah memeriksa:
-
-$$
-\boxed{
-akar,\ air,\ lingkungan,\ dan\ keseimbangan\ ion
-}
-$$
-
-bukan sekadar menaikkan konsentrasi.
-
----
-
-## 7.13 Status Formula Target: Biologis, Bukan Resep Pupuk Final
-
-Formula:
-
-$$
-\boxed{
-C_{target,j,\phi}
-}
-$$
-
-adalah target konsentrasi unsur hara. Ini belum sama dengan komposisi pupuk teknis.
-
-Untuk menjadi resep pupuk, masih diperlukan tahap lain:
-
-- konversi unsur ke garam pupuk,
-- koreksi kualitas air baku,
-- pemisahan larutan A dan B,
-- kompatibilitas Ca dengan fosfat dan sulfat,
-- kelarutan pupuk,
-- EC total,
-- pH target,
-- drainase,
-- dan koreksi antagonisme.
-
-Jadi Bab 7 menghasilkan:
+Formula Bab 7 menghasilkan:
 
 $$
 \boxed{
@@ -2570,15 +2404,27 @@ target\ konsentrasi\ unsur
 }
 $$
 
-bukan:
+Bukan langsung:
 
 $$
 \boxed{
-resep\ stok\ pupuk\ final
+resep\ pupuk\ final
 }
 $$
 
-Tahap koreksi antarunsur akan dibahas pada Bab 8.
+Artinya, setelah target N, P, K, Ca, dan Mg diperoleh, masih ada tahap teknis berikutnya:
+
+- memilih sumber pupuk,
+- menghitung kandungan unsur,
+- menyesuaikan kualitas air baku,
+- memisahkan larutan A dan B,
+- menghindari endapan Ca dengan fosfat/sulfat,
+- menghitung EC total,
+- menyesuaikan pH,
+- mengecek drainase,
+- dan mengoreksi antagonisme antarhara.
+
+Jadi keluaran Bab 7 adalah **target unsur**, bukan langsung “sekian gram pupuk A dan B”.
 
 ---
 
@@ -2586,18 +2432,18 @@ Tahap koreksi antarunsur akan dibahas pada Bab 8.
 
 ```mermaid id="bab7-keputusan-target"
 flowchart TD
-    A["Hitung C_req,j,phi"] --> B{"C_req < C_min?"}
+    A["Hitung konsentrasi kebutuhan<br/>C_req"] --> B{"C_req lebih rendah<br/>dari minimum?"}
 
-    B -->|Ya| C["Gunakan C_min<br/>agar tidak defisiensi"]
-    B -->|Tidak| D{"C_req <= C_sat?"}
+    B -->|Ya| C["Gunakan batas minimum<br/>agar tidak defisiensi"]
+    B -->|Tidak| D{"C_req masih di bawah<br/>batas jenuh?"}
 
-    D -->|Ya| E["Gunakan C_req<br/>zona respons efektif"]
-    D -->|Tidak| F["Batasi pada C_sat<br/>atau C_tox - margin"]
+    D -->|Ya| E["Gunakan C_req<br/>zona efektif"]
+    D -->|Tidak| F["Batasi di batas jenuh<br/>atau batas aman toksik"]
 
-    F --> G["Jangan langsung naikkan konsentrasi"]
-    G --> H["Periksa akar, air,<br/>lingkungan, antagonisme"]
+    F --> G["Jangan langsung<br/>menaikkan ppm"]
+    G --> H["Cek akar, air,<br/>lingkungan, antagonisme"]
 
-    C --> I["C_target,j,phi"]
+    C --> I["Target konsentrasi<br/>C_target"]
     E --> I
     F --> I
 
@@ -2616,64 +2462,68 @@ flowchart TD
     class I hasil;
 ```
 
-Diagram ini menunjukkan logika utama Bab 7: formula target bukan sekadar hasil pembagian kebutuhan hara dengan air terserap. Formula target adalah hasil keputusan antara kebutuhan, minimum, jenuh, dan batas aman.
+Diagram ini adalah cara praktis membaca Bab 7:
+
+1. hitung kebutuhan;
+2. pastikan tidak di bawah minimum;
+3. pastikan tidak melewati jenuh;
+4. jika melewati jenuh, cari penyebabnya;
+5. baru tetapkan target.
 
 ---
 
 ## 7.15 Kesimpulan Bab 7
 
-Formula target konsentrasi hara adalah pusat artikel ini.
-
-Rumus utamanya:
+Rumus utama Bab 7 adalah:
 
 $$
 \boxed{
-\begin{aligned}
-C_{target,j,\phi} &= \min
+C_{target,j,\phi} =
+\min
 \left[
 C_{sat,j,\phi},
 C_{tox,j}-m_j,
 \max(C_{min,j},C_{req,j,\phi})
 \right]
-\end{aligned}
 }
 $$
 
-dan vektor fase:
+Dalam bahasa praktis:
 
 $$
 \boxed{
-\begin{aligned}
-\mathbf{C}_{target,\phi} &= [
+\text{target konsentrasi} = \text{cukup, tidak terlalu rendah, tidak melewati jenuh, dan tetap aman}
+}
+$$
+
+Vektor formula fase:
+
+$$
+\boxed{
+\mathbf{C}_{target,\phi} =
+[
 C_{N,\phi},
 C_{P,\phi},
 C_{K,\phi},
 C_{Ca,\phi},
 C_{Mg,\phi}
 ]
-\end{aligned}
 }
 $$
 
-Makna praktisnya:
-
-1. $C_{req}$ memenuhi laju akumulasi tanaman.
-2. $C_{min}$ mencegah defisiensi.
-3. $C_{sat}$ mencegah pemberian melewati zona respons efektif.
-4. $C_{tox}-m$ menjaga keamanan dari risiko toksik.
-5. Formula dihitung per unsur dan per fase.
-
-Kesimpulan tajamnya:
+Maknanya:
 
 $$
 \boxed{
-formula\ nutrisi\ yang\ presisi
-bukan\ yang\ paling\ pekat,
-tetapi\ yang\ cukup,\ efektif,\ dan\ tidak\ melewati\ batas\ respons
+\text{formula fase} = \text{target N, P, K, Ca, dan Mg}
 }
 $$
 
-Bab berikutnya akan membahas mengapa target konsentrasi ini masih perlu dikoreksi oleh interaksi antarhara, terutama:
+Kesimpulan tajam:
+
+> Formula nutrisi yang presisi bukan yang paling pekat, tetapi yang paling sesuai dengan kebutuhan tanaman dan masih berada dalam zona respons efektif.
+
+Bab berikutnya akan membahas mengapa target ini masih harus dikoreksi oleh keseimbangan antarhara, terutama:
 
 $$
 \boxed{
@@ -2693,35 +2543,21 @@ $$
 
 ---
 
+Berikut **Tahap 4 — Re-writing Bab 8–9** dengan gaya lebih praktis, tetap mempertahankan rumus inti, diagram, dan tautan internal.
+
+---
+
 # 8. Koreksi Antagonisme dan Unsur Pembatas
 
-Bab 7 menghasilkan target konsentrasi awal:
+Bab 7 menghasilkan target konsentrasi awal untuk N, P, K, Ca, dan Mg.
 
-$$
-\boxed{
-C_{target,j,\phi}
-}
-$$
+Namun target itu belum final.
 
-Namun target tersebut belum boleh dianggap final. Alasannya, unsur hara tidak bekerja sendiri. Di dalam larutan dan zona akar, unsur hara saling memengaruhi. Satu unsur yang terlalu tinggi dapat menekan serapan unsur lain, walaupun unsur yang ditekan sebenarnya tersedia dalam larutan.
+Mengapa?
 
-Karena itu, setelah target konsentrasi dihitung, perlu dilakukan koreksi terhadap:
+Karena unsur hara tidak bekerja sendiri. Di larutan nutrisi, satu unsur bisa memengaruhi serapan unsur lain. Unsur yang terlalu dominan bisa membuat unsur lain menjadi kurang efektif, walaupun unsur tersebut sebenarnya tersedia di larutan.
 
-$$
-\boxed{
-antagonisme\ hara
-}
-$$
-
-dan:
-
-$$
-\boxed{
-unsur\ pembatas
-}
-$$
-
-Dua kelompok antagonisme yang paling penting dalam formula cabai hidroponik/fertigasi adalah:
+Contoh paling penting pada cabai:
 
 $$
 \boxed{
@@ -2737,79 +2573,80 @@ NH_4:NO_3
 }
 $$
 
-Poin tajam bab ini:
+Bahasa lapangannya:
+
+> Hara tidak hanya soal cukup atau kurang. Hara juga soal seimbang atau tidak.
+
+Poin tajam Bab 8:
 
 > Jika Ca menjadi pembatas, menaikkan K tidak menyelesaikan masalah.
 
 ---
 
-## 8.1 Mengapa Antagonisme Harus Masuk Model?
+## 8.1 Mengapa Target Konsentrasi Perlu Dikoreksi?
 
-Pada Bab 7, target konsentrasi dihitung per unsur. Misalnya:
-
-$$
-C_{target,K,\phi}
-$$
-
-$$
-C_{target,Ca,\phi}
-$$
-
-$$
-C_{target,Mg,\phi}
-$$
-
-Namun akar tidak menyerap unsur dalam ruang yang terpisah. K, Ca, Mg, dan NH₄ berada dalam larutan yang sama dan masuk melalui sistem serapan yang saling berinteraksi.
-
-Jika K terlalu tinggi, serapan Ca dan Mg dapat terganggu. Jika NH₄ terlalu tinggi, serapan kation lain juga dapat tertekan. Maka, formula yang hanya menghitung kebutuhan setiap unsur secara terpisah masih belum cukup.
-
-Model perlu membaca dua hal:
-
-1. **berapa target konsentrasi setiap unsur**, dan
-2. **apakah unsur tersebut masih efektif diserap dalam kehadiran unsur lain**.
-
-Dengan demikian, target konsentrasi awal:
-
-$$
-C_{target,j,\phi}
-$$
-
-perlu dikoreksi menjadi:
-
-$$
-C'_{j,\phi}
-$$
-
-yaitu konsentrasi target setelah memperhitungkan antagonisme.
-
----
-
-## 8.2 Antagonisme K terhadap Ca
-
-Kalsium memiliki karakter khusus. Ca penting untuk dinding sel, kekuatan jaringan, dan organ muda. Namun serapan dan distribusi Ca mudah terganggu oleh kondisi akar, transpirasi, dan persaingan dengan ion lain.
-
-Salah satu antagonisme penting adalah pengaruh K dan NH₄ terhadap efektivitas Ca.
-
-Faktor koreksi antagonisme Ca dapat ditulis:
+Pada Bab 7, kita menghitung:
 
 $$
 \boxed{
-\begin{aligned}
-f_{ant,Ca} &= \frac{1}
-{1+\alpha_K C_K+\alpha_{NH4}C_{NH4}}
-\end{aligned}
+C_{target,N},\ C_{target,P},\ C_{target,K},\ C_{target,Ca},\ C_{target,Mg}
 }
 $$
 
-Keterangan:
+Namun akar tidak menyerap N, P, K, Ca, dan Mg dalam ruang yang terpisah. Semua unsur berada dalam larutan yang sama, melewati zona akar yang sama, dan dapat saling memengaruhi.
 
-| Simbol         | Arti                                      |
-| -------------- | ----------------------------------------- |
-| $f_{ant,Ca}$   | faktor efektivitas Ca setelah antagonisme |
-| $C_K$          | konsentrasi K dalam larutan               |
-| $C_{NH4}$      | konsentrasi amonium dalam larutan         |
-| $\alpha_K$     | koefisien pengaruh K terhadap Ca          |
-| $\alpha_{NH4}$ | koefisien pengaruh NH₄ terhadap Ca        |
+Masalah lapangan yang sering terjadi:
+
+| Kondisi larutan    | Risiko                               |
+| ------------------ | ------------------------------------ |
+| K terlalu tinggi   | Ca dan Mg bisa kalah                 |
+| NH₄ terlalu tinggi | Ca, Mg, dan K bisa terganggu         |
+| Ca terlalu tinggi  | Mg bisa tertekan                     |
+| EC terlalu tinggi  | akar stres, serapan turun            |
+| pH tidak tepat     | unsur tersedia, tetapi sulit diserap |
+
+Jadi formula hara tidak cukup hanya bertanya:
+
+> Berapa target tiap unsur?
+
+Tetapi juga harus bertanya:
+
+> Apakah unsur itu masih efektif diserap setelah bercampur dengan unsur lain?
+
+---
+
+## 8.2 K Tinggi Bisa Menekan Ca
+
+Kalsium penting untuk jaringan muda, pucuk, dinding sel, dan kualitas buah. Tetapi Ca mudah kalah jika K terlalu dominan.
+
+Secara teknis, efektivitas Ca dapat dikoreksi dengan faktor antagonisme:
+
+$$
+\boxed{
+f_{ant,Ca} =
+\frac{1}
+{1+\alpha_K C_K+\alpha_{NH4}C_{NH4}}
+}
+$$
+
+Untuk praktisi, maknanya seperti ini:
+
+$$
+\boxed{
+semakin\ tinggi\ K\ atau\ NH_4,
+semakin\ besar\ risiko\ Ca\ menjadi\ kurang\ efektif
+}
+$$
+
+Keterangan praktis:
+
+| Simbol teknis  | Bahasa lapangan                                   |
+| -------------- | ------------------------------------------------- |
+| $f_{ant,Ca}$   | tingkat efektivitas Ca setelah ditekan unsur lain |
+| $C_K$          | konsentrasi K                                     |
+| $C_{NH4}$      | konsentrasi amonium                               |
+| $\alpha_K$     | kuatnya pengaruh K terhadap Ca                    |
+| $\alpha_{NH4}$ | kuatnya pengaruh NH₄ terhadap Ca                  |
 
 Nilai:
 
@@ -2819,264 +2656,216 @@ $$
 }
 $$
 
-Jika K dan NH₄ rendah atau masih seimbang, maka:
+Jika nilainya mendekati 1, Ca masih efektif.
 
-$$
-f_{ant,Ca}\approx1
-$$
+Jika nilainya turun, Ca mulai terganggu.
 
-Artinya, efektivitas Ca tidak banyak terganggu.
-
-Namun jika K atau NH₄ tinggi, maka penyebut membesar, sehingga:
-
-$$
-f_{ant,Ca}<1
-$$
-
-Artinya, efektivitas Ca menurun.
-
-Konsentrasi Ca terkoreksi dapat ditulis:
+Konsentrasi Ca efektif dapat dibaca sebagai:
 
 $$
 \boxed{
-\begin{aligned}
-C'_{Ca,\phi} &= C_{target,Ca,\phi}
+C'_{Ca,\phi} =
+C_{target,Ca,\phi}
 \times
 f_{ant,Ca}
-\end{aligned}
+}
+$$
+
+Bahasa lapangannya:
+
+> Ca di larutan belum tentu sama dengan Ca yang efektif dipakai tanaman.
+
+Jika K terlalu dominan, tanaman bisa menunjukkan masalah Ca walaupun larutan mengandung Ca cukup.
+
+---
+
+## 8.3 K dan Ca Bisa Menekan Mg
+
+Magnesium penting untuk klorofil dan fotosintesis. Namun Mg juga bisa kalah oleh K dan Ca jika keseimbangan kation tidak dijaga.
+
+Secara teknis:
+
+$$
+\boxed{
+f_{ant,Mg} =
+\frac{1}
+{1+\beta_K C_K+\beta_{Ca}C_{Ca}}
 }
 $$
 
 Makna praktisnya:
 
-> Walaupun Ca tersedia dalam larutan, efektivitasnya dapat turun jika K atau NH₄ terlalu tinggi.
-
-Karena itu, masalah Ca tidak selalu diselesaikan dengan menaikkan Ca. Kadang masalahnya adalah K atau NH₄ yang terlalu dominan.
-
----
-
-## 8.3 Antagonisme K dan Ca terhadap Mg
-
-Magnesium juga perlu dikoreksi karena Mg dapat ditekan oleh keseimbangan kation lain, terutama K dan Ca.
-
-Faktor koreksi antagonisme Mg dapat ditulis:
-
 $$
 \boxed{
-\begin{aligned}
-f_{ant,Mg} &= \frac{1}
-{1+\beta_K C_K+\beta_{Ca}C_{Ca}}
-\end{aligned}
+semakin\ dominan\ K\ atau\ Ca,
+semakin\ besar\ risiko\ Mg\ menjadi\ kurang\ efektif
 }
 $$
 
-Keterangan:
+Keterangan praktis:
 
-| Simbol       | Arti                                      |
-| ------------ | ----------------------------------------- |
-| $f_{ant,Mg}$ | faktor efektivitas Mg setelah antagonisme |
-| $C_K$        | konsentrasi K dalam larutan               |
-| $C_{Ca}$     | konsentrasi Ca dalam larutan              |
-| $\beta_K$    | koefisien pengaruh K terhadap Mg          |
-| $\beta_{Ca}$ | koefisien pengaruh Ca terhadap Mg         |
+| Simbol teknis | Bahasa lapangan                                   |
+| ------------- | ------------------------------------------------- |
+| $f_{ant,Mg}$  | tingkat efektivitas Mg setelah ditekan unsur lain |
+| $C_K$         | konsentrasi K                                     |
+| $C_{Ca}$      | konsentrasi Ca                                    |
+| $\beta_K$     | kuatnya pengaruh K terhadap Mg                    |
+| $\beta_{Ca}$  | kuatnya pengaruh Ca terhadap Mg                   |
 
-Nilai:
-
-$$
-\boxed{
-0<f_{ant,Mg}\leq1
-}
-$$
-
-Jika K terlalu tinggi, Mg dapat menjadi kurang efektif. Jika Ca sangat tinggi, Mg juga bisa tertekan. Karena itu, Mg harus dibaca dalam konteks rasio kation, bukan sebagai unsur tunggal.
-
-Konsentrasi Mg terkoreksi:
+Konsentrasi Mg efektif:
 
 $$
 \boxed{
-\begin{aligned}
-C'_{Mg,\phi} &= C_{target,Mg,\phi}
+C'_{Mg,\phi} =
+C_{target,Mg,\phi}
 \times
 f_{ant,Mg}
-\end{aligned}
 }
 $$
 
-Makna praktisnya:
+Bahasa lapangannya:
 
-> Jika tanaman menunjukkan gejala Mg rendah, masalahnya belum tentu Mg di larutan kurang. Bisa jadi Mg kalah bersaing oleh K atau Ca.
+> Kalau daun menunjukkan gejala Mg rendah, penyebabnya belum tentu Mg kurang di larutan. Bisa jadi Mg kalah bersaing dengan K atau Ca.
+
+Ini penting pada fase buah, karena petani sering menaikkan K untuk buah, tetapi lupa menjaga Mg agar daun tetap menjadi “pabrik fotosintesis”.
 
 ---
 
-## 8.4 Konsentrasi Terkoreksi Antagonisme
+## 8.4 Konsentrasi Efektif, Bukan Sekadar Konsentrasi di Tandon
 
-Secara umum, konsentrasi terkoreksi untuk unsur $j$ pada fase $\phi$ dapat ditulis sebagai:
+Secara umum, konsentrasi setelah koreksi antagonisme dapat ditulis:
 
 $$
 \boxed{
-\begin{aligned}
-C'_{j,\phi} &= C_{target,j,\phi}
+C'_{j,\phi} =
+C_{target,j,\phi}
 \times
 f_{ant,j,\phi}
-\end{aligned}
 }
 $$
 
-Keterangan:
-
-| Simbol              | Arti                                            |
-| ------------------- | ----------------------------------------------- |
-| $C'_{j,\phi}$       | konsentrasi efektif setelah koreksi antagonisme |
-| $C_{target,j,\phi}$ | target konsentrasi awal dari Bab 7              |
-| $f_{ant,j,\phi}$    | faktor koreksi antagonisme unsur $j$            |
-
-Jika:
-
-$$
-f_{ant,j,\phi}=1
-$$
-
-maka unsur tersebut tidak banyak terganggu.
-
-Jika:
-
-$$
-f_{ant,j,\phi}=0.7
-$$
-
-maka efektivitas unsur turun sekitar 30%.
-
-Dalam praktik, ini berarti konsentrasi unsur tidak boleh dibaca hanya dari angka larutan. Yang lebih penting adalah:
+Untuk praktisi, baca seperti ini:
 
 $$
 \boxed{
-konsentrasi\ efektif
+\text{konsentrasi efektif} = \text{target konsentrasi} \times \text{faktor keseimbangan}
 }
 $$
 
-yaitu konsentrasi yang masih dapat diserap dan digunakan tanaman.
+Jika:
+
+$$
+f_{ant}=1
+$$
+
+berarti unsur tersebut masih efektif.
+
+Jika:
+
+$$
+f_{ant}=0.7
+$$
+
+berarti efektivitasnya turun. Walaupun angka di larutan tampak cukup, tanaman mungkin hanya “merasakan” sebagian.
+
+Inilah alasan kenapa membaca nutrisi tidak cukup dari tandon saja. Perlu dilihat juga:
+
+- gejala tanaman,
+- daun,
+- buah,
+- akar,
+- pH,
+- EC,
+- dan keseimbangan antarion.
 
 ---
 
 ## 8.5 Koreksi Tidak Selalu Berarti Menambah Unsur
 
-Poin penting: jika efektivitas Ca atau Mg turun akibat antagonisme, solusinya tidak selalu menaikkan Ca atau Mg.
+Ini bagian penting.
 
-Misalnya, jika:
+Jika Ca kurang efektif, solusinya tidak selalu menambah Ca.
 
-$$
-f_{ant,Ca}
-$$
+Jika Mg kurang efektif, solusinya tidak selalu menambah Mg.
 
-rendah karena K terlalu tinggi, menaikkan Ca bisa saja kurang efektif. Strategi yang lebih tepat mungkin:
+Kadang yang perlu dilakukan adalah menurunkan unsur yang menekan.
 
-- menurunkan K,
-- menurunkan NH₄,
-- memperbaiki rasio K:Ca:Mg,
-- memperbaiki transpirasi,
-- memperbaiki kondisi akar,
-- atau menstabilkan pH dan EC.
+Contoh:
 
-Contoh logika:
+| Gejala                            | Kemungkinan penyebab        | Koreksi yang lebih masuk akal       |
+| --------------------------------- | --------------------------- | ----------------------------------- |
+| Ca rendah di jaringan muda        | K terlalu tinggi            | turunkan dominasi K, seimbangkan Ca |
+| Ca sulit masuk buah               | transpirasi atau akar lemah | cek akar, air, VPD, kelembapan      |
+| Mg rendah di daun                 | K terlalu tinggi            | koreksi rasio K:Mg                  |
+| Daun tetap lemah meski Mg cukup   | akar atau pH bermasalah     | cek pH, EC, akar, suhu larutan      |
+| Buah tidak respons meski K tinggi | bukan K pembatas            | cek N, Mg, Ca, cahaya, akar         |
 
-| Masalah                       | Penyebab mungkin        | Koreksi yang lebih tepat       |
-| ----------------------------- | ----------------------- | ------------------------------ |
-| Ca rendah di jaringan muda    | K terlalu tinggi        | turunkan K relatif terhadap Ca |
-| Mg rendah di daun             | K tinggi                | koreksi rasio K:Mg             |
-| Ca tidak masuk buah           | transpirasi buah rendah | koreksi VPD, air, akar         |
-| Mg rendah meski larutan cukup | antagonisme K/Ca        | koreksi keseimbangan kation    |
-
-Maka prinsipnya:
+Prinsipnya:
 
 $$
 \boxed{
-defisiensi\ jaringan
+gejala\ kekurangan\ jaringan
 \neq
 selalu\ kekurangan\ konsentrasi\ larutan
 }
 $$
 
+Kadang masalahnya adalah unsur tersebut kalah bersaing, tidak terdistribusi, atau akar tidak mampu menyerap.
+
 ---
 
-## 8.6 Respons Multi-Hara
+## 8.6 Unsur Pembatas: Bottleneck Pertumbuhan
 
-Pertumbuhan tanaman tidak dikendalikan oleh satu unsur saja. Walaupun satu unsur berada pada zona optimal, pertumbuhan tetap bisa tertahan jika unsur lain menjadi pembatas.
+Tanaman tumbuh mengikuti unsur atau proses yang paling membatasi.
 
-Respons total fase dapat ditulis sebagai gabungan respons setiap unsur:
+Jika N, P, K, dan Mg cukup, tetapi Ca bermasalah, maka pertumbuhan tetap bisa tertahan. Jika K tinggi tetapi Mg kurang, daun tidak optimal. Jika semua unsur cukup tetapi akar rusak, tanaman tetap tidak respons.
 
-$$
-\boxed{
-\begin{aligned}
-R_{\phi} &= R_{N,\phi}
-\times
-R_{P,\phi}
-\times
-R_{K,\phi}
-\times
-R_{Ca,\phi}
-\times
-R_{Mg,\phi}
-\end{aligned}
-}
-$$
-
-Namun untuk keperluan praktis, pendekatan unsur pembatas sering lebih tajam. Respons fase dapat dibaca sebagai unsur dengan nilai respons terendah:
+Secara teknis, respons fase dapat dibaca sebagai unsur dengan respons terendah:
 
 $$
 \boxed{
-\begin{aligned}
-R_{\phi} &= \min
+R_{\phi} =
+\min
 (
 R_N,\ R_P,\ R_K,\ R_{Ca},\ R_{Mg}
 )
-\end{aligned}
 }
 $$
 
-Keterangan:
-
-| Simbol     | Arti                |
-| ---------- | ------------------- |
-| $R_{\phi}$ | respons total fase  |
-| $R_N$      | respons terhadap N  |
-| $R_P$      | respons terhadap P  |
-| $R_K$      | respons terhadap K  |
-| $R_{Ca}$   | respons terhadap Ca |
-| $R_{Mg}$   | respons terhadap Mg |
-
-Jika:
-
-$$
-R_N=0.90
-$$
-
-$$
-R_P=0.85
-$$
-
-$$
-R_K=0.92
-$$
-
-$$
-R_{Ca}=0.55
-$$
-
-$$
-R_{Mg}=0.80
-$$
-
-maka:
+Bahasa praktisnya:
 
 $$
 \boxed{
-R_{\phi}=0.55
+respons\ tanaman
+ditentukan\ oleh\ faktor\ yang\ paling\ membatasi
 }
 $$
 
-Artinya, fase tersebut dibatasi oleh Ca.
+Contoh:
 
-Jika Ca menjadi pembatas, menaikkan K tidak menyelesaikan masalah. Bahkan, menaikkan K bisa memperburuk kondisi jika K menekan Ca lebih lanjut.
+| Unsur | Respons |
+| ----- | ------: |
+| N     |     90% |
+| P     |     85% |
+| K     |     92% |
+| Ca    |     55% |
+| Mg    |     80% |
+
+Maka respons fase bukan 90%, tetapi:
+
+$$
+\boxed{
+55\%
+}
+$$
+
+Karena Ca menjadi pembatas.
+
+Maka:
+
+> Jika Ca menjadi pembatas, menaikkan K tidak menyelesaikan masalah.
+
+Bahkan bisa memperburuk masalah jika K makin menekan Ca.
 
 ---
 
@@ -3084,14 +2873,14 @@ Jika Ca menjadi pembatas, menaikkan K tidak menyelesaikan masalah. Bahkan, menai
 
 ```mermaid id="bab8-unsur-pembatas"
 flowchart TD
-    A["Target konsentrasi<br/>N, P, K, Ca, Mg"] --> B["Koreksi antagonisme"]
-    B --> C["Respons efektif<br/>R_N, R_P, R_K,<br/>R_Ca, R_Mg"]
-    C --> D{"Unsur dengan<br/>respons terendah?"}
+    A["Target konsentrasi<br/>N, P, K, Ca, Mg"] --> B["Cek keseimbangan<br/>antarhara"]
+    B --> C["Baca respons efektif<br/>N, P, K, Ca, Mg"]
+    C --> D{"Unsur mana<br/>paling membatasi?"}
 
-    D --> E["Ca terendah"]
+    D --> E["Contoh:<br/>Ca paling rendah"]
     E --> F["Ca menjadi<br/>unsur pembatas"]
     F --> G["Menaikkan K<br/>tidak menyelesaikan masalah"]
-    G --> H["Koreksi Ca, K:Ca:Mg,<br/>akar, air, transpirasi"]
+    G --> H["Koreksi Ca,<br/>rasio K:Ca:Mg,<br/>akar, air, transpirasi"]
 
     classDef awal fill:#E3F2FD,stroke:#1565C0,stroke-width:1.5px,color:#0D47A1;
     classDef proses fill:#FFF3E0,stroke:#EF6C00,stroke-width:1.5px,color:#E65100;
@@ -3106,13 +2895,27 @@ flowchart TD
     class H koreksi;
 ```
 
-Diagram ini menegaskan bahwa formula hara harus melihat unsur yang paling membatasi respons. Jika satu unsur menjadi bottleneck, unsur lain yang dinaikkan tidak akan memberi hasil optimal.
+Diagram ini menunjukkan bahwa formula nutrisi harus mencari bottleneck, bukan hanya menaikkan unsur yang populer.
 
 ---
 
-## 8.8 Implikasi Praktis untuk Formula Hidroponik/Fertigasi
+## 8.8 Alur Koreksi Setelah Target Konsentrasi
 
-Setelah Bab 7 dan Bab 8 digabung, alur formula menjadi:
+Setelah Bab 7 dan Bab 8 digabung, alur kerjanya menjadi:
+
+$$
+\boxed{
+kebutuhan
+\rightarrow
+target
+\rightarrow
+koreksi\ keseimbangan
+\rightarrow
+cek\ unsur\ pembatas
+}
+$$
+
+Secara teknis:
 
 $$
 \boxed{
@@ -3128,20 +2931,18 @@ $$
 
 Artinya:
 
-1. hitung konsentrasi kebutuhan dari laju akumulasi;
+1. hitung kebutuhan konsentrasi dari kebutuhan harian tanaman;
 2. batasi dengan minimum, jenuh, dan toksik;
-3. koreksi dengan antagonisme;
-4. cek unsur pembatas.
-
-Alur lengkap:
+3. koreksi oleh antagonisme hara;
+4. cari unsur atau proses yang paling membatasi.
 
 ```mermaid id="bab8-alur-koreksi"
 flowchart TD
-    A["C_req,j,phi<br/>berdasarkan laju akumulasi"] --> B["C_target,j,phi<br/>dibatasi C_min, C_sat, C_tox"]
-    B --> C["Koreksi antagonisme<br/>K:Ca:Mg dan NH4:NO3"]
-    C --> D["C'_j,phi<br/>konsentrasi efektif"]
-    D --> E["Respons multi-hara<br/>R_N, R_P, R_K, R_Ca, R_Mg"]
-    E --> F["Unsur pembatas<br/>R_phi = min(...)"]
+    A["Konsentrasi kebutuhan<br/>berdasarkan kebutuhan harian"] --> B["Target konsentrasi<br/>dibatasi minimum,<br/>jenuh, toksik"]
+    B --> C["Koreksi keseimbangan<br/>K:Ca:Mg dan NH4:NO3"]
+    C --> D["Konsentrasi efektif<br/>yang benar-benar bekerja"]
+    D --> E["Cek respons multi-hara"]
+    E --> F["Tentukan unsur pembatas"]
 
     classDef req fill:#E3F2FD,stroke:#1565C0,stroke-width:1.5px,color:#0D47A1;
     classDef target fill:#E8F5E9,stroke:#2E7D32,stroke-width:1.5px,color:#1B5E20;
@@ -3156,27 +2957,13 @@ flowchart TD
     class F batas;
 ```
 
-Formula yang tajam tidak berhenti pada:
-
-$$
-C_{target,j,\phi}
-$$
-
-tetapi membaca apakah target tersebut tetap efektif setelah masuk ke sistem ion yang nyata.
-
 ---
 
 ## 8.9 Kesimpulan Bab 8
 
-Bab 8 menegaskan bahwa formula hara tidak boleh dibaca sebagai daftar konsentrasi unsur yang berdiri sendiri.
+Bab ini menegaskan bahwa target konsentrasi belum cukup jika dibaca per unsur secara terpisah.
 
-Target konsentrasi:
-
-$$
-C_{target,N},\ C_{target,P},\ C_{target,K},\ C_{target,Ca},\ C_{target,Mg}
-$$
-
-harus dikoreksi oleh interaksi antarhara, terutama:
+Formula nutrisi harus mempertimbangkan keseimbangan:
 
 $$
 \boxed{
@@ -3192,41 +2979,31 @@ NH_4:NO_3
 }
 $$
 
-Koreksi umum:
+Koreksi umumnya:
 
 $$
 \boxed{
-\begin{aligned}
-C'_{j,\phi} &= C_{target,j,\phi}
+C'_{j,\phi} =
+C_{target,j,\phi}
 \times
 f_{ant,j,\phi}
-\end{aligned}
 }
 $$
 
-Respons fase dibatasi oleh unsur dengan respons terendah:
+Makna praktisnya:
 
 $$
 \boxed{
-\begin{aligned}
-R_{\phi} &= \min
-(
-R_N,\ R_P,\ R_K,\ R_{Ca},\ R_{Mg}
-)
-\end{aligned}
+yang\ penting\ bukan\ hanya\ hara\ tersedia,
+tetapi\ hara\ itu\ efektif\ diserap
 }
 $$
 
-Kesimpulan tajamnya:
+Kesimpulan tajam:
 
-$$
-\boxed{
-menaikkan\ unsur\ yang\ bukan\ pembatas
-tidak\ memperbaiki\ respons\ tanaman
-}
-$$
+> Menaikkan unsur yang bukan pembatas tidak memperbaiki respons tanaman.
 
-Jika Ca menjadi pembatas, menaikkan K tidak menyelesaikan masalah. Jika Mg menjadi pembatas, menaikkan N tidak otomatis meningkatkan fotosintesis. Jika akar menjadi pembatas, menaikkan semua konsentrasi justru bisa meningkatkan stres.
+Jika Ca menjadi pembatas, menaikkan K tidak menyelesaikan masalah. Jika Mg menjadi pembatas, menaikkan N tidak otomatis meningkatkan fotosintesis. Jika akar menjadi pembatas, menaikkan semua konsentrasi bisa membuat tanaman makin stres.
 
 [**Kembali ke Atas**](#model-formula-hara-cabai-berbasis-laju-serapan-dan-batas-jenuh-respons-per-fase-organ)
 
@@ -3234,13 +3011,15 @@ Jika Ca menjadi pembatas, menaikkan K tidak menyelesaikan masalah. Jika Mg menja
 
 # 9. Adaptasi untuk Lahan Tanah dan Strategi Pemupukan
 
-Bab ini harus dibaca sebagai batas dan jembatan, bukan sebagai pengalihan fokus artikel. Model utama artikel ini tetap untuk hidroponik dan fertigasi substrat. Namun karena cabai juga banyak dibudidayakan di lahan tanah, perlu dijelaskan bagaimana model ini diadaptasi.
+Bab ini sengaja dibuat singkat dan terkendali.
+
+Fokus utama artikel tetap **hidroponik dan fertigasi substrat**. Namun, karena cabai juga banyak ditanam di lahan tanah, perlu dijelaskan bagaimana model ini dibaca jika sistemnya bukan larutan hidroponik.
 
 Poin utamanya:
 
 > Lahan tanah bukan sistem larutan langsung. Tanah menyimpan, melepas, mengikat, dan kehilangan hara.
 
-Karena itu, output model pada lahan tanah bukan:
+Karena itu, pada lahan tanah, output model bukan:
 
 $$
 \boxed{
@@ -3252,61 +3031,72 @@ melainkan:
 
 $$
 \boxed{
+F_{pupuk}
+}
+$$
+
+atau secara teknis:
+
+$$
+\boxed{
 F_{j,\phi}
 }
 $$
 
-yaitu kebutuhan pupuk unsur $j$ pada fase $\phi$.
+Artinya:
+
+> Yang dicari bukan target konsentrasi larutan, tetapi kebutuhan pupuk per fase setelah dikoreksi oleh kondisi tanah.
 
 ---
 
-## 9.1 Perbedaan Kunci: Hidroponik vs Lahan Tanah
+## 9.1 Hidroponik dan Lahan Tanah Berbeda Cara Kerjanya
 
-Pada hidroponik/fertigasi substrat, hara terutama dikendalikan melalui konsentrasi larutan. Maka output model adalah:
+Pada hidroponik atau fertigasi substrat, hara bisa dikontrol langsung melalui larutan.
 
-$$
-\boxed{
-C_{target,j,\phi}
-}
-$$
+Maka pertanyaan utamanya:
 
-Pada lahan tanah, hara tidak langsung tersedia sebagai larutan yang dapat dikontrol penuh. Hara berada dalam berbagai bentuk:
+> Berapa mg/L unsur yang perlu tersedia?
 
-- larutan tanah,
-- koloid tanah,
-- bahan organik,
-- mineral tanah,
-- kompleks jerapan,
-- biomassa mikroba,
-- bentuk terfiksasi,
-- dan bentuk yang dapat tercuci.
+Pada lahan tanah, hara tidak bekerja sesederhana itu. Tanah punya daya simpan, daya lepas, dan daya ikat.
 
-Maka output model lahan adalah:
+Maka pertanyaannya menjadi:
 
-$$
-\boxed{
-F_{j,\phi}
-}
-$$
+> Berapa pupuk yang perlu diberikan setelah memperhitungkan hara yang sudah ada di tanah?
 
-yaitu dosis pupuk fase yang sudah dikoreksi oleh suplai tanah, kehilangan, dan efisiensi pemupukan.
+Perbandingannya:
 
-Perbedaannya:
-
-| Aspek         | Hidroponik / fertigasi         | Lahan tanah                        |
-| ------------- | ------------------------------ | ---------------------------------- |
-| Output utama  | $C_{target,j,\phi}$            | $F_{j,\phi}$                       |
-| Basis kontrol | konsentrasi larutan            | dosis pupuk dan kesuburan tanah    |
-| Satuan umum   | mg/L, mmol/L, ppm              | kg/ha, g/tanaman                   |
-| Buffer hara   | rendah–sedang                  | sedang–tinggi                      |
-| Risiko utama  | jenuh larutan, antagonisme ion | fiksasi, pencucian, pH, CEC        |
-| Koreksi utama | pH, EC, drainase, rasio ion    | analisis tanah dan efisiensi pupuk |
+| Aspek            | Hidroponik / fertigasi         | Lahan tanah                            |
+| ---------------- | ------------------------------ | -------------------------------------- |
+| Output utama     | target konsentrasi larutan     | kebutuhan pupuk terkoreksi tanah       |
+| Satuan umum      | mg/L, mmol/L, ppm              | kg/ha, g/tanaman                       |
+| Pengendali utama | larutan nutrisi                | tanah + pupuk + air                    |
+| Buffer hara      | rendah–sedang                  | sedang–tinggi                          |
+| Risiko utama     | EC tinggi, jenuh, antagonisme  | pH, fiksasi, pencucian, CEC            |
+| Data penting     | pH, EC, drainase, air terserap | pH tanah, C-organik, NPK tersedia, KTK |
 
 ---
 
 ## 9.2 Kebutuhan Tanaman Tetap Sama
 
-Walaupun sistem budidaya berbeda, kebutuhan biologis tanaman tetap dibaca dari model yang sama:
+Walaupun sistemnya berbeda, kebutuhan biologis tanaman tetap sama.
+
+Tanaman tetap membangun:
+
+- akar,
+- batang,
+- daun,
+- bunga,
+- buah.
+
+Tanaman tetap membutuhkan:
+
+$$
+\boxed{
+N,\ P,\ K,\ Ca,\ Mg
+}
+$$
+
+Dan kebutuhan itu tetap bisa dibaca dari tambahan akumulasi hara per fase:
 
 $$
 \boxed{
@@ -3314,11 +3104,15 @@ $$
 }
 $$
 
-yaitu kenaikan akumulasi unsur $j$ pada fase $\phi$.
+Dalam bahasa praktis:
 
-Artinya, cabai tetap membutuhkan N, P, K, Ca, dan Mg untuk membangun akar, batang, daun, bunga, dan buah. Perbedaannya bukan pada kebutuhan biologisnya, tetapi pada cara hara disediakan.
+$$
+\boxed{
+berapa\ hara\ tambahan\ yang\ dibangun\ tanaman\ pada\ fase\ itu
+}
+$$
 
-Dengan kata lain:
+Yang berbeda adalah cara menyediakannya.
 
 $$
 \boxed{
@@ -3326,11 +3120,9 @@ kebutuhan\ tanaman = berbasis\ akumulasi
 }
 $$
 
-sedangkan:
-
 $$
 \boxed{
-strategi\ suplai = bergantung\ sistem\ budidaya
+strategi\ suplai = bergantung\ pada\ sistem\ budidaya
 }
 $$
 
@@ -3338,12 +3130,13 @@ $$
 
 ## 9.3 Formula Adaptasi untuk Lahan Tanah
 
-Pada lahan tanah, kebutuhan pupuk fase dapat ditulis sebagai:
+Pada lahan tanah, kebutuhan pupuk fase dapat ditulis:
 
 $$
-\boxed{
+{
 F_{j,\phi} =
-\frac{
+
+rac{
 \Delta A_{j,\phi}
 - S_{j,\phi}
 - M_{j,\phi}
@@ -3355,214 +3148,198 @@ F_{j,\phi} =
 }
 $$
 
-Keterangan:
+Agar tidak terasa terlalu akademis, baca seperti ini:
 
-| Simbol              | Arti                                              |
-| ------------------- | ------------------------------------------------- |
-| $F_{j,\phi}$        | kebutuhan pupuk unsur $j$ pada fase $\phi$        |
-| $\Delta A_{j,\phi}$ | kenaikan akumulasi hara tanaman pada fase $\phi$  |
-| $S_{j,\phi}$        | suplai hara tersedia dari tanah                   |
-| $M_{j,\phi}$        | mineralisasi hara dari bahan organik tanah        |
-| $O_{j,\phi}$        | kontribusi pupuk organik atau kompos              |
-| $L_{j,\phi}$        | kehilangan hara, misalnya pencucian atau limpasan |
-| $I_{j,\phi}$        | imobilisasi, fiksasi, atau pengikatan hara        |
-| $RE_{j,\phi}$       | recovery efficiency pupuk                         |
+$$
+{
+	ext{pupuk yang perlu diberikan} =
 
-Makna formula:
+rac{
+	ext{kebutuhan tanaman}
+- 	ext{suplai tanah}
+- 	ext{mineralisasi}
+- 	ext{kontribusi organik}
++ 	ext{kehilangan}
++ 	ext{fiksasi}
+}
+{	ext{efisiensi pupuk}}
+}
+$$
 
-- kebutuhan tanaman ditunjukkan oleh $\Delta A_{j,\phi}$;
-- suplai alami tanah dikurangkan;
-- mineralisasi dan pupuk organik dikurangkan;
-- kehilangan dan fiksasi ditambahkan;
-- hasil akhirnya dibagi efisiensi pemulihan pupuk.
+Keterangan praktis:
 
-Jadi pada lahan tanah, dosis pupuk bukan sama dengan akumulasi tanaman. Dosis pupuk adalah akumulasi yang dibutuhkan setelah dikoreksi oleh tanah dan efisiensi pupuk.
+| Simbol teknis       | Bahasa lapangan                                       |
+| ------------------- | ----------------------------------------------------- |
+| $F_{j,\phi}$        | pupuk unsur yang perlu diberikan pada fase itu        |
+| $\Delta A_{j,\phi}$ | tambahan hara yang dibutuhkan tanaman                 |
+| $S_{j,\phi}$        | hara tersedia dari tanah                              |
+| $M_{j,\phi}$        | hara yang dilepas dari bahan organik tanah            |
+| $O_{j,\phi}$        | kontribusi pupuk organik/kompos                       |
+| $L_{j,\phi}$        | hara yang hilang karena tercuci/limpasan              |
+| $I_{j,\phi}$        | hara yang terikat atau tidak tersedia                 |
+| $RE_{j,\phi}$       | efisiensi pupuk yang benar-benar dimanfaatkan tanaman |
+
+Maknanya:
+
+- jika tanah sudah kaya K, pupuk K tidak perlu disamakan dengan tanah miskin K;
+- jika P banyak terfiksasi, pupuk P perlu strategi khusus;
+- jika N mudah tercuci, waktu aplikasi harus dipecah;
+- jika C-organik baik, sebagian suplai bisa berasal dari mineralisasi.
 
 ---
 
-## 9.4 Makna Setiap Komponen Formula Lahan
+## 9.4 Cara Membaca Komponen Formula Lahan
 
-### 9.4.1 Kenaikan Akumulasi Tanaman
+### Kebutuhan tanaman
 
 $$
 \Delta A_{j,\phi}
 $$
 
-adalah kebutuhan biologis fase. Ini berasal dari model artikel pertama.
+Ini adalah kebutuhan biologis tanaman. Angka ini berasal dari pertambahan hara yang dibangun tanaman selama fase tertentu.
 
-Jika fase pembesaran buah membutuhkan tambahan K besar, maka:
+Bahasa lapangannya:
 
-$$
-\Delta A_{K,\phi}
-$$
-
-akan besar.
-
-Namun di lahan, kebutuhan tersebut belum tentu seluruhnya harus berasal dari pupuk. Sebagian bisa berasal dari tanah.
+> Berapa tambahan N, P, K, Ca, atau Mg yang benar-benar masuk ke tubuh tanaman?
 
 ---
 
-### 9.4.2 Suplai Hara Tersedia dari Tanah
+### Suplai tanah
 
 $$
 S_{j,\phi}
 $$
 
-adalah hara yang sudah tersedia di tanah dan dapat diserap tanaman.
+Ini adalah hara yang sudah tersedia di tanah.
 
 Contoh:
 
-- N mineral tanah,
+- N tersedia,
 - P tersedia,
 - K-dd,
 - Ca-dd,
 - Mg-dd.
 
-Semakin tinggi suplai tanah, semakin kecil kebutuhan pupuk tambahan.
+Jika suplai tanah tinggi, dosis pupuk bisa dikurangi. Jika suplai rendah, pupuk perlu ditambah.
 
 ---
 
-### 9.4.3 Mineralisasi Bahan Organik
+### Mineralisasi bahan organik
 
 $$
 M_{j,\phi}
 $$
 
-adalah hara yang dilepas dari bahan organik tanah selama fase tersebut.
+Ini adalah hara yang dilepas dari bahan organik tanah.
 
-Tanah dengan C-organik baik dapat menyediakan sebagian N, S, dan unsur lain melalui mineralisasi. Namun laju mineralisasi dipengaruhi oleh suhu, kelembapan, aerasi, tekstur, dan aktivitas mikroba.
+Tanah dengan C-organik baik biasanya punya kontribusi lebih besar. Tetapi mineralisasi tidak terjadi sekaligus. Ia dipengaruhi suhu, kelembapan, aerasi, tekstur, dan aktivitas mikroba.
 
 ---
 
-### 9.4.4 Kontribusi Pupuk Organik
+### Kontribusi pupuk organik
 
 $$
 O_{j,\phi}
 $$
 
-adalah kontribusi dari kompos, pupuk kandang, atau bahan organik tambahan.
+Kompos atau pupuk kandang juga menyumbang hara. Namun tidak semua langsung tersedia.
 
-Kontribusi ini tidak boleh diasumsikan 100% tersedia langsung. Sebagian hara pupuk organik tersedia lambat, terutama N dan P.
+Karena itu, pupuk organik sebaiknya dihitung sebagai kontribusi bertahap, bukan dianggap langsung 100% tersedia.
 
 ---
 
-### 9.4.5 Kehilangan Hara
+### Kehilangan hara
 
 $$
 L_{j,\phi}
 $$
 
-adalah hara yang hilang dari sistem.
+Hara bisa hilang karena:
 
-Contoh kehilangan:
-
-- pencucian nitrat,
-- limpasan permukaan,
+- pencucian,
+- limpasan,
 - erosi,
-- volatilization untuk N tertentu,
+- volatilization,
 - drainase berlebih.
 
-Jika risiko kehilangan tinggi, kebutuhan pupuk efektif dapat meningkat.
+N, terutama dalam bentuk nitrat, sangat rentan tercuci. Karena itu, di lahan tanah, aplikasi N sering lebih aman jika dibagi beberapa kali.
 
 ---
 
-### 9.4.6 Imobilisasi dan Fiksasi
+### Fiksasi dan imobilisasi
 
 $$
 I_{j,\phi}
 $$
 
-adalah hara yang menjadi tidak tersedia karena diikat atau diimobilisasi.
+Ini adalah hara yang menjadi tidak tersedia.
 
 Contoh:
 
-- P terfiksasi oleh Fe/Al pada tanah masam,
+- P terfiksasi pada tanah masam,
 - P terikat Ca pada tanah alkalis,
-- N diimobilisasi mikroba,
-- K terjerap pada mineral liat tertentu.
+- N diikat mikroba sementara,
+- K terjerap mineral liat tertentu.
 
-Semakin tinggi imobilisasi atau fiksasi, semakin besar pupuk yang dibutuhkan untuk mencapai suplai efektif.
+Artinya, hara ada di tanah, tetapi tidak semuanya bisa langsung digunakan tanaman.
 
 ---
 
-### 9.4.7 Recovery Efficiency
+### Efisiensi pupuk
 
 $$
 RE_{j,\phi}
 $$
 
-adalah fraksi pupuk yang benar-benar dapat dimanfaatkan tanaman.
+Ini menunjukkan bagian pupuk yang benar-benar dimanfaatkan tanaman.
 
-Nilainya:
+Jika efisiensi pupuk rendah, dosis yang diberikan harus lebih besar untuk menghasilkan serapan yang sama. Namun menaikkan dosis tanpa memperbaiki efisiensi bisa boros dan merusak lingkungan.
 
-$$
-\boxed{
-0<RE_{j,\phi}\leq1
-}
-$$
+Bahasa lapangannya:
 
-Jika:
-
-$$
-RE=0.5
-$$
-
-artinya hanya 50% pupuk yang efektif dipulihkan oleh tanaman pada fase tersebut.
-
-Maka, semakin rendah:
-
-$$
-RE_{j,\phi}
-$$
-
-semakin besar dosis pupuk yang dibutuhkan untuk mencapai akumulasi tanaman yang sama.
+> Pupuk yang ditebar tidak semuanya masuk tanaman.
 
 ---
 
-## 9.5 Parameter Tanah yang Wajib Masuk
+## 9.5 Data Tanah yang Wajib Masuk
 
-Untuk mengadaptasi model ke lahan tanah, data kesuburan tanah wajib masuk.
+Jika model ini mau diadaptasi ke lahan tanah, data tanah wajib masuk.
 
-Parameter minimal:
+Minimal:
 
-| Parameter tanah | Fungsi dalam model                   |
-| --------------- | ------------------------------------ |
-| pH              | menentukan ketersediaan hara         |
-| C-organik       | sumber mineralisasi dan buffer tanah |
-| N tersedia      | koreksi kebutuhan N                  |
-| P tersedia      | koreksi kebutuhan P                  |
-| K-dd            | koreksi kebutuhan K                  |
-| Ca-dd           | status Ca tanah                      |
-| Mg-dd           | status Mg tanah                      |
-| KTK / CEC       | kapasitas tanah menahan kation       |
-| Tekstur         | retensi air dan hara                 |
-| EC tanah        | risiko salinitas                     |
+| Parameter tanah | Fungsi                              |
+| --------------- | ----------------------------------- |
+| pH tanah        | menentukan ketersediaan hara        |
+| C-organik       | sumber mineralisasi dan daya buffer |
+| N tersedia      | koreksi kebutuhan N                 |
+| P tersedia      | koreksi kebutuhan P                 |
+| K-dd            | koreksi kebutuhan K                 |
+| Ca-dd           | status Ca tanah                     |
+| Mg-dd           | status Mg tanah                     |
+| KTK / CEC       | kemampuan tanah menahan kation      |
+| Tekstur         | memengaruhi air dan retensi hara    |
+| EC tanah        | membaca risiko salinitas            |
 
-Jika data ini tidak tersedia, rekomendasi pupuk lahan akan lemah karena model tidak mengetahui berapa hara yang sudah disediakan tanah.
+Tanpa data tanah, rekomendasi pupuk lahan akan mudah meleset.
 
 ---
 
 ## 9.6 Strategi Pemupukan Lahan Berdasarkan Fase
 
-Pada lahan tanah, strategi pemupukan tidak sefleksibel hidroponik. Rezim pemupukan biasanya dibagi menjadi:
+Di lahan, pupuk tidak dikontrol secepat hidroponik. Karena itu, strategi waktunya penting.
 
-- pupuk dasar,
-- pupuk susulan,
-- pembenahan tanah,
-- dan koreksi fase produksi.
+| Fase            | Strategi umum di lahan                                    |
+| --------------- | --------------------------------------------------------- |
+| Pra-tanam       | koreksi pH, bahan organik, pupuk dasar                    |
+| Establishment   | pupuk ringan, dukung akar                                 |
+| Vegetatif       | susulan N, K, Ca, Mg sesuai kondisi tanah                 |
+| Generatif awal  | dukung bunga, fruit set, K dan Ca mulai dijaga            |
+| Pembesaran buah | K, Ca, Mg dikontrol sesuai beban buah                     |
+| Panen intensif  | pupuk susulan dipecah mengikuti panen dan kondisi tanaman |
 
-Contoh kerangka strategi:
+Namun tabel ini tetap harus dikoreksi dengan hasil uji tanah.
 
-| Fase            | Strategi pemupukan lahan                              |
-| --------------- | ----------------------------------------------------- |
-| Pra-tanam       | koreksi pH, bahan organik, pupuk dasar                |
-| Establishment   | pupuk ringan, dukung akar                             |
-| Vegetatif       | susulan N, K, Ca, Mg sesuai status tanah              |
-| Generatif awal  | koreksi K, Ca, dan unsur pendukung bunga              |
-| Pembesaran buah | susulan K, Ca, Mg terkontrol                          |
-| Panen intensif  | split application mengikuti panen dan kondisi tanaman |
-
-Namun strategi ini harus selalu dikoreksi oleh data tanah. Tanah dengan K-dd tinggi tidak memerlukan perlakuan sama dengan tanah K-dd rendah. Tanah dengan pH masam dan P terfiksasi tidak bisa diperlakukan sama dengan tanah pH netral.
+Tanah dengan K tinggi tidak perlu diperlakukan sama dengan tanah K rendah. Tanah masam dengan P terfiksasi tidak bisa diperlakukan sama dengan tanah netral. Tanah berpasir tidak sama dengan tanah liat.
 
 ---
 
@@ -3570,16 +3347,16 @@ Namun strategi ini harus selalu dikoreksi oleh data tanah. Tanah dengan K-dd tin
 
 ```mermaid id="bab9-adaptasi-lahan"
 flowchart TD
-    A["Kebutuhan biologis tanaman<br/>Delta A_j,phi"] --> B{"Sistem budidaya"}
+    A["Kebutuhan biologis tanaman<br/>tambahan hara per fase"] --> B{"Sistem budidaya"}
 
     B --> C["Hidroponik / fertigasi"]
-    C --> D["Serapan air<br/>Q_w"]
-    D --> E["Konsentrasi target<br/>C_target,j,phi"]
+    C --> D["Air terserap<br/>oleh tanaman"]
+    D --> E["Target konsentrasi<br/>larutan"]
 
     B --> F["Lahan tanah"]
-    F --> G["Kesuburan tanah<br/>pH, C-organik,<br/>N, P, K, Ca, Mg"]
+    F --> G["Cek kesuburan tanah<br/>pH, C-organik,<br/>N, P, K, Ca, Mg"]
     G --> H["Koreksi suplai,<br/>mineralisasi,<br/>kehilangan, fiksasi"]
-    H --> I["Kebutuhan pupuk fase<br/>F_j,phi"]
+    H --> I["Kebutuhan pupuk<br/>per fase"]
 
     classDef dasar fill:#E8F5E9,stroke:#2E7D32,stroke-width:1.5px,color:#1B5E20;
     classDef pilih fill:#FFF8E1,stroke:#F9A825,stroke-width:1.5px,color:#5D4037;
@@ -3592,55 +3369,72 @@ flowchart TD
     class F,G,H,I tanah;
 ```
 
-Diagram ini menunjukkan bahwa titik awalnya sama, yaitu kebutuhan biologis tanaman. Tetapi setelah itu, jalurnya bercabang sesuai sistem budidaya.
+Diagram ini menegaskan bahwa titik awalnya sama, yaitu kebutuhan tanaman. Tetapi jalur penyediaan haranya berbeda.
 
 ---
 
 ## 9.8 Batas Bab Ini
 
-Bab 9 tidak bertujuan membuat rekomendasi pupuk lahan secara lengkap. Bab ini hanya menjelaskan bagaimana model hidroponik/fertigasi dapat diadaptasi secara konseptual untuk lahan tanah.
+Bab ini tidak bertujuan membuat rekomendasi pupuk lahan secara lengkap.
 
-Untuk membuat rekomendasi pupuk lahan yang benar-benar operasional, diperlukan data tambahan:
+Bab ini hanya menjelaskan bahwa model hidroponik tidak boleh langsung dipindahkan ke tanah tanpa koreksi.
+
+Untuk membuat rekomendasi pupuk lahan yang benar-benar operasional, masih diperlukan:
 
 - hasil analisis tanah,
 - target hasil,
 - riwayat pemupukan,
 - jenis pupuk,
-- efisiensi pupuk,
 - curah hujan atau irigasi,
 - tekstur tanah,
-- dan kondisi drainase.
+- drainase,
+- dan efisiensi pupuk.
 
-Tanpa data tersebut, formula pupuk lahan akan terlalu spekulatif.
+Tanpa data tersebut, angka pupuk lahan akan terlalu spekulatif.
 
 ---
 
 ## 9.9 Kesimpulan Bab 9
 
-Model artikel ini memiliki dua keluaran berbeda tergantung sistem budidaya.
-
-Untuk hidroponik dan fertigasi substrat:
+Untuk hidroponik dan fertigasi substrat, output model adalah:
 
 $$
 \boxed{
-output = C_{target,j,\phi}
+target\ konsentrasi\ larutan
 }
 $$
 
-Untuk lahan tanah:
+atau:
 
 $$
 \boxed{
-output = F_{j,\phi}
+C_{target,j,\phi}
 }
 $$
 
-Dengan formula adaptasi:
+Untuk lahan tanah, outputnya adalah:
 
 $$
 \boxed{
+kebutuhan\ pupuk\ terkoreksi\ tanah
+}
+$$
+
+atau:
+
+$$
+\boxed{
+F_{j,\phi}
+}
+$$
+
+Formula adaptasi lahan:
+
+$$
+{
 F_{j,\phi} =
-\frac{
+
+rac{
 \Delta A_{j,\phi}
 - S_{j,\phi}
 - M_{j,\phi}
@@ -3652,17 +3446,22 @@ F_{j,\phi} =
 }
 $$
 
-Kesimpulan tajamnya:
+Makna praktisnya:
 
 $$
-\boxed{
-lahan\ tanah\ bukan\ sistem\ larutan\ langsung
+{
+	ext{pupuk lahan} =
+	ext{kebutuhan tanaman}
+- 	ext{kontribusi tanah}
++ 	ext{koreksi kehilangan}
 }
 $$
 
-Tanah menyimpan, melepas, mengikat, dan kehilangan hara. Karena itu, strategi pemupukan lahan harus selalu memasukkan kesuburan tanah dan efisiensi pupuk.
+Kesimpulan tajam:
 
-Artikel ini tetap berfokus pada model konsentrasi hara untuk hidroponik/fertigasi, sedangkan lahan tanah ditempatkan sebagai adaptasi dengan submodel tersendiri.
+> Tanah bukan tandon nutrisi. Tanah adalah sistem hidup yang bisa menyimpan, melepas, mengikat, dan kehilangan hara.
+
+Karena itu, artikel ini tetap berfokus pada formula konsentrasi untuk hidroponik dan fertigasi substrat. Lahan tanah dibahas sebagai adaptasi yang membutuhkan submodel kesuburan tanah.
 
 [**Kembali ke Atas**](#model-formula-hara-cabai-berbasis-laju-serapan-dan-batas-jenuh-respons-per-fase-organ)
 
@@ -3670,37 +3469,55 @@ Artikel ini tetap berfokus pada model konsentrasi hara untuk hidroponik/fertigas
 
 # 10. Validasi Formula dan Protokol Data Praktisi
 
-## 10.1 Mengapa Formula Harus Divalidasi?
-
-Formula target konsentrasi yang dibangun pada artikel ini tidak boleh langsung dianggap benar hanya karena rumusnya rapi. Formula harus diuji terhadap tanaman nyata.
+Formula hara tidak cukup hanya terlihat rapi di atas kertas. Formula harus diuji pada tanaman nyata.
 
 Target konsentrasi seperti:
 
 $$
-C_{target,N,\phi},\ C_{target,P,\phi},\ C_{target,K,\phi},\ C_{target,Ca,\phi},\ C_{target,Mg,\phi}
+\boxed{
+C_{target,N},\ C_{target,P},\ C_{target,K},\ C_{target,Ca},\ C_{target,Mg}
+}
 $$
 
-baru layak digunakan jika mampu menghasilkan respons tanaman yang sesuai dengan fase pertumbuhannya.
+baru layak dipakai jika tanaman memberi respons yang benar.
 
-Validasi tidak cukup hanya melihat:
+Respons yang benar bukan hanya EC stabil, daun hijau, atau tanaman terlihat segar. Respons yang benar harus terlihat pada:
 
-$$
-EC
-$$
+- akar,
+- batang,
+- daun,
+- bunga,
+- buah,
+- dan akumulasi hara di jaringan tanaman.
 
-atau:
-
-$$
-ppm
-$$
-
-Sebab EC hanya menunjukkan total konsentrasi ion dalam larutan. EC tidak menjelaskan apakah N, P, K, Ca, dan Mg benar-benar masuk ke tanaman, apakah tersimpan di organ yang tepat, atau apakah unsur tertentu menjadi pembatas.
-
-Poin tajamnya:
+Poin tajam Bab 10:
 
 > Formula tidak divalidasi dari EC saja, tetapi dari respons organ dan akumulasi hara.
 
-Dengan demikian, validasi formula harus melihat tiga lapis:
+---
+
+## 10.1 EC Penting, tetapi Tidak Cukup
+
+EC hanya menunjukkan kekuatan total larutan. EC tidak menjelaskan unsur mana yang dominan, unsur mana yang kurang, atau unsur mana yang saling menekan.
+
+Dua larutan bisa memiliki EC sama, tetapi komposisinya berbeda.
+
+Contoh:
+
+| Larutan   |   EC | Masalah yang mungkin terjadi                |
+| --------- | ---: | ------------------------------------------- |
+| Larutan A | sama | K terlalu tinggi, Ca tertekan               |
+| Larutan B | sama | N terlalu tinggi, tanaman terlalu vegetatif |
+| Larutan C | sama | Mg terlalu rendah, daun melemah             |
+| Larutan D | sama | komposisi lebih seimbang                    |
+
+Jadi, EC adalah indikator penting, tetapi bukan bukti bahwa formula sudah benar.
+
+Bahasa lapangannya:
+
+> EC memberi tahu “berapa kuat larutan”, tetapi tidak memberi tahu “apakah komposisinya tepat untuk fase tanaman”.
+
+Karena itu, validasi formula harus melihat tiga lapis:
 
 $$
 \boxed{
@@ -3716,61 +3533,71 @@ $$
 
 ## 10.2 Apa yang Harus Divalidasi?
 
-Formula hara perlu divalidasi pada beberapa tingkat.
-
 ### 10.2.1 Validasi Larutan
 
-Validasi larutan memastikan bahwa konsentrasi yang diberikan benar-benar sesuai dengan target.
+Validasi pertama dilakukan pada larutan.
 
 Data yang diamati:
 
-- konsentrasi input,
-- konsentrasi drainase atau larutan sisa,
-- pH,
-- EC,
-- suhu larutan,
-- volume input,
-- volume drainase.
+- pH input,
+- EC input,
+- konsentrasi N, P, K, Ca, Mg di larutan,
+- volume larutan masuk,
+- volume drainase atau sisa,
+- pH drainase,
+- EC drainase,
+- suhu larutan.
 
-Tujuannya adalah mengetahui apakah larutan yang diberikan stabil dan tidak berubah ekstrem di zona akar.
+Tujuannya sederhana:
+
+> Apakah larutan yang diberikan benar-benar sesuai target, dan apakah larutan berubah ekstrem setelah melewati zona akar?
+
+Jika EC drainase jauh lebih tinggi dari input, bisa berarti tanaman tidak menyerap sebanding dengan larutan yang diberikan. Jika pH drift terlalu tajam, komposisi ion atau aktivitas akar perlu dicek.
 
 ---
 
 ### 10.2.2 Validasi Akar
 
-Akar adalah pintu masuk air dan hara. Formula yang baik tetap gagal jika akar tidak sehat.
+Akar adalah pintu masuk air dan hara. Formula yang baik tetap gagal jika akar lemah.
 
 Data yang diamati:
 
 - warna akar,
-- jumlah akar aktif,
-- panjang dan percabangan akar,
-- gejala busuk akar,
+- jumlah akar putih aktif,
+- percabangan akar,
+- bau akar,
 - lendir atau biofilm berlebih,
+- tanda busuk akar,
 - suhu zona akar,
-- oksigen terlarut bila tersedia.
+- oksigen terlarut jika tersedia.
 
-Dalam model ini, akar sehat berarti efisiensi serapan:
+Jika akar sehat, efisiensi serapan cenderung lebih baik.
+
+Secara teknis, efisiensi serapan ditulis:
 
 $$
+\boxed{
 \eta_{j,\phi}
+}
 $$
 
-lebih mendekati kondisi optimal.
-
-Jika akar tidak sehat, nilai:
+Namun untuk praktisi, cukup baca sebagai:
 
 $$
-C_{target,j,\phi}
+\boxed{
+seberapa\ efektif\ akar\ menyerap\ hara
+}
 $$
 
-tidak otomatis meningkatkan akumulasi hara. Masalahnya bukan lagi konsentrasi, tetapi kapasitas serapan.
+Jika akar lemah, menaikkan ppm sering tidak menyelesaikan masalah. Justru bisa menambah stres.
 
 ---
 
 ### 10.2.3 Validasi Organ Tanaman
 
-Validasi utama harus dilakukan pada organ tanaman:
+Validasi utama ada pada organ tanaman.
+
+Organ yang diamati:
 
 - akar,
 - batang,
@@ -3778,46 +3605,50 @@ Validasi utama harus dilakukan pada organ tanaman:
 - bunga,
 - buah.
 
-Yang diamati adalah apakah formula menghasilkan pertumbuhan organ sesuai fase.
+Setiap fase punya organ kunci.
 
-| Fase            | Organ yang harus divalidasi | Indikator utama                          |
-| --------------- | --------------------------- | ---------------------------------------- |
-| Establishment   | akar, daun muda             | akar aktif, daun muda tumbuh             |
-| Vegetatif       | daun, batang                | tajuk dan percabangan meningkat          |
-| Generatif awal  | bunga, buah muda            | bunga dan fruit set terbentuk            |
-| Pembesaran buah | buah, daun aktif            | buah membesar, daun tetap sehat          |
-| Panen intensif  | buah, daun, akar            | panen berlanjut, tajuk tidak cepat turun |
+| Fase            | Organ yang perlu dibaca | Indikator praktis                        |
+| --------------- | ----------------------- | ---------------------------------------- |
+| Establishment   | akar, daun muda         | akar aktif, daun baru tumbuh             |
+| Vegetatif       | daun, batang            | tajuk sehat, percabangan baik            |
+| Generatif awal  | bunga, buah muda        | bunga jadi buah, tidak mudah rontok      |
+| Pembesaran buah | buah, daun aktif        | buah membesar, daun tetap kuat           |
+| Panen intensif  | buah, daun, akar        | panen berlanjut, tajuk tidak cepat turun |
 
-Formula yang benar tidak hanya membuat tanaman hijau. Formula yang benar harus membuat organ yang tepat tumbuh pada fase yang tepat.
+Formula yang tepat harus membuat organ yang benar tumbuh pada fase yang benar.
+
+Misalnya, pada fase pembesaran buah, tanaman seharusnya tidak hanya makin rimbun, tetapi buah juga harus mengisi. Jika tajuk kuat tetapi buah lambat, formula masih perlu dikoreksi.
 
 ---
 
-## 10.3 Data Minimal untuk Hidroponik dan Fertigasi Substrat
+## 10.3 Data Minimal untuk Praktisi Hidroponik/Fertigasi
 
-Untuk praktisi, data minimal yang perlu dikumpulkan adalah:
+Data minimal yang perlu dikumpulkan:
 
-| Data                      | Fungsi                                              |
-| ------------------------- | --------------------------------------------------- |
-| Berat kering organ        | membaca pertumbuhan akar, batang, daun, bunga, buah |
-| Kadar N, P, K, Ca, Mg     | menghitung akumulasi hara                           |
-| Serapan air harian        | mengubah laju akumulasi menjadi konsentrasi         |
-| Konsentrasi input         | memastikan formula yang diberikan                   |
-| Konsentrasi drainase/sisa | membaca serapan dan sisa hara                       |
-| pH                        | membaca kondisi ketersediaan hara                   |
-| EC                        | membaca total kekuatan larutan                      |
-| Suhu larutan              | membaca risiko stres akar                           |
-| Kondisi akar              | membaca kapasitas serapan                           |
+| Data                      | Fungsi                                                  |
+| ------------------------- | ------------------------------------------------------- |
+| Berat kering organ        | membaca pertumbuhan akar, batang, daun, bunga, buah     |
+| Kadar N, P, K, Ca, Mg     | menghitung hara yang benar-benar masuk tanaman          |
+| Serapan air harian        | menghubungkan kebutuhan hara dengan konsentrasi larutan |
+| Konsentrasi input         | memastikan larutan sesuai target                        |
+| Konsentrasi drainase/sisa | membaca hara yang tidak terserap                        |
+| pH                        | membaca kondisi ketersediaan hara                       |
+| EC                        | membaca kekuatan total larutan                          |
+| Suhu larutan              | membaca risiko stres akar                               |
+| Kondisi akar              | membaca kapasitas serapan                               |
 
-Data tersebut membentuk rantai validasi:
+Data ini tidak harus semuanya langsung sempurna. Namun tanpa data tersebut, koreksi formula akan banyak menebak.
+
+Alur validasi:
 
 ```mermaid id="bab10-validasi-data"
 flowchart TD
-    A["Larutan input<br/>C_target, pH, EC"] --> B["Zona akar<br/>suhu, pH, EC, drainase"]
+    A["Larutan input<br/>target, pH, EC"] --> B["Zona akar<br/>pH, EC, suhu,<br/>drainase"]
     B --> C["Akar<br/>sehat atau tidak"]
-    C --> D["Serapan air<br/>Q_w"]
-    D --> E["Akumulasi hara<br/>A_j(t)"]
+    C --> D["Air yang diserap<br/>per tanaman"]
+    D --> E["Hara yang masuk<br/>ke jaringan tanaman"]
     E --> F["Respons organ<br/>akar, daun, batang,<br/>bunga, buah"]
-    F --> G["Evaluasi formula<br/>layak / perlu koreksi"]
+    F --> G["Keputusan:<br/>formula layak<br/>atau perlu koreksi"]
 
     classDef larutan fill:#E3F2FD,stroke:#1565C0,stroke-width:1.5px,color:#0D47A1;
     classDef akar fill:#E8F5E9,stroke:#2E7D32,stroke-width:1.5px,color:#1B5E20;
@@ -3832,34 +3663,9 @@ flowchart TD
 
 ---
 
-## 10.4 Protokol Pengamatan Praktis
+## 10.4 Cara Menghitung Serapan Air
 
-Agar model bisa diuji, pengamatan sebaiknya dilakukan per fase.
-
-Minimal fase pengamatan:
-
-$$
-\boxed{
-vegetatif,\ generatif\ awal,\ pembesaran\ buah,\ panen\ intensif
-}
-$$
-
-Lebih baik jika data dikumpulkan secara mingguan.
-
-Untuk setiap waktu pengamatan, ambil data berikut:
-
-| Kelompok data | Parameter                                                    |
-| ------------- | ------------------------------------------------------------ |
-| Larutan       | pH input, EC input, konsentrasi N, P, K, Ca, Mg              |
-| Drainase/sisa | pH drainase, EC drainase, konsentrasi sisa hara              |
-| Air           | volume input, volume drainase, estimasi serapan air          |
-| Tanaman       | jumlah daun, jumlah bunga, jumlah buah, bobot buah           |
-| Organ         | berat segar dan berat kering akar, batang, daun, bunga, buah |
-| Jaringan      | kadar N, P, K, Ca, Mg                                        |
-| Akar          | warna, percabangan, gejala busuk, vigor                      |
-| Lingkungan    | suhu larutan, suhu udara, kelembapan, cahaya bila tersedia   |
-
-Serapan air per tanaman dapat dihitung sederhana:
+Untuk sistem fertigasi dengan drainase, serapan air bisa dihitung sederhana:
 
 $$
 \boxed{
@@ -3869,21 +3675,54 @@ Q_w=
 }
 $$
 
+Dalam bahasa lapangan:
+
+$$
+{
+	ext{air terserap} =
+
+rac{
+	ext{air masuk} - 	ext{air keluar}
+}
+{	ext{jumlah tanaman}}
+}
+$$
+
 Keterangan:
 
-| Simbol         | Arti                       |
-| -------------- | -------------------------- |
-| $Q_w$          | serapan air per tanaman    |
-| $V_{input}$    | volume larutan masuk       |
-| $V_{drainase}$ | volume larutan keluar/sisa |
+| Simbol         | Bahasa praktis                       |
+| -------------- | ------------------------------------ |
+| $Q_w$          | air terserap per tanaman             |
+| $V_{input}$    | volume larutan masuk                 |
+| $V_{drainase}$ | volume larutan keluar                |
+| jumlah tanaman | jumlah tanaman dalam unit pengamatan |
 
-Jika sistem recirculating, pendekatannya perlu disesuaikan dengan perubahan volume dan konsentrasi larutan di tandon.
+Contoh:
+
+Jika larutan masuk 100 liter, drainase keluar 30 liter, dan jumlah tanaman 100 tanaman:
+
+$$
+Q_w=
+\frac{100-30}{100}
+$$
+
+$$
+\boxed{
+Q_w=0.7\ L/tanaman
+}
+$$
+
+Artinya, rata-rata tanaman menyerap sekitar 0,7 liter air pada periode pengamatan tersebut.
+
+Untuk sistem recirculating, perhitungannya harus menyesuaikan perubahan volume tandon dan perubahan konsentrasi larutan.
 
 ---
 
 ## 10.5 Validasi Akumulasi Hara
 
-Akumulasi hara observasi dihitung dengan persamaan:
+Agar formula benar-benar terbukti, hara yang masuk ke tanaman harus dihitung dari jaringan tanaman.
+
+Secara teknis:
 
 $$
 \boxed{
@@ -3892,15 +3731,15 @@ A_{j,obs}(t)=
 }
 $$
 
-Keterangan:
+Bahasa lapangannya:
 
-| Simbol           | Arti                                      |
-| ---------------- | ----------------------------------------- |
-| $A_{j,obs}(t)$   | akumulasi unsur $j$ hasil observasi       |
-| $W_{o,obs}(t)$   | berat kering organ hasil pengamatan       |
-| $C_{j,o,obs}(t)$ | kadar unsur $j$ pada organ hasil analisis |
+$$
+\boxed{
+\text{hara yang ditemukan di tanaman} = \text{berat kering organ} \times \text{kadar hara organ}
+}
+$$
 
-Lalu dibandingkan dengan prediksi model:
+Lalu hasil observasi dibandingkan dengan prediksi model:
 
 $$
 \boxed{
@@ -3908,7 +3747,7 @@ A_{j,pred}(t)
 }
 $$
 
-Error tiap unsur:
+Selisihnya disebut error:
 
 $$
 \boxed{
@@ -3916,15 +3755,24 @@ e_j(t)=A_{j,obs}(t)-A_{j,pred}(t)
 }
 $$
 
-Jika error besar, maka formula atau parameternya perlu dikoreksi.
+Makna praktisnya:
+
+| Kondisi                             | Arti                                               |
+| ----------------------------------- | -------------------------------------------------- |
+| observasi mendekati prediksi        | model cukup sesuai                                 |
+| observasi jauh lebih rendah         | tanaman tidak menyerap sesuai target               |
+| observasi jauh lebih tinggi         | model mungkin terlalu rendah atau sampling berbeda |
+| error konsisten pada unsur tertentu | parameter unsur itu perlu dikoreksi                |
 
 ---
 
 ## 10.6 Metrik Validasi
 
-### 10.6.1 RMSE
+Metrik statistik tetap berguna, tetapi harus dijelaskan sederhana.
 
-RMSE menunjukkan besar kesalahan model dalam satuan asli data.
+### RMSE
+
+RMSE menunjukkan rata-rata besar kesalahan dalam satuan asli data.
 
 $$
 \boxed{
@@ -3937,26 +3785,17 @@ RMSE_j=
 }
 $$
 
-Keterangan:
+Bahasa praktis:
 
-| Simbol         | Arti                                           |
-| -------------- | ---------------------------------------------- |
-| $RMSE_j$       | root mean square error unsur $j$               |
-| $A_{j,obs,i}$  | akumulasi observasi unsur $j$ pada data ke-$i$ |
-| $A_{j,pred,i}$ | akumulasi prediksi unsur $j$ pada data ke-$i$  |
-| $n$            | jumlah data                                    |
+> RMSE menunjukkan seberapa jauh prediksi model dari data nyata, dalam satuan mg/tanaman.
 
-RMSE berguna untuk mengetahui besar error dalam satuan:
-
-$$
-mg/tanaman
-$$
+Jika RMSE besar, prediksi model masih kasar.
 
 ---
 
-### 10.6.2 MAPE
+### MAPE
 
-MAPE menunjukkan error dalam persen.
+MAPE menunjukkan kesalahan dalam persen.
 
 $$
 \boxed{
@@ -3974,20 +3813,22 @@ $$
 
 Interpretasi praktis:
 
-|   MAPE | Kualitas model                    |
+|   MAPE | Makna                             |
 | -----: | --------------------------------- |
 |  < 10% | sangat baik                       |
-| 10–20% | layak operasional                 |
+| 10–20% | masih layak operasional           |
 | 20–30% | perlu koreksi                     |
 |   >30% | belum layak untuk formula presisi |
 
-MAPE perlu hati-hati pada fase awal karena nilai akumulasi kecil dapat membuat error persentase tampak besar.
+Catatan penting:
+
+> Pada fase awal, MAPE bisa terlihat besar karena nilai tanaman masih kecil.
 
 ---
 
-### 10.6.3 Bias
+### Bias
 
-Bias menunjukkan apakah model cenderung terlalu tinggi atau terlalu rendah.
+Bias menunjukkan arah kesalahan.
 
 $$
 \boxed{
@@ -3998,74 +3839,70 @@ Bias_j=
 }
 $$
 
-Interpretasi:
+Makna praktis:
 
-| Bias | Makna                                   |
-| ---: | --------------------------------------- |
-|   >0 | model cenderung overestimate            |
-|  < 0 | model cenderung underestimate           |
-|   ≈0 | tidak ada kecenderungan arah error kuat |
+|          Bias | Arti                           |
+| ------------: | ------------------------------ |
+|       positif | model cenderung terlalu tinggi |
+|       negatif | model cenderung terlalu rendah |
+| mendekati nol | tidak ada kecenderungan kuat   |
 
-Jika model selalu overestimate K, formula bisa terlalu mendorong K. Jika model underestimate Ca, tanaman dapat masuk risiko Ca menjadi pembatas.
+Contoh:
+
+Jika model selalu memprediksi K terlalu tinggi, formula bisa terlalu mendorong K. Jika model selalu memprediksi Ca terlalu rendah, risiko Ca menjadi pembatas bisa tidak terbaca.
 
 ---
 
-## 10.7 Validasi Organ
-
-Validasi tidak cukup hanya pada total tanaman. Formula harus dilihat terhadap organ yang sedang dominan tumbuh.
+## 10.7 Validasi Organ secara Praktis
 
 ### Akar
 
-Validasi akar penting pada fase establishment dan seluruh sistem hidroponik.
+Akar harus sehat karena semua formula bergantung pada kemampuan akar menyerap.
 
-Parameter:
+Yang dicek:
 
-- berat kering akar,
-- warna akar,
-- percabangan,
 - akar putih aktif,
-- tidak ada busuk.
+- tidak busuk,
+- tidak bau,
+- percabangan baik,
+- tidak berlendir berlebihan,
+- volume akar cukup.
 
-Jika akar buruk, nilai:
-
-$$
-\eta_{j,\phi}
-$$
-
-harus diturunkan.
+Jika akar bermasalah, koreksi pertama bukan menaikkan ppm, tetapi memperbaiki akar.
 
 ---
 
 ### Daun
 
-Daun adalah source fotosintesis.
+Daun adalah pabrik fotosintesis.
 
-Parameter:
+Yang dicek:
 
-- berat kering daun,
 - warna daun,
 - luas daun,
+- daun muda,
 - klorosis,
 - nekrosis,
-- kadar N dan Mg,
-- akumulasi Ca pada daun.
+- ketebalan daun,
+- kadar N dan Mg bila ada analisis.
 
-Jika daun melemah saat fase buah, pengisian buah juga akan terganggu.
+Jika daun melemah saat buah banyak, pengisian buah juga akan turun.
 
 ---
 
 ### Batang
 
-Batang menunjukkan struktur dan transport.
+Batang menunjukkan keseimbangan struktur tanaman.
 
-Parameter:
+Yang dicek:
 
-- berat kering batang,
 - kekuatan batang,
+- panjang ruas,
 - percabangan,
-- keseimbangan vegetatif-generatif.
+- kecenderungan terlalu vegetatif,
+- kemampuan menopang buah.
 
-Batang terlalu dominan saat fase buah dapat menunjukkan formula masih terlalu mendorong vegetatif.
+Jika batang dan tajuk terlalu dominan saat fase buah, N atau keseimbangan vegetatif-generatif perlu ditinjau.
 
 ---
 
@@ -4073,50 +3910,52 @@ Batang terlalu dominan saat fase buah dapat menunjukkan formula masih terlalu me
 
 Bunga penting pada fase generatif awal.
 
-Parameter:
+Yang dicek:
 
 - jumlah bunga,
-- bunga gugur,
-- keberhasilan fruit set,
-- kondisi bunga abnormal.
+- bunga rontok,
+- fruit set,
+- bunga abnormal,
+- stres panas atau kelembapan.
 
-Jika bunga banyak gugur, formula tidak bisa hanya dilihat dari NPK. Ca, B, keseimbangan air, suhu, dan stres akar perlu diperiksa.
+Jika bunga banyak tetapi fruit set rendah, masalahnya bisa nutrisi, air, suhu, atau keseimbangan tanaman.
 
 ---
 
 ### Buah
 
-Buah adalah organ utama pada fase pembesaran dan panen.
+Buah menjadi indikator utama pada fase pembesaran dan panen.
 
-Parameter:
+Yang dicek:
 
 - jumlah buah,
 - bobot buah,
-- berat kering buah,
 - ukuran buah,
+- bentuk buah,
+- berat kering buah,
 - kualitas buah,
 - gejala fisiologis,
-- kadar K, Ca, dan Mg pada buah.
+- kadar K, Ca, Mg bila dianalisis.
 
-Jika buah tidak berkembang meski K tinggi, kemungkinan pembatasnya bukan K.
+Jika K tinggi tetapi buah tidak mengisi, pembatasnya mungkin bukan K. Bisa jadi daun lemah, Mg kurang efektif, Ca bermasalah, cahaya rendah, atau akar tidak mampu mengejar beban buah.
 
 ---
 
 ## 10.8 Keputusan Validasi Formula
 
-Setelah data terkumpul, formula dapat diklasifikasikan menjadi tiga status.
+Setelah data dikumpulkan, formula bisa masuk tiga status.
 
-| Status        | Kriteria                                                           | Tindakan              |
-| ------------- | ------------------------------------------------------------------ | --------------------- |
-| Layak         | akumulasi sesuai, organ tumbuh sesuai fase, error rendah           | formula dapat dipakai |
-| Perlu koreksi | ada error sedang atau organ tertentu tidak sesuai                  | koreksi parameter     |
-| Tidak layak   | error tinggi, gejala defisiensi/kelebihan, organ tidak sesuai fase | bangun ulang model    |
+| Status        | Kondisi                                                           | Tindakan                        |
+| ------------- | ----------------------------------------------------------------- | ------------------------------- |
+| Layak         | organ tumbuh sesuai fase, error rendah, tidak ada gejala serius   | formula bisa digunakan terbatas |
+| Perlu koreksi | ada error sedang atau organ tertentu tidak sesuai                 | koreksi parameter               |
+| Tidak layak   | error tinggi, defisiensi/kelebihan jelas, organ tidak sesuai fase | bangun ulang model              |
 
 Diagram keputusan:
 
 ```mermaid id="bab10-keputusan-validasi"
 flowchart TD
-    A["Data validasi<br/>larutan, akar, organ, jaringan"] --> B["Hitung error<br/>RMSE, MAPE, Bias"]
+    A["Data validasi<br/>larutan, akar,<br/>organ, jaringan"] --> B["Hitung error<br/>RMSE, MAPE, Bias"]
     B --> C{"Error rendah?"}
 
     C -->|Ya| D{"Organ tumbuh<br/>sesuai fase?"}
@@ -4125,7 +3964,7 @@ flowchart TD
     D -->|Ya| E["Formula layak<br/>digunakan terbatas"]
     D -->|Tidak| G
 
-    G --> H["Cek penyebab:<br/>akar, air, pH, EC,<br/>antagonisme, C_sat"]
+    G --> H["Cek penyebab:<br/>akar, air, pH, EC,<br/>antagonisme, batas jenuh"]
     H --> I["Kalibrasi ulang<br/>parameter model"]
 
     classDef data fill:#E3F2FD,stroke:#1565C0,stroke-width:1.5px,color:#0D47A1;
@@ -4141,33 +3980,31 @@ flowchart TD
 
 ---
 
-## 10.9 Parameter yang Paling Sering Perlu Dikoreksi
+## 10.9 Jika Formula Tidak Sesuai, Apa yang Dicek?
 
-Jika formula tidak sesuai, jangan langsung mengubah semua unsur. Koreksi harus dimulai dari parameter yang paling mungkin menyebabkan error.
+Jangan langsung menaikkan semua unsur.
 
-| Gejala                              | Parameter yang perlu dicek               |
-| ----------------------------------- | ---------------------------------------- |
-| Akumulasi rendah semua unsur        | akar, serapan air, suhu larutan, oksigen |
-| K tinggi tetapi buah tidak membesar | source daun, beban buah, cahaya, Mg      |
-| Ca jaringan rendah                  | K:Ca, NH₄, VPD, transpirasi, akar        |
-| Mg rendah                           | K terlalu tinggi, Ca tinggi, pH, akar    |
-| N berlebih                          | vegetatif terlalu kuat, buah lambat      |
-| EC tinggi tetapi pertumbuhan rendah | overfeeding, stres akar, jenuh respons   |
-| pH drift tajam                      | komposisi ion tidak seimbang             |
+Gunakan gejala untuk mencari pembatas.
 
-Validasi yang baik tidak hanya bertanya:
+| Gejala                              | Yang perlu dicek                            |
+| ----------------------------------- | ------------------------------------------- |
+| Akumulasi semua unsur rendah        | akar, serapan air, suhu larutan, oksigen    |
+| K tinggi tetapi buah tidak membesar | daun sebagai source, Mg, cahaya, beban buah |
+| Ca rendah di jaringan               | K:Ca, NH₄, transpirasi, akar                |
+| Mg rendah di daun                   | K terlalu dominan, Ca tinggi, pH, akar      |
+| Tanaman terlalu vegetatif           | N, rasio N:K, beban buah                    |
+| EC tinggi tetapi pertumbuhan lambat | overfeeding, akar stres, batas jenuh        |
+| pH cepat berubah                    | komposisi ion atau akar tidak seimbang      |
 
-> Apakah konsentrasi sudah sesuai?
+Pesan praktis:
 
-Tetapi juga:
-
-> Apakah tanaman merespons sesuai fase?
+> Koreksi formula harus berdasarkan penyebab, bukan berdasarkan kebiasaan menaikkan ppm.
 
 ---
 
 ## 10.10 Kesimpulan Bab 10
 
-Validasi formula hara harus dilakukan pada tiga tingkat:
+Validasi formula harus membaca tiga hal:
 
 $$
 \boxed{
@@ -4179,21 +4016,31 @@ organ
 }
 $$
 
-Data minimal yang wajib dikumpulkan meliputi berat kering organ, kadar N, P, K, Ca, Mg, serapan air harian, konsentrasi input, konsentrasi drainase atau sisa, pH, EC, suhu larutan, dan kondisi akar.
+EC dan pH penting, tetapi tidak cukup. Formula harus dibuktikan dengan respons organ dan akumulasi hara.
+
+Data minimal yang perlu dikumpulkan:
+
+- berat kering organ,
+- kadar N, P, K, Ca, Mg,
+- serapan air harian,
+- konsentrasi input,
+- konsentrasi drainase/sisa,
+- pH,
+- EC,
+- suhu larutan,
+- kondisi akar.
 
 Metrik seperti:
 
 $$
+\boxed{
 RMSE,\ MAPE,\ Bias
+}
 $$
 
-berguna untuk mengukur akurasi model, tetapi tidak cukup jika berdiri sendiri. Formula juga harus divalidasi terhadap respons organ:
+membantu membaca akurasi, tetapi keputusan akhir tetap harus melihat tanaman.
 
-$$
-akar,\ daun,\ batang,\ bunga,\ buah
-$$
-
-Kesimpulan tajamnya:
+Kesimpulan tajam:
 
 $$
 \boxed{
@@ -4202,13 +4049,15 @@ tetapi\ dari\ akumulasi\ hara\ dan\ respons\ organ
 }
 $$
 
+[**Kembali ke Atas**](#model-formula-hara-cabai-berbasis-laju-serapan-dan-batas-jenuh-respons-per-fase-organ)
+
 ---
 
 # 11. Kesimpulan
 
-Artikel pertama menghasilkan dasar biologis berupa rasio akumulasi N:P:K:Ca:Mg per fase pertumbuhan. Rasio tersebut dibangun dari berat kering organ dan kadar hara jaringan.
+Artikel pertama telah menghasilkan rasio akumulasi N:P:K:Ca:Mg per fase pertumbuhan. Rasio itu dibangun dari berat kering organ dan kadar hara jaringan.
 
-Alur artikel pertama adalah:
+Alurnya:
 
 $$
 \boxed{
@@ -4220,75 +4069,79 @@ rasio\ N:P:K:Ca:Mg
 }
 $$
 
-Artikel kedua melanjutkan model tersebut ke tahap formula hara. Fokusnya bukan lagi hanya membaca unsur mana yang lebih banyak diakumulasi, tetapi mengubah laju akumulasi menjadi target konsentrasi hara untuk hidroponik dan fertigasi substrat.
+Artikel kedua melanjutkan langkah tersebut menjadi formula hara. Fokusnya bukan lagi hanya membaca unsur mana yang banyak diakumulasi, tetapi mengubah kebutuhan harian tanaman menjadi target konsentrasi larutan.
 
-Alur artikel kedua adalah:
+Alurnya:
 
 $$
 \boxed{
-laju\ akumulasi
+kebutuhan\ harian
 \rightarrow
-kebutuhan\ konsentrasi
+serapan\ air
+\rightarrow
+konsentrasi\ kebutuhan
 \rightarrow
 batas\ jenuh
 \rightarrow
-formula\ target
-\rightarrow
-validasi
+target\ konsentrasi
 }
 $$
 
 ---
 
-## 11.1 Formula Utama Artikel
+## 11.1 Rumus Utama Artikel
 
 Rumus utama artikel ini adalah:
 
 $$
 \boxed{
-\begin{aligned}
-C_{target,j,\phi} &= \min
+C_{target,j,\phi} =
+\min
 \left[
 C_{sat,j,\phi},
 C_{tox,j}-m_j,
 \max(C_{min,j},C_{req,j,\phi})
 \right]
-\end{aligned}
 }
 $$
 
-dengan:
+Dengan:
 
 $$
 \boxed{
-\begin{aligned}
-C_{req,j,\phi} &= \frac{\bar{U}_{j,\phi}}
+C_{req,j,\phi} =
+\frac{\bar{U}_{j,\phi}}
 {\bar{Q}_{w,\phi}\eta_{j,\phi}}
-\end{aligned}
 }
 $$
 
-Keterangan:
+Dalam bahasa praktis:
 
-| Simbol              | Arti                                             |
-| ------------------- | ------------------------------------------------ |
-| $C_{target,j,\phi}$ | target konsentrasi unsur $j$ pada fase $\phi$    |
-| $C_{req,j,\phi}$    | konsentrasi kebutuhan berdasarkan laju akumulasi |
-| $C_{sat,j,\phi}$    | batas jenuh respons                              |
-| $C_{tox,j}$         | batas risiko toksik                              |
-| $m_j$               | margin keamanan                                  |
-| $C_{min,j}$         | batas minimum unsur                              |
-| $\bar{U}_{j,\phi}$  | laju akumulasi unsur $j$ pada fase $\phi$        |
-| $\bar{Q}_{w,\phi}$  | serapan air rata-rata                            |
-| $\eta_{j,\phi}$     | efisiensi serapan                                |
+$$
+\boxed{
+\text{target konsentrasi} = \text{cukup, tidak terlalu rendah, tidak melewati jenuh, dan tetap aman}
+}
+$$
 
-Formula ini menyatukan kebutuhan biologis tanaman dengan batas fisiologis respons akar.
+Keterangan ringkas:
+
+| Simbol teknis | Bahasa lapangan                   |
+| ------------- | --------------------------------- |
+| $C_{target}$  | target konsentrasi larutan        |
+| $C_{req}$     | konsentrasi dari kebutuhan harian |
+| $C_{min}$     | batas agar tidak defisiensi       |
+| $C_{sat}$     | batas jenuh respons               |
+| $C_{tox}$     | batas risiko toksik               |
+| $m$           | margin aman                       |
+| $\bar{U}$     | kebutuhan hara per hari           |
+| $\bar{Q}_w$   | air yang diserap per hari         |
+| $\eta$        | efisiensi serapan                 |
 
 ---
 
 ## 11.2 Fokus Utama: Hidroponik dan Fertigasi Substrat
 
-Model utama artikel ini ditujukan untuk sistem yang dikontrol melalui larutan, yaitu:
+Model utama artikel ini untuk sistem yang dikontrol lewat larutan, yaitu:
 
 - hidroponik,
 - fertigasi substrat,
@@ -4299,7 +4152,15 @@ Model utama artikel ini ditujukan untuk sistem yang dikontrol melalui larutan, y
 - NFT,
 - DFT.
 
-Pada sistem tersebut, hara dikendalikan melalui:
+Pada sistem ini, output model adalah:
+
+$$
+\boxed{
+target\ konsentrasi\ unsur\ per\ fase
+}
+$$
+
+atau secara teknis:
 
 $$
 \boxed{
@@ -4307,9 +4168,7 @@ C_{target,j,\phi}
 }
 $$
 
-Artinya, keluaran model adalah target konsentrasi unsur per fase.
-
-Namun untuk lahan tanah, model harus diadaptasi. Outputnya bukan konsentrasi larutan, tetapi kebutuhan pupuk fase:
+Lahan tanah tetap dibahas, tetapi hanya sebagai adaptasi. Pada lahan, outputnya bukan konsentrasi larutan, melainkan kebutuhan pupuk yang dikoreksi oleh kondisi tanah:
 
 $$
 \boxed{
@@ -4317,61 +4176,56 @@ F_{j,\phi}
 }
 $$
 
-dengan koreksi terhadap:
+Karena tanah bisa menyimpan, melepas, mengikat, dan kehilangan hara, maka rekomendasi pupuk lahan wajib memasukkan:
 
-- suplai tanah,
-- mineralisasi bahan organik,
-- pupuk organik,
-- kehilangan hara,
+- pH tanah,
+- C-organik,
+- hara tersedia,
+- KTK/CEC,
+- tekstur,
+- kelembapan,
+- kehilangan,
 - fiksasi,
-- dan recovery efficiency.
-
-Maka artikel ini menegaskan:
-
-$$
-\boxed{
-kebutuhan\ tanaman\ dibaca\ dari\ akumulasi,
-tetapi\ strategi\ suplai\ ditentukan\ oleh\ sistem\ budidaya
-}
-$$
+- dan efisiensi pupuk.
 
 ---
 
 ## 11.3 Batas Jenuh Mencegah Overfeeding
 
-Salah satu kontribusi utama artikel ini adalah memasukkan batas jenuh respons.
+Kontribusi penting artikel ini adalah memasukkan konsep batas jenuh.
 
-Target konsentrasi tidak boleh hanya ditentukan oleh:
+Formula tidak hanya bertanya:
 
-$$
-C_{req}
-$$
+> Berapa hara yang dibutuhkan?
 
-tetapi harus dibatasi oleh:
+Tetapi juga:
 
-$$
-C_{sat}
-$$
-
-karena serapan akar tidak naik tanpa batas.
+> Sampai titik mana tanaman masih merespons tambahan hara?
 
 Jika:
 
 $$
+\boxed{
 C_{req,j,\phi}>C_{sat,j,\phi}
+}
 $$
 
-maka menaikkan konsentrasi bukan solusi utama. Kondisi tersebut menunjukkan bahwa pembatas mungkin berada pada:
+maka jawabannya bukan otomatis menaikkan konsentrasi.
+
+Yang perlu dicek:
 
 - akar,
 - serapan air,
+- pH,
+- EC,
 - oksigen,
 - suhu larutan,
-- pH,
-- antagonisme,
-- atau lingkungan.
+- antagonisme hara,
+- drainase,
+- cahaya,
+- dan beban buah.
 
-Dengan demikian, batas jenuh mencegah praktik overfeeding.
+Pesan praktisnya:
 
 $$
 \boxed{
@@ -4381,11 +4235,15 @@ lebih\ efektif
 }
 $$
 
+Larutan yang terlalu pekat bisa boros, menekan akar, memicu antagonisme, dan tidak menambah hasil.
+
 ---
 
-## 11.4 Formula Harus Dikoreksi oleh Antagonisme
+## 11.4 Formula Harus Seimbang, Bukan Sekadar Cukup
 
-Target konsentrasi awal belum cukup. Formula perlu dikoreksi oleh interaksi antarhara, terutama:
+Target konsentrasi awal masih perlu dikoreksi oleh keseimbangan antarhara.
+
+Yang paling penting:
 
 $$
 \boxed{
@@ -4401,87 +4259,99 @@ NH_4:NO_3
 }
 $$
 
-Koreksi umum:
+Koreksi umumnya:
 
 $$
 \boxed{
-\begin{aligned}
-C'_{j,\phi} &= C_{target,j,\phi}
+C'_{j,\phi} =
+C_{target,j,\phi}
 \times
 f_{ant,j,\phi}
-\end{aligned}
 }
 $$
 
-Jika K terlalu tinggi, Ca dan Mg bisa menjadi kurang efektif. Jika NH₄ terlalu tinggi, serapan kation lain dapat terganggu.
+Makna praktisnya:
 
-Maka formula hara tidak boleh dibaca sebagai daftar angka terpisah. Formula harus dibaca sebagai sistem keseimbangan ion.
+> Unsur yang tersedia di larutan belum tentu efektif jika kalah oleh unsur lain.
+
+Contoh:
+
+- K terlalu tinggi bisa menekan Ca dan Mg.
+- NH₄ terlalu tinggi bisa mengganggu kation lain.
+- Ca tinggi berlebihan bisa menekan Mg.
+- EC tinggi bisa membuat akar sulit bekerja.
+
+Jadi, formula hara harus dibaca sebagai sistem keseimbangan, bukan daftar angka berdiri sendiri.
 
 ---
 
-## 11.5 Unsur Pembatas Menentukan Respons Fase
+## 11.5 Cari Unsur Pembatas
 
-Pertumbuhan organ pada fase tertentu dapat dibatasi oleh unsur yang paling rendah responsnya.
+Pertumbuhan tanaman ditentukan oleh unsur atau proses yang paling membatasi.
 
-Respons fase dapat dibaca sebagai:
+Secara teknis:
 
 $$
 \boxed{
-\begin{aligned}
-R_{\phi} &= \min
+R_{\phi} =
+\min
 (
 R_N,\ R_P,\ R_K,\ R_{Ca},\ R_{Mg}
 )
-\end{aligned}
 }
 $$
 
-Jika Ca menjadi pembatas, menaikkan K tidak menyelesaikan masalah. Jika Mg menjadi pembatas, menaikkan N tidak otomatis meningkatkan fotosintesis. Jika akar menjadi pembatas, menaikkan semua konsentrasi justru dapat memperburuk stres.
+Bahasa lapangan:
 
-Ini mengubah cara membaca formula hara.
+$$
+\boxed{
+tanaman\ tertahan\ oleh\ faktor\ yang\ paling\ lemah
+}
+$$
 
-Bukan hanya:
+Jika Ca menjadi pembatas, menaikkan K tidak menyelesaikan masalah. Jika Mg menjadi pembatas, menaikkan N tidak otomatis memperbaiki fotosintesis. Jika akar menjadi pembatas, menaikkan semua ppm justru bisa membuat tanaman stres.
 
-> Unsur mana yang harus dinaikkan?
+Maka pertanyaan penting bukan hanya:
+
+> Unsur mana yang perlu dinaikkan?
 
 Tetapi:
 
-> Unsur atau proses apa yang paling membatasi respons tanaman?
+> Apa yang sedang membatasi respons tanaman?
 
 ---
 
 ## 11.6 Validasi Wajib
 
-Formula hara harus divalidasi. Validasi tidak cukup dari EC atau ppm larutan.
+Formula hara harus divalidasi. Tidak cukup hanya melihat EC atau ppm.
 
-Validasi harus mencakup:
+Validasi perlu melihat:
 
 - larutan,
 - akar,
-- akumulasi hara,
+- serapan air,
+- jaringan tanaman,
 - dan pertumbuhan organ.
-
-Data yang digunakan:
-
-$$
-W_o(t),\ A_j(t),\ U_j(t),\ C_j(t),\ R_{j,\phi}
-$$
-
-Metrik statistik seperti:
-
-$$
-RMSE,\ MAPE,\ Bias
-$$
-
-perlu dipakai, tetapi harus dibaca bersama respons organ.
 
 Formula layak jika:
 
-1. akumulasi hara mendekati target,
-2. organ dominan tumbuh sesuai fase,
-3. tidak ada gejala defisiensi,
-4. tidak ada gejala kelebihan,
-5. tidak ada tanda jenuh atau antagonisme serius.
+1. akumulasi hara mendekati target;
+2. organ tumbuh sesuai fase;
+3. tidak ada defisiensi jelas;
+4. tidak ada gejala kelebihan;
+5. tidak ada tanda antagonisme berat;
+6. akar tetap sehat;
+7. hasil dan kualitas buah sesuai arah model.
+
+Metrik seperti:
+
+$$
+\boxed{
+RMSE,\ MAPE,\ Bias
+}
+$$
+
+membantu membaca akurasi, tetapi keputusan akhir tetap ada pada respons tanaman.
 
 ---
 
@@ -4489,14 +4359,14 @@ Formula layak jika:
 
 ```mermaid id="bab11-alur-akhir"
 flowchart TD
-    A["Artikel 1<br/>Rasio akumulasi<br/>N:P:K:Ca:Mg"] --> B["Laju akumulasi<br/>Ubar_j,phi"]
-    B --> C["Serapan air<br/>Qbar_w,phi"]
-    C --> D["Efisiensi serapan<br/>eta_j,phi"]
-    D --> E["Konsentrasi kebutuhan<br/>C_req,j,phi"]
+    A["Artikel sebelumnya<br/>rasio akumulasi<br/>N:P:K:Ca:Mg"] --> B["Kebutuhan hara<br/>per hari"]
+    B --> C["Air yang diserap<br/>per tanaman"]
+    C --> D["Efisiensi akar<br/>dan sistem"]
+    D --> E["Konsentrasi kebutuhan"]
     E --> F["Batas minimum,<br/>jenuh, toksik"]
-    F --> G["Target konsentrasi<br/>C_target,j,phi"]
-    G --> H["Koreksi antagonisme<br/>K:Ca:Mg, NH4:NO3"]
-    H --> I["Cek unsur pembatas<br/>R_phi = min(...)"]
+    F --> G["Target konsentrasi"]
+    G --> H["Koreksi keseimbangan<br/>K:Ca:Mg, NH4:NO3"]
+    H --> I["Cari unsur pembatas"]
     I --> J["Validasi organ<br/>akar, daun, batang,<br/>bunga, buah"]
 
     classDef sumber fill:#E8F5E9,stroke:#2E7D32,stroke-width:1.5px,color:#1B5E20;
@@ -4524,29 +4394,25 @@ Tetapi juga bertanya:
 
 > Apakah tanaman masih memberi respons terhadap tambahan konsentrasi itu?
 
-Dengan pendekatan ini, formula nutrisi tidak lagi sekadar mengejar angka ppm atau EC. Formula dibangun dari laju akumulasi tanaman, dikoreksi oleh serapan air, dibatasi oleh titik jenuh, disesuaikan dengan antagonisme, lalu divalidasi melalui respons organ.
+Dengan pendekatan ini, formula nutrisi tidak lagi sekadar mengejar ppm atau EC. Formula dibangun dari kebutuhan harian tanaman, dikoreksi oleh serapan air, dibatasi oleh titik jenuh, disesuaikan dengan keseimbangan antarhara, lalu divalidasi melalui organ tanaman.
 
-Kesimpulan akhir artikel:
+Kesimpulan akhir:
 
 $$
 \boxed{
 \begin{aligned}
-formula\ hara\ yang\ baik &= cukup\ untuk\ kebutuhan\ tanaman
-+
-tidak\ melewati\ batas\ jenuh
-+
-tidak\ menciptakan\ unsur\ pembatas
-+
-tervalidasi\ pada\ organ
+\text{Formula hara yang baik}
+&= \text{cukup untuk kebutuhan tanaman} \\
+&+ \text{tidak melewati batas jenuh} \\
+&+ \text{tidak menciptakan unsur pembatas} \\
+&+ \text{tervalidasi pada organ}
 \end{aligned}
 }
 $$
 
-Atau secara praktis:
+Atau dalam bahasa paling praktis:
 
-> Nutrisi yang presisi bukan nutrisi yang paling pekat, tetapi nutrisi yang paling sesuai dengan laju serapan, fase organ, dan batas respons tanaman.
-
-[**Kembali ke Atas**](#model-formula-hara-cabai-berbasis-laju-serapan-dan-batas-jenuh-respons-per-fase-organ)
+> Nutrisi yang presisi bukan nutrisi yang paling pekat, tetapi nutrisi yang paling sesuai dengan fase tanaman, kemampuan akar, dan respons organ.
 
 ---
 
