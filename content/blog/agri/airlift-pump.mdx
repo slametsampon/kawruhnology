@@ -400,6 +400,70 @@ Dalam merancang **Air Lift Pump** yang efisien, perhitungan teknis sangat pentin
 
 Beberapa rumus fisika dasar digunakan untuk menghitung parameter yang diperlukan dalam desain **Air Lift Pump**. Ini mencakup aliran air, tekanan hidrostatik, dan rasio udara-air.
 
+### Catatan penting: submergence ratio
+
+Kinerja airlift-pump sangat dipengaruhi oleh rasio antara panjang pipa yang terendam dan total tinggi angkat. Rasio ini sering disebut **submergence ratio**.
+
+$$
+SR =
+\frac{\text{panjang pipa terendam}}
+{\text{panjang pipa terendam} + \text{tinggi angkat air}}
+$$
+
+Contoh jika pipa terendam 45 cm dan tinggi angkat 20 cm:
+
+$$
+SR =
+\frac{45}{45 + 20}
+$$
+
+$$
+SR =
+\frac{45}{65}
+$$
+
+$$
+SR = 0{,}69 = 69%
+$$
+
+Contoh jika pipa terendam 35 cm dan tinggi angkat 30 cm:
+
+$$
+SR =
+\frac{35}{35 + 30}
+$$
+
+$$
+SR =
+\frac{35}{65}
+$$
+
+$$
+SR = 0{,}54 = 54%
+$$
+
+Artinya, pada kolam dangkal 50 cm, airlift masih bisa digunakan, tetapi harus dibuat **serendah mungkin**. Semakin tinggi outlet, semakin rendah efisiensi aliran.
+
+Prinsip praktis:
+
+```text
+pipa terendam makin panjang
++ tinggi angkat makin rendah
+= airlift makin efektif
+```
+
+Sebaliknya:
+
+```text
+pipa terendam pendek
++ outlet terlalu tinggi
+= debit airlift turun tajam
+```
+
+Karena itu, untuk kolam air dangkal 50 cm, desain airlift harus memakai prinsip:
+
+> **maksimalkan pipa terendam, minimalkan tinggi angkat.**
+
 ---
 
 ##### **5.1.1. Aliran Air: $ Q = A \cdot v $**
@@ -828,3 +892,739 @@ Secara keseluruhan, **Air Lift Pump** adalah solusi yang layak dan efektif dalam
   bantuan alat penulisan. Pembaca disarankan untuk melakukan verifikasi lanjutan
   dan penyesuaian sesuai dengan kondisi serta kebutuhan masing-masing sistem.
 </small>
+Berikut koreksi artikel berdasarkan review Airlift-Pump. Format saya buat sebagai **patch siap copas**.
+
+---
+
+# Koreksi 1 — Bab 5.1 Prinsip desain
+
+## Lokasi koreksi
+
+Letakkan di akhir **Bab 5.1 Prinsip desain**, setelah kalimat:
+
+> Airlift harus dibuat **rendah-head**.
+
+## Materi koreksi siap copas
+
+Tambahkan:
+
+---
+
+# Koreksi 2 — Bab 5.2 Spesifikasi awal
+
+## Lokasi koreksi
+
+Ganti tabel pada **Bab 5.2 Spesifikasi awal** dengan versi berikut.
+
+## Materi koreksi siap copas
+
+### 5.2 Spesifikasi awal
+
+Spesifikasi awal yang disarankan:
+
+| Komponen                            |               Rekomendasi |
+| ----------------------------------- | ------------------------: |
+| Pipa riser                          |              1/2–3/4 inci |
+| Pipa riser untuk debit lebih tinggi |                3/4–1 inci |
+| Kedalaman pipa terendam             |                  35–45 cm |
+| Tinggi angkat air ideal             |                 <10–20 cm |
+| Tinggi angkat maksimum uji          |                  20–30 cm |
+| Outlet                              | langsung ke talang rendah |
+| Sumber udara                        |      aerator/blower kecil |
+| Return air                          |            jatuh ke kolam |
+| Diffuser/injektor udara             |     di bagian bawah riser |
+| Check valve                         |         pada selang udara |
+| Kran kontrol udara                  |          sebelum masuk AP |
+| Saringan kasar intake               |      pada titik masuk air |
+| Sambungan bongkar/union             |   untuk pembersihan riser |
+
+Catatan penting:
+
+> **Angka debit airlift tidak boleh dianggap pasti. Debit aktual harus diuji karena sangat dipengaruhi oleh tinggi angkat, kedalaman pipa terendam, diameter riser, volume udara, diffuser, dan hambatan pipa.**
+
+---
+
+# Koreksi 3 — Bab 5.2 setelah pembahasan pipa riser
+
+## Lokasi koreksi
+
+Letakkan setelah paragraf tentang **Pipa riser** di Bab 5.2.
+
+## Materi koreksi siap copas
+
+### Pemilihan diameter pipa riser
+
+Diameter riser menentukan kapasitas air yang bisa terangkat. Untuk kolam air dangkal 50 cm, pipa terlalu kecil akan membatasi debit, sedangkan pipa terlalu besar membutuhkan suplai udara lebih besar.
+
+Panduan praktis:
+
+|  Target debit | Diameter riser yang lebih rasional |
+| ------------: | ---------------------------------- |
+|  50–150 L/jam | 1/2 inci                           |
+| 100–250 L/jam | 3/4 inci                           |
+| 250–400 L/jam | 3/4–1 inci                         |
+
+Untuk uji awal, pipa **3/4 inci** sering menjadi pilihan lebih aman karena masih mudah dibuat, tetapi memberi ruang aliran lebih baik dibanding 1/2 inci.
+
+Catatan:
+
+> **Pipa 1/2 inci cocok untuk uji kecil. Untuk target debit lebih tinggi, 3/4 inci lebih rasional.**
+
+---
+
+# Koreksi 4 — Tambahan subbab baru setelah Bab 5.2
+
+## Lokasi koreksi
+
+Tambahkan subbab baru setelah **Bab 5.2 Spesifikasi awal**.
+
+## Materi koreksi siap copas
+
+## 5.2.1 Komponen tambahan yang disarankan
+
+Agar airlift-pump lebih aman dan mudah dirawat, ada beberapa komponen tambahan yang sebaiknya dipasang.
+
+| Komponen                  | Fungsi                                                     |
+| ------------------------- | ---------------------------------------------------------- |
+| Diffuser/injektor udara   | memecah udara menjadi gelembung dan memasukkannya ke riser |
+| Check valve               | mencegah air balik ke aerator saat listrik mati            |
+| Kran kontrol udara        | mengatur besar kecilnya aliran udara                       |
+| Saringan kasar intake     | mencegah ikan kecil/kotoran besar masuk riser              |
+| Sambungan union/clean-out | memudahkan pipa dibongkar dan dibersihkan                  |
+
+### Diffuser atau injektor udara
+
+Udara sebaiknya dimasukkan di bagian bawah riser melalui diffuser, batu aerasi, lubang injeksi, atau injektor sederhana. Fungsinya adalah membentuk gelembung udara di dalam pipa riser.
+
+Gelembung udara yang naik akan menurunkan massa jenis campuran air-udara di dalam pipa. Campuran yang lebih ringan ini terdorong naik sehingga air ikut terangkat. Prinsip ini adalah dasar kerja airlift-pump: udara diinjeksikan ke pipa vertikal, membentuk gelembung, menurunkan densitas campuran, lalu mendorong air naik.
+
+### Check valve
+
+Check valve atau katup satu arah dipasang pada selang udara antara aerator dan airlift-pump.
+
+Fungsinya:
+
+- mencegah air balik ke aerator,
+- melindungi aerator saat listrik mati,
+- mengurangi risiko kerusakan aerator.
+
+Tanpa check valve, air dari kolam dapat masuk ke selang udara dan merusak aerator.
+
+### Kran kontrol udara
+
+Kran kontrol udara berguna untuk mengatur besarnya udara yang masuk ke airlift-pump.
+
+Jika udara terlalu kecil:
+
+- air tidak terangkat optimal,
+- debit rendah,
+- aliran ke talang melemah.
+
+Jika udara terlalu besar:
+
+- aliran menjadi terlalu turbulen,
+- gelembung terlalu kasar,
+- efisiensi bisa turun,
+- air bisa menyembur tidak stabil.
+
+Prinsipnya:
+
+> **udara cukup besar untuk mengangkat air, tetapi tidak berlebihan sampai aliran menjadi kasar.**
+
+### Saringan kasar intake
+
+Intake sebaiknya diberi saringan kasar. Tujuannya bukan menyaring lumpur halus, tetapi mencegah benda besar masuk ke pipa.
+
+Yang perlu dicegah:
+
+- ikan kecil masuk,
+- daun masuk,
+- akar masuk,
+- kotoran besar menyumbat pipa.
+
+Saringan jangan terlalu halus karena mudah mampet. Gunakan lubang agak besar atau mesh kasar agar air tetap mudah masuk.
+
+### Sambungan union atau clean-out
+
+Pipa airlift akan berlendir karena biofilm. Karena itu, desain sebaiknya mudah dibongkar.
+
+Gunakan:
+
+- sambungan union,
+- socket mudah lepas,
+- elbow yang bisa dibuka,
+- pipa yang mudah dicabut.
+
+Tujuannya agar pipa riser dapat dibersihkan berkala tanpa membongkar seluruh sistem.
+
+---
+
+# Koreksi 5 — Bab 5.3 Posisi intake
+
+## Lokasi koreksi
+
+Ganti atau tambahkan di akhir **Bab 5.3 Posisi intake**.
+
+## Materi koreksi siap copas
+
+Tambahkan:
+
+### Intake perlu saringan kasar
+
+Walaupun intake diletakkan 5–10 cm di atas dasar kolam, tetap ada risiko benda besar masuk ke pipa. Karena itu, intake sebaiknya diberi **saringan kasar**.
+
+Fungsi saringan kasar:
+
+- mencegah ikan kecil masuk ke pipa,
+- mencegah daun atau akar masuk,
+- mengurangi risiko pipa tersumbat,
+- menjaga aliran airlift tetap stabil.
+
+Namun saringan tidak boleh terlalu halus. Jika terlalu halus, saringan cepat tertutup lendir dan kotoran.
+
+Prinsip praktis:
+
+```text
+cukup kasar untuk tidak mudah mampet
+cukup rapat untuk menahan benda besar
+```
+
+Catatan penting:
+
+> **Saringan intake bukan pengganti sifon endapan. Feses halus dan lumpur tetap harus dikendalikan dengan pakan disiplin dan sifon manual.**
+
+---
+
+# Koreksi 6 — Bab 5.4 Target debit
+
+## Lokasi koreksi
+
+Ganti bagian **Bab 5.4 Target debit** dengan versi berikut.
+
+## Materi koreksi siap copas
+
+## 5.4 Target debit
+
+Debit adalah jumlah air yang dialirkan per satuan waktu. Untuk sistem ini, debit tidak perlu terlalu besar. Targetnya bukan membuat arus kuat, tetapi membuat aliran nutrien yang stabil melewati akar tanaman.
+
+Untuk kolam 251 liter, target awal:
+
+$$
+Q = 0{,}5 - 1 \times \text{volume kolam/jam}
+$$
+
+Maka:
+
+$$
+Q = 0{,}5 \times 251
+$$
+
+$$
+Q = 125{,}5 \text{ liter/jam}
+$$
+
+Dan:
+
+$$
+Q = 1 \times 251
+$$
+
+$$
+Q = 251 \text{ liter/jam}
+$$
+
+Jadi target awal yang diuji:
+
+> **100–250 liter/jam**
+
+Setelah sistem stabil, debit dapat diuji naik menjadi:
+
+> **250–400 liter/jam**
+
+Namun angka ini bukan jaminan. Pada airlift-pump, debit aktual dipengaruhi oleh:
+
+- diameter pipa riser,
+- kedalaman pipa terendam,
+- tinggi angkat air,
+- volume udara dari aerator,
+- ukuran gelembung/diffuser,
+- hambatan elbow,
+- panjang outlet,
+- kebersihan pipa,
+- posisi intake.
+
+Karena kolam hanya memiliki tinggi air 50 cm, target 250–400 L/jam sebaiknya dianggap sebagai **target lanjut yang harus diuji**, bukan angka pasti.
+
+Target praktis:
+
+| Fase sistem                   |                        Debit target |
+| ----------------------------- | ----------------------------------: |
+| Uji awal                      |                       100–150 L/jam |
+| Sistem mulai stabil           |                       150–250 L/jam |
+| Lanjut/stabil                 |                       250–400 L/jam |
+| Jika akar/talang kotor        |   kurangi debit dan bersihkan jalur |
+| Jika talang kekurangan aliran | naikkan debit atau perbaiki airlift |
+
+Prinsipnya:
+
+> **Debit sedang tetapi stabil lebih baik daripada debit besar tetapi tidak konsisten.**
+
+---
+
+# Koreksi 7 — Tambahan subbab baru setelah Bab 5.4
+
+## Lokasi koreksi
+
+Tambahkan setelah **Bab 5.4 Target debit**.
+
+## Materi koreksi siap copas
+
+## 5.5 Tekanan udara minimum
+
+Agar udara bisa masuk ke bagian bawah airlift-pump, tekanan aerator harus mampu mengatasi tekanan hidrostatik air.
+
+Rumus tekanan hidrostatik:
+
+$$
+P = \rho \times g \times h
+$$
+
+Keterangan:
+
+$$
+P = \text{tekanan hidrostatik}
+$$
+
+$$
+\rho = \text{densitas air} \approx 1000 \text{ kg/m}^3
+$$
+
+$$
+g = 9{,}81 \text{ m/s}^2
+$$
+
+$$
+h = \text{kedalaman injeksi udara}
+$$
+
+Jika udara masuk pada kedalaman 45 cm:
+
+$$
+P = 1000 \times 9{,}81 \times 0{,}45
+$$
+
+$$
+P = 4414{,}5 \text{ Pa}
+$$
+
+Konversi ke bar:
+
+$$
+1 \text{ bar} = 100.000 \text{ Pa}
+$$
+
+$$
+P =
+\frac{4414{,}5}{100.000}
+$$
+
+$$
+P \approx 0{,}044 \text{ bar}
+$$
+
+Secara teori, aerator harus mampu mengatasi tekanan sekitar **0,044 bar** pada kedalaman 45 cm. Namun dalam praktik, dibutuhkan tekanan lebih tinggi karena ada hambatan dari:
+
+- selang udara,
+- diffuser,
+- sambungan,
+- batu aerasi,
+- tekanan balik air,
+- kehilangan tekanan di pipa.
+
+Maka rekomendasi praktis:
+
+> **Gunakan aerator/blower yang mampu bekerja stabil pada tekanan sekitar 0,06–0,10 bar untuk sistem kecil ini.**
+
+Catatan:
+
+> **Aerator yang hanya kuat menghasilkan gelembung di air dangkal belum tentu cukup kuat untuk airlift jika injeksi udara berada 35–45 cm di bawah permukaan.**
+
+---
+
+# Koreksi 8 — Tambahan subbab baru setelah Bab 5.5
+
+## Lokasi koreksi
+
+Tambahkan setelah subbab tekanan udara minimum.
+
+## Materi koreksi siap copas
+
+## 5.6 Risiko operasional airlift-pump
+
+Airlift-pump sederhana, tetapi tetap memiliki risiko operasional yang perlu diantisipasi.
+
+### 1. Aerator mati
+
+Jika aerator mati, airlift berhenti. Artinya:
+
+- air tidak naik,
+- aliran ke talang berhenti,
+- oksigen tambahan hilang,
+- akar tanaman bisa kekurangan aliran,
+- sirkulasi kolam berkurang.
+
+Tindakan:
+
+- cek listrik,
+- cek aerator,
+- cek selang udara,
+- siapkan aerasi cadangan bila biomassa ikan sudah tinggi.
+
+### 2. Air balik ke aerator
+
+Jika tidak ada check valve, air dapat mengalir balik melalui selang udara saat listrik mati.
+
+Tindakan:
+
+```text
+pasang check valve pada selang udara
+```
+
+### 3. Diffuser tersumbat
+
+Diffuser atau batu aerasi dapat tersumbat oleh biofilm, lumpur halus, atau mineral.
+
+Tanda:
+
+- gelembung mengecil,
+- gelembung tidak merata,
+- debit air turun,
+- airlift melemah.
+
+Tindakan:
+
+- bersihkan diffuser,
+- ganti batu aerasi bila perlu,
+- gunakan diffuser yang mudah dilepas.
+
+### 4. Pipa riser berlendir
+
+Biofilm akan menempel di dinding pipa. Jika terlalu tebal, debit bisa turun.
+
+Tindakan:
+
+- bersihkan pipa berkala,
+- gunakan sambungan yang mudah dibongkar,
+- jangan membuat pipa permanen yang sulit dibuka.
+
+### 5. Udara terlalu besar
+
+Udara yang terlalu besar tidak selalu lebih baik. Jika udara berlebihan:
+
+- aliran terlalu kasar,
+- air menyembur,
+- energi terbuang,
+- debit tidak efisien,
+- ikan bisa terganggu.
+
+Tindakan:
+
+- gunakan kran kontrol udara,
+- atur sampai aliran stabil,
+- cari titik udara yang menghasilkan debit paling stabil.
+
+Kesimpulan:
+
+> **Airlift-pump bukan sekadar pipa dan aerator. Agar stabil, perlu kontrol udara, check valve, diffuser yang mudah dibersihkan, intake yang tidak mudah mampet, dan pipa yang mudah dibongkar.**
+
+---
+
+# Koreksi 9 — Bab 6.2 Spesifikasi awal talang
+
+## Lokasi koreksi
+
+Tambahkan catatan di akhir **Bab 6.2 Spesifikasi awal**.
+
+## Materi koreksi siap copas
+
+Tambahkan:
+
+### Catatan hubungan talang dengan kemampuan airlift
+
+Talang harus disesuaikan dengan kemampuan airlift-pump. Karena airlift pada kolam 50 cm bekerja pada head rendah, talang sebaiknya:
+
+- dekat dengan kolam,
+- tidak terlalu tinggi,
+- jalurnya pendek,
+- outlet AP langsung masuk ke talang,
+- return air mudah kembali ke kolam.
+
+Jika talang terlalu tinggi atau terlalu jauh, debit airlift akan turun. Jika debit turun, akar tanaman bisa kekurangan aliran, talang mudah stagnan, dan biofilm bisa menebal.
+
+Prinsipnya:
+
+```text
+airlift kecil
+= talang rendah dan dekat
+```
+
+---
+
+# Koreksi 10 — Bab 12.1 Harian
+
+## Lokasi koreksi
+
+Tambahkan pada checklist **Bab 12.1 Harian**.
+
+## Materi koreksi siap copas
+
+Tambahkan ke daftar checklist harian:
+
+- cek gelembung udara di dalam riser,
+- cek check valve tidak bocor,
+- cek selang udara tidak terlipat,
+- cek outlet AP tidak terlalu tinggi/tersumbat,
+- cek suara aerator normal.
+
+Tambahkan paragraf:
+
+Dalam sistem airlift-pump, aliran air sangat bergantung pada udara. Karena itu, pemeriksaan harian tidak cukup hanya melihat air keluar dari pipa. Operator juga harus melihat apakah gelembung udara di dalam riser masih kuat dan merata.
+
+Tanda airlift sehat:
+
+- gelembung naik stabil,
+- air keluar dari outlet konsisten,
+- tidak ada suara aerator melemah,
+- selang udara tidak terlipat,
+- pipa tidak tersumbat,
+- outlet tidak terlalu tinggi.
+
+Tanda airlift bermasalah:
+
+- gelembung kecil atau hilang,
+- air keluar putus-putus,
+- debit menurun,
+- pipa berlendir,
+- batu aerasi tersumbat,
+- aerator berbunyi berat.
+
+---
+
+# Koreksi 11 — Bab 13.3.6 Jika airlift lemah
+
+## Lokasi koreksi
+
+Ganti bagian **13.3.6 Jika airlift lemah** dengan versi berikut.
+
+## Materi koreksi siap copas
+
+### 13.3.6 Jika airlift lemah
+
+Airlift lemah berarti aliran air dan suplai oksigen tambahan ikut menurun. Ini harus segera dikoreksi.
+
+Kemungkinan penyebab:
+
+- aerator lemah,
+- selang udara bocor,
+- selang udara terlipat,
+- check valve tersumbat,
+- batu aerasi/diffuser tersumbat,
+- pipa riser berlendir,
+- intake tersumbat,
+- outlet terlalu tinggi,
+- diameter pipa terlalu kecil untuk target debit,
+- udara terlalu kecil atau terlalu besar.
+
+Tindakan:
+
+1. cek aerator/blower,
+2. cek listrik,
+3. cek selang udara,
+4. cek check valve,
+5. cek kran kontrol udara,
+6. bersihkan diffuser/batu aerasi,
+7. bersihkan pipa riser,
+8. cek saringan intake,
+9. turunkan outlet jika terlalu tinggi,
+10. ukur debit aktual dengan ember dan stopwatch.
+
+Cara mengukur debit sederhana:
+
+$$
+Q =
+\frac{\text{volume air tertampung}}
+{\text{waktu}}
+$$
+
+Contoh:
+
+Jika dalam 1 menit terkumpul 3 liter air:
+
+$$
+Q =
+3 \text{ liter/menit}
+$$
+
+Konversi ke liter per jam:
+
+$$
+Q =
+3 \times 60
+$$
+
+$$
+Q =
+180 \text{ L/jam}
+$$
+
+Dengan cara ini, debit airlift tidak hanya diperkirakan, tetapi benar-benar diukur.
+
+---
+
+# Koreksi 12 — Bab 14.3 Data yang dicatat
+
+## Lokasi koreksi
+
+Tambahkan parameter di daftar **Bab 14.3 Data yang dicatat**.
+
+## Materi koreksi siap copas
+
+Tambahkan data berikut:
+
+- debit aktual airlift,
+- tinggi angkat outlet,
+- kedalaman pipa terendam,
+- kondisi diffuser,
+- kondisi check valve,
+- kondisi saringan intake,
+- waktu terakhir pipa dibersihkan.
+
+Tambahkan tabel:
+
+| Parameter AP              | Data yang dicatat       |
+| ------------------------- | ----------------------- |
+| Debit aktual              | L/jam                   |
+| Tinggi angkat outlet      | cm                      |
+| Pipa terendam             | cm                      |
+| Diameter riser            | inci                    |
+| Kondisi gelembung         | kuat/lemah/tidak merata |
+| Kondisi diffuser          | bersih/tersumbat        |
+| Kondisi check valve       | normal/bocor            |
+| Kondisi intake            | bersih/tersumbat        |
+| Tanggal pembersihan riser | tanggal                 |
+
+Tambahkan rumus debit:
+
+$$
+Q =
+\frac{V}{t}
+$$
+
+Keterangan:
+
+$$
+Q = \text{debit}
+$$
+
+$$
+V = \text{volume air tertampung}
+$$
+
+$$
+t = \text{waktu pengukuran}
+$$
+
+Jika memakai satuan liter per menit:
+
+$$
+Q_{\text{L/jam}} =
+Q_{\text{L/menit}} \times 60
+$$
+
+---
+
+# Koreksi 13 — Bab 15.2 Desain final yang dikunci
+
+## Lokasi koreksi
+
+Ganti blok desain final pada **Bab 15.2** dengan versi berikut.
+
+## Materi koreksi siap copas
+
+## 15.2 Desain final yang dikunci
+
+Desain final:
+
+```text
+Kolam lele 251 L
++ airlift-pump rendah-head
++ pipa riser 1/2–3/4 inci
++ pipa terendam 35–45 cm
++ outlet ideal <10–20 cm di atas permukaan air
++ outlet maksimum uji 20–30 cm
++ diffuser/injektor udara di bawah riser
++ check valve pada selang udara
++ kran kontrol udara
++ saringan kasar intake
++ intake 5–10 cm di atas dasar
++ talang akar lebar dangkal
++ kangkung/pakcoy
++ return air jatuh ke kolam
++ sifon endapan manual
++ pakan disiplin
+```
+
+Catatan desain:
+
+> **Airlift-pump harus diperlakukan sebagai alat rendah-head. Semakin rendah outlet dan semakin panjang pipa terendam, semakin besar peluang aliran stabil.**
+
+Catatan debit:
+
+> **Target debit awal 100–250 L/jam realistis untuk uji awal. Target 250–400 L/jam hanya boleh dianggap target lanjut dan harus dibuktikan dengan pengukuran debit aktual.**
+
+---
+
+# Koreksi 14 — Bab 15.4 Prinsip akhir
+
+## Lokasi koreksi
+
+Tambahkan di akhir **Bab 15.4 Prinsip akhir**.
+
+## Materi koreksi siap copas
+
+Tambahkan:
+
+### Prinsip akhir khusus airlift-pump
+
+Airlift-pump adalah alat sederhana, tetapi performanya sangat bergantung pada desain. Empat faktor paling menentukan adalah:
+
+1. **pipa terendam cukup panjang,**
+2. **tinggi angkat rendah,**
+3. **udara masuk stabil,**
+4. **pipa dan diffuser bersih.**
+
+Rumus praktisnya:
+
+```text
+submergence tinggi
++ head rendah
++ udara stabil
++ pipa bersih
+= debit airlift stabil
+```
+
+Sebaliknya:
+
+```text
+submergence rendah
++ head tinggi
++ diffuser tersumbat
++ pipa berlendir
+= debit airlift melemah
+```
+
+Maka desain airlift tidak boleh hanya dilihat dari bentuk pipa. Desain harus diuji dengan debit aktual, kondisi gelembung, kestabilan aliran, dan kemudahan pembersihan.
+
+Rumusan akhir:
+
+> **Airlift-pump bukan pompa kuat untuk mengangkat air tinggi. Airlift-pump adalah alat sirkulasi rendah-head yang efektif bila pipa terendam dalam, outlet rendah, udara stabil, dan jalur air mudah dibersihkan.**
