@@ -26,6 +26,8 @@ summary: HortiLink dirancang sebagai sistem smart agriculture offline-first berb
   - [Bagian 1 — Orientasi Sistem HortiLink](#bagian-1--orientasi-sistem-hortilink)
     - [1.1 Definisi sistem HortiLink](#11-definisi-sistem-hortilink)
     - [1.2 Prinsip desain HortiLink](#12-prinsip-desain-hortilink)
+    - [1.2A Opsi Topologi Komunikasi Multi-Node](#12a-opsi-topologi-komunikasi-multi-node)
+    - [1.2B Channel Komunikasi Operasional](#12b-channel-komunikasi-operasional)
     - [1.3 Definisi single-project HortiLink](#13-definisi-single-project-hortilink)
     - [1.4 Functional scope awal yang perlu dikunci](#14-functional-scope-awal-yang-perlu-dikunci)
   - [Bagian 2 — Platform Nyata dan Batasan Simulator](#bagian-2--platform-nyata-dan-batasan-simulator)
@@ -51,12 +53,14 @@ summary: HortiLink dirancang sebagai sistem smart agriculture offline-first berb
     - [4.1 Tujuan sistem yang diterjemahkan menjadi fitur](#41-tujuan-sistem-yang-diterjemahkan-menjadi-fitur)
     - [4.2 Fitur Node ESP32](#42-fitur-node-esp32)
     - [4.3 Fitur Gateway Raspberry Pi](#43-fitur-gateway-raspberry-pi)
+    - [4.3A Brokered Node-to-Node Interaction](#43a-brokered-node-to-node-interaction)
     - [4.4 Fitur Offline-first dan Reliability](#44-fitur-offline-first-dan-reliability)
     - [4.5 Fitur Cloud / Remote Layer](#45-fitur-cloud--remote-layer)
     - [4.6 Feature list yang paling cocok untuk fase belajar](#46-feature-list-yang-paling-cocok-untuk-fase-belajar)
   - [Bagian 5 — Mode Operasi Resmi HortiLink](#bagian-5--mode-operasi-resmi-hortilink)
     - [5.1 Definisi mode operasi HortiLink](#51-definisi-mode-operasi-hortilink)
     - [5.2 Kenapa mode operasi ini penting](#52-kenapa-mode-operasi-ini-penting)
+    - [5.3 Prioritas Keputusan Runtime](#53-prioritas-keputusan-runtime)
   - [Bagian 6 — Mapping ke Arsitektur Firmware](#bagian-6--mapping-ke-arsitektur-firmware)
     - [6.1 `sys`](#61-sys)
     - [6.2 `drv`](#62-drv)
@@ -66,6 +70,7 @@ summary: HortiLink dirancang sebagai sistem smart agriculture offline-first berb
   - [Bagian 7 — Urutan Implementasi Belajar yang Natural](#bagian-7--urutan-implementasi-belajar-yang-natural)
     - [7.1 Urutan implementasi terbaik](#71-urutan-implementasi-terbaik)
     - [7.2 Kesimpulan analisis](#72-kesimpulan-analisis)
+    - [7.3 Batas Nyaman Jumlah Node per Topologi](#73-batas-nyaman-jumlah-node-per-topologi)
   - [Bagian 8 — Definisi Formal HortiLink v0.1](#bagian-8--definisi-formal-hortilink-v01)
     - [8.1 HortiLink v0.1 — System Definition](#81-hortilink-v01--system-definition)
     - [8.2 Layer Reference](#82-layer-reference)
@@ -77,6 +82,7 @@ summary: HortiLink dirancang sebagai sistem smart agriculture offline-first berb
     - [8.4 Operation Modes](#84-operation-modes)
     - [8.5 MVP Scope Recommendation](#85-mvp-scope-recommendation)
     - [8.6 Learning-Oriented Build Order](#86-learning-oriented-build-order)
+    - [8.6A Roadmap Pertumbuhan Arsitektur](#86a-roadmap-pertumbuhan-arsitektur)
     - [8.7 Feature-to-Layer Reading Example](#87-feature-to-layer-reading-example)
 
 ---
@@ -142,6 +148,103 @@ Sistem harus bisa dimulai dari 1 node sederhana, lalu tumbuh ke:
 - dashboard lokal
 - sinkronisasi cloud
 
+### 1.2A Opsi Topologi Komunikasi Multi-Node
+
+Saat HortiLink berkembang dari satu node menjadi banyak node, bentuk komunikasi antar node menjadi keputusan arsitektur yang sangat penting. Secara umum, ada tiga opsi yang bisa dipakai:
+
+- **Full star via Raspberry Pi**
+- **Hybrid star + limited peer**
+- **Full peer-to-peer**
+
+Untuk HortiLink, ketiganya perlu dikenali sejak awal agar pembaca memahami kenapa Raspberry Pi kemudian diposisikan sebagai pusat koordinasi lokal.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "primaryColor": "#E8F5E9",
+    "primaryTextColor": "#1B4332",
+    "primaryBorderColor": "#2D6A4F",
+    "lineColor": "#64748B",
+    "fontSize": "14px"
+  }
+}}%%
+flowchart TB
+    subgraph STAR["A. Full Star"]
+      direction TB
+      S1[N1] --> SPI[Pi]
+      S2[N2] --> SPI
+      SPI --> S3[N3]
+    end
+
+    subgraph HYB["B. Hybrid"]
+      direction TB
+      H1[N1] --> HPI[Pi]
+      H2[N2] --> HPI
+      H2 <--> H3[N3]
+    end
+
+    subgraph PEER["C. Full Peer"]
+      direction TB
+      P1[N1] <--> P2[N2]
+      P2 <--> P3[N3]
+      P1 <--> P3
+    end
+
+    classDef star fill:#E8F5E9,stroke:#2D6A4F,color:#1B4332,stroke-width:2px;
+    classDef hybrid fill:#FFF7ED,stroke:#EA580C,color:#7C2D12,stroke-width:2px;
+    classDef peer fill:#F3E8FF,stroke:#7C3AED,color:#3B0764,stroke-width:2px;
+    classDef pi fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+
+    class S1,S2,S3 star;
+    class H1,H2,H3 hybrid;
+    class P1,P2,P3 peer;
+    class SPI,HPI pi;
+```
+
+---
+
+### 1.2B Channel Komunikasi Operasional
+
+Dalam HortiLink, tidak semua jalur komunikasi mempunyai peran yang sama. Smartphone, node ESP32, dan Raspberry Pi harus dibaca sebagai tiga channel yang berbeda fungsinya:
+
+- **Smartphone → Node** = operasi lokal oleh manusia
+- **Node → Raspberry Pi** = komunikasi machine-to-machine
+- **Node ↔ Node** = secara logika mungkin terjadi, tetapi transport utamanya tetap dibrokerkan melalui Raspberry Pi
+
+Dengan pemisahan ini, sistem menjadi lebih mudah dipahami dan lebih sehat secara SoC.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#475569"
+  }
+}}%%
+flowchart TB
+    HP[Smartphone<br/>HTTP]
+    N1[ESP32 Node]
+    PI[Raspberry Pi<br/>Broker]
+    N2[ESP32 Node]
+    N3[ESP32 Node]
+
+    HP <--> N1
+    N1 <--> PI
+    N2 <--> PI
+    N3 <--> PI
+
+    classDef hp fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+    classDef node fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef pi fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:3px;
+
+    class HP hp;
+    class N1,N2,N3 node;
+    class PI pi;
+```
+
 ### 1.3 Definisi single-project HortiLink
 
 Agar tetap sesuai keputusan Anda, HortiLink sebaiknya dipahami sebagai:
@@ -174,6 +277,8 @@ Kalau definisi awal HortiLink ingin dibuat formal sejak awal, maka functional sc
 - optional cloud synchronization
 
 Ruang lingkup ini sudah cukup formal untuk dijadikan dasar roadmap teknis, namun tetap tidak membuat sistem menjadi terlalu besar di tahap awal.
+
+[**Kembali ke Atas**](#readme-hortilink--aliran-belajar)
 
 ---
 
@@ -362,6 +467,8 @@ Untuk percakapan-percakapan berikutnya, spesifikasi acuan HortiLink sebaiknya di
 - Analog-capable pins in real hardware: **GPIO0–GPIO5**
 - Simulator-safe feature set: **GPIO digital + UART + timing/state machine**
 
+[**Kembali ke Atas**](#readme-hortilink--aliran-belajar)
+
 ---
 
 ## Bagian 3 — MVP dan Cara Berpikir Engineering
@@ -521,6 +628,8 @@ Definisi ini baik karena menekankan tiga identitas utama HortiLink:
 Untuk HortiLink, MVP berarti:
 
 > versi paling kecil yang sudah membuktikan bahwa ESP32 node, Raspberry Pi gateway, dan prinsip offline-first benar-benar bekerja
+
+[**Kembali ke Atas**](#readme-hortilink--aliran-belajar)
 
 ---
 
@@ -684,6 +793,42 @@ Di level lebih lanjut, gateway bisa menjalankan aturan lintas-node:
 
 Ini menunjukkan bahwa saat sistem bertumbuh, sebagian intelligence dapat dinaikkan ke level gateway tanpa menghilangkan local autonomy di level node.
 
+---
+
+### 4.3A Brokered Node-to-Node Interaction
+
+Saat node mulai bertambah, kebutuhan interaksi antar node akan muncul. Tetapi interaksi itu tidak sebaiknya diterjemahkan sebagai semua node saling terhubung langsung. Untuk HortiLink, pola yang lebih sehat adalah:
+
+> **logical node-to-node interaction, physical brokered interaction**
+
+Artinya, secara fungsi Node A bisa mempengaruhi Node B, tetapi transport utamanya dilakukan melalui Raspberry Pi sebagai broker/gateway lokal.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#334155"
+  }
+}}%%
+flowchart TB
+    A[Soil Node<br/>publish DRY]
+    PI[Raspberry Pi<br/>Broker]
+    B[Pump Node<br/>evaluate request]
+
+    A --> PI
+    PI --> B
+
+    classDef src fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef hub fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:3px;
+    classDef dst fill:#FCE7F3,stroke:#DB2777,color:#831843,stroke-width:2px;
+
+    class A src;
+    class PI hub;
+    class B dst;
+```
+
 ### 4.4 Fitur Offline-first dan Reliability
 
 Kelompok ketiga adalah fitur yang menjadi pembeda utama HortiLink, yaitu fitur offline-first dan reliability. Bagian ini tidak boleh dipandang sebagai pelengkap, karena justru inilah identitas sistem yang sejak awal dikunci.
@@ -789,6 +934,8 @@ Walaupun feature list HortiLink cukup lengkap, strategi belajar tidak boleh menc
 
 Kalau inti ini sudah hidup, maka HortiLink sudah tidak abstrak lagi. Sistem sudah punya identitas, punya perilaku, dan bisa divalidasi.
 
+[**Kembali ke Atas**](#readme-hortilink--aliran-belajar)
+
 ---
 
 ## Bagian 5 — Mode Operasi Resmi HortiLink
@@ -832,6 +979,57 @@ Mode-mode ini sangat penting karena nanti:
 - firmware punya state machine yang jelas
 
 Dengan demikian, mode operasi bukan hanya label dokumentasi. Mode operasi adalah fondasi untuk visualisasi status, struktur state machine, dan disiplin perilaku firmware. Tanpa mode resmi, sistem akan cenderung sulit dibaca, sulit diuji, dan sulit diskalakan.
+
+---
+
+### 5.3 Prioritas Keputusan Runtime
+
+Saat sistem mulai menerima banyak sumber pengaruh — sensor, tombol lokal, smartphone, gateway, atau peer node — maka HortiLink harus punya aturan prioritas yang jelas. Tanpa urutan prioritas, sistem akan mudah bentrok dan sulit dipelihara.
+
+Urutan prioritas yang sehat adalah:
+
+1. **SAFE_FALLBACK**
+2. **MANUAL_OVERRIDE**
+3. **GATEWAY / COORDINATION**
+4. **PEER REQUEST**
+5. **AUTO RULE**
+6. **MONITORING**
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#64748B"
+  }
+}}%%
+flowchart TB
+    A[1. SAFE_FALLBACK]
+    B[2. MANUAL_OVERRIDE]
+    C[3. GATEWAY / COORDINATION]
+    D[4. PEER REQUEST]
+    E[5. AUTO RULE]
+    F[6. MONITORING]
+
+    A --> B --> C --> D --> E --> F
+
+    classDef c1 fill:#FEE2E2,stroke:#DC2626,color:#7F1D1D,stroke-width:2px;
+    classDef c2 fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+    classDef c3 fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef c4 fill:#EDE9FE,stroke:#7C3AED,color:#4C1D95,stroke-width:2px;
+    classDef c5 fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px;
+    classDef c6 fill:#F1F5F9,stroke:#64748B,color:#334155,stroke-width:2px;
+
+    class A c1;
+    class B c2;
+    class C c3;
+    class D c4;
+    class E c5;
+    class F c6;
+```
+
+[**Kembali ke Atas**](#readme-hortilink--aliran-belajar)
 
 ---
 
@@ -889,6 +1087,8 @@ Layer ini penting karena walaupun logic dan driver sudah ada, sistem tetap perlu
 
 Dokumen asli menegaskan bahwa mapping ini dibuat supaya feature list tidak berhenti di level ide. Setiap feature nantinya harus bisa dipetakan ke layer yang tepat. Dengan begitu, pembaca tidak hanya tahu “fitur apa yang dibuat”, tetapi juga tahu “fitur itu hidup di layer mana”. Ini sangat penting untuk menjaga OOP kecil, layering jelas, dan struktur project yang tetap bisa tumbuh tanpa berantakan.
 
+[**Kembali ke Atas**](#readme-hortilink--aliran-belajar)
+
 ---
 
 ## Bagian 7 — Urutan Implementasi Belajar yang Natural
@@ -924,6 +1124,37 @@ Analisis saya:
 - cloud harus diposisikan sebagai **lapisan tambahan**, bukan fondasi sistem
 
 Dengan urutan ini, proses belajar menjadi lebih sehat: engineer lebih dulu memahami node yang deterministik dan otonom, baru naik ke komunikasi, persistence, dan lapisan remote.
+
+---
+
+### 7.3 Batas Nyaman Jumlah Node per Topologi
+
+Agar pembaca tidak hanya melihat arsitektur secara teoritis, perlu diberikan gambaran kasar tentang skala node yang masih nyaman untuk tiap topologi. Angka berikut bukan batas keras, tetapi **rule-of-thumb engineering** untuk sistem lokal seperti HortiLink.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#475569"
+  }
+}}%%
+flowchart TB
+    P1[Full Peer<br/>Optimal: 2–6]
+    P2[Hybrid<br/>Optimal: 10–40]
+    P3[Full Star via Pi<br/>Optimal: 5–30]
+
+    classDef peer fill:#F3E8FF,stroke:#7C3AED,color:#3B0764,stroke-width:2px;
+    classDef hybrid fill:#FFF7ED,stroke:#EA580C,color:#7C2D12,stroke-width:2px;
+    classDef star fill:#ECFDF5,stroke:#16A34A,color:#14532D,stroke-width:3px;
+
+    class P1 peer;
+    class P2 hybrid;
+    class P3 star;
+```
+
+[**Kembali ke Atas**](#readme-hortilink--aliran-belajar)
 
 ---
 
@@ -1219,6 +1450,40 @@ Tujuan:
 
 - optional cloud extension
 
+---
+
+### 8.6A Roadmap Pertumbuhan Arsitektur
+
+Agar pertumbuhan HortiLink tetap mudah dipahami, pembaca juga perlu melihat bagaimana roadmap arsitektur berkembang dari akses lokal satu node menuju koordinasi multi-node yang lebih matang.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#475569"
+  }
+}}%%
+flowchart TB
+    L4A[Level 4A<br/>Local HTTP Access]
+    L5[Level 5<br/>Pi as Broker / Gateway]
+    L6[Level 6<br/>Brokered Node Coordination]
+    L6A[Level 6A<br/>Limited Peer if Needed]
+
+    L4A --> L5 --> L6 --> L6A
+
+    classDef step1 fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+    classDef step2 fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef step3 fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px;
+    classDef step4 fill:#F3E8FF,stroke:#7C3AED,color:#3B0764,stroke-width:2px;
+
+    class L4A step1;
+    class L5 step2;
+    class L6 step3;
+    class L6A step4;
+```
+
 ### 8.7 Feature-to-Layer Reading Example
 
 Agar nanti gampang saat desain firmware, cara bacanya seperti ini.
@@ -1240,6 +1505,8 @@ Agar nanti gampang saat desain firmware, cara bacanya seperti ini.
 **Urutan belajar akhirnya, dalam satu kalimat**
 
 **Platform dan batasan kerja dulu → istilah MVP dulu → definisi konseptual HortiLink → functional scope dan feature groups → core MVP dan mode operasi → mapping layer firmware → definisi formal dan feature catalog → MVP scope → build order implementasi.**
+
+[**Kembali ke Atas**](#readme-hortilink--aliran-belajar)
 
 ---
 

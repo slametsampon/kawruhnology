@@ -30,23 +30,29 @@ summary: Level 2 adalah kelanjutan langsung dari Level 1 dan berfokus pada inter
   - [3. Feature yang Dikerjakan](#3-feature-yang-dikerjakan)
   - [4. Platform](#4-platform)
   - [5. Konsep Level 2](#5-konsep-level-2)
+    - [5.1 Gambaran Node Level 2](#51-gambaran-node-level-2)
   - [6. Mode yang Dipakai](#6-mode-yang-dipakai)
     - [6.1 Pola status LED](#61-pola-status-led)
     - [6.2 Interaksi tombol](#62-interaksi-tombol)
+    - [6.3 Diagram Mode dan Transisi](#63-diagram-mode-dan-transisi)
+    - [6.4 Hubungan Tombol, Mode, dan Aktuator](#64-hubungan-tombol-mode-dan-aktuator)
   - [7. Struktur Layer](#7-struktur-layer)
     - [7.1 `sys`](#71-sys)
     - [7.2 `drv`](#72-drv)
     - [7.3 `svc`](#73-svc)
     - [7.4 `app`](#74-app)
+    - [7.5 Diagram Layering Level 2](#75-diagram-layering-level-2)
   - [8. Wiring untuk Simulator](#8-wiring-untuk-simulator)
     - [Status LED](#status-led)
     - [Manual button](#manual-button)
     - [Actuator output](#actuator-output)
+    - [8.1 Diagram Wiring Level 2](#81-diagram-wiring-level-2)
   - [9. Sketch Level 2](#9-sketch-level-2)
   - [10. Cara Kerja Firmware](#10-cara-kerja-firmware)
     - [10.1 Saat board menyala](#101-saat-board-menyala)
     - [10.2 Saat tombol ditekan](#102-saat-tombol-ditekan)
     - [10.3 Saat loop berjalan](#103-saat-loop-berjalan)
+    - [10.4 Diagram Alur Runtime](#104-diagram-alur-runtime)
   - [11. Yang Dipelajari dari Level 2](#11-yang-dipelajari-dari-level-2)
     - [11.1 Tambah 1 class input](#111-tambah-1-class-input)
     - [11.2 Tambah 1 class output](#112-tambah-1-class-output)
@@ -56,6 +62,7 @@ summary: Level 2 adalah kelanjutan langsung dari Level 1 dan berfokus pada inter
     - [12.1 Serial Monitor](#121-serial-monitor)
     - [12.2 Status LED GPIO8](#122-status-led-gpio8)
     - [12.3 Actuator LED GPIO7](#123-actuator-led-gpio7)
+    - [12.4 Timeline Demo Level 2](#124-timeline-demo-level-2)
   - [13. Inti Level 2](#13-inti-level-2)
 
 ---
@@ -126,6 +133,8 @@ Feature yang dikerjakan pada Level 2 adalah:
 
 Pada Level 2, aktuator belum dibuat sebagai relay sungguhan. Untuk kebutuhan simulator dan pembelajaran, aktuator direpresentasikan sebagai **LED eksternal** pada `GPIO7`. Ini sengaja dipilih agar HN-04 bisa dipelajari dengan aman dan tetap sesuai dengan kemampuan Velxio pada ESP32-C3.
 
+[**Kembali ke Atas**](#hortilink-level-2--local-interaction)
+
 ---
 
 ## 5. Konsep Level 2
@@ -153,6 +162,44 @@ Dengan desain ini, tiga feature Level 2 bisa dipelajari sekaligus:
 - tombol lokal sebagai input
 - aktuator lokal sebagai output
 - mode manual override sebagai keputusan operasional
+
+### 5.1 Gambaran Node Level 2
+
+Agar pembaca langsung menangkap ruang lingkup level ini, Node Level 2 perlu divisualisasikan sebagai node yang sudah melampaui status pasif. Node sekarang bukan hanya punya identitas runtime, tetapi juga sudah menerima input lokal dan menghasilkan aksi lokal.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#64748B"
+  }
+}}%%
+flowchart TB
+    BTN[Manual Button<br/>GPIO4]
+    ESP[ESP32-C3 Node]
+    LED[Status LED<br/>GPIO8]
+    ACT[Actuator LED<br/>GPIO7]
+    SER[Serial Monitor]
+
+    BTN --> ESP
+    ESP --> LED
+    ESP --> ACT
+    ESP --> SER
+
+    classDef in fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+    classDef node fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:3px;
+    classDef out fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px;
+    classDef log fill:#F3F4F6,stroke:#6B7280,color:#374151,stroke-width:2px;
+
+    class BTN in;
+    class ESP node;
+    class LED,ACT out;
+    class SER log;
+```
+
+[**Kembali ke Atas**](#hortilink-level-2--local-interaction)
 
 ---
 
@@ -182,6 +229,81 @@ Tombol manual bekerja seperti ini:
 - tekan lagi → kembali ke `LOCAL_ONLY`, aktuator OFF
 
 Untuk menjaga perilaku tetap stabil, pembacaan tombol dibungkus dengan **debounce sederhana** di level driver.
+
+---
+
+### 6.3 Diagram Mode dan Transisi
+
+Agar mode operasional tidak hanya dibaca sebagai daftar teks, diagram berikut memperlihatkan bagaimana mode berubah pada Level 2.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#64748B"
+  }
+}}%%
+flowchart TB
+    B[BOOTING]
+    L[LOCAL_ONLY]
+    M[MANUAL_OVERRIDE]
+
+    B -->|boot selesai| L
+    L -->|tombol ditekan| M
+    M -->|tombol ditekan lagi| L
+
+    classDef boot fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef local fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px;
+    classDef manual fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+
+    class B boot;
+    class L local;
+    class M manual;
+```
+
+---
+
+### 6.4 Hubungan Tombol, Mode, dan Aktuator
+
+Selain mode, pembaca juga perlu melihat hubungan langsung antara tombol, mode, dan aktuator. Pada Level 2, tombol bukan sekadar input, tetapi pemicu keputusan operasional.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#64748B"
+  }
+}}%%
+flowchart TB
+    BTN[Tombol ditekan]
+    LOCAL[Mode LOCAL_ONLY]
+    MANUAL[Mode MANUAL_OVERRIDE]
+    ACTON[Actuator ON]
+    ACTOFF[Actuator OFF]
+
+    LOCAL --> BTN
+    BTN --> MANUAL
+    MANUAL --> ACTON
+    MANUAL --> BTN
+    BTN --> LOCAL
+    LOCAL --> ACTOFF
+
+    classDef btn fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+    classDef local fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px;
+    classDef manual fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef act fill:#FCE7F3,stroke:#DB2777,color:#831843,stroke-width:2px;
+
+    class BTN btn;
+    class LOCAL local;
+    class MANUAL manual;
+    class ACTON,ACTOFF act;
+```
+
+[**Kembali ke Atas**](#hortilink-level-2--local-interaction)
 
 ---
 
@@ -261,6 +383,48 @@ Dengan pembagian ini, `app` tidak memegang rule domain dan tidak menyentuh drive
 
 ---
 
+### 7.5 Diagram Layering Level 2
+
+Pada Level 2, layering HortiLink sudah terlihat lebih utuh dibanding Level 1. Driver input dan driver output sudah ada, service sudah menyelesaikan logic domain interaksi lokal, dan app tetap hanya mengorkestrasi runtime.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#475569"
+  }
+}}%%
+flowchart TB
+    SYS[sys<br/>config]
+    DRV1[drv<br/>StatusLed]
+    DRV2[drv<br/>ManualButton]
+    DRV3[drv<br/>ActuatorOutput]
+    SVC[svc<br/>LocalInteractionService]
+    APP[app<br/>FirmwareApp]
+
+    SYS --> SVC
+    DRV1 --> SVC
+    DRV2 --> SVC
+    DRV3 --> SVC
+    SVC --> APP
+
+    classDef sys fill:#F1F5F9,stroke:#64748B,color:#334155,stroke-width:2px;
+    classDef drv fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef svc fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px;
+    classDef app fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+
+    class SYS sys;
+    class DRV1,DRV2,DRV3 drv;
+    class SVC svc;
+    class APP app;
+```
+
+[**Kembali ke Atas**](#hortilink-level-2--local-interaction)
+
+---
+
 ## 8. Wiring untuk Simulator
 
 Agar Level 2 bisa diuji di Velxio, wiring yang dipakai adalah:
@@ -285,6 +449,48 @@ Catatan penting:
 - pada simulator, bentuk ini cukup untuk validasi logika output
 - pada hardware nyata, **sangat disarankan** memakai resistor seri untuk LED
 - kalau di masa depan aktuator diganti relay, maka `GPIO7` tidak boleh langsung ke relay besar tanpa driver transistor atau modul relay yang sesuai
+
+---
+
+### 8.1 Diagram Wiring Level 2
+
+Agar pembaca tidak hanya membaca wiring sebagai daftar bullet, hubungan antar pin dan komponen pada Level 2 divisualisasikan sebagai berikut.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#64748B"
+  }
+}}%%
+flowchart TB
+    G4[GPIO4]
+    BTN[Button]
+    GND1[GND]
+
+    G8[GPIO8]
+    LED1[Status LED]
+
+    G7[GPIO7]
+    LED2[Actuator LED]
+    GND2[GND]
+
+    G4 --> BTN --> GND1
+    G8 --> LED1
+    G7 --> LED2 --> GND2
+
+    classDef pin fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef comp fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+    classDef gnd fill:#F1F5F9,stroke:#64748B,color:#334155,stroke-width:2px;
+
+    class G4,G7,G8 pin;
+    class BTN,LED1,LED2 comp;
+    class GND1,GND2 gnd;
+```
+
+[**Kembali ke Atas**](#hortilink-level-2--local-interaction)
 
 ---
 
@@ -663,6 +869,8 @@ void loop() {
 }
 ```
 
+[**Kembali ke Atas**](#hortilink-level-2--local-interaction)
+
 ---
 
 ## 10. Cara Kerja Firmware
@@ -711,6 +919,44 @@ Di dalamnya:
 - service memutuskan mode dan output
 - service menerapkan output ke LED status dan aktuator
 - app melakukan logging heartbeat dan event
+
+---
+
+### 10.4 Diagram Alur Runtime
+
+Agar fungsi `run()` tidak hanya dibaca sebagai teks, diagram berikut memperlihatkan ritme runtime Level 2 secara ringkas.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#475569"
+  }
+}}%%
+flowchart TB
+    M[millis()]
+    SVC[svc_localInteractionService.run]
+    LED[update status LED]
+    ACT[update actuator]
+    LOG[heartbeat / event log]
+    D[delay]
+
+    M --> SVC --> LED --> ACT --> LOG --> D
+
+    classDef t fill:#F1F5F9,stroke:#64748B,color:#334155,stroke-width:2px;
+    classDef svc fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px;
+    classDef out fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef log fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+
+    class M,D t;
+    class SVC svc;
+    class LED,ACT out;
+    class LOG log;
+```
+
+[**Kembali ke Atas**](#hortilink-level-2--local-interaction)
 
 ---
 
@@ -777,6 +1023,8 @@ Ini penting karena HN-07 bukan lagi sekadar istilah pada feature list, tetapi su
 
 Ini membuat peran `app` tetap bersih.
 
+[**Kembali ke Atas**](#hortilink-level-2--local-interaction)
+
 ---
 
 ## 12. Output yang Diharapkan
@@ -824,6 +1072,42 @@ Dengan begitu, engineer bisa melihat dua lapisan output sekaligus:
 
 ---
 
+### 12.4 Timeline Demo Level 2
+
+Timeline berikut merangkum urutan demo yang diharapkan pada Level 2.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#64748B"
+  }
+}}%%
+flowchart TB
+    T1[0-3 dtk<br/>BOOTING]
+    T2[3+ dtk<br/>LOCAL_ONLY]
+    T3[tombol ditekan<br/>MANUAL_OVERRIDE]
+    T4[tombol ditekan lagi<br/>LOCAL_ONLY]
+
+    T1 --> T2 --> T3 --> T4
+
+    classDef c1 fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef c2 fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px;
+    classDef c3 fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+    classDef c4 fill:#F3F4F6,stroke:#6B7280,color:#374151,stroke-width:2px;
+
+    class T1 c1;
+    class T2 c2;
+    class T3 c3;
+    class T4 c4;
+```
+
+[**Kembali ke Atas**](#hortilink-level-2--local-interaction)
+
+---
+
 ## 13. Inti Level 2
 
 Level 2 ini bukan sekadar menambah tombol dan LED.
@@ -842,6 +1126,8 @@ Dengan kata lain, Level 2 adalah jembatan penting antara:
 
 - node yang hanya punya identitas
 - dan node yang mulai punya **kontrol lokal nyata**
+
+[**Kembali ke Atas**](#hortilink-level-2--local-interaction)
 
 ---
 
