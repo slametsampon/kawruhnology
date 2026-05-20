@@ -1083,9 +1083,139 @@ Layer `app` menangani:
 
 Layer ini penting karena walaupun logic dan driver sudah ada, sistem tetap perlu orkestrasi runtime yang disiplin. Dalam konteks HortiLink, bagian ini sangat relevan dengan pendekatan cooperative scheduler berbasis `millis()`.
 
+### 6.4A Diagram Mapping Layer Firmware
+
+Agar pembaca tidak hanya membaca layer sebagai daftar teks, diagram berikut memperlihatkan bagaimana empat layer firmware HortiLink diposisikan secara arsitektural.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#64748B"
+  }
+}}%%
+flowchart TB
+    SYS["sys<br/>config & identity"]
+    DRV["drv<br/>hardware boundary"]
+    SVC["svc<br/>domain logic"]
+    APP["app<br/>runtime orchestration"]
+
+    SYS --> DRV
+    SYS --> SVC
+    SYS --> APP
+
+    DRV --> SVC
+    SVC --> APP
+
+    classDef sys fill:#F1F5F9,stroke:#64748B,color:#334155,stroke-width:2px;
+    classDef drv fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef svc fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px;
+    classDef app fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+
+    class SYS sys;
+    class DRV drv;
+    class SVC svc;
+    class APP app;
+```
+
 ### 6.5 Kenapa feature harus dipetakan ke layer firmware
 
 Dokumen asli menegaskan bahwa mapping ini dibuat supaya feature list tidak berhenti di level ide. Setiap feature nantinya harus bisa dipetakan ke layer yang tepat. Dengan begitu, pembaca tidak hanya tahu “fitur apa yang dibuat”, tetapi juga tahu “fitur itu hidup di layer mana”. Ini sangat penting untuk menjaga OOP kecil, layering jelas, dan struktur project yang tetap bisa tumbuh tanpa berantakan.
+
+### 6.5A Diagram Aliran Data, Keputusan, dan Perintah
+
+Selain struktur layer, pembaca juga perlu melihat bagaimana aliran data dan perintah berjalan di dalam arsitektur firmware HortiLink. Diagram berikut memperlihatkan aliran yang sehat mulai dari input fisik, diproses menjadi keputusan domain, lalu diterapkan kembali ke output fisik dengan ritme runtime yang diatur oleh `app`.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#475569"
+  }
+}}%%
+flowchart TB
+    HWIN["Input fisik<br/>sensor / button"]
+    DRV["drv<br/>read / write device"]
+    SVC["svc<br/>rule, mode, decision"]
+    APP["app<br/>schedule & orchestration"]
+    HWOUT["Output fisik<br/>LED / relay / actuator"]
+    LOG["Serial / MQTT / UI"]
+
+    HWIN --> DRV
+    DRV --> SVC
+    SVC --> DRV
+    DRV --> HWOUT
+
+    SVC --> APP
+    APP --> SVC
+    APP --> LOG
+
+    classDef in fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+    classDef drv fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef svc fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px;
+    classDef app fill:#F3E8FF,stroke:#7C3AED,color:#4C1D95,stroke-width:2px;
+    classDef out fill:#FCE7F3,stroke:#DB2777,color:#831843,stroke-width:2px;
+    classDef log fill:#F1F5F9,stroke:#64748B,color:#334155,stroke-width:2px;
+
+    class HWIN in;
+    class DRV drv;
+    class SVC svc;
+    class APP app;
+    class HWOUT out;
+    class LOG log;
+```
+
+---
+
+### 6.5B Contoh Mapping Feature ke Layer
+
+Agar mapping tidak berhenti di level teori, berikut contoh visual bagaimana feature HortiLink ditempatkan ke layer firmware.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#64748B"
+  }
+}}%%
+flowchart TB
+    F1["Node identity"]
+    F2["Manual button"]
+    F3["Sensor acquisition"]
+    F4["Auto rule"]
+    F5["Alarm / fault"]
+    F6["Runtime scheduling"]
+
+    SYS["sys"]
+    DRV["drv"]
+    SVC["svc"]
+    APP["app"]
+
+    F1 --> SYS
+    F2 --> DRV
+    F3 --> DRV
+    F4 --> SVC
+    F5 --> SVC
+    F6 --> APP
+
+    classDef feat fill:#FEFCE8,stroke:#CA8A04,color:#713F12,stroke-width:2px;
+    classDef sys fill:#F1F5F9,stroke:#64748B,color:#334155,stroke-width:2px;
+    classDef drv fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef svc fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px;
+    classDef app fill:#F3E8FF,stroke:#7C3AED,color:#4C1D95,stroke-width:2px;
+
+    class F1,F2,F3,F4,F5,F6 feat;
+    class SYS sys;
+    class DRV drv;
+    class SVC svc;
+    class APP app;
+```
 
 [**Kembali ke Atas**](#readme-hortilink--aliran-belajar)
 
@@ -1366,6 +1496,18 @@ Tujuan:
 - mengenalkan `app`
 - mulai pakai state mode
 
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'HortiLink Level 1 — Node Identity and Status',
+      href: '/blog/IoT/hortiink-velxio/hortilink-level-01',
+    },
+  ]}
+/>
+
+---
+
 **Level 2 — Local Interaction**
 
 Fokus:
@@ -1379,6 +1521,18 @@ Tujuan:
 - tambah 1 class input
 - tambah 1 class output
 - mulai ada manual override
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'HortiLink Level 2 — Local Interaction',
+      href: '/blog/IoT/hortiink-velxio/hortilink-level-02',
+    },
+  ]}
+/>
+
+---
 
 **Level 3 — Sensor and Rule**
 
@@ -1394,6 +1548,18 @@ Tujuan:
 - service logic
 - auto control
 
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'HortiLink Level 3 — Sensor and Rule',
+      href: '/blog/IoT/hortiink-velxio/hortilink-level-03',
+    },
+  ]}
+/>
+
+---
+
 **Level 4 — Runtime Discipline**
 
 Fokus:
@@ -1407,6 +1573,22 @@ Tujuan:
 - state persistence
 - health/fault
 - cooperative concurrency
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'HortiLink Level 4 — Runtime Discipline',
+      href: '/blog/IoT/hortiink-velxio/hortilink-level-04',
+    },
+    {
+      name: 'HortiLink Level 4A — Local HTTP Access',
+      href: '/blog/IoT/hortiink-velxio/hortilink-level-04A',
+    },
+  ]}
+/>
+
+---
 
 **Level 5 — Gateway Integration**
 
