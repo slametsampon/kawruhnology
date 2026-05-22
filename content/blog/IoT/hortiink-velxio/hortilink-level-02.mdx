@@ -506,6 +506,180 @@ flowchart TB
 
 ## 9. Sketch Level 2
 
+### 9.1 Diagram Layering dan Class Mapping
+
+Agar pembaca tidak hanya membaca sketch sebagai kumpulan kode, diagram berikut memperlihatkan bagaimana class pada Level 2 dipetakan ke layer firmware HortiLink.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+
+flowchart TB
+
+    subgraph SYS["namespace sys"]
+      direction TB
+      C["sys::Config<br/>pin, timing, blink pattern"]
+    end
+
+    subgraph DRV["namespace drv"]
+      direction TB
+      D1["drv::StatusLed"]
+      D2["drv::ManualButton"]
+      D3["drv::ActuatorOutput"]
+    end
+
+    subgraph SVC["namespace svc"]
+      direction TB
+      S1["NodeMode"]
+      S2["ControlEvent"]
+      S3["svc::LocalInteractionService"]
+    end
+
+    subgraph APP["namespace app"]
+      direction TB
+      A1["app::FirmwareApp"]
+    end
+
+    C --> D1
+    C --> D2
+    C --> D3
+    C --> S3
+    C --> A1
+
+    D1 --> S3
+    D2 --> S3
+    D3 --> S3
+
+    S1 --> S3
+    S2 --> S3
+    S3 --> A1
+
+    classDef sys fill:#E3F2FD,stroke:#1565C0,color:#111,stroke-width:1.6px;
+    classDef drv fill:#E8F5E9,stroke:#2E7D32,color:#111,stroke-width:1.6px;
+    classDef svc fill:#FFF3E0,stroke:#EF6C00,color:#111,stroke-width:1.6px;
+    classDef app fill:#FCE4EC,stroke:#C2185B,color:#111,stroke-width:1.6px;
+    classDef state fill:#ECEFF1,stroke:#455A64,color:#111,stroke-width:1.2px;
+
+    class C sys;
+    class D1,D2,D3 drv;
+    class S3 svc;
+    class A1 app;
+    class S1,S2 state;
+```
+
+---
+
+### 9.2 Diagram Object Wiring / Composition Root
+
+Selain class, pembaca juga perlu melihat bagaimana object nyata dirangkai pada composition root. Diagram ini menunjukkan urutan dependency yang benar pada Level 2.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+
+flowchart TB
+
+    CFG["sys::Config"]
+    O1["drv_statusLed"]
+    O2["drv_manualButton"]
+    O3["drv_actuator"]
+    O4["svc_localInteractionService"]
+    O5["app_firmware"]
+
+    CFG --> O1
+    CFG --> O2
+    CFG --> O3
+    CFG --> O4
+    CFG --> O5
+
+    O1 --> O4
+    O2 --> O4
+    O3 --> O4
+    O4 --> O5
+
+    classDef sys fill:#E3F2FD,stroke:#1565C0,color:#111,stroke-width:1.6px;
+    classDef drv fill:#E8F5E9,stroke:#2E7D32,color:#111,stroke-width:1.6px;
+    classDef svc fill:#FFF3E0,stroke:#EF6C00,color:#111,stroke-width:1.6px;
+    classDef app fill:#FCE4EC,stroke:#C2185B,color:#111,stroke-width:1.6px;
+
+    class CFG sys;
+    class O1,O2,O3 drv;
+    class O4 svc;
+    class O5 app;
+```
+
+---
+
+### 9.3 Diagram Interaksi Runtime Ringkas
+
+Setelah struktur layer dan wiring object jelas, diagram berikut memperlihatkan interaksi runtime Level 2 secara ringkas tanpa mencampur terlalu banyak detail implementasi.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+
+flowchart TB
+
+    T["millis() / time"]
+    B["drv::ManualButton<br/>update + wasPressed"]
+    S["svc::LocalInteractionService<br/>mode decision"]
+    L["drv::StatusLed<br/>set state"]
+    A["drv::ActuatorOutput<br/>set state"]
+    P["app::FirmwareApp<br/>log event + heartbeat"]
+
+    T --> S
+    B --> S
+    S --> L
+    S --> A
+    S --> P
+
+    classDef time fill:#FFF8E1,stroke:#F9A825,color:#111,stroke-width:1.4px;
+    classDef drv fill:#E8F5E9,stroke:#2E7D32,color:#111,stroke-width:1.6px;
+    classDef svc fill:#FFF3E0,stroke:#EF6C00,color:#111,stroke-width:1.6px;
+    classDef app fill:#FCE4EC,stroke:#C2185B,color:#111,stroke-width:1.6px;
+
+    class T time;
+    class B,L,A drv;
+    class S svc;
+    class P app;
+```
+
 ```cpp
 #include <Arduino.h>
 

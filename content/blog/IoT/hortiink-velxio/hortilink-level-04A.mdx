@@ -767,6 +767,259 @@ flowchart TB
 
 ## 12. Sketch Level 4A
 
+### 12.1 Diagram Layering dan Class Mapping
+
+Agar pembaca tidak hanya membaca sketch sebagai kumpulan kode, diagram berikut memperlihatkan bagaimana class pada Level 4A dipetakan ke layer firmware HortiLink.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+
+flowchart TB
+
+    subgraph SYS["namespace sys"]
+      direction TB
+      C["sys::Config<br/>pin, timing, AP, HTTP port"]
+    end
+
+    subgraph DRV["namespace drv"]
+      direction TB
+      D1["drv::StatusLed"]
+      D2["drv::DigitalSoilSensor"]
+      D3["drv::ActuatorOutput"]
+      D4["drv::WifiAccessPoint"]
+      D5["drv::HttpServerPort"]
+    end
+
+    subgraph SVC["namespace svc"]
+      direction TB
+      S1["OperatorCommand"]
+      S2["CommandResult"]
+      S3["NodeSnapshot"]
+      S4["svc::RuntimeDisciplineService"]
+      S5["svc::LocalHttpAccessService"]
+    end
+
+    subgraph APP["namespace app"]
+      direction TB
+      A1["app::FirmwareApp"]
+    end
+
+    C --> D1
+    C --> D2
+    C --> D3
+    C --> D4
+    C --> D5
+    C --> S4
+    C --> S5
+    C --> A1
+
+    D1 --> S4
+    D2 --> S4
+    D3 --> S4
+
+    D4 --> S5
+    D5 --> S5
+    S4 --> S5
+
+    S1 --> S5
+    S2 --> S5
+    S3 --> S4
+
+    S4 --> A1
+    S5 --> A1
+
+    classDef sys fill:#E3F2FD,stroke:#1565C0,color:#111,stroke-width:1.6px;
+    classDef drv fill:#E8F5E9,stroke:#2E7D32,color:#111,stroke-width:1.6px;
+    classDef svc fill:#FFF3E0,stroke:#EF6C00,color:#111,stroke-width:1.6px;
+    classDef app fill:#FCE4EC,stroke:#C2185B,color:#111,stroke-width:1.6px;
+    classDef state fill:#ECEFF1,stroke:#455A64,color:#111,stroke-width:1.2px;
+
+    class C sys;
+    class D1,D2,D3,D4,D5 drv;
+    class S4,S5 svc;
+    class A1 app;
+    class S1,S2,S3 state;
+```
+
+---
+
+### 12.2 Diagram Object Wiring / Composition Root
+
+Selain class, pembaca juga perlu melihat bagaimana object nyata dirangkai pada composition root. Diagram ini menunjukkan urutan dependency yang benar pada Level 4A.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+
+flowchart TB
+
+    CFG["sys::Config"]
+    O1["drv_statusLed"]
+    O2["drv_soilSensor"]
+    O3["drv_actuator"]
+    O4["drv_wifiAccessPoint"]
+    O5["drv_httpServerPort"]
+    O6["svc_runtimeService"]
+    O7["svc_httpAccessService"]
+    O8["app_firmware"]
+
+    CFG --> O1
+    CFG --> O2
+    CFG --> O3
+    CFG --> O4
+    CFG --> O5
+    CFG --> O6
+    CFG --> O7
+    CFG --> O8
+
+    O1 --> O6
+    O2 --> O6
+    O3 --> O6
+
+    O4 --> O7
+    O5 --> O7
+    O6 --> O7
+
+    O6 --> O8
+    O7 --> O8
+
+    classDef sys fill:#E3F2FD,stroke:#1565C0,color:#111,stroke-width:1.6px;
+    classDef drv fill:#E8F5E9,stroke:#2E7D32,color:#111,stroke-width:1.6px;
+    classDef svc fill:#FFF3E0,stroke:#EF6C00,color:#111,stroke-width:1.6px;
+    classDef app fill:#FCE4EC,stroke:#C2185B,color:#111,stroke-width:1.6px;
+
+    class CFG sys;
+    class O1,O2,O3,O4,O5 drv;
+    class O6,O7 svc;
+    class O8 app;
+```
+
+---
+
+### 12.3 Diagram Struktur Domain di dalam `svc`
+
+Karena Level 4A sudah membawa command channel baru, pembaca juga perlu melihat struktur domain internal pada layer `svc`.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+
+flowchart TB
+
+    CMD["OperatorCommand"]
+    RES["CommandResult"]
+    SNAP["NodeSnapshot"]
+    RTS["RuntimeDisciplineService"]
+    HTTP["LocalHttpAccessService"]
+
+    SNAP --> RTS
+    RTS --> HTTP
+    CMD --> HTTP
+    RES --> HTTP
+
+    classDef state fill:#ECEFF1,stroke:#455A64,color:#111,stroke-width:1.2px;
+    classDef svc fill:#FFF3E0,stroke:#EF6C00,color:#111,stroke-width:1.6px;
+
+    class CMD,RES,SNAP state;
+    class RTS,HTTP svc;
+```
+
+---
+
+### 12.4 Diagram Browser / Smartphone ↔ Node Interface
+
+Karena Level 4A memperkenalkan local HTTP access, pembaca juga perlu melihat dengan jelas bagaimana smartphone atau browser berinteraksi dengan node tanpa merusak layering.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+
+flowchart TB
+
+    HP["Smartphone / Browser"]
+    HTML["GET /<br/>index.html"]
+    SNAP["GET /api/snapshot"]
+    CMD["POST /api/command"]
+    WIFI["drv::WifiAccessPoint"]
+    HTTP["drv::HttpServerPort"]
+    SVC["svc::LocalHttpAccessService"]
+    RTS["svc::RuntimeDisciplineService"]
+
+    HP --> HTML
+    HP --> SNAP
+    HP --> CMD
+
+    HTML --> WIFI
+    SNAP --> WIFI
+    CMD --> WIFI
+
+    WIFI --> HTTP
+    HTTP --> SVC
+    SVC --> RTS
+    RTS --> SVC
+    SVC --> HTTP
+    HTTP --> HP
+
+    classDef hp fill:#FEF3C7,stroke:#D97706,color:#111,stroke-width:1.6px;
+    classDef drv fill:#E8F5E9,stroke:#2E7D32,color:#111,stroke-width:1.6px;
+    classDef svc fill:#FFF3E0,stroke:#EF6C00,color:#111,stroke-width:1.6px;
+    classDef api fill:#E3F2FD,stroke:#1565C0,color:#111,stroke-width:1.4px;
+
+    class HP hp;
+    class WIFI,HTTP drv;
+    class SVC,RTS svc;
+    class HTML,SNAP,CMD api;
+```
+
 ```cpp
 #include <Arduino.h>
 #include <WiFi.h>

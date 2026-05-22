@@ -575,6 +575,236 @@ flowchart TB
 
 ## 9. Sketch Level 4
 
+### 9.1 Diagram Layering dan Class Mapping
+
+Agar pembaca tidak hanya membaca sketch sebagai kumpulan kode, diagram berikut memperlihatkan bagaimana class pada Level 4 dipetakan ke layer firmware HortiLink.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+
+flowchart TB
+
+    subgraph SYS["namespace sys"]
+      direction TB
+      C["sys::Config<br/>pin, timing, defaults, LED pattern"]
+    end
+
+    subgraph DRV["namespace drv"]
+      direction TB
+      D1["drv::StatusLed"]
+      D2["drv::DigitalSoilSensor"]
+      D3["drv::ActuatorOutput"]
+    end
+
+    subgraph SVC["namespace svc"]
+      direction TB
+      S1["NodeMode"]
+      S2["RuntimeEvent"]
+      S3["PersistentLocalConfig"]
+      S4["HealthSnapshot"]
+      S5["svc::RuntimeDisciplineService"]
+      S6["svc_persistentShadowStore"]
+    end
+
+    subgraph APP["namespace app"]
+      direction TB
+      A1["app::FirmwareApp"]
+    end
+
+    C --> D1
+    C --> D2
+    C --> D3
+    C --> S3
+    C --> S5
+    C --> A1
+
+    D1 --> S5
+    D2 --> S5
+    D3 --> S5
+
+    S1 --> S5
+    S2 --> S5
+    S3 --> S5
+    S4 --> S5
+    S6 --> S3
+    S5 --> A1
+
+    classDef sys fill:#E3F2FD,stroke:#1565C0,color:#111,stroke-width:1.6px;
+    classDef drv fill:#E8F5E9,stroke:#2E7D32,color:#111,stroke-width:1.6px;
+    classDef svc fill:#FFF3E0,stroke:#EF6C00,color:#111,stroke-width:1.6px;
+    classDef app fill:#FCE4EC,stroke:#C2185B,color:#111,stroke-width:1.6px;
+    classDef state fill:#ECEFF1,stroke:#455A64,color:#111,stroke-width:1.2px;
+
+    class C sys;
+    class D1,D2,D3 drv;
+    class S5 svc;
+    class A1 app;
+    class S1,S2,S3,S4,S6 state;
+```
+
+---
+
+### 9.2 Diagram Object Wiring / Composition Root
+
+Selain class, pembaca juga perlu melihat bagaimana object nyata dirangkai pada composition root. Diagram ini menunjukkan urutan dependency yang benar pada Level 4.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+
+flowchart TB
+
+    CFG["sys::Config"]
+    O1["drv_statusLed"]
+    O2["drv_soilSensor"]
+    O3["drv_actuator"]
+    O4["svc_runtimeDisciplineService"]
+    O5["app_firmware"]
+
+    CFG --> O1
+    CFG --> O2
+    CFG --> O3
+    CFG --> O4
+    CFG --> O5
+
+    O1 --> O4
+    O2 --> O4
+    O3 --> O4
+    O4 --> O5
+
+    classDef sys fill:#E3F2FD,stroke:#1565C0,color:#111,stroke-width:1.6px;
+    classDef drv fill:#E8F5E9,stroke:#2E7D32,color:#111,stroke-width:1.6px;
+    classDef svc fill:#FFF3E0,stroke:#EF6C00,color:#111,stroke-width:1.6px;
+    classDef app fill:#FCE4EC,stroke:#C2185B,color:#111,stroke-width:1.6px;
+
+    class CFG sys;
+    class O1,O2,O3 drv;
+    class O4 svc;
+    class O5 app;
+```
+
+---
+
+### 9.3 Diagram Struktur Domain di dalam `svc`
+
+Karena Level 4 sudah lebih kompleks dibanding Level 3, pembaca juga perlu melihat struktur domain internal pada layer `svc`.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+
+flowchart TB
+
+    M["NodeMode"]
+    E["RuntimeEvent"]
+    P["PersistentLocalConfig"]
+    H["HealthSnapshot"]
+    SH["svc_persistentShadowStore"]
+    R["RuntimeDisciplineService"]
+
+    SH --> P
+    M --> R
+    E --> R
+    P --> R
+    H --> R
+
+    classDef state fill:#ECEFF1,stroke:#455A64,color:#111,stroke-width:1.2px;
+    classDef svc fill:#FFF3E0,stroke:#EF6C00,color:#111,stroke-width:1.6px;
+
+    class M,E,P,H,SH state;
+    class R svc;
+```
+
+---
+
+### 9.4 Diagram Interaksi Runtime Ringkas
+
+Setelah struktur layer, object, dan domain `svc` jelas, diagram berikut memperlihatkan interaksi runtime Level 4 secara ringkas tanpa mencampur terlalu banyak detail implementasi.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+
+flowchart TB
+
+    T["millis() / time"]
+    C1["app::FirmwareApp<br/>control scheduler"]
+    C2["app::FirmwareApp<br/>health scheduler"]
+    S["svc::RuntimeDisciplineService"]
+    D1["drv::DigitalSoilSensor<br/>update + read"]
+    D2["drv::StatusLed<br/>set state"]
+    D3["drv::ActuatorOutput<br/>set state"]
+    L["app::FirmwareApp<br/>event + health log"]
+
+    T --> C1
+    T --> C2
+    C1 --> S
+    C2 --> S
+    D1 --> S
+    S --> D2
+    S --> D3
+    S --> L
+
+    classDef time fill:#FFF8E1,stroke:#F9A825,color:#111,stroke-width:1.4px;
+    classDef drv fill:#E8F5E9,stroke:#2E7D32,color:#111,stroke-width:1.6px;
+    classDef svc fill:#FFF3E0,stroke:#EF6C00,color:#111,stroke-width:1.6px;
+    classDef app fill:#FCE4EC,stroke:#C2185B,color:#111,stroke-width:1.6px;
+
+    class T time;
+    class D1,D2,D3 drv;
+    class S svc;
+    class C1,C2,L app;
+```
+
 ```cpp
 #include <Arduino.h>
 

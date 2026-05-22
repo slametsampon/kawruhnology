@@ -266,21 +266,6 @@ Berisi:
 - pergantian mode
 - logging ke serial
 
-Kenapa di sini: `## 5. Mode yang Dipakai` memang mendefinisikan empat mode dan pola LED-nya. :contentReference[oaicite:3]{index=3}
-
-### Koreksi narasi singkat untuk Bab 6
-
-Ganti bagian ini:
-
-- `6.3 app` berisi definisi mode node, orkestrasi runtime, pergantian mode, logging
-
-Menjadi empat layer:
-
-- `6.1 sys`
-- `6.2 drv`
-- `6.3 svc`
-- `6.4 app`
-
 ### 6.4 Diagram Layering Level 1
 
 Pada sketch final Level 1, layering yang dipakai sebenarnya sudah lengkap:
@@ -334,6 +319,242 @@ Untuk **konvensi layering HortiLink yang Anda kunci**, bentuk yang benar adalah:
 - `svc_` menyelesaikan logic domainnya
 - `app_` hanya mengorkestrasi `svc_`
 - jadi `app_firmware` **tidak** boleh pegang `drv_statusLed`
+
+### 7.1A Diagram Layering dan Class Mapping
+
+Agar pembaca tidak hanya membaca empat layer firmware sebagai daftar teks, diagram berikut memperlihatkan bagaimana layer dan class dipetakan dalam struktur HortiLink.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+
+flowchart TB
+
+    subgraph SYS["sys"]
+      direction TB
+      SYS1["Config<br/>pin map<br/>timing<br/>identity<br/>default constants"]
+    end
+
+    subgraph DRV["drv"]
+      direction TB
+      DRV1["StatusLed<br/>hardware boundary"]
+      DRV2["Button / Sensor / Relay<br/>hardware driver"]
+    end
+
+    subgraph SVC["svc"]
+      direction TB
+      SVC1["Mode Logic Service"]
+      SVC2["Rule / Alarm / Command Service"]
+    end
+
+    subgraph APP["app"]
+      direction TB
+      APP1["FirmwareApp<br/>runtime orchestration"]
+    end
+
+    SYS1 --> DRV1
+    SYS1 --> DRV2
+    SYS1 --> SVC1
+    SYS1 --> SVC2
+    SYS1 --> APP1
+
+    DRV1 --> SVC1
+    DRV2 --> SVC1
+    DRV2 --> SVC2
+
+    SVC1 --> APP1
+    SVC2 --> APP1
+
+    classDef sys fill:#E3F2FD,stroke:#1565C0,color:#111,stroke-width:1.6px;
+    classDef drv fill:#E8F5E9,stroke:#2E7D32,color:#111,stroke-width:1.6px;
+    classDef svc fill:#FFF3E0,stroke:#EF6C00,color:#111,stroke-width:1.6px;
+    classDef app fill:#FCE4EC,stroke:#C2185B,color:#111,stroke-width:1.6px;
+
+    class SYS1 sys;
+    class DRV1,DRV2 drv;
+    class SVC1,SVC2 svc;
+    class APP1 app;
+```
+
+---
+
+### 7.1B Contoh Nyata pada Code Level 1
+
+Pada Level 1, mapping layer itu sudah tampak jelas di level class. Diagram berikut menggunakan class yang benar-benar ada pada sketch Level 1.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+
+flowchart TB
+
+    subgraph SYS["sys"]
+      direction TB
+      C["sys::Config"]
+    end
+
+    subgraph DRV["drv"]
+      direction TB
+      D["drv::StatusLed"]
+    end
+
+    subgraph SVC["svc"]
+      direction TB
+      S["svc::NodeIdentityService"]
+      M["NodeMode<br/>BOOTING / LOCAL_ONLY / GATEWAY_LINKED / ALERT"]
+    end
+
+    subgraph APP["app"]
+      direction TB
+      A["app::FirmwareApp"]
+    end
+
+    C --> D
+    C --> S
+    C --> A
+
+    D --> S
+    M --> S
+    S --> A
+
+    classDef sys fill:#E3F2FD,stroke:#1565C0,color:#111,stroke-width:1.6px;
+    classDef drv fill:#E8F5E9,stroke:#2E7D32,color:#111,stroke-width:1.6px;
+    classDef svc fill:#FFF3E0,stroke:#EF6C00,color:#111,stroke-width:1.6px;
+    classDef app fill:#FCE4EC,stroke:#C2185B,color:#111,stroke-width:1.6px;
+    classDef state fill:#ECEFF1,stroke:#455A64,color:#111,stroke-width:1.2px;
+
+    class C sys;
+    class D drv;
+    class S svc;
+    class A app;
+    class M state;
+```
+
+Pada sketch Level 1, `NodeIdentityService` memang memakai `drv::StatusLed`, lalu `FirmwareApp` hanya memakai `svc::NodeIdentityService`, bukan langsung memegang driver. Itu terlihat jelas pada wiring object `drv_statusLed`, `svc_nodeIdentityService`, dan `app_firmware`. :contentReference[oaicite:3]{index=3} :contentReference[oaicite:4]{index=4}
+
+---
+
+### 7.1C Diagram Object Wiring
+
+Selain class, pembaca juga perlu melihat bagaimana object dirangkai pada composition root. Diagram ini tidak lagi menunjukkan “jenis class”, tetapi object nyata yang dibuat di sketch.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+
+flowchart TB
+
+    CFG["sys::Config"]
+    O1["drv_statusLed"]
+    O2["svc_nodeIdentityService"]
+    O3["app_firmware"]
+
+    CFG --> O1
+    CFG --> O2
+    CFG --> O3
+
+    O1 --> O2
+    O2 --> O3
+
+    classDef sys fill:#E3F2FD,stroke:#1565C0,color:#111,stroke-width:1.6px;
+    classDef drv fill:#E8F5E9,stroke:#2E7D32,color:#111,stroke-width:1.6px;
+    classDef svc fill:#FFF3E0,stroke:#EF6C00,color:#111,stroke-width:1.6px;
+    classDef app fill:#FCE4EC,stroke:#C2185B,color:#111,stroke-width:1.6px;
+
+    class CFG sys;
+    class O1 drv;
+    class O2 svc;
+    class O3 app;
+```
+
+Itu tepat dengan composition root Level 1 yang membuat `drv::StatusLed`, lalu `svc::NodeIdentityService(drv_statusLed)`, lalu `app::FirmwareApp(svc_nodeIdentityService)`. :contentReference[oaicite:5]{index=5}
+
+---
+
+### 7.1D Diagram Aliran Data dan Perintah
+
+Setelah struktur layer dan class jelas, pembaca juga perlu melihat aliran data dan perintah secara ringkas. Diagram berikut sengaja dibuat sederhana agar tidak mencampur arsitektur dengan detail runtime mikro.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+
+flowchart TB
+
+    IN["Input / waktu / event"]
+    DRV["drv<br/>hardware read / write"]
+    SVC["svc<br/>decision & domain logic"]
+    APP["app<br/>runtime orchestration"]
+    OUT["LED / actuator / log"]
+
+    IN --> DRV
+    DRV --> SVC
+    SVC --> DRV
+    SVC --> APP
+    APP --> SVC
+    DRV --> OUT
+    APP --> OUT
+
+    classDef in fill:#FFF8E1,stroke:#F9A825,color:#111,stroke-width:1.4px;
+    classDef drv fill:#E8F5E9,stroke:#2E7D32,color:#111,stroke-width:1.6px;
+    classDef svc fill:#FFF3E0,stroke:#EF6C00,color:#111,stroke-width:1.6px;
+    classDef app fill:#FCE4EC,stroke:#C2185B,color:#111,stroke-width:1.6px;
+    classDef out fill:#E0F7FA,stroke:#00838F,color:#111,stroke-width:1.6px;
+
+    class IN in;
+    class DRV drv;
+    class SVC svc;
+    class APP app;
+    class OUT out;
+```
 
 ```cpp id="level1-final-hortilink"
 #include <Arduino.h>
@@ -646,24 +867,29 @@ Agar pembaca tidak hanya membaca fungsi `run()` sebagai teks, diagram berikut me
     "lineColor": "#475569"
   }
 }}%%
-flowchart TB
-    M[millis()]
-    SVC[svc_nodeIdentityService.run]
-    LED[update LED]
-    LOG[heartbeat serial]
-    D[delay]
 
-    M --> SVC --> LED --> LOG --> D
+flowchart TB
+
+    M["millis"]
+    SVC["svc_nodeIdentityService run"]
+    LED["update LED"]
+    HBT["heartbeat serial"]
+    DLY["delay"]
+
+    M --> SVC
+    SVC --> LED
+    LED --> HBT
+    HBT --> DLY
 
     classDef t fill:#F1F5F9,stroke:#64748B,color:#334155,stroke-width:2px;
     classDef s fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px;
     classDef o fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
     classDef l fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
 
-    class M,D t;
+    class M,DLY t;
     class SVC s;
     class LED o;
-    class LOG l;
+    class HBT l;
 ```
 
 [**Kembali ke Atas**](#hortilink-level-1--node-identity-and-status)
