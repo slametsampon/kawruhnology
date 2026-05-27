@@ -29,26 +29,32 @@ summary: Level 3 adalah kelanjutan langsung dari Level 2 dan berfokus pada akuis
   - [3. Feature yang Dikerjakan](#3-feature-yang-dikerjakan)
   - [4. Platform](#4-platform)
   - [5. Konsep Level 3](#5-konsep-level-3)
+    - [5.1 Gambaran Node Level 3](#51-gambaran-node-level-3)
   - [6. Mode yang Dipakai](#6-mode-yang-dipakai)
     - [6.1 Pola status LED](#61-pola-status-led)
     - [6.2 Rule otomatis lokal](#62-rule-otomatis-lokal)
     - [6.3 Alarm/Fault State](#63-alarmfault-state)
+    - [6.4 Diagram Mode dan Transisi](#64-diagram-mode-dan-transisi)
+    - [6.5 Hubungan Sensor, Fault, dan Aktuator](#65-hubungan-sensor-fault-dan-aktuator)
   - [7. Struktur Layer](#7-struktur-layer)
     - [7.1 `sys`](#71-sys)
     - [7.2 `drv`](#72-drv)
     - [7.3 `svc`](#73-svc)
     - [7.4 `app`](#74-app)
+    - [7.5 Diagram Layering Level 3](#75-diagram-layering-level-3)
   - [8. Wiring untuk Simulator](#8-wiring-untuk-simulator)
     - [Status LED](#status-led)
     - [Sensor lingkungan digital proxy](#sensor-lingkungan-digital-proxy)
     - [Fault simulation input](#fault-simulation-input)
     - [Actuator output](#actuator-output)
+    - [8.1 Diagram Wiring Level 3](#81-diagram-wiring-level-3)
   - [9. Sketch Level 3](#9-sketch-level-3)
   - [10. Cara Kerja Firmware](#10-cara-kerja-firmware)
     - [10.1 Saat board menyala](#101-saat-board-menyala)
     - [10.2 Saat sensor mendeteksi kondisi dry](#102-saat-sensor-mendeteksi-kondisi-dry)
     - [10.3 Saat sensor fault aktif](#103-saat-sensor-fault-aktif)
     - [10.4 Saat loop berjalan](#104-saat-loop-berjalan)
+    - [10.5 Diagram Alur Runtime](#105-diagram-alur-runtime)
   - [11. Yang Dipelajari dari Level 3](#11-yang-dipelajari-dari-level-3)
     - [11.1 Sensor acquisition dibungkus di `drv`](#111-sensor-acquisition-dibungkus-di-drv)
     - [11.2 Rule engine diselesaikan di `svc`](#112-rule-engine-diselesaikan-di-svc)
@@ -58,6 +64,7 @@ summary: Level 3 adalah kelanjutan langsung dari Level 2 dan berfokus pada akuis
     - [12.1 Serial Monitor](#121-serial-monitor)
     - [12.2 Status LED GPIO8](#122-status-led-gpio8)
     - [12.3 Actuator LED GPIO7](#123-actuator-led-gpio7)
+    - [12.4 Timeline Demo Level 3](#124-timeline-demo-level-3)
   - [13. Inti Level 3](#13-inti-level-3)
 
 ---
@@ -88,6 +95,16 @@ Artinya, Level 3 bukan lagi node yang hanya memiliki identitas dan kontrol manua
 - memiliki alarm/fault state dasar
 
 Karena target platform tetap **ESP32-C3 DevKit** pada **simulator Velxio**, maka Level 3 didesain agar tetap testable pada simulator. Untuk itu, sensor lingkungan pada level ini direpresentasikan sebagai **digital environment sensor proxy**, sehingga pola akuisisi sensor, rule engine, dan fault handling tetap bisa diuji tanpa bergantung pada periferal analog.
+
+<ResourceBox
+  title="Artikel Terkait:"
+  items={[
+    {
+      name: 'README - HortiLink — Aliran Belajar',
+      href: '/blog/IoT/hortiink-velxio/README',
+    },
+  ]}
+/>
 
 ---
 
@@ -137,6 +154,8 @@ Pada Level 3, sensor lingkungan belum dibuat sebagai sensor analog penuh. Untuk 
 
 Selain itu, untuk memvalidasi **HN-09 Alarm/Fault State**, digunakan satu input fault simulasi pada `GPIO6`. Dengan cara ini, akuisisi sensor, rule engine lokal, dan alarm state tetap bisa diuji secara nyata di Velxio.
 
+[**Kembali ke Atas**](#hortilink-level-3--sensor-and-rule)
+
 ---
 
 ## 5. Konsep Level 3
@@ -159,6 +178,46 @@ Dengan begitu, engineer mulai melihat bentuk yang lebih nyata dari edge node Hor
 - ada rule lokal yang memproses data
 - ada output otomatis yang mengikuti hasil rule
 - ada kondisi fault yang mengubah perilaku sistem
+
+### 5.1 Gambaran Node Level 3
+
+Agar pembaca langsung menangkap ruang lingkup level ini, Node Level 3 perlu divisualisasikan sebagai node yang sudah mulai benar-benar membaca kondisi lingkungan, menjalankan rule lokal, dan memberi respons otomatis.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#64748B"
+  }
+}}%%
+flowchart TB
+    SENS[Digital Soil Sensor<br/>GPIO5]
+    FAULT[Fault Input<br/>GPIO6]
+    ESP[ESP32-C3 Node]
+    LED[Status LED<br/>GPIO8]
+    ACT[Actuator LED<br/>GPIO7]
+    SER[Serial Monitor]
+
+    SENS --> ESP
+    FAULT --> ESP
+    ESP --> LED
+    ESP --> ACT
+    ESP --> SER
+
+    classDef in fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+    classDef node fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:3px;
+    classDef out fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px;
+    classDef log fill:#F3F4F6,stroke:#6B7280,color:#374151,stroke-width:2px;
+
+    class SENS,FAULT in;
+    class ESP node;
+    class LED,ACT out;
+    class SER log;
+```
+
+[**Kembali ke Atas**](#hortilink-level-3--sensor-and-rule)
 
 ---
 
@@ -201,6 +260,83 @@ Perilakunya:
   - `MONITORING` jika sensor sudah normal
 
 Ini membuat Level 3 sekaligus memperkenalkan ide penting bahwa **fault state mengalahkan auto rule normal**.
+
+---
+
+### 6.4 Diagram Mode dan Transisi
+
+Agar mode pada Level 3 tidak hanya dibaca sebagai daftar teks, diagram berikut memperlihatkan bagaimana mode berubah sesuai kondisi sensor dan fault.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#64748B"
+  }
+}}%%
+flowchart TB
+    B[BOOTING]
+    M[MONITORING]
+    A[AUTO_ACTIVE]
+    F[ALERT]
+
+    B -->|boot selesai| M
+    M -->|sensor DRY| A
+    A -->|sensor NORMAL| M
+    M -->|fault aktif| F
+    A -->|fault aktif| F
+    F -->|fault hilang + DRY| A
+    F -->|fault hilang + NORMAL| M
+
+    classDef boot fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef mon fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px;
+    classDef auto fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+    classDef alert fill:#FEE2E2,stroke:#DC2626,color:#7F1D1D,stroke-width:2px;
+
+    class B boot;
+    class M mon;
+    class A auto;
+    class F alert;
+```
+
+---
+
+### 6.5 Hubungan Sensor, Fault, dan Aktuator
+
+Selain mode, pembaca juga perlu melihat hubungan langsung antara sensor, fault, dan aktuator. Pada Level 3, fault harus selalu lebih kuat daripada rule normal.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#64748B"
+  }
+}}%%
+flowchart TB
+    S[Sensor DRY]
+    N[Sensor NORMAL]
+    F[Fault Aktif]
+    ON[Actuator ON]
+    OFF[Actuator OFF]
+
+    S --> ON
+    N --> OFF
+    F --> OFF
+
+    classDef sensor fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+    classDef fault fill:#FEE2E2,stroke:#DC2626,color:#7F1D1D,stroke-width:2px;
+    classDef act fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px;
+
+    class S,N sensor;
+    class F fault;
+    class ON,OFF act;
+```
+
+[**Kembali ke Atas**](#hortilink-level-3--sensor-and-rule)
 
 ---
 
@@ -277,6 +413,48 @@ Dengan pembagian ini, `app` tidak memuat logic rule atau keputusan kontrol.
 
 ---
 
+### 7.5 Diagram Layering Level 3
+
+Pada Level 3, layering HortiLink sudah terlihat jauh lebih utuh. Input lingkungan, fault state, rule otomatis, dan output lokal semuanya sudah punya tempat yang jelas.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#475569"
+  }
+}}%%
+flowchart TB
+    SYS[sys<br/>config]
+    DRV1[drv<br/>StatusLed]
+    DRV2[drv<br/>DigitalSoilSensor]
+    DRV3[drv<br/>ActuatorOutput]
+    SVC[svc<br/>SensorRuleService]
+    APP[app<br/>FirmwareApp]
+
+    SYS --> SVC
+    DRV1 --> SVC
+    DRV2 --> SVC
+    DRV3 --> SVC
+    SVC --> APP
+
+    classDef sys fill:#F1F5F9,stroke:#64748B,color:#334155,stroke-width:2px;
+    classDef drv fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef svc fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px;
+    classDef app fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+
+    class SYS sys;
+    class DRV1,DRV2,DRV3 drv;
+    class SVC svc;
+    class APP app;
+```
+
+[**Kembali ke Atas**](#hortilink-level-3--sensor-and-rule)
+
+---
+
 ## 8. Wiring untuk Simulator
 
 Agar Level 3 bisa diuji di Velxio, wiring yang dipakai adalah:
@@ -317,7 +495,228 @@ Catatan penting:
 
 ---
 
+### 8.1 Diagram Wiring Level 3
+
+Agar pembaca tidak hanya membaca wiring sebagai daftar bullet, hubungan antar pin dan komponen pada Level 3 divisualisasikan sebagai berikut.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#64748B"
+  }
+}}%%
+flowchart TB
+    G5[GPIO5]
+    SW1[Dry Sensor Switch]
+    GND1[GND]
+
+    G6[GPIO6]
+    SW2[Fault Switch]
+    GND2[GND]
+
+    G8[GPIO8]
+    LED1[Status LED]
+
+    G7[GPIO7]
+    LED2[Actuator LED]
+    GND3[GND]
+
+    G5 --> SW1 --> GND1
+    G6 --> SW2 --> GND2
+    G8 --> LED1
+    G7 --> LED2 --> GND3
+
+    classDef pin fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef comp fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+    classDef gnd fill:#F1F5F9,stroke:#64748B,color:#334155,stroke-width:2px;
+
+    class G5,G6,G7,G8 pin;
+    class SW1,SW2,LED1,LED2 comp;
+    class GND1,GND2,GND3 gnd;
+```
+
+[**Kembali ke Atas**](#hortilink-level-3--sensor-and-rule)
+
+---
+
 ## 9. Sketch Level 3
+
+### 9.1 Diagram Layering dan Class Mapping
+
+Agar pembaca tidak hanya membaca sketch sebagai kumpulan kode, diagram berikut memperlihatkan bagaimana class pada Level 3 dipetakan ke layer firmware HortiLink.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+
+flowchart TB
+
+    subgraph SYS["namespace sys"]
+      direction TB
+      C["sys::Config<br/>pin, timing, debounce, LED pattern"]
+    end
+
+    subgraph DRV["namespace drv"]
+      direction TB
+      D1["drv::StatusLed"]
+      D2["drv::DigitalSoilSensor"]
+      D3["drv::ActuatorOutput"]
+    end
+
+    subgraph SVC["namespace svc"]
+      direction TB
+      S1["NodeMode"]
+      S2["RuleEvent"]
+      S3["svc::SensorRuleService"]
+    end
+
+    subgraph APP["namespace app"]
+      direction TB
+      A1["app::FirmwareApp"]
+    end
+
+    C --> D1
+    C --> D2
+    C --> D3
+    C --> S3
+    C --> A1
+
+    D1 --> S3
+    D2 --> S3
+    D3 --> S3
+
+    S1 --> S3
+    S2 --> S3
+    S3 --> A1
+
+    classDef sys fill:#E3F2FD,stroke:#1565C0,color:#111,stroke-width:1.6px;
+    classDef drv fill:#E8F5E9,stroke:#2E7D32,color:#111,stroke-width:1.6px;
+    classDef svc fill:#FFF3E0,stroke:#EF6C00,color:#111,stroke-width:1.6px;
+    classDef app fill:#FCE4EC,stroke:#C2185B,color:#111,stroke-width:1.6px;
+    classDef state fill:#ECEFF1,stroke:#455A64,color:#111,stroke-width:1.2px;
+
+    class C sys;
+    class D1,D2,D3 drv;
+    class S3 svc;
+    class A1 app;
+    class S1,S2 state;
+```
+
+---
+
+### 9.2 Diagram Object Wiring / Composition Root
+
+Selain class, pembaca juga perlu melihat bagaimana object nyata dirangkai pada composition root. Diagram ini menunjukkan urutan dependency yang benar pada Level 3.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+
+flowchart TB
+
+    CFG["sys::Config"]
+    O1["drv_statusLed"]
+    O2["drv_soilSensor"]
+    O3["drv_actuator"]
+    O4["svc_sensorRuleService"]
+    O5["app_firmware"]
+
+    CFG --> O1
+    CFG --> O2
+    CFG --> O3
+    CFG --> O4
+    CFG --> O5
+
+    O1 --> O4
+    O2 --> O4
+    O3 --> O4
+    O4 --> O5
+
+    classDef sys fill:#E3F2FD,stroke:#1565C0,color:#111,stroke-width:1.6px;
+    classDef drv fill:#E8F5E9,stroke:#2E7D32,color:#111,stroke-width:1.6px;
+    classDef svc fill:#FFF3E0,stroke:#EF6C00,color:#111,stroke-width:1.6px;
+    classDef app fill:#FCE4EC,stroke:#C2185B,color:#111,stroke-width:1.6px;
+
+    class CFG sys;
+    class O1,O2,O3 drv;
+    class O4 svc;
+    class O5 app;
+```
+
+---
+
+### 9.3 Diagram Interaksi Runtime Ringkas
+
+Setelah struktur layer dan wiring object jelas, diagram berikut memperlihatkan interaksi runtime Level 3 secara ringkas tanpa mencampur terlalu banyak detail implementasi.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+
+flowchart TB
+
+    T["millis() / time"]
+    B["drv::DigitalSoilSensor<br/>update + read state"]
+    S["svc::SensorRuleService<br/>mode decision + rule engine"]
+    L["drv::StatusLed<br/>set state"]
+    A["drv::ActuatorOutput<br/>set state"]
+    P["app::FirmwareApp<br/>log event + heartbeat"]
+
+    T --> S
+    B --> S
+    S --> L
+    S --> A
+    S --> P
+
+    classDef time fill:#FFF8E1,stroke:#F9A825,color:#111,stroke-width:1.4px;
+    classDef drv fill:#E8F5E9,stroke:#2E7D32,color:#111,stroke-width:1.6px;
+    classDef svc fill:#FFF3E0,stroke:#EF6C00,color:#111,stroke-width:1.6px;
+    classDef app fill:#FCE4EC,stroke:#C2185B,color:#111,stroke-width:1.6px;
+
+    class T time;
+    class B,L,A drv;
+    class S svc;
+    class P app;
+```
 
 ```cpp
 #include <Arduino.h>
@@ -768,6 +1167,8 @@ void loop() {
 }
 ```
 
+[**Kembali ke Atas**](#hortilink-level-3--sensor-and-rule)
+
 ---
 
 ## 10. Cara Kerja Firmware
@@ -825,6 +1226,44 @@ Di dalamnya:
 - service menghitung keputusan mode dan output
 - service menerapkan output ke driver
 - app hanya melakukan logging dan mengatur ritme runtime
+
+---
+
+### 10.5 Diagram Alur Runtime
+
+Agar fungsi `run()` tidak hanya dibaca sebagai teks, diagram berikut memperlihatkan ritme runtime Level 3 secara ringkas.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#475569"
+  }
+}}%%
+flowchart TB
+    NODE_TIME["millis()"];
+    NODE_SVC["svc_sensorRuleService.run"];
+    NODE_LED["update status LED"];
+    NODE_ACT["update actuator"];
+    NODE_LOG["event + heartbeat"];
+    NODE_DELAY["delay"];
+
+    NODE_TIME --> NODE_SVC --> NODE_LED --> NODE_ACT --> NODE_LOG --> NODE_DELAY;
+
+    classDef cls_time fill:#F1F5F9,stroke:#64748B,color:#334155,stroke-width:2px;
+    classDef cls_svc fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px;
+    classDef cls_out fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef cls_log fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+
+    class NODE_TIME,NODE_DELAY cls_time;
+    class NODE_SVC cls_svc;
+    class NODE_LED,NODE_ACT cls_out;
+    class NODE_LOG cls_log;
+```
+
+[**Kembali ke Atas**](#hortilink-level-3--sensor-and-rule)
 
 ---
 
@@ -890,6 +1329,8 @@ Pada Level 3, `app` tidak menghitung rule dan tidak menyimpan state machine doma
 
 Dengan begitu, layering tetap konsisten.
 
+[**Kembali ke Atas**](#hortilink-level-3--sensor-and-rule)
+
 ---
 
 ## 12. Output yang Diharapkan
@@ -941,6 +1382,45 @@ Dengan begitu, engineer bisa melihat hubungan yang jelas antara:
 
 ---
 
+### 12.4 Timeline Demo Level 3
+
+Timeline berikut merangkum urutan demo yang diharapkan pada Level 3.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#64748B"
+  }
+}}%%
+flowchart TB
+    T1[0-3 dtk<br/>BOOTING]
+    T2[3+ dtk<br/>MONITORING]
+    T3[sensor DRY<br/>AUTO_ACTIVE]
+    T4[fault aktif<br/>ALERT]
+    T5[fault hilang<br/>MONITORING / AUTO_ACTIVE]
+
+    T1 --> T2 --> T3 --> T4 --> T5
+
+    classDef c1 fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef c2 fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px;
+    classDef c3 fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+    classDef c4 fill:#FEE2E2,stroke:#DC2626,color:#7F1D1D,stroke-width:2px;
+    classDef c5 fill:#F3F4F6,stroke:#6B7280,color:#374151,stroke-width:2px;
+
+    class T1 c1;
+    class T2 c2;
+    class T3 c3;
+    class T4 c4;
+    class T5 c5;
+```
+
+[**Kembali ke Atas**](#hortilink-level-3--sensor-and-rule)
+
+---
+
 ## 13. Inti Level 3
 
 Level 3 ini bukan sekadar menambah sensor.
@@ -965,12 +1445,14 @@ Dengan kata lain, Level 3 adalah jembatan antara:
 - node yang hanya punya interaksi lokal
 - dan node yang mulai punya **kontrol otomatis lokal yang berbasis sensor**
 
+[**Kembali ke Atas**](#hortilink-level-3--sensor-and-rule)
+
 ---
 
 <small>
-  **_Catatan Penyusunan_** Artikel ini merupakan kelanjutan langsung dari Level 2
-  dan ditulis khusus sebagai dokumen pengembangan untuk Level 3 pada platform
-  ESP32-C3 DevKit di simulator Velxio. Isi level ini disusun agar tetap konsisten
-  dengan README utama HortiLink, single-project learning flow, dan standar
-  layering yang sudah dikunci: `sys`, `drv`, `svc`, `app`.
+  **_Catatan Penyusunan_** Artikel ini merupakan kelanjutan langsung dari Level
+  2 dan ditulis khusus sebagai dokumen pengembangan untuk Level 3 pada platform
+  ESP32-C3 DevKit di simulator Velxio. Isi level ini disusun agar tetap
+  konsisten dengan README utama HortiLink, single-project learning flow, dan
+  standar layering yang sudah dikunci: `sys`, `drv`, `svc`, `app`.
 </small>

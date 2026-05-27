@@ -29,6 +29,7 @@ summary: Level 4A adalah level transisi antara Runtime Discipline di node dan Ga
   - [2. Tujuan](#2-tujuan)
   - [3. Feature yang Dikerjakan](#3-feature-yang-dikerjakan)
   - [4. Platform](#4-platform)
+    - [4.1 Wiring Fisik dan Akses Lokal](#41-wiring-fisik-dan-akses-lokal)
   - [5. Konsep Level 4A](#5-konsep-level-4a)
   - [6. Frontend pada Node](#6-frontend-pada-node)
     - [6.1 Peran frontend node](#61-peran-frontend-node)
@@ -56,6 +57,10 @@ summary: Level 4A adalah level transisi antara Runtime Discipline di node dan Ga
     - [11.3 `svc`](#113-svc)
     - [11.4 `app`](#114-app)
   - [12. Sketch Level 4A](#12-sketch-level-4a)
+    - [12.1 Diagram Layering dan Class Mapping](#121-diagram-layering-dan-class-mapping)
+    - [12.2 Diagram Object Wiring / Composition Root](#122-diagram-object-wiring--composition-root)
+    - [12.3 Diagram Struktur Domain di dalam `svc`](#123-diagram-struktur-domain-di-dalam-svc)
+    - [12.4 Diagram Browser / Smartphone ↔ Node Interface](#124-diagram-browser--smartphone--node-interface)
   - [13. Cara Kerja Firmware](#13-cara-kerja-firmware)
     - [13.1 Saat node menyala](#131-saat-node-menyala)
     - [13.2 Saat browser membuka halaman](#132-saat-browser-membuka-halaman)
@@ -96,6 +101,128 @@ Tetapi ketika mulai menuju Level 5, kita akan berhadapan dengan:
 - gateway orchestration
 
 Kalau akses smartphone via HTTP langsung dimasukkan ke Level 5, maka beban konsep menjadi terlalu besar. Karena itu, Level 4A dipakai sebagai **jembatan arsitektur** agar node lebih dulu memiliki **local operator access channel** sebelum Raspberry Pi diperkenalkan sebagai gateway utama.
+
+**A. Full star via Raspberry Pi**
+
+```mermaid id="full-star"
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "primaryColor": "#E8F5E9",
+    "primaryTextColor": "#1B4332",
+    "primaryBorderColor": "#2D6A4F",
+    "lineColor": "#52796F",
+    "secondaryColor": "#E3F2FD",
+    "tertiaryColor": "#FFF3E0",
+    "fontSize": "14px"
+  }
+}}%%
+flowchart TB
+    A[Node A]
+    B[Node B]
+    C[Node C]
+    D[Node D]
+    PI[Raspberry Pi<br/>Broker / Gateway]
+
+    A --> PI
+    B --> PI
+    C --> PI
+    D --> PI
+
+    PI --> A
+    PI --> B
+    PI --> C
+    PI --> D
+
+    classDef node fill:#E3F2FD,stroke:#1D4ED8,color:#0F172A,stroke-width:2px;
+    classDef pi fill:#E8F5E9,stroke:#2D6A4F,color:#1B4332,stroke-width:3px;
+
+    class A,B,C,D node;
+    class PI pi;
+```
+
+**B. Hybrid star + limited peer**
+
+```mermaid id="hybrid-star"
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "primaryColor": "#E8F5E9",
+    "primaryTextColor": "#1B4332",
+    "primaryBorderColor": "#2D6A4F",
+    "lineColor": "#64748B",
+    "fontSize": "14px"
+  }
+}}%%
+flowchart TB
+    PI[Raspberry Pi]
+
+    A[Soil Node]
+    B[Pump Node]
+    C[Tank Node]
+    D[Weather Node]
+
+    A --> PI
+    B --> PI
+    C --> PI
+    D --> PI
+
+    PI --> A
+    PI --> B
+    PI --> C
+    PI --> D
+
+    B <-->|Local peer link| C
+
+    classDef pi fill:#E8F5E9,stroke:#2D6A4F,color:#1B4332,stroke-width:3px;
+    classDef main fill:#E3F2FD,stroke:#1D4ED8,color:#0F172A,stroke-width:2px;
+    classDef peer fill:#FFF3E0,stroke:#EA580C,color:#7C2D12,stroke-width:2px;
+
+    class PI pi;
+    class A,D main;
+    class B,C peer;
+```
+
+**C. Full peer-to-peer**
+
+```mermaid id="peer-to-peer"
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "lineColor": "#7C3AED",
+    "fontSize": "14px"
+  }
+}}%%
+flowchart TB
+    A[Node A]
+    B[Node B]
+    C[Node C]
+    D[Node D]
+
+    A <--> B
+    A <--> C
+    B <--> C
+    B <--> D
+    C <--> D
+    A <--> D
+
+    classDef peer fill:#F3E8FF,stroke:#7C3AED,color:#3B0764,stroke-width:2px;
+
+    class A,B,C,D peer;
+```
+
+<ResourceBox
+title="Artikel Terkait:"
+items={[
+{
+name: 'README - HortiLink — Aliran Belajar',
+href: '/blog/IoT/hortiink-velxio/README',
+},
+]}
+/>
 
 ---
 
@@ -143,6 +270,69 @@ Feature Level 4A bukan mengganti Level 4, tetapi menambahkan kemampuan baru pada
 
 SoftAP lokal untuk operator access didukung oleh Arduino-ESP32, sedangkan emulasi **ESP32-C3** di Velxio saat ini masih difokuskan pada jalur lain dan belum cocok untuk uji HTTP lokal penuh. Karena itu, sketch pada level ini diposisikan sebagai **implementasi board nyata**. :contentReference[oaicite:1]{index=1}
 
+### 4.1 Wiring Fisik dan Akses Lokal
+
+Agar pembaca tidak hanya membaca platform sebagai daftar pin, hubungan antar pin, komponen fisik, dan akses smartphone pada Level 4A divisualisasikan sebagai berikut.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+flowchart TB
+
+    GPIO5["GPIO5"];
+    SW_DRY["Dry Sensor Switch"];
+    GND1["GND"];
+
+    GPIO6["GPIO6"];
+    SW_FAULT["Fault Switch"];
+    GND2["GND"];
+
+    GPIO8["GPIO8"];
+    LED_STATUS["Status LED"];
+
+    GPIO7["GPIO7"];
+    LED_ACT["Actuator LED"];
+    GND3["GND"];
+
+    NODE["ESP32-C3 Node<br/>SoftAP + HTTP Server"];
+    PHONE["HP / Smartphone<br/>Browser"];
+    WIFI["Wi-Fi AP Lokal<br/>SSID: HortiLink-Node"];
+
+    GPIO5 --> SW_DRY --> GND1;
+    GPIO6 --> SW_FAULT --> GND2;
+    GPIO8 --> LED_STATUS;
+    GPIO7 --> LED_ACT --> GND3;
+
+    NODE --> WIFI;
+    PHONE -. "akses lokal via browser" .-> WIFI;
+
+    classDef pin fill:#DBEAFE,stroke:#2563EB,color:#111,stroke-width:1.6px;
+    classDef comp fill:#FEF3C7,stroke:#D97706,color:#111,stroke-width:1.6px;
+    classDef gnd fill:#F1F5F9,stroke:#64748B,color:#111,stroke-width:1.4px;
+    classDef node fill:#E8F5E9,stroke:#2E7D32,color:#111,stroke-width:1.8px;
+    classDef net fill:#FCE4EC,stroke:#C2185B,color:#111,stroke-width:1.6px;
+
+    class GPIO5,GPIO6,GPIO7,GPIO8 pin;
+    class SW_DRY,SW_FAULT,LED_STATUS,LED_ACT comp;
+    class GND1,GND2,GND3 gnd;
+    class NODE node;
+    class PHONE,WIFI net;
+```
+
+[**Kembali ke Atas**](#hortilink-level-4a--local-http-access)
+
 ---
 
 ## 5. Konsep Level 4A
@@ -154,6 +344,36 @@ Pada Level 4A, node HortiLink mulai memiliki **jalur operasi lokal tambahan**:
 - tetapi juga dari **smartphone melalui HTTP**
 
 Namun smartphone **bukan pusat kontrol baru**.
+
+```mermaid id="peran-channel-komunikasi"
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#475569"
+  }
+}}%%
+flowchart TB
+    HP[Smartphone<br/>HTTP]
+    N1[ESP32 Node]
+    PI[Raspberry Pi<br/>MQTT Broker]
+    N2[ESP32 Node]
+    N3[ESP32 Node]
+
+    HP <--> N1
+    N1 <--> PI
+    N2 <--> PI
+    N3 <--> PI
+
+    classDef hp fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+    classDef node fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef pi fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:3px;
+
+    class HP hp;
+    class N1,N2,N3 node;
+    class PI pi;
+```
 
 Smartphone di Level 4A hanya diposisikan sebagai:
 
@@ -178,6 +398,8 @@ maka node tetap bisa:
 - dioperasikan secara lokal
 
 Ini sangat selaras dengan prinsip **offline-first**.
+
+[**Kembali ke Atas**](#hortilink-level-4a--local-http-access)
 
 ---
 
@@ -256,6 +478,8 @@ Menampilkan:
 - auto rule enabled
 - safe fallback enabled
 
+[**Kembali ke Atas**](#hortilink-level-4a--local-http-access)
+
 ---
 
 ## 7. Mekanisme Interaksi Browser ke Node
@@ -298,6 +522,8 @@ Saat operator menekan tombol di browser, frontend akan:
 5. jika ditolak, frontend menampilkan pesan
 
 Dengan pola ini, browser tetap menjadi channel, bukan sumber logic.
+
+[**Kembali ke Atas**](#hortilink-level-4a--local-http-access)
 
 ---
 
@@ -382,6 +608,8 @@ atau:
 }
 ```
 
+[**Kembali ke Atas**](#hortilink-level-4a--local-http-access)
+
 ---
 
 ## 9. Kontrak Domain yang Diperkenalkan
@@ -436,6 +664,8 @@ struct CommandResult {
 };
 ```
 
+[**Kembali ke Atas**](#hortilink-level-4a--local-http-access)
+
 ---
 
 ## 10. Mode dan Prioritas Kontrol
@@ -459,6 +689,42 @@ Agar HTTP tidak mengacaukan safety, prioritas keputusan harus dikunci sebagai be
 3. `AUTO_ACTIVE`
 4. `MONITORING`
 
+**Diagram prioritas keputusan**
+
+```mermaid id="prioritas-keputusan"
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#64748B"
+  }
+}}%%
+flowchart TB
+    A[1. SAFE_FALLBACK]
+    B[2. MANUAL_OVERRIDE]
+    C[3. GATEWAY / COORDINATION]
+    D[4. PEER REQUEST]
+    E[5. AUTO RULE]
+    F[6. MONITORING]
+
+    A --> B --> C --> D --> E --> F
+
+    classDef c1 fill:#FEE2E2,stroke:#DC2626,color:#7F1D1D,stroke-width:2px;
+    classDef c2 fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+    classDef c3 fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef c4 fill:#EDE9FE,stroke:#7C3AED,color:#4C1D95,stroke-width:2px;
+    classDef c5 fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px;
+    classDef c6 fill:#F1F5F9,stroke:#64748B,color:#334155,stroke-width:2px;
+
+    class A c1;
+    class B c2;
+    class C c3;
+    class D c4;
+    class E c5;
+    class F c6;
+```
+
 ### 10.3 Arti prioritas ini bagi browser
 
 Artinya:
@@ -467,6 +733,8 @@ Artinya:
 - tetapi jika fault aktif dan service memutuskan `SAFE_FALLBACK`, maka command override bisa ditolak
 - browser boleh meminta reset fault
 - tetapi service tetap memutuskan apakah reset itu sah atau tidak
+
+[**Kembali ke Atas**](#hortilink-level-4a--local-http-access)
 
 ---
 
@@ -531,9 +799,292 @@ Tugas `app`:
 - logging
 - menjaga ritme runtime
 
+**Diagram alur “logical node-to-node” yang sehat**
+
+```mermaid id="logical node-to-node"
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#334155"
+  }
+}}%%
+flowchart TB
+    A[Soil Node<br/>publish DRY]
+    PI[Raspberry Pi<br/>Broker]
+    B[Pump Node<br/>evaluate request]
+
+    A --> PI
+    PI --> B
+
+    classDef src fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef hub fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:3px;
+    classDef dst fill:#FCE7F3,stroke:#DB2777,color:#831843,stroke-width:2px;
+
+    class A src;
+    class PI hub;
+    class B dst;
+```
+
+[**Kembali ke Atas**](#hortilink-level-4a--local-http-access)
+
 ---
 
 ## 12. Sketch Level 4A
+
+### 12.1 Diagram Layering dan Class Mapping
+
+Agar pembaca tidak hanya membaca sketch sebagai kumpulan kode, diagram berikut memperlihatkan bagaimana class pada Level 4A dipetakan ke layer firmware HortiLink.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+
+flowchart TB
+
+    subgraph SYS["namespace sys"]
+      direction TB
+      C["sys::Config<br/>pin, timing, AP, HTTP port"]
+    end
+
+    subgraph DRV["namespace drv"]
+      direction TB
+      D1["drv::StatusLed"]
+      D2["drv::DigitalSoilSensor"]
+      D3["drv::ActuatorOutput"]
+      D4["drv::WifiAccessPoint"]
+      D5["drv::HttpServerPort"]
+    end
+
+    subgraph SVC["namespace svc"]
+      direction TB
+      S1["OperatorCommand"]
+      S2["CommandResult"]
+      S3["NodeSnapshot"]
+      S4["svc::RuntimeDisciplineService"]
+      S5["svc::LocalHttpAccessService"]
+    end
+
+    subgraph APP["namespace app"]
+      direction TB
+      A1["app::FirmwareApp"]
+    end
+
+    C --> D1
+    C --> D2
+    C --> D3
+    C --> D4
+    C --> D5
+    C --> S4
+    C --> S5
+    C --> A1
+
+    D1 --> S4
+    D2 --> S4
+    D3 --> S4
+
+    D4 --> S5
+    D5 --> S5
+    S4 --> S5
+
+    S1 --> S5
+    S2 --> S5
+    S3 --> S4
+
+    S4 --> A1
+    S5 --> A1
+
+    classDef sys fill:#E3F2FD,stroke:#1565C0,color:#111,stroke-width:1.6px;
+    classDef drv fill:#E8F5E9,stroke:#2E7D32,color:#111,stroke-width:1.6px;
+    classDef svc fill:#FFF3E0,stroke:#EF6C00,color:#111,stroke-width:1.6px;
+    classDef app fill:#FCE4EC,stroke:#C2185B,color:#111,stroke-width:1.6px;
+    classDef state fill:#ECEFF1,stroke:#455A64,color:#111,stroke-width:1.2px;
+
+    class C sys;
+    class D1,D2,D3,D4,D5 drv;
+    class S4,S5 svc;
+    class A1 app;
+    class S1,S2,S3 state;
+```
+
+---
+
+### 12.2 Diagram Object Wiring / Composition Root
+
+Selain class, pembaca juga perlu melihat bagaimana object nyata dirangkai pada composition root. Diagram ini menunjukkan urutan dependency yang benar pada Level 4A.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+
+flowchart TB
+
+    CFG["sys::Config"]
+    O1["drv_statusLed"]
+    O2["drv_soilSensor"]
+    O3["drv_actuator"]
+    O4["drv_wifiAccessPoint"]
+    O5["drv_httpServerPort"]
+    O6["svc_runtimeService"]
+    O7["svc_httpAccessService"]
+    O8["app_firmware"]
+
+    CFG --> O1
+    CFG --> O2
+    CFG --> O3
+    CFG --> O4
+    CFG --> O5
+    CFG --> O6
+    CFG --> O7
+    CFG --> O8
+
+    O1 --> O6
+    O2 --> O6
+    O3 --> O6
+
+    O4 --> O7
+    O5 --> O7
+    O6 --> O7
+
+    O6 --> O8
+    O7 --> O8
+
+    classDef sys fill:#E3F2FD,stroke:#1565C0,color:#111,stroke-width:1.6px;
+    classDef drv fill:#E8F5E9,stroke:#2E7D32,color:#111,stroke-width:1.6px;
+    classDef svc fill:#FFF3E0,stroke:#EF6C00,color:#111,stroke-width:1.6px;
+    classDef app fill:#FCE4EC,stroke:#C2185B,color:#111,stroke-width:1.6px;
+
+    class CFG sys;
+    class O1,O2,O3,O4,O5 drv;
+    class O6,O7 svc;
+    class O8 app;
+```
+
+---
+
+### 12.3 Diagram Struktur Domain di dalam `svc`
+
+Karena Level 4A sudah membawa command channel baru, pembaca juga perlu melihat struktur domain internal pada layer `svc`.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+
+flowchart TB
+
+    CMD["OperatorCommand"]
+    RES["CommandResult"]
+    SNAP["NodeSnapshot"]
+    RTS["RuntimeDisciplineService"]
+    HTTP["LocalHttpAccessService"]
+
+    SNAP --> RTS
+    RTS --> HTTP
+    CMD --> HTTP
+    RES --> HTTP
+
+    classDef state fill:#ECEFF1,stroke:#455A64,color:#111,stroke-width:1.2px;
+    classDef svc fill:#FFF3E0,stroke:#EF6C00,color:#111,stroke-width:1.6px;
+
+    class CMD,RES,SNAP state;
+    class RTS,HTTP svc;
+```
+
+---
+
+### 12.4 Diagram Browser / Smartphone ↔ Node Interface
+
+Karena Level 4A memperkenalkan local HTTP access, pembaca juga perlu melihat dengan jelas bagaimana smartphone atau browser berinteraksi dengan node tanpa merusak layering.
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "fontSize":"13px",
+  "fontFamily":"Arial, sans-serif",
+  "lineColor":"#546E7A",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0D47A1",
+  "primaryBorderColor":"#1565C0",
+  "secondaryColor":"#E8F5E9",
+  "secondaryTextColor":"#1B5E20",
+  "secondaryBorderColor":"#2E7D32",
+  "tertiaryColor":"#FFF3E0",
+  "tertiaryTextColor":"#E65100",
+  "tertiaryBorderColor":"#EF6C00"
+}}}%%
+
+flowchart TB
+
+    HP["Smartphone / Browser"]
+    HTML["GET /<br/>index.html"]
+    SNAP["GET /api/snapshot"]
+    CMD["POST /api/command"]
+    WIFI["drv::WifiAccessPoint"]
+    HTTP["drv::HttpServerPort"]
+    SVC["svc::LocalHttpAccessService"]
+    RTS["svc::RuntimeDisciplineService"]
+
+    HP --> HTML
+    HP --> SNAP
+    HP --> CMD
+
+    HTML --> WIFI
+    SNAP --> WIFI
+    CMD --> WIFI
+
+    WIFI --> HTTP
+    HTTP --> SVC
+    SVC --> RTS
+    RTS --> SVC
+    SVC --> HTTP
+    HTTP --> HP
+
+    classDef hp fill:#FEF3C7,stroke:#D97706,color:#111,stroke-width:1.6px;
+    classDef drv fill:#E8F5E9,stroke:#2E7D32,color:#111,stroke-width:1.6px;
+    classDef svc fill:#FFF3E0,stroke:#EF6C00,color:#111,stroke-width:1.6px;
+    classDef api fill:#E3F2FD,stroke:#1565C0,color:#111,stroke-width:1.4px;
+
+    class HP hp;
+    class WIFI,HTTP drv;
+    class SVC,RTS svc;
+    class HTML,SNAP,CMD api;
+```
 
 ```cpp
 #include <Arduino.h>
@@ -1459,6 +2010,8 @@ void loop() {
 }
 ```
 
+[**Kembali ke Atas**](#hortilink-level-4a--local-http-access)
+
 ---
 
 ## 13. Cara Kerja Firmware
@@ -1523,9 +2076,36 @@ Jika fault aktif:
 - command operator yang bertentangan dengan safety bisa ditolak
 - frontend tetap bisa menunjukkan bahwa node sedang berada di mode aman
 
+[**Kembali ke Atas**](#hortilink-level-4a--local-http-access)
+
 ---
 
 ## 14. Yang Dipelajari dari Level 4A
+
+**Diagram jumlah node optimal**
+
+```mermaid id="jumlah-node"
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#475569"
+  }
+}}%%
+flowchart TB
+    P1[Full Peer<br/>Optimal: 2–6]
+    P2[Hybrid<br/>Optimal: 10–40]
+    P3[Full Star via Pi<br/>Optimal: 5–30]
+
+    classDef peer fill:#F3E8FF,stroke:#7C3AED,color:#3B0764,stroke-width:2px;
+    classDef hybrid fill:#FFF7ED,stroke:#EA580C,color:#7C2D12,stroke-width:2px;
+    classDef star fill:#ECFDF5,stroke:#16A34A,color:#14532D,stroke-width:3px;
+
+    class P1 peer;
+    class P2 hybrid;
+    class P3 star;
+```
 
 ### 14.1 HTTP adalah channel, bukan logic domain
 
@@ -1565,6 +2145,8 @@ Sedangkan HMI Raspberry Pi nantinya adalah:
 
 Dengan Level 4A, saat masuk Level 5 nanti, node sudah siap menerima command dari channel selain GPIO.
 
+[**Kembali ke Atas**](#hortilink-level-4a--local-http-access)
+
 ---
 
 ## 15. Inti Level 4A
@@ -1587,8 +2169,44 @@ Dengan kata lain, Level 4A adalah jembatan antara:
 - node yang hanya punya sensor, rule, dan runtime discipline
 - dan node yang siap masuk ke ekosistem **gateway + operator access + multi-channel command**
 
+**Diagram rekomendasi roadmap**
+
+```mermaid id="rekomendasi-roadmap"
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "fontSize": "14px",
+    "lineColor": "#475569"
+  }
+}}%%
+flowchart TB
+    L4A[Level 4A<br/>Local HTTP Access]
+    L5[Level 5<br/>Pi as Broker / Gateway]
+    L6[Level 6<br/>Brokered Node Coordination]
+    L6A[Level 6A<br/>Limited Peer if Needed]
+
+    L4A --> L5 --> L6 --> L6A
+
+    classDef step1 fill:#FEF3C7,stroke:#D97706,color:#78350F,stroke-width:2px;
+    classDef step2 fill:#DBEAFE,stroke:#2563EB,color:#1E3A8A,stroke-width:2px;
+    classDef step3 fill:#DCFCE7,stroke:#16A34A,color:#14532D,stroke-width:2px;
+    classDef step4 fill:#F3E8FF,stroke:#7C3AED,color:#3B0764,stroke-width:2px;
+
+    class L4A step1;
+    class L5 step2;
+    class L6 step3;
+    class L6A step4;
+```
+
+[**Kembali ke Atas**](#hortilink-level-4a--local-http-access)
+
 ---
 
 <small>
-  **_Catatan Penyusunan_** Level 4A adalah level sisipan yang disarankan agar transisi dari node-centric firmware ke gateway integration tidak terlalu meloncat. Untuk ESP32-C3 pada Velxio, level ini harus diperlakukan sebagai level desain arsitektur dan implementasi board nyata, karena WiFi/HTTP belum tersedia sebagai jalur uji penuh pada emulasi ESP32-C3 RISC-V saat ini.
+  **_Catatan Penyusunan_** Level 4A adalah level sisipan yang disarankan agar
+  transisi dari node-centric firmware ke gateway integration tidak terlalu
+  meloncat. Untuk ESP32-C3 pada Velxio, level ini harus diperlakukan sebagai
+  level desain arsitektur dan implementasi board nyata, karena WiFi/HTTP belum
+  tersedia sebagai jalur uji penuh pada emulasi ESP32-C3 RISC-V saat ini.
 </small>

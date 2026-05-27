@@ -85,6 +85,15 @@ summary: Mermaid diagram adalah metode membuat diagram menggunakan teks sederhan
   - [Tahap 2 — Bentuk Menengah](#tahap-2--bentuk-menengah)
   - [Tahap 3 — Bentuk Advanced](#tahap-3--bentuk-advanced)
   - [A.13. Kesimpulan Apendix](#a13-kesimpulan-apendix)
+  - [B.1. Apa Itu Mermaid XY Chart?](#b1-apa-itu-mermaid-xy-chart)
+  - [B.2. Struktur Dasar XY Chart](#b2-struktur-dasar-xy-chart)
+  - [B.3. Contoh Line Chart: Spesiasi Karbonat vs pH](#b3-contoh-line-chart-spesiasi-karbonat-vs-ph)
+  - [B.4. Versi yang Lebih Rapi untuk Warna Line Chart](#b4-versi-yang-lebih-rapi-untuk-warna-line-chart)
+  - [B.5. Contoh Bar Chart](#b5-contoh-bar-chart)
+  - [B.6. Contoh Kombinasi Bar dan Line](#b6-contoh-kombinasi-bar-dan-line)
+  - [B.7. Kapan Mermaid Chart Cocok Digunakan?](#b7-kapan-mermaid-chart-cocok-digunakan)
+  - [B.8. Rekomendasi Standar Penulisan Chart di Artikel](#b8-rekomendasi-standar-penulisan-chart-di-artikel)
+  - [B.9. Kesimpulan Tambahan](#b9-kesimpulan-tambahan)
 
 ---
 
@@ -99,21 +108,21 @@ Di sinilah **Mermaid diagram** menjadi sangat berguna.
 Mermaid memungkinkan penulis membuat diagram hanya dengan teks. Diagram ditulis langsung di dalam artikel, lalu dirender otomatis oleh sistem menjadi gambar diagram. Untuk proyek berbasis **Next.js, Contentlayer, MDX, dan blog teknis**, Mermaid sangat cocok karena mudah diedit, mudah disimpan di Git, dan sangat praktis untuk dokumentasi engineering.
 
 <ResourceBox
-  title="Artikel Terkait:"
-  items={[
-    {
-      name: 'Cara Menampilkan Gambar pada File MDX',
-      href: '/blog/markdown/figure-image-guide',
-    },
-    {
-      name: 'Panduan Markdown',
-      href: '/blog/markdown/github-markdown-guide',
-    },
-    {
-      name: 'Panduan Penulisan Formula Matematika dalam Block Markdown',
-      href: '/blog/markdown/math-formula-guide',
-    },
-  ]}
+title="Artikel Terkait:"
+items={[
+{
+name: 'Cara Menampilkan Gambar pada File MDX',
+href: '/blog/markdown/figure-image-guide',
+},
+{
+name: 'Panduan Markdown',
+href: '/blog/markdown/github-markdown-guide',
+},
+{
+name: 'Panduan Penulisan Formula Matematika dalam Block Markdown',
+href: '/blog/markdown/math-formula-guide',
+},
+]}
 />
 
 ---
@@ -1470,6 +1479,251 @@ Jangan terlalu banyak memakai bentuk berbeda dalam satu diagram. Untuk artikel t
 Mermaid tidak hanya mendukung kotak dan panah. Mermaid juga dapat digunakan untuk membuat node berbentuk lingkaran, diamond, database, parallelogram, subroutine, hexagon, trapezoid, double circle, dan pada versi baru juga segitiga. Namun, bentuk node harus digunakan secara konsisten dan memiliki makna teknis.
 
 Untuk dokumentasi engineering, bentuk node yang paling penting adalah kotak untuk proses, diamond untuk keputusan, database untuk data, lingkaran untuk start/end, dan segitiga atau node warning untuk risiko. Jika dikombinasikan dengan warna, diagram Mermaid dapat menjadi alat visual yang kuat untuk menjelaskan proses, risiko, kontrol, dan output teknis.
+
+---
+
+## B.1. Apa Itu Mermaid XY Chart?
+
+Selain flowchart, sequence diagram, Gantt chart, dan mind map, Mermaid juga dapat membuat grafik data sederhana menggunakan `xychart` atau `xychart-beta`.
+
+Format ini cocok untuk menampilkan hubungan antara dua variabel, misalnya:
+
+```text
+pH → fraksi karbonat
+waktu → suhu
+hari → berat ikan
+beban → arus motor
+jam operasi → vibration trend
+```
+
+Contoh dasar:
+
+````mdx
+```mermaid id="contoh-xychart-01"
+xychart-beta
+    title "Contoh Line Chart"
+    x-axis "Hari" [1, 2, 3, 4, 5]
+    y-axis "Nilai" 0 --> 100
+    line [10, 25, 45, 70, 90]
+```
+````
+
+---
+
+## B.2. Struktur Dasar XY Chart
+
+Struktur umum:
+
+````mdx
+```mermaid id="nama-chart"
+xychart-beta
+    title "Judul Chart"
+    x-axis "Nama Sumbu X" [x1, x2, x3, x4]
+    y-axis "Nama Sumbu Y" min --> max
+    line [y1, y2, y3, y4]
+```
+````
+
+Bagian penting:
+
+| Bagian         | Fungsi                                    |
+| -------------- | ----------------------------------------- |
+| `xychart-beta` | Menentukan jenis diagram sebagai XY chart |
+| `title`        | Judul grafik                              |
+| `x-axis`       | Label dan nilai sumbu-X                   |
+| `y-axis`       | Label dan rentang sumbu-Y                 |
+| `line`         | Data line chart                           |
+| `bar`          | Data bar chart                            |
+
+---
+
+## B.3. Contoh Line Chart: Spesiasi Karbonat vs pH
+
+Contoh yang Anda berikan sudah valid sebagai chart edukatif:
+
+````mdx
+```mermaid id="karbonat-ph"
+%%{init: {'theme':'base','themeVariables':{
+'primaryColor':'#E3F2FD',
+'primaryTextColor':'#0D47A1',
+'primaryBorderColor':'#1565C0',
+'secondaryColor':'#E8F5E9',
+'secondaryTextColor':'#1B5E20',
+'secondaryBorderColor':'#2E7D32',
+'tertiaryColor':'#FFF3E0',
+'tertiaryTextColor':'#E65100',
+'tertiaryBorderColor':'#EF6C00',
+'lineColor':'#546E7A'
+}}}%%
+xychart-beta
+    title "Spesiasi Karbonat vs pH"
+    x-axis "pH" [5.5, 6.0, 6.35, 7.0, 7.5, 8.0, 8.3, 8.5, 9.0, 9.5, 10.0, 10.33, 11.0]
+    y-axis "Fraksi persen" 0 --> 100
+    line [88, 69, 50, 18, 7, 2, 1, 0.7, 0.2, 0.07, 0.02, 0.01, 0]
+    line [12, 31, 50, 82, 93, 98, 98, 98, 96, 87, 68, 50, 18]
+    line [0, 0, 0, 0, 0.3, 0.5, 0.9, 1.5, 4.5, 13, 32, 50, 82]
+```
+````
+
+Namun ada satu kelemahan penting:
+
+> Mermaid XY Chart belum nyaman untuk memberi nama langsung pada setiap garis seperti legend lengkap.
+
+Karena itu, sebaiknya setelah chart diberi caption:
+
+```mdx
+**Gambar B.1.** Spesiasi karbonat terhadap pH. Garis pertama menunjukkan dominasi CO₂/H₂CO₃, garis kedua menunjukkan HCO₃⁻, dan garis ketiga menunjukkan CO₃²⁻.
+```
+
+---
+
+## B.4. Versi yang Lebih Rapi untuk Warna Line Chart
+
+Untuk `xychart`, pewarnaan line/bar yang lebih tepat dapat memakai `plotColorPalette` di dalam konfigurasi `xyChart`. Mermaid menyediakan theme variable khusus untuk XY Chart, termasuk `plotColorPalette` untuk warna bar atau line secara berurutan. ([Mermaid][1])
+
+Contoh:
+
+````mdx
+```mermaid id="karbonat-ph-warna"
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "xyChart": {
+      "backgroundColor": "#FFFFFF",
+      "titleColor": "#0D47A1",
+      "xAxisLabelColor": "#263238",
+      "xAxisTitleColor": "#0D47A1",
+      "xAxisTickColor": "#546E7A",
+      "xAxisLineColor": "#546E7A",
+      "yAxisLabelColor": "#263238",
+      "yAxisTitleColor": "#0D47A1",
+      "yAxisTickColor": "#546E7A",
+      "yAxisLineColor": "#546E7A",
+      "plotColorPalette": "#1565C0, #2E7D32, #EF6C00"
+    }
+  }
+}}%%
+xychart-beta
+    title "Spesiasi Karbonat vs pH"
+    x-axis "pH" [5.5, 6.0, 6.35, 7.0, 7.5, 8.0, 8.3, 8.5, 9.0, 9.5, 10.0, 10.33, 11.0]
+    y-axis "Fraksi persen" 0 --> 100
+    line [88, 69, 50, 18, 7, 2, 1, 0.7, 0.2, 0.07, 0.02, 0.01, 0]
+    line [12, 31, 50, 82, 93, 98, 98, 98, 96, 87, 68, 50, 18]
+    line [0, 0, 0, 0, 0.3, 0.5, 0.9, 1.5, 4.5, 13, 32, 50, 82]
+```
+
+**Gambar B.1.** Spesiasi karbonat terhadap pH. Garis biru mewakili CO₂/H₂CO₃, garis hijau mewakili HCO₃⁻, dan garis oranye mewakili CO₃²⁻.
+````
+
+---
+
+## B.5. Contoh Bar Chart
+
+Selain `line`, Mermaid XY Chart juga mendukung `bar`.
+
+````mdx
+```mermaid id="contoh-bar-chart-01"
+xychart-beta
+    title "Contoh Produksi Harian"
+    x-axis "Hari" [1, 2, 3, 4, 5, 6, 7]
+    y-axis "Produksi kg" 0 --> 100
+    bar [40, 55, 60, 72, 68, 80, 90]
+```
+````
+
+Bar chart cocok untuk:
+
+```text
+produksi harian
+jumlah mortalitas
+jumlah pekerjaan selesai
+jumlah inspeksi
+jumlah failure per kategori
+```
+
+---
+
+## B.6. Contoh Kombinasi Bar dan Line
+
+Mermaid XY Chart juga dapat menampilkan beberapa seri, misalnya bar dan line dalam satu chart.
+
+````mdx
+```mermaid id="contoh-bar-line-01"
+xychart-beta
+    title "Pakan Harian dan Pertumbuhan"
+    x-axis "Hari" [1, 2, 3, 4, 5, 6, 7]
+    y-axis "Nilai" 0 --> 100
+    bar [20, 25, 30, 35, 40, 45, 50]
+    line [10, 18, 28, 42, 55, 70, 85]
+```
+````
+
+Untuk artikel budidaya, ini bisa digunakan sebagai ilustrasi:
+
+```text
+bar  = pakan harian
+line = estimasi pertumbuhan biomassa
+```
+
+---
+
+## B.7. Kapan Mermaid Chart Cocok Digunakan?
+
+Gunakan Mermaid XY Chart untuk:
+
+| Kebutuhan                         | Cocok?       |
+| --------------------------------- | ------------ |
+| Grafik edukatif sederhana         | Sangat cocok |
+| Grafik tren ringan                | Cocok        |
+| Ilustrasi hubungan parameter      | Cocok        |
+| Grafik dengan sedikit data        | Cocok        |
+| Chart untuk artikel MDX           | Cocok        |
+| Grafik ilmiah kompleks            | Kurang cocok |
+| Banyak seri dengan legend lengkap | Kurang cocok |
+| Tooltip/interaktif                | Kurang cocok |
+| Analisis statistik                | Tidak cocok  |
+
+Untuk artikel teknis, Mermaid Chart sangat cocok sebagai **ilustrasi konsep**, bukan sebagai alat analisis data utama.
+
+---
+
+## B.8. Rekomendasi Standar Penulisan Chart di Artikel
+
+Gunakan format berikut:
+
+````mdx
+```mermaid id="nama-chart"
+xychart-beta
+    title "Judul Grafik"
+    x-axis "Nama Sumbu X" [x1, x2, x3]
+    y-axis "Nama Sumbu Y" min --> max
+    line [y1, y2, y3]
+```
+
+**Gambar X.** Keterangan grafik, termasuk arti setiap garis jika ada lebih dari satu seri.
+````
+
+Untuk multiple line, selalu tambahkan keterangan:
+
+```mdx
+**Keterangan garis:**
+
+- Garis pertama = CO₂/H₂CO₃
+- Garis kedua = HCO₃⁻
+- Garis ketiga = CO₃²⁻
+```
+
+Karena tanpa legend, pembaca bisa sulit memahami arti masing-masing garis.
+
+---
+
+## B.9. Kesimpulan Tambahan
+
+Mermaid ternyata tidak hanya untuk flowchart dan diagram proses, tetapi juga dapat membuat chart sederhana melalui `xychart-beta`. Fitur ini berguna untuk artikel MDX karena grafik dapat ditulis langsung sebagai teks, mudah direvisi, dan tidak membutuhkan file gambar terpisah.
+
+Namun penggunaannya perlu proporsional. Untuk chart edukatif seperti pH vs spesiasi karbonat, Mermaid sudah cukup. Untuk grafik data aktual, dashboard, banyak seri, tooltip, atau analisis statistik, lebih tepat menggunakan Recharts, Vega-Lite, Python/Matplotlib, atau Excel.
+
+[1]: https://mermaid.ai/open-source/syntax/xyChart.html 'XY Chart | Mermaid'
 
 ---
 
