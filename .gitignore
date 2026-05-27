@@ -34,3 +34,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .contentlayer
+
+# Generated blog/search data
+/build.log
+/public/search.json
+/app/author-data.json
+/app/tag-data.json
