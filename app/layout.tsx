@@ -2,6 +2,7 @@
 
 import 'css/tailwind.css';
 import 'pliny/search/algolia.css';
+import 'katex/dist/katex.min.css';
 
 import './globals.css';
 import { Inter } from 'next/font/google';

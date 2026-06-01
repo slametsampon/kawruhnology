@@ -3,7 +3,7 @@
 /** @type {import("pliny/config").PlinyConfig } */
 const siteMetadata = {
   title: 'kawruhnology',
-  version: '1.0.0', // 🆕 Tambahkan versi di sini
+  version: '1.0.1', // 🆕 Tambahkan versi di sini
   author: 'Slamet-Sam',
   headerTitle: 'MxCore',
   description: 'Kawruh - Technology',
