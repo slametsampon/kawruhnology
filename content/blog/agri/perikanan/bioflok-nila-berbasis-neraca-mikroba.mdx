@@ -56,18 +56,22 @@ _Membaca Avnimelech, Sarker, Debnath, dan Zablon untuk Praktik Budidaya yang Tid
     - [Jika DO subuh rendah](#jika-do-subuh-rendah)
     - [Jika ingin mengandalkan denitrifikasi](#jika-ingin-mengandalkan-denitrifikasi)
   - [3.7 Pesan Kunci Bab Ini](#37-pesan-kunci-bab-ini)
-- [4. Stoikiometri Praktis: dari TAN ke Dosis Karbon, Oksigen, Alkalinitas, dan TSS](#4-stoikiometri-praktis-dari-tan-ke-dosis-karbon-oksigen-alkalinitas-dan-tss)
-  - [4.1 Rumus Nitrogen Pakan](#41-rumus-nitrogen-pakan)
-  - [4.2 Rumus Karbon Praktis Berbasis Ekskresi Nitrogen](#42-rumus-karbon-praktis-berbasis-ekskresi-nitrogen)
-  - [4.3 Dua Pendekatan Dosis Karbon: Berbasis Pakan vs Berbasis TAN Aktual](#43-dua-pendekatan-dosis-karbon-berbasis-pakan-vs-berbasis-tan-aktual)
-  - [4.4 Microbial Efficiency / ME](#44-microbial-efficiency--me)
-  - [4.5 Konsekuensi Stoikiometri: Karbon Bukan Satu-satunya Input](#45-konsekuensi-stoikiometri-karbon-bukan-satu-satunya-input)
-  - [4.6 Perbandingan Heterotrof dan Nitrifikasi dari Sudut Neraca](#46-perbandingan-heterotrof-dan-nitrifikasi-dari-sudut-neraca)
-  - [4.7 Contoh Hitungan Lapangan: 10 kg Pakan per Hari](#47-contoh-hitungan-lapangan-10-kg-pakan-per-hari)
-  - [4.8 Contoh Hitungan Berbasis TAN Aktual](#48-contoh-hitungan-berbasis-tan-aktual)
-  - [4.9 Hubungan Stoikiometri dengan TSS dan Sludge](#49-hubungan-stoikiometri-dengan-tss-dan-sludge)
-  - [4.10 Koreksi Dosis Karbon Berdasarkan Kondisi Lapangan](#410-koreksi-dosis-karbon-berdasarkan-kondisi-lapangan)
-  - [4.11 Pesan Bisnis dari Stoikiometri](#411-pesan-bisnis-dari-stoikiometri)
+- [4. Stoikiometri Praktis: dari Pakan, TAN, Karbon, Oksigen, Alkalinitas, hingga TSS](#4-stoikiometri-praktis-dari-pakan-tan-karbon-oksigen-alkalinitas-hingga-tss)
+  - [4.1 Mengapa Stoikiometri BFT Harus Dimulai dari Pakan, Bukan dari Molase](#41-mengapa-stoikiometri-bft-harus-dimulai-dari-pakan-bukan-dari-molase)
+  - [4.2 Rumus Nitrogen Pakan](#42-rumus-nitrogen-pakan)
+  - [4.3 Karbon Pakan Wajib Masuk dalam Neraca Input C/N](#43-karbon-pakan-wajib-masuk-dalam-neraca-input-cn)
+  - [4.4 Dua Basis Perhitungan: Input C/N vs Koreksi TAN Aktual](#44-dua-basis-perhitungan-input-cn-vs-koreksi-tan-aktual)
+    - [4.4.1 Basis A — Perencanaan Input C/N Harian](#441-basis-a--perencanaan-input-cn-harian)
+  - [4.4.2 Basis B — Koreksi TAN Aktual](#442-basis-b--koreksi-tan-aktual)
+  - [4.5 Microbial Efficiency: Rumus Koreksi TAN, Bukan Rumus Molase Harian](#45-microbial-efficiency-rumus-koreksi-tan-bukan-rumus-molase-harian)
+  - [4.6 Disiplin Satuan: Karbon, Karbohidrat, dan Molase Tidak Boleh Dicampur](#46-disiplin-satuan-karbon-karbohidrat-dan-molase-tidak-boleh-dicampur)
+  - [4.7 Konsekuensi Stoikiometri: Karbon Eksternal Bukan Input Gratis](#47-konsekuensi-stoikiometri-karbon-eksternal-bukan-input-gratis)
+  - [4.8 Perbandingan Heterotrof dan Nitrifikasi dari Sudut Neraca](#48-perbandingan-heterotrof-dan-nitrifikasi-dari-sudut-neraca)
+  - [4.9 Contoh Hitungan 1: Input C/N Harian dengan Menghitung Karbon Pakan](#49-contoh-hitungan-1-input-cn-harian-dengan-menghitung-karbon-pakan)
+  - [4.10 Contoh Hitungan 2: Koreksi TAN Aktual](#410-contoh-hitungan-2-koreksi-tan-aktual)
+  - [4.11 Hubungan Stoikiometri dengan TSS, BFV, dan Side-Stream Solids Removal](#411-hubungan-stoikiometri-dengan-tss-bfv-dan-side-stream-solids-removal)
+  - [4.12 Koreksi Dosis Karbon Berdasarkan Kondisi Lapangan](#412-koreksi-dosis-karbon-berdasarkan-kondisi-lapangan)
+  - [4.13 Pesan Bisnis dari Stoikiometri](#413-pesan-bisnis-dari-stoikiometri)
 - [5. Membaca Indikator Air sebagai Sinyal Proses Mikroba](#5-membaca-indikator-air-sebagai-sinyal-proses-mikroba)
   - [5.1 Prinsip Utama Diagnosis: Jangan Membaca Satu Angka Sendiri](#51-prinsip-utama-diagnosis-jangan-membaca-satu-angka-sendiri)
   - [5.2 Diagnostic Framework Utama](#52-diagnostic-framework-utama)
@@ -1817,48 +1821,124 @@ Dengan kerangka ini, praktisi tidak hanya tahu “siapa mikroba yang bekerja”,
 
 ---
 
-# 4. Stoikiometri Praktis: dari TAN ke Dosis Karbon, Oksigen, Alkalinitas, dan TSS
+# 4. Stoikiometri Praktis: dari Pakan, TAN, Karbon, Oksigen, Alkalinitas, hingga TSS
 
 Bab ini adalah jembatan antara mikrobiologi dan keputusan lapangan. Setelah memahami bahwa heterotrof, nitrifier, alga, dan denitrifier bekerja dengan mekanisme berbeda, praktisi harus mampu menjawab pertanyaan operasional:
 
-> Jika pakan masuk sekian kilogram, berapa nitrogen masuk? Berapa TAN yang mungkin terbentuk? Berapa karbon yang dibutuhkan? Apa konsekuensinya terhadap oksigen, alkalinitas, dan TSS?
+> Jika pakan masuk sekian kilogram, berapa nitrogen masuk? Berapa karbon sudah ikut masuk dari pakan? Berapa tambahan karbon eksternal yang benar-benar diperlukan? Apa konsekuensinya terhadap oksigen, alkalinitas, TSS, BFV, dan FCR?
 
 Tanpa stoikiometri, keputusan bioflok mudah berubah menjadi kebiasaan: “tambah molase”, “tambah probiotik”, “air kurang coklat”, atau “flok belum jadi”. Padahal, dalam bisnis budidaya, keputusan harus berbasis neraca.
 
+Bab ini membedakan tiga hal yang sering tercampur:
+
+$$
+\text{input C/N harian}
+\neq
+\text{koreksi TAN aktual}
+\neq
+\text{dosis operasional final}
+$$
+
+Pemisahan ini penting karena **pakan ikan tidak hanya membawa nitrogen, tetapi juga membawa karbon**. Karena itu, dosis molase harian tidak boleh dihitung seolah-olah karbon pakan bernilai nol. Struktur revisi bab ini mengikuti kerangka outline yang memisahkan perencanaan input $C/N$, koreksi TAN aktual, dan koreksi lapangan.
+
+Avnimelech menempatkan manipulasi rasio karbon-nitrogen sebagai cara untuk mengendalikan nitrogen anorganik melalui penambahan sumber karbon dan sintesis protein mikroba oleh bakteri. Ebeling et al. kemudian membahas stoikiometri jalur photoautotroph, autotroph, dan heterotroph serta dampaknya terhadap kualitas air dan suspended solids. ([ScienceDirect][1])
+
 ```mermaid
 flowchart TD
-    A["Pakan harian"] --> B["Protein pakan"]
-    B --> C["Nitrogen pakan"]
-    C --> D["Ekskresi nitrogen<br/>TAN + organik"]
-    D --> E["Tambahkan karbon"]
-    E --> F["Heterotrof tumbuh"]
-    F --> G["TAN turun"]
-    F --> H["O2 terpakai"]
-    F --> I["TSS / VSS naik"]
-    F --> J["Alkalinitas terpakai"]
+    A["Pakan harian"] --> B["Karbon pakan<br/>protein, lipid, karbohidrat"]
+    A --> C["Nitrogen pakan<br/>protein × 0,16"]
+    B --> D["Input C/N awal"]
+    C --> D
+    D --> E{"C/N sudah cukup?"}
+    E --> F["Ya<br/>pantau TAN, TSS, DO"]
+    E --> G["Tidak<br/>tambahkan karbon eksternal"]
+    G --> H["Molase / gula / tapioka"]
+    H --> I["Heterotrof tumbuh"]
+    I --> J["TAN turun<br/>TSS dan O2 demand naik"]
 
     classDef input fill:#E3F2FD,stroke:#1565C0,color:#0D47A1,stroke-width:1px;
+    classDef decision fill:#FFF3E0,stroke:#EF6C00,color:#E65100,stroke-width:1px;
     classDef process fill:#E8F5E9,stroke:#2E7D32,color:#1B5E20,stroke-width:1px;
-    classDef result fill:#FFF3E0,stroke:#EF6C00,color:#E65100,stroke-width:1px;
     classDef risk fill:#FFEBEE,stroke:#C62828,color:#B71C1C,stroke-width:1px;
 
-    class A,B,C input;
-    class D,E,F process;
-    class G result;
-    class H,I,J risk;
+    class A,B,C,D input;
+    class E decision;
+    class F,G,H,I process;
+    class J risk;
 ```
 
 ---
 
-## 4.1 Rumus Nitrogen Pakan
+## 4.1 Mengapa Stoikiometri BFT Harus Dimulai dari Pakan, Bukan dari Molase
 
-Sumber nitrogen utama dalam sistem nila intensif adalah protein pakan. Secara praktis, nitrogen pakan dihitung dengan:
+Kesalahan umum dalam menghitung dosis karbon bioflok adalah memulai dari pertanyaan:
 
 $$
-N_{\text{pakan}}
+\text{berapa molase harus ditambahkan?}
+$$
+
+Padahal pertanyaan pertama yang benar adalah:
+
+$$
+\text{berapa karbon dan nitrogen sudah masuk dari pakan?}
+$$
+
+Pakan adalah sumber utama nitrogen karena protein pakan mengandung nitrogen. Tetapi pakan juga membawa karbon dari protein, lipid, karbohidrat, serat, dan bahan organik lain.
+
+Jadi pakan harus dibaca sebagai input ganda:
+
+$$
+\text{pakan}
+\rightarrow
+C_{\text{feed}}
++
+N_{\text{feed}}
+$$
+
+Bukan hanya:
+
+$$
+\text{pakan}
+\rightarrow
+N_{\text{feed}}
+$$
+
+Ini penting karena target $C/N$ adalah rasio antara karbon dan nitrogen. Jika karbon pakan diabaikan, maka molase yang dihitung akan terlalu besar.
+
+Secara konsep:
+
+$$
+\left(C:N\right)_{\text{input}}
 =
 
-\text{Feed}
+\frac{
+C_{\text{feed}} + C_{\text{external}}
+}{
+N_{\text{feed}}
+}
+$$
+
+Artinya, karbon eksternal seperti molase, gula, atau tapioka hanya diperlukan untuk **menutup kekurangan karbon** setelah karbon pakan dihitung.
+
+Jika praktisi mengabaikan karbon pakan, maka rumusnya secara implisit menjadi:
+
+$$
+C_{\text{feed}} = 0
+$$
+
+Itu tidak realistis untuk pelet ikan.
+
+---
+
+## 4.2 Rumus Nitrogen Pakan
+
+Rumus nitrogen pakan tetap penting dan tetap digunakan.
+
+$$
+N_{\text{feed}}
+=
+
+Feed
 \times
 CP
 \times
@@ -1868,14 +1948,14 @@ $$
 Keterangan:
 
 $$
-N_{\text{pakan}}
+N_{\text{feed}}
 =
 
 \text{nitrogen yang masuk dari pakan}
 $$
 
 $$
-\text{Feed}
+Feed
 =
 
 \text{jumlah pakan yang diberikan}
@@ -1895,16 +1975,16 @@ $$
 \text{fraksi nitrogen rata-rata dalam protein}
 $$
 
-Jika pakan mengandung protein 30%, maka:
+Jika pakan mengandung protein $30%$, maka:
 
 $$
 CP = 0{,}30
 $$
 
-Jika pakan harian adalah $1{,}000 \ \mathrm{g}$, maka nitrogen yang masuk:
+Jika pakan harian adalah $1{,}000 \ \mathrm{g}$, maka:
 
 $$
-N_{\text{pakan}}
+N_{\text{feed}}
 =
 
 1{,}000
@@ -1915,18 +1995,20 @@ N_{\text{pakan}}
 $$
 
 $$
-N_{\text{pakan}}
+N_{\text{feed}}
 =
 
 48 \ \mathrm{g \ N}
 $$
 
-Angka $48 \ \mathrm{g \ N}$ ini bukan semuanya menjadi daging ikan. Sebagian ditahan dalam biomassa ikan, tetapi sebagian besar menjadi limbah nitrogen dalam bentuk TAN, feses, sisa pakan, dan bahan organik.
+Namun, angka $48 \ \mathrm{g \ N}$ ini tidak boleh langsung dikalikan target $C/N$ lalu dianggap sebagai kebutuhan molase. Angka ini hanya menyatakan nitrogen yang masuk dari pakan.
+
+Sebagian nitrogen akan ditahan dalam biomassa ikan. Sebagian lain keluar sebagai TAN, feses, sisa pakan, nitrogen organik tersuspensi, dan nitrogen organik terlarut.
 
 Secara konseptual:
 
 $$
-N_{\text{pakan}}
+N_{\text{feed}}
 =
 
 N_{\text{retensi ikan}}
@@ -1940,307 +2022,346 @@ N_{\text{sisa pakan}}
 N_{\text{organik tersuspensi}}
 $$
 
-Dalam artikel Sarker et al., kebutuhan karbon dihitung dari konsumsi pakan harian, protein pakan, nitrogen pakan, lalu nitrogen yang diekskresikan. Mereka menggunakan asumsi bahwa nitrogen yang diekskresikan adalah 75% dari total nitrogen pakan, kemudian molase digunakan untuk menyesuaikan rasio C/N pada perlakuan bioflok.
-
-Maka untuk pendekatan praktis:
+Jika ingin menghitung pendekatan nitrogen yang menjadi beban air, dapat digunakan:
 
 $$
-EFN
+N_{\text{excreted}}
 =
 
-N_{\text{pakan}}
+N_{\text{feed}}
 \times
-0{,}75
+f_{\text{excretion}}
 $$
 
-atau langsung:
+atau:
 
 $$
-EFN
+N_{\text{excreted}}
 =
 
-\text{Feed}
+Feed
 \times
 CP
 \times
 0{,}16
 \times
-0{,}75
+f_{\text{excretion}}
 $$
 
-Keterangan:
+Nilai $f_{\text{excretion}}$ kadang didekati dengan $0{,}75$, tetapi ini harus dibaca sebagai **asumsi praktis**, bukan konstanta universal. Nilainya bisa berubah menurut ukuran ikan, kualitas pakan, suhu, feeding rate, protein pakan, kecernaan pakan, dan kesehatan ikan.
+
+Tiga istilah berikut harus dibedakan:
 
 $$
-EFN
+N_{\text{feed}}
 =
 
-\text{excreted feed nitrogen}
+\text{nitrogen input dari pakan}
 $$
 
-Jika contoh sebelumnya digunakan:
-
 $$
-EFN
+N_{\text{excreted}}
 =
 
-1{,}000
-\times
-0{,}30
-\times
-0{,}16
-\times
-0{,}75
+\text{perkiraan nitrogen yang menjadi beban sistem}
 $$
 
 $$
-EFN
+TAN_{\text{measured}}
 =
 
-36 \ \mathrm{g \ N}
+\text{nitrogen anorganik aktual yang sudah terukur di air}
 $$
 
-Artinya, dari $1 \ \mathrm{kg}$ pakan 30% protein, kira-kira $36 \ \mathrm{g}$ nitrogen berpotensi menjadi beban yang harus diproses sistem.
+Kesalahan bisnis terjadi ketika ketiganya dianggap sama.
 
 ---
 
-## 4.2 Rumus Karbon Praktis Berbasis Ekskresi Nitrogen
+## 4.3 Karbon Pakan Wajib Masuk dalam Neraca Input C/N
 
-Setelah beban nitrogen diperkirakan, praktisi perlu menghitung karbon yang dibutuhkan untuk mencapai target C/N.
+Untuk menghitung input $C/N$ harian, karbon pakan harus dihitung.
 
 Rumus dasarnya:
 
 $$
-EFN
+C_{\text{feed}}
 =
 
-\text{Feed}
+Feed
 \times
-CP
-\times
-0{,}16
-\times
-0{,}75
-$$
-
-Kemudian:
-
-$$
-C_{\text{required}}
-=
-
-EFN
-\times
-\left(C:N\right)_{\text{target}}
-$$
-
-Jika sumber karbon adalah molase, maka:
-
-$$
-\text{Molase}
-=
-
-\frac{
-C_{\text{required}}
-}{
-f_{C,\text{molase}}
-}
+f_{C,\text{feed}}
 $$
 
 Keterangan:
 
 $$
-C_{\text{required}}
+C_{\text{feed}}
 =
 
-\text{karbon yang dibutuhkan}
+\text{karbon yang masuk dari pakan}
 $$
 
 $$
-\left(C:N\right)_{\text{target}}
+f_{C,\text{feed}}
 =
 
-\text{target rasio karbon terhadap nitrogen}
+\text{fraksi karbon dalam pakan}
 $$
 
+Jika data karbon pakan tersedia dari analisis laboratorium, gunakan data itu. Jika tidak tersedia, praktisi dapat memakai pendekatan dari komposisi pakan, tetapi untuk keputusan bisnis skala besar sebaiknya dilakukan analisis pakan.
+
+Pendekatan umum:
+
 $$
-f_{C,\text{molase}}
+f_{C,\text{feed}}
+\approx
+0{,}40 - 0{,}50
+$$
+
+Namun angka ini tidak boleh diperlakukan sebagai pasti. Pakan berlemak tinggi, pakan tinggi karbohidrat, dan pakan dengan kadar abu tinggi akan memiliki fraksi karbon berbeda.
+
+Maka untuk input $C/N$:
+
+$$
+\left(C:N\right)_{\text{input}}
 =
 
-\text{fraksi karbon efektif dalam molase}
+\frac{
+C_{\text{feed}} + C_{\text{external}}
+}{
+N_{\text{feed}}
+}
 $$
 
-Misalnya:
+Jika praktisi ingin memakai basis nitrogen ekskresi, maka harus lebih hati-hati karena tidak semua karbon pakan tersedia cepat di kolom air.
+
+Pendekatan alternatifnya:
 
 $$
-\text{Feed} = 1{,}000 \ \mathrm{g}
-$$
-
-$$
-CP = 0{,}30
-$$
-
-$$
-\left(C:N\right)_{\text{target}} = 15
-$$
-
-$$
-f_{C,\text{molase}} = 0{,}40
-$$
-
-Maka:
-
-$$
-EFN
+\left(C:N\right)_{\text{available}}
 =
 
-1{,}000
+\frac{
+C_{\text{available,feed}} + C_{\text{external}}
+}{
+N_{\text{excreted}}
+}
+$$
+
+Tetapi $C_{\text{available,feed}}$ sulit diketahui di lapangan. Karena itu, untuk SOP praktis, lebih aman memisahkan:
+
+$$
+\text{perencanaan input C/N}
+$$
+
+dari:
+
+$$
+\text{koreksi TAN aktual}
+$$
+
+Karbon pakan wajib dihitung dalam perencanaan input $C/N$. Namun, karbon pakan tidak boleh dianggap seluruhnya setara dengan molase untuk respons cepat heterotrof, karena karbon pakan sebagian sudah dimakan ikan, dimetabolisme, menjadi feses, atau menjadi partikel organik yang terurai lebih lambat.
+
+Secara jalur karbon:
+
+$$
+C_{\text{feed}}
+\rightarrow
+C_{\text{ikan}}
++
+CO_2
++
+C_{\text{feses}}
++
+C_{\text{sisa pakan}}
++
+C_{\text{terlarut}}
++
+C_{\text{bioflok}}
+$$
+
+Molase atau gula lebih cepat tersedia bagi heterotrof dibanding sebagian besar karbon dalam pelet. Inilah alasan mengapa perencanaan harian dan koreksi TAN aktual harus dipisahkan.
+
+---
+
+## 4.4 Dua Basis Perhitungan: Input C/N vs Koreksi TAN Aktual
+
+Dalam praktik bioflok, ada dua basis perhitungan karbon yang berbeda. Keduanya sama-sama berguna, tetapi tidak boleh dicampur.
+
+```mermaid
+flowchart TD
+    A["Keputusan karbon"] --> B["Basis A<br/>Input C/N harian"]
+    A --> C["Basis B<br/>Koreksi TAN aktual"]
+
+    B --> D["Hitung C_feed dan N_feed"]
+    D --> E["Tambahkan karbon eksternal<br/>hanya jika C/N kurang"]
+
+    C --> F["Ukur TAN aktual"]
+    F --> G["Hitung ΔN_TAN"]
+    G --> H["Tambahkan karbon cepat<br/>untuk koreksi TAN"]
+
+    E --> I["Dosis awal"]
+    H --> J["Dosis koreksi"]
+    I --> K["Dosis final dikoreksi<br/>TSS, DO, BFV, pH"]
+    J --> K
+
+    classDef main fill:#E3F2FD,stroke:#1565C0,color:#0D47A1,stroke-width:1px;
+    classDef route fill:#FFF3E0,stroke:#EF6C00,color:#E65100,stroke-width:1px;
+    classDef process fill:#E8F5E9,stroke:#2E7D32,color:#1B5E20,stroke-width:1px;
+    classDef final fill:#FFEBEE,stroke:#C62828,color:#B71C1C,stroke-width:1px;
+
+    class A main;
+    class B,C route;
+    class D,E,F,G,H,I,J process;
+    class K final;
+```
+
+---
+
+### 4.4.1 Basis A — Perencanaan Input C/N Harian
+
+Basis ini dipakai untuk menentukan tambahan karbon eksternal harian awal.
+
+Pertama, hitung nitrogen pakan:
+
+$$
+N_{\text{feed}}
+=
+
+Feed
 \times
-0{,}30
+CP
 \times
 0{,}16
+$$
+
+Kedua, hitung karbon pakan:
+
+$$
+C_{\text{feed}}
+=
+
+Feed
 \times
-0{,}75
+f_{C,\text{feed}}
 $$
 
+Ketiga, hitung karbon target:
+
 $$
-EFN
+C_{\text{target}}
 =
 
-36 \ \mathrm{g \ N}
-$$
-
-Karbon yang dibutuhkan untuk target C/N 15:1:
-
-$$
-C_{\text{required}}
-=
-
-36
+R_{\text{target}}
 \times
-15
+N_{\text{feed}}
 $$
 
+Keempat, hitung karbon tambahan:
+
 $$
-C_{\text{required}}
+C_{\text{add}}
 =
 
-540 \ \mathrm{g \ C}
-$$
-
-Jika molase diasumsikan memiliki fraksi karbon efektif 40%, maka:
-
-$$
-\text{Molase}
-=
-
-\frac{540}{0{,}40}
-$$
-
-$$
-\text{Molase}
-=
-
-1{,}350 \ \mathrm{g}
-$$
-
-Secara matematis, hasil ini benar berdasarkan asumsi tersebut. Namun, dalam praktik, angka ini tidak boleh langsung dipakai tanpa koreksi lapangan. Mengapa? Karena rumus ini menghitung kebutuhan karbon berdasarkan estimasi nitrogen ekskresi, bukan berdasarkan kondisi aktual air.
-
-Kondisi aktual bisa berbeda karena:
-
-- ikan tidak selalu memakan seluruh pakan,
-- retensi nitrogen berubah menurut ukuran ikan,
-- flok yang sudah ada ikut menyerap TAN,
-- nitrifikasi ikut bekerja,
-- alga ikut mengambil nitrogen,
-- sebagian padatan mengendap,
-- karbon molase tidak seluruhnya dikonversi menjadi biomassa,
-- DO dan alkalinitas dapat membatasi proses mikroba.
-
-Maka rumus karbon berbasis pakan harus dibaca sebagai **starting estimate**, bukan dosis buta.
-
-$$
-\text{dosis karbon teoritis}
-\neq
-\text{dosis karbon final}
-$$
-
-Dosis final harus dikoreksi dengan data lapangan:
-
-$$
-\text{dosis final}
-=
-
-f
+\max
 \left(
-\text{TAN},
-\text{NO}_2^-,
-\text{DO},
-\text{pH},
-\text{alkalinitas},
-\text{TSS},
-\text{BFV},
-\text{respons makan},
-\text{sludge}
+0,
+C_{\text{target}} - C_{\text{feed}}
 \right)
 $$
 
+Jika sumber karbon adalah molase:
+
+$$
+M_{\text{molase}}
+=
+
+\frac{
+C_{\text{add}}
+}{
+f_{C,\text{molase}}
+}
+$$
+
+Keterangan:
+
+$$
+R_{\text{target}}
+=
+
+\text{target rasio C/N}
+$$
+
+$$
+C_{\text{add}}
+=
+
+\text{karbon eksternal yang perlu ditambahkan}
+$$
+
+$$
+f_{C,\text{molase}}
+=
+
+\text{fraksi karbon dalam molase}
+$$
+
+Rumus ini digunakan untuk menyetel **rasio input C/N**, bukan untuk mengobati TAN yang sudah naik.
+
+Jika hasilnya besar, jangan langsung dianggap wajib diberikan penuh. Dosis tersebut masih harus dibaca bersama kualitas air, umur flok, TSS, BFV, DO subuh, dan respons makan ikan.
+
 ---
 
-## 4.3 Dua Pendekatan Dosis Karbon: Berbasis Pakan vs Berbasis TAN Aktual
+### 4.4.2 Basis B — Koreksi TAN Aktual
 
-Dalam praktik, ada dua pendekatan utama.
+Basis ini dipakai ketika TAN sudah terukur naik di air.
 
-### Pendekatan 1: Berbasis Pakan
-
-Pendekatan ini memakai jumlah pakan dan protein pakan sebagai dasar.
+Pertama, tentukan berapa TAN-N yang ingin diturunkan.
 
 $$
-EFN
+\Delta N_{\text{TAN}}
 =
 
-\text{Feed}
+\frac{
+\Delta TAN\text{-}N
 \times
-CP
-\times
-0{,}16
-\times
-0{,}75
+V
+}{
+1000
+}
 $$
 
-Lalu:
+Keterangan:
 
 $$
-C_{\text{required}}
+\Delta TAN\text{-}N
 =
 
-EFN
-\times
-\left(C:N\right)_{\text{target}}
+\text{kenaikan TAN-N atau target penurunan TAN-N dalam } \mathrm{mg/L}
 $$
 
-Kelebihan pendekatan ini:
+$$
+V
+=
 
-- mudah digunakan,
-- cocok untuk perencanaan harian,
-- membantu memperkirakan beban nitrogen sebelum TAN naik.
+\text{volume air dalam liter}
+$$
 
-Kelemahannya:
+$$
+\Delta N_{\text{TAN}}
+=
 
-- tidak membaca kondisi aktual air,
-- bisa over-dosing jika bioflok sudah matang,
-- bisa under-dosing jika pakan banyak tidak termakan,
-- tidak memperhitungkan kontribusi nitrifikasi dan alga.
+\text{massa TAN-N dalam gram}
+$$
 
-### Pendekatan 2: Berbasis TAN Aktual
-
-Pendekatan ini menghitung karbon dari TAN-N yang benar-benar ingin dikonversi.
+Kemudian gunakan rumus microbial efficiency:
 
 $$
 \Delta CH
 =
 
 \frac{
-\Delta N
+\Delta N_{\text{TAN}}
 \times
 \left(C:N\right)_{\text{mikroba}}
 }{
@@ -2250,42 +2371,19 @@ f_C
 }
 $$
 
-Kelebihan pendekatan ini:
+Rumus ini menjawab pertanyaan:
 
-- lebih dekat ke kondisi aktual,
-- lebih aman untuk koreksi saat TAN naik,
-- mengurangi risiko over-carbon.
+> Berapa sumber karbon cepat yang dibutuhkan untuk membantu bakteri heterotrof mengikat TAN aktual yang sudah terukur?
 
-Kelemahannya:
-
-- membutuhkan pengukuran TAN yang benar,
-- harus bisa membedakan TAN sebagai $\mathrm{mg/L}$ dan TAN-N,
-- memerlukan estimasi volume air yang akurat,
-- tetap harus dikoreksi dengan DO, TSS, dan alkalinitas.
-
-Untuk bisnis, pendekatan terbaik adalah kombinasi:
-
-$$
-\text{dosis awal}
-=
-
-\text{berbasis pakan}
-$$
-
-$$
-\text{koreksi harian}
-=
-
-\text{berbasis TAN, TSS, DO, dan respons ikan}
-$$
+Ini bukan rumus dosis molase harian otomatis.
 
 ---
 
-## 4.4 Microbial Efficiency / ME
+## 4.5 Microbial Efficiency: Rumus Koreksi TAN, Bukan Rumus Molase Harian
 
-Dalam kerangka Avnimelech, kebutuhan karbon tidak cukup dihitung hanya dari target C/N air. Yang penting adalah berapa banyak karbon yang benar-benar dikonversi menjadi biomassa mikroba.
+Dalam kerangka Avnimelech, kebutuhan karbohidrat untuk menurunkan amonium bergantung pada tiga komponen utama: rasio $C/N$ biomassa mikroba, efisiensi konversi mikroba, dan fraksi karbon bahan yang ditambahkan. Prinsip ini menjelaskan mengapa satu dosis karbon tidak bisa berlaku untuk semua sistem. ([ScienceDirect][1])
 
-Kerangka praktisnya:
+Rumus praktisnya:
 
 $$
 \Delta CH
@@ -2308,7 +2406,7 @@ $$
 \Delta CH
 =
 
-\text{kebutuhan karbohidrat}
+\text{kebutuhan karbohidrat atau sumber karbon}
 $$
 
 $$
@@ -2352,7 +2450,7 @@ $$
 f_C = 0{,}50
 $$
 
-Maka untuk mengikat $1 \ \mathrm{g}$ TAN-N:
+maka untuk mengikat $1 \ \mathrm{g}$ TAN-N:
 
 $$
 \Delta CH
@@ -2380,12 +2478,12 @@ $$
 \Delta CH
 =
 
-20 \ \mathrm{g \ karbohidrat/g \ TAN\text{-}N}
+20 \ \mathrm{g/g \ TAN\text{-}N}
 $$
 
-Angka ini penting karena sering menjadi dasar praktis: sekitar $20 \ \mathrm{g}$ karbohidrat untuk mengikat $1 \ \mathrm{g}$ TAN-N. Tetapi angka ini tetap bergantung pada efisiensi mikroba dan bahan karbon.
+Angka $20 \ \mathrm{g/g \ TAN\text{-}N}$ adalah pendekatan untuk **koreksi TAN aktual**, bukan rumus untuk menghitung molase harian dari pakan tanpa menghitung karbon pelet.
 
-Jika efisiensi mikroba turun, kebutuhan karbon naik.
+Jika efisiensi mikroba turun, kebutuhan sumber karbon naik.
 
 Misalnya:
 
@@ -2412,7 +2510,7 @@ $$
 \Delta CH
 =
 
-26{,}67 \ \mathrm{g \ karbohidrat/g \ TAN\text{-}N}
+26{,}67 \ \mathrm{g/g \ TAN\text{-}N}
 $$
 
 Jika efisiensi mikroba naik:
@@ -2440,29 +2538,112 @@ $$
 \Delta CH
 =
 
-13{,}33 \ \mathrm{g \ karbohidrat/g \ TAN\text{-}N}
+13{,}33 \ \mathrm{g/g \ TAN\text{-}N}
 $$
 
-Artinya, satu angka dosis karbon tidak bisa dipakai untuk semua kolam. Efisiensi mikroba berubah menurut:
+Efisiensi mikroba berubah menurut:
 
 - DO,
 - suhu,
 - pH,
 - alkalinitas,
-- jenis karbon,
-- kualitas inokulum,
+- jenis sumber karbon,
 - umur bioflok,
+- kualitas inokulum,
 - TSS,
-- rasio bakteri hidup terhadap detritus,
+- rasio bakteri aktif terhadap detritus,
 - beban organik.
+
+Jadi angka $20 \ \mathrm{g/g \ TAN\text{-}N}$ berguna sebagai patokan awal, tetapi bukan angka sakral.
 
 ---
 
-## 4.5 Konsekuensi Stoikiometri: Karbon Bukan Satu-satunya Input
+## 4.6 Disiplin Satuan: Karbon, Karbohidrat, dan Molase Tidak Boleh Dicampur
 
-Mengikat TAN menjadi biomassa heterotrof membutuhkan lebih dari karbon. Ia juga membutuhkan oksigen dan menghasilkan padatan.
+Banyak kesalahan dosis bioflok terjadi bukan karena rumusnya rumit, tetapi karena satuannya tercampur.
 
-Dari stoikiometri heterotrof:
+Ada tiga istilah yang harus dipisahkan.
+
+$$
+C
+=
+
+\text{massa karbon murni}
+$$
+
+$$
+CH
+=
+
+\text{massa karbohidrat atau sumber karbon}
+$$
+
+$$
+M_{\text{molase}}
+=
+
+\text{massa molase aktual yang ditimbang}
+$$
+
+Jangan mencampur:
+
+$$
+\mathrm{g \ C}
+$$
+
+dengan:
+
+$$
+\mathrm{g \ karbohidrat}
+$$
+
+dan:
+
+$$
+\mathrm{g \ molase}
+$$
+
+Contoh:
+
+Jika rumus memakai $f_C = 0{,}50$, maka hasil $\Delta CH$ sudah memperhitungkan fraksi karbon bahan. Jangan membagi lagi dengan $0{,}50$ kecuali bahan aktual yang dipakai berbeda dari asumsi awal.
+
+Kesalahan umum:
+
+$$
+\Delta CH
+=
+
+20 \ \mathrm{g}
+$$
+
+lalu dihitung lagi:
+
+$$
+\frac{20}{0{,}50}
+=
+
+40 \ \mathrm{g}
+$$
+
+Padahal jika angka $20 \ \mathrm{g}$ sudah berasal dari rumus yang memakai $f_C = 0{,}50$, maka pembagian kedua itu menyebabkan over-dosing.
+
+Aturan praktis:
+
+| Istilah                    | Makna                                | Contoh                                                 |
+| -------------------------- | ------------------------------------ | ------------------------------------------------------ |
+| $\mathrm{g \ C}$           | massa karbon                         | karbon target dalam rasio $C/N$                        |
+| $\mathrm{g \ karbohidrat}$ | massa sumber karbon murni/pendekatan | gula, pati, karbohidrat efektif                        |
+| $\mathrm{g \ molase}$      | massa bahan aktual                   | molase cair/padat dengan kadar air dan karbon tertentu |
+
+Untuk keputusan bisnis, nilai $f_{C,\text{molase}}$ sebaiknya berasal dari spesifikasi bahan atau analisis sederhana, bukan asumsi tunggal.
+
+---
+
+## 4.7 Konsekuensi Stoikiometri: Karbon Eksternal Bukan Input Gratis
+
+Karbon eksternal seperti molase dapat membantu menurunkan TAN melalui pertumbuhan heterotrof. Tetapi karbon eksternal bukan input gratis secara biologis. Ia membawa konsekuensi terhadap oksigen, alkalinitas, dan padatan.
+
+Dari stoikiometri heterotrof Ebeling et al., setiap $1 \ \mathrm{g}$ TAN-N yang diproses melalui jalur heterotrof membutuhkan dan menghasilkan kira-kira: ([ScienceDirect][2])
 
 $$
 1 \ \mathrm{g \ TAN\text{-}N}
@@ -2476,28 +2657,41 @@ $$
 8{,}07 \ \mathrm{g \ VSS}
 $$
 
-Ini berarti setiap keputusan menambah karbon membawa empat konsekuensi.
+Maknanya:
+
+$$
+\text{molase ditambah}
+\rightarrow
+TAN \downarrow
++
+O_2 \text{ demand} \uparrow
++
+TSS \uparrow
++
+sludge \uparrow
+$$
 
 ```mermaid
 flowchart TD
-    A["Tambah karbon"] --> B["TAN lebih cepat diikat"]
-    A --> C["Kebutuhan O2 naik"]
-    A --> D["Alkalinitas terpakai"]
-    A --> E["VSS / TSS naik"]
-    B --> F["Amonia lebih aman"]
-    C --> G["Risiko DO drop"]
-    D --> H["Risiko pH turun"]
-    E --> I["Risiko sludge & insang terganggu"]
+    A["Karbon eksternal<br/>molase/gula/tapioka"] --> B["Heterotrof aktif"]
+    B --> C["TAN lebih cepat diikat"]
+    B --> D["Kebutuhan O2 naik"]
+    B --> E["Alkalinitas terpakai"]
+    B --> F["VSS / TSS naik"]
+    C --> G["Amonia lebih aman"]
+    D --> H["Risiko DO subuh turun"]
+    E --> I["Risiko pH turun"]
+    F --> J["Risiko sludge & insang terganggu"]
 
-    classDef action fill:#E3F2FD,stroke:#1565C0,color:#0D47A1,stroke-width:1px;
-    classDef benefit fill:#E8F5E9,stroke:#2E7D32,color:#1B5E20,stroke-width:1px;
+    classDef input fill:#E3F2FD,stroke:#1565C0,color:#0D47A1,stroke-width:1px;
+    classDef process fill:#E8F5E9,stroke:#2E7D32,color:#1B5E20,stroke-width:1px;
+    classDef benefit fill:#FFF3E0,stroke:#EF6C00,color:#E65100,stroke-width:1px;
     classDef risk fill:#FFEBEE,stroke:#C62828,color:#B71C1C,stroke-width:1px;
-    classDef process fill:#FFF3E0,stroke:#EF6C00,color:#E65100,stroke-width:1px;
 
-    class A action;
-    class B,C,D,E process;
-    class F benefit;
-    class G,H,I risk;
+    class A input;
+    class B process;
+    class C,G benefit;
+    class D,E,F,H,I,J risk;
 ```
 
 Praktisi sering hanya fokus pada manfaat:
@@ -2522,7 +2716,7 @@ $$
 \text{TSS naik}
 $$
 
-Inilah alasan sistem dengan karbon berlebih bisa terlihat “aman” dari amonia, tetapi ikan tetap lambat tumbuh.
+Inilah alasan sistem dengan karbon berlebih bisa terlihat aman dari amonia, tetapi ikan tetap lambat tumbuh.
 
 $$
 \text{TAN rendah}
@@ -2536,7 +2730,7 @@ $$
 
 ---
 
-## 4.6 Perbandingan Heterotrof dan Nitrifikasi dari Sudut Neraca
+## 4.8 Perbandingan Heterotrof dan Nitrifikasi dari Sudut Neraca
 
 Heterotrof dan nitrifier sama-sama memproses TAN, tetapi konsekuensinya berbeda.
 
@@ -2593,36 +2787,42 @@ $$
 \text{padatan dikelola}
 $$
 
+Heterotrof cocok untuk respons cepat TAN, tetapi meningkatkan VSS/TSS. Nitrifikasi lebih lambat dan menghasilkan biomassa kecil, tetapi mengonsumsi alkalinitas lebih besar. Maka kontrol bioflok yang sehat bukan hanya soal menambah molase, melainkan mengatur keseimbangan antara heterotrof, nitrifier, oksigen, alkalinitas, dan solids control.
+
 ---
 
-## 4.7 Contoh Hitungan Lapangan: 10 kg Pakan per Hari
+## 4.9 Contoh Hitungan 1: Input C/N Harian dengan Menghitung Karbon Pakan
 
 Misalnya satu unit bioflok nila menerima:
 
 $$
-\text{Feed} = 10 \ \mathrm{kg/hari}
+Feed = 10 \ \mathrm{kg/hari}
 $$
 
 $$
-CP = 30\% = 0{,}30
+CP = 0{,}30
+$$
+
+$$
+f_{C,\text{feed}} = 0{,}45
 $$
 
 Target:
 
 $$
-C:N = 15:1
+R_{\text{target}} = 15
 $$
 
-Asumsi:
+Asumsi molase:
 
 $$
-75\% \text{ nitrogen pakan diekskresikan}
+f_{C,\text{molase}} = 0{,}40
 $$
 
-Maka nitrogen pakan:
+Hitung nitrogen pakan:
 
 $$
-N_{\text{pakan}}
+N_{\text{feed}}
 =
 
 10{,}000
@@ -2633,106 +2833,134 @@ N_{\text{pakan}}
 $$
 
 $$
-N_{\text{pakan}}
+N_{\text{feed}}
 =
 
 480 \ \mathrm{g \ N/hari}
 $$
 
-Nitrogen yang diekskresikan:
+Hitung karbon pakan:
 
 $$
-EFN
+C_{\text{feed}}
 =
 
-480
+10{,}000
 \times
-0{,}75
+0{,}45
 $$
 
 $$
-EFN
+C_{\text{feed}}
 =
 
-360 \ \mathrm{g \ N/hari}
+4{,}500 \ \mathrm{g \ C/hari}
 $$
 
-Karbon yang dibutuhkan untuk C/N 15:1:
+Hitung karbon target:
 
 $$
-C_{\text{required}}
+C_{\text{target}}
 =
 
-360
-\times
 15
+\times
+480
 $$
 
 $$
-C_{\text{required}}
+C_{\text{target}}
 =
 
-5{,}400 \ \mathrm{g \ C/hari}
+7{,}200 \ \mathrm{g \ C/hari}
 $$
 
-Jika fraksi karbon efektif molase diasumsikan 40%:
+Hitung karbon tambahan:
 
 $$
-\text{Molase}
+C_{\text{add}}
 =
 
-\frac{5{,}400}{0{,}40}
+7{,}200
+
+4{,}500
 $$
 
 $$
-\text{Molase}
+C_{\text{add}}
 =
 
-13{,}500 \ \mathrm{g/hari}
+2{,}700 \ \mathrm{g \ C/hari}
+$$
+
+Hitung molase:
+
+$$
+M_{\text{molase}}
+=
+
+\frac{
+2{,}700
+}{
+0{,}40
+}
+$$
+
+$$
+M_{\text{molase}}
+=
+
+6{,}750 \ \mathrm{g/hari}
 $$
 
 atau:
 
 $$
-\text{Molase}
+M_{\text{molase}}
 =
 
-13{,}5 \ \mathrm{kg/hari}
+6{,}75 \ \mathrm{kg/hari}
 $$
 
-Angka ini terlihat besar. Karena itu, praktisi tidak boleh memakai hasil hitungan ini secara mekanis tanpa membaca kondisi air. Jika bioflok sudah matang, TAN rendah, dan TSS tinggi, dosis aktual harus lebih rendah atau bahkan dihentikan sementara.
+Angka ini jauh berbeda dibanding pendekatan yang mengabaikan karbon pakan. Jika karbon pakan diabaikan, dosis molase akan terlalu besar.
 
-Keputusan yang benar bukan:
+Namun, angka $6{,}75 \ \mathrm{kg/hari}$ ini tetap bukan perintah otomatis. Ia adalah estimasi input $C/N$.
 
-$$
-\text{pakan 10 kg}
-\rightarrow
-\text{molase wajib 13,5 kg}
-$$
-
-Keputusan yang benar:
+Dosis aktual harus dikoreksi oleh:
 
 $$
-\text{pakan 10 kg}
-\rightarrow
-\text{estimasi beban N}
-\rightarrow
-\text{cek TAN, TSS, DO, pH, alkalinitas}
-\rightarrow
-\text{putuskan dosis karbon aktual}
+TAN
++
+NO_2^-
++
+DO_{\text{subuh}}
++
+TSS
++
+BFV
++
+pH
++
+\text{alkalinitas}
++
+\text{respons makan}
 $$
+
+Jika TAN rendah, TSS tinggi, dan DO subuh menurun, maka dosis karbon harus dikurangi atau dihentikan meskipun rumus input $C/N$ masih menghasilkan angka tambahan.
 
 ---
 
-## 4.8 Contoh Hitungan Berbasis TAN Aktual
+## 4.10 Contoh Hitungan 2: Koreksi TAN Aktual
 
-Misalnya kolam volume:
+Sekarang gunakan basis berbeda: TAN aktual sudah terukur naik.
+
+Misalnya volume kolam:
 
 $$
 V = 10{,}000 \ \mathrm{L}
 $$
 
-TAN-N ingin diturunkan sebesar:
+Target penurunan TAN-N:
 
 $$
 \Delta TAN\text{-}N = 1 \ \mathrm{mg/L}
@@ -2741,29 +2969,32 @@ $$
 Maka total TAN-N yang ingin dikonversi:
 
 $$
-\Delta N
+\Delta N_{\text{TAN}}
 =
 
-1 \ \mathrm{mg/L}
+\frac{
+1
 \times
-10{,}000 \ \mathrm{L}
+10{,}000
+}{
+1000
+}
 $$
 
 $$
-\Delta N
-=
-
-10{,}000 \ \mathrm{mg}
-$$
-
-$$
-\Delta N
+\Delta N_{\text{TAN}}
 =
 
 10 \ \mathrm{g \ TAN\text{-}N}
 $$
 
-Jika memakai pendekatan $20 \ \mathrm{g}$ karbohidrat per $1 \ \mathrm{g}$ TAN-N:
+Jika memakai pendekatan:
+
+$$
+20 \ \mathrm{g \ sumber \ karbon/g \ TAN\text{-}N}
+$$
+
+maka:
 
 $$
 \Delta CH
@@ -2778,26 +3009,10 @@ $$
 \Delta CH
 =
 
-200 \ \mathrm{g \ karbohidrat}
+200 \ \mathrm{g}
 $$
 
-Jika bahan karbon mengandung 50% karbohidrat efektif:
-
-$$
-\text{bahan karbon}
-=
-
-\frac{200}{0{,}50}
-$$
-
-$$
-\text{bahan karbon}
-=
-
-400 \ \mathrm{g}
-$$
-
-Tetapi konsekuensi oksigennya juga harus dihitung. Jika $1 \ \mathrm{g}$ TAN-N membutuhkan sekitar $4{,}71 \ \mathrm{g \ O_2}$:
+Konsekuensi oksigen:
 
 $$
 O_{2,\text{required}}
@@ -2815,7 +3030,7 @@ O_{2,\text{required}}
 47{,}1 \ \mathrm{g \ O_2}
 $$
 
-Dan biomassa mikroba yang terbentuk:
+Konsekuensi biomassa mikroba:
 
 $$
 VSS_{\text{formed}}
@@ -2833,11 +3048,15 @@ VSS_{\text{formed}}
 80{,}7 \ \mathrm{g \ VSS}
 $$
 
-Artinya, menurunkan TAN-N sebesar $1 \ \mathrm{mg/L}$ pada kolam $10{,}000 \ \mathrm{L}$ bukan hanya soal menambah karbon. Sistem juga harus mampu menyediakan oksigen tambahan dan menampung padatan baru.
+Artinya, menurunkan TAN-N sebesar $1 \ \mathrm{mg/L}$ pada kolam $10{,}000 \ \mathrm{L}$ bukan hanya soal menambah sekitar $200 \ \mathrm{g}$ sumber karbon. Sistem juga harus mampu menyediakan oksigen tambahan dan menampung padatan baru.
+
+Jangan membagi lagi $\Delta CH$ dengan $0{,}50$ jika nilai $20 \ \mathrm{g/g \ TAN\text{-}N}$ sudah berasal dari rumus yang memakai $f_C = 0{,}50$.
+
+Jika bahan aktual berbeda dari asumsi, hitung dari awal dengan nilai $f_C$ bahan tersebut.
 
 ---
 
-## 4.9 Hubungan Stoikiometri dengan TSS dan Sludge
+## 4.11 Hubungan Stoikiometri dengan TSS, BFV, dan Side-Stream Solids Removal
 
 TSS bukan sekadar angka kualitas air. TSS adalah konsekuensi dari neraca mikroba.
 
@@ -2846,7 +3065,7 @@ Jika heterotrof mengambil TAN dan membentuk biomassa:
 $$
 \mathrm{TAN}
 +
-\text{karbon}
+\text{karbon eksternal}
 \rightarrow
 \text{VSS}
 $$
@@ -2858,7 +3077,23 @@ $$
 \rightarrow
 \text{TSS naik}
 \rightarrow
+\text{BFV naik}
+\rightarrow
 \text{sludge naik}
+$$
+
+Padatan yang terbentuk punya tiga nasib utama:
+
+$$
+\text{tersuspensi aktif}
+$$
+
+$$
+\text{dimakan ikan}
+$$
+
+$$
+\text{mengendap menjadi sludge}
 $$
 
 Jika padatan tetap tersuspensi, aktif, dan dimakan ikan, ia bisa menjadi aset.
@@ -2885,8 +3120,6 @@ $$
 \text{stres ikan}
 $$
 
-Inilah perbedaan penting antara **flok produktif** dan **lumpur organik**.
-
 ```mermaid
 flowchart TD
     A["VSS / flok terbentuk"] --> B{"Nasib padatan?"}
@@ -2898,33 +3131,68 @@ flowchart TD
     D --> G["Nutrisi tambahan<br/>FCR pellet membaik"]
     E --> H["Zona anaerob<br/>bau / H2S / stres"]
 
+    H --> I["Side-stream removal<br/>settling / clarifier"]
+    I --> J["Sludge dibuang"]
+    I --> K["Air kembali ke kolam"]
+
     classDef start fill:#E3F2FD,stroke:#1565C0,color:#0D47A1,stroke-width:1px;
     classDef decision fill:#FFF3E0,stroke:#EF6C00,color:#E65100,stroke-width:1px;
     classDef good fill:#E8F5E9,stroke:#2E7D32,color:#1B5E20,stroke-width:1px;
     classDef bad fill:#FFEBEE,stroke:#C62828,color:#B71C1C,stroke-width:1px;
+    classDef removal fill:#E0F2F1,stroke:#00695C,color:#004D40,stroke-width:1px;
 
     class A start;
     class B decision;
     class C,D,F,G good;
     class E,H bad;
+    class I,J,K removal;
 ```
 
-Dalam artikel Sarker, kenaikan C/N meningkatkan biofloc volume dan TSS. Pada titik tertentu, tambahan karbon tidak lagi menghasilkan pertumbuhan lebih baik. Ini menunjukkan bahwa padatan yang berlebih dapat mengurangi manfaat bioflok.
+Side-stream solids removal menjadi penting karena target bioflok bukan membuat air jernih, tetapi menjaga padatan pada zona produktif.
+
+$$
+\text{VSS/TSS berlebih}
+\rightarrow
+\text{side-stream settling/clarifier}
+\rightarrow
+\text{sludge dibuang}
+\rightarrow
+\text{air kembali}
+$$
+
+Jika padatan tidak dikelola:
+
+$$
+TSS \uparrow
+\rightarrow
+DO_{\text{subuh}} \downarrow
+\rightarrow
+\text{ikan stres}
+\rightarrow
+FCR \uparrow
+$$
+
+Maka, setiap keputusan karbon harus diikuti pertanyaan:
+
+$$
+\text{apakah sistem mampu membuang kelebihan padatan?}
+$$
 
 ---
 
-## 4.10 Koreksi Dosis Karbon Berdasarkan Kondisi Lapangan
+## 4.12 Koreksi Dosis Karbon Berdasarkan Kondisi Lapangan
 
 Rumus hanya memberi estimasi. Keputusan akhir harus mengikuti kondisi aktual.
 
-| Kondisi lapangan                  | Interpretasi              | Keputusan karbon                                |
-| --------------------------------- | ------------------------- | ----------------------------------------------- |
-| TAN tinggi, TSS rendah, DO aman   | heterotrof kurang aktif   | karbon bisa ditambah bertahap                   |
-| TAN tinggi, TSS tinggi, DO rendah | sistem organik berat      | jangan tambah karbon; perbaiki DO dan padatan   |
-| TAN rendah, TSS tinggi            | karbon/flok berlebih      | kurangi atau hentikan karbon                    |
-| TAN rendah, nitrit tinggi         | nitrifikasi belum lengkap | jangan over-carbon; cek alkalinitas dan DO      |
-| pH turun                          | alkalinitas terpakai      | koreksi alkalinitas sebelum tambah karbon besar |
-| DO subuh rendah                   | respirasi terlalu tinggi  | kurangi beban organik dan tambah aerasi         |
+| Kondisi lapangan                | Dosis input C/N     | Koreksi TAN aktual     | Keputusan                        |
+| ------------------------------- | ------------------- | ---------------------- | -------------------------------- |
+| TAN naik, TSS rendah, DO aman   | boleh naik bertahap | boleh koreksi TAN      | tambah karbon perlahan           |
+| TAN naik, TSS tinggi, DO rendah | jangan naik         | jangan koreksi agresif | aerasi + solids removal          |
+| TAN rendah, TSS tinggi          | turunkan            | tidak perlu            | hentikan karbon                  |
+| TAN rendah, nitrit tinggi       | jangan over-carbon  | bukan prioritas utama  | alkalinitas + dukung nitrifikasi |
+| BFV tinggi, FCR naik            | turunkan            | tidak perlu            | side-stream removal              |
+| pH turun terus                  | jangan tambah besar | hati-hati              | koreksi alkalinitas              |
+| DO subuh rendah                 | turunkan            | jangan agresif         | tambah aerasi, kurangi organik   |
 
 Keputusan praktisnya:
 
@@ -2933,7 +3201,7 @@ $$
 \quad
 \text{hanya jika}
 \quad
-\text{TAN perlu dikendalikan dan sistem mampu menanggung O}_2 \text{ serta TSS}
+\text{TAN perlu dikendalikan dan sistem mampu menanggung } O_2 \text{ serta TSS}
 $$
 
 Bukan:
@@ -2944,75 +3212,212 @@ $$
 \text{tambah molase}
 $$
 
+Jika TAN tinggi tetapi TSS rendah dan DO aman, karbon bertahap masuk akal.
+
+$$
+TAN \uparrow
++
+TSS \downarrow
++
+DO_{\text{subuh}} \text{ aman}
+\rightarrow
+\text{karbon bisa ditambah bertahap}
+$$
+
+Jika TAN rendah tetapi TSS tinggi, penambahan karbon justru berbahaya.
+
+$$
+TAN \downarrow
++
+TSS \uparrow
+\rightarrow
+\text{jangan tambah karbon}
+$$
+
+Jika nitrit tinggi, masalah utama sering berada pada nitrifikasi, alkalinitas, dan maturasi mikroba, bukan kekurangan molase.
+
+$$
+NO_2^- \uparrow
+\rightarrow
+\text{cek alkalinitas, DO, pH, dan maturasi nitrifier}
+$$
+
 ---
 
-## 4.11 Pesan Bisnis dari Stoikiometri
+## 4.13 Pesan Bisnis dari Stoikiometri
 
-Dosis karbon yang salah bukan hanya membuat air “tidak jadi bioflok”. Dosis karbon yang salah bisa:
+Dosis molase yang salah bisa merugikan dari dua arah.
 
-$$
-\text{menaikkan biaya karbon}
-$$
+Jika terlalu tinggi:
 
 $$
-\text{menurunkan DO}
+\text{molase berlebih}
+\rightarrow
+\text{biaya naik}
++
+TSS \uparrow
++
+DO_{\text{subuh}} \downarrow
++
+\text{sludge naik}
++
+FCR \uparrow
 $$
 
-$$
-\text{menaikkan TSS}
-$$
+Jika terlalu rendah:
 
 $$
-\text{memperburuk FCR}
+\text{karbon kurang}
+\rightarrow
+TAN \uparrow
++
+NO_2^- \uparrow
++
+\text{ikan stres}
++
+FCR \uparrow
 $$
 
-$$
-\text{memperpanjang siklus panen}
-$$
+Dalam bisnis, kesalahan stoikiometri berarti kesalahan margin.
 
 $$
-\text{menaikkan risiko mortalitas}
-$$
-
-Dalam bisnis, ini berarti:
-
-$$
-\text{kesalahan stoikiometri}
+\text{kesalahan dosis karbon}
 \rightarrow
 \text{kesalahan biaya produksi}
 \rightarrow
-\text{kesalahan margin}
+\text{kesalahan keputusan scale-up}
 $$
 
-Karena itu, praktisi perlu menghitung setidaknya empat hal setiap kali mengatur karbon:
-
-1. Berapa nitrogen masuk dari pakan?
-2. Berapa TAN aktual di air?
-3. Berapa oksigen dan alkalinitas yang tersedia?
-4. Berapa TSS/BFV yang sudah terbentuk?
-
-Rumus ringkas keputusan:
+Rumus keputusan akhir yang lebih aman:
 
 $$
-\text{Dosis karbon aman}
+\text{dosis karbon final}
 =
 
 f
 \left(
-N_{\text{pakan}},
+C_{\text{feed}},
+N_{\text{feed}},
 TAN,
-DO,
+NO_2^-,
+DO_{\text{subuh}},
 pH,
 \text{alkalinitas},
 TSS,
 BFV,
+FCR,
 \text{respons ikan}
 \right)
 $$
 
+Praktisi perlu menghitung setidaknya:
+
+1. Berapa nitrogen masuk dari pakan?
+2. Berapa karbon sudah masuk dari pakan?
+3. Berapa TAN aktual di air?
+4. Berapa DO dan alkalinitas tersedia?
+5. Berapa TSS/BFV yang sudah terbentuk?
+6. Apakah FCR dan respons makan membaik atau memburuk?
+
+Targetnya bukan memenuhi rumus $C/N$ secara kaku. Targetnya adalah:
+
+$$
+C/N \text{ cukup}
++
+TAN \text{ aman}
++
+NO_2^- \text{ terkendali}
++
+DO_{\text{subuh}} \text{ aman}
++
+TSS \text{ terkendali}
++
+FCR \text{ membaik}
+$$
+
+---
+
+## 4.14 Batas Bukti dan Status Rumus
+
+Rumus dalam bab ini harus dibaca sesuai statusnya. Tidak semua angka adalah konstanta.
+
+| Pernyataan                                             | Status                                            |
+| ------------------------------------------------------ | ------------------------------------------------- |
+| $N_{\text{feed}} = Feed \times CP \times 0{,}16$       | rumus dasar kuat                                  |
+| $f_{\text{excretion}} = 0{,}75$                        | asumsi praktis, bukan universal                   |
+| $f_{C,\text{feed}}$                                    | sebaiknya dari analisis atau label pakan          |
+| $f_{C,\text{molase}}$                                  | sebaiknya dari spesifikasi bahan                  |
+| $20 \ \mathrm{g/g \ TAN\text{-}N}$                     | pendekatan koreksi TAN aktual                     |
+| molase harian dari $EFN \times C/N$ tanpa karbon pakan | harus dihindari                                   |
+| dosis final                                            | harus dikoreksi dengan data air dan performa ikan |
+
+Formula lama yang harus dihindari sebagai rumus utama molase harian adalah:
+
+$$
+C_{\text{required}}
+=
+
+EFN
+\times
+\left(C:N\right)_{\text{target}}
+$$
+
+lalu langsung:
+
+$$
+M_{\text{molase}}
+=
+
+\frac{
+C_{\text{required}}
+}{
+f_{C,\text{molase}}
+}
+$$
+
+Masalahnya: rumus itu mengabaikan karbon pakan.
+
+Rumus utama untuk perencanaan input harian adalah:
+
+$$
+C_{\text{add}}
+=
+
+\max
+\left(
+0,
+R_{\text{target}}
+\times
+N_{\text{feed}}
+---------------
+
+C_{\text{feed}}
+\right)
+$$
+
+Sedangkan rumus microbial efficiency dipakai untuk koreksi TAN aktual:
+
+$$
+\Delta CH
+=
+
+\frac{
+\Delta N_{\text{TAN}}
+\times
+\left(C:N\right)_{\text{mikroba}}
+}{
+E
+\times
+f_C
+}
+$$
+
 Kesimpulan bab ini:
 
-> Karbon adalah alat kendali nitrogen. Tetapi setiap gram karbon yang masuk membawa konsekuensi terhadap oksigen, alkalinitas, padatan, biaya, dan risiko produksi. Stoikiometri membuat praktisi tidak mengambil keputusan berdasarkan warna air, tetapi berdasarkan neraca sistem.
+> Karbon adalah alat kendali nitrogen, tetapi karbon eksternal bukan obat bebas risiko. Untuk keputusan bisnis, dosis molase harus dihitung dari neraca karbon-nitrogen yang memasukkan karbon pakan, lalu dikoreksi dengan TAN aktual, DO subuh, TSS, BFV, pH, alkalinitas, FCR, dan respons ikan. Stoikiometri membuat praktisi tidak mengambil keputusan berdasarkan warna air, tetapi berdasarkan neraca sistem.
+
+[1]: https://www.sciencedirect.com/science/article/pii/S004484869900085X?utm_source=chatgpt.com 'Carbon/nitrogen ratio as a control element in aquaculture ...'
+[2]: https://www.sciencedirect.com/science/article/pii/S004484860600216X?utm_source=chatgpt.com 'Engineering analysis of the stoichiometry ...'
 
 [Kembali ke Atas](#bioflok-nila-berbasis-neraca-mikroba-cn-ratio-protein-pakan-tan-fcr-dan-keputusan-bisnis)
 
