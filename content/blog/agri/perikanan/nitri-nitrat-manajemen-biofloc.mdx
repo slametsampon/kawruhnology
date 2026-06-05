@@ -25,58 +25,204 @@ _Panduan praktisi untuk membedakan risiko cepat `$NO_2^-$`, akumulasi `$NO_3^-$`
 ---
 
 - [**_Manajemen Nitrit dan Nitrat pada Bioflok: `$C/N$`, `$Cl^-$`, Nitrifikasi, Denitrifikasi, dan Ekspor Nitrogen Berbasis Angka_**](#manajemen-nitrit-dan-nitrat-pada-bioflok-cn-cl--nitrifikasi-denitrifikasi-dan-ekspor-nitrogen-berbasis-angka)
-- [Alur Besar Artikel](#alur-besar-artikel)
 - [Bab 1. Fundamental Nitrit dan Nitrat dalam Bioflok](#bab-1-fundamental-nitrit-dan-nitrat-dalam-bioflok)
   - [1.1. Nitrogen tidak hilang, hanya berpindah bentuk](#11-nitrogen-tidak-hilang-hanya-berpindah-bentuk)
+    - [Diagram alur dasar nitrogen](#diagram-alur-dasar-nitrogen)
+    - [Implikasi praktis](#implikasi-praktis)
+    - [Pesan utama bab ini](#pesan-utama-bab-ini)
   - [1.2. Perbedaan nitrit dan nitrat](#12-perbedaan-nitrit-dan-nitrat)
+    - [Nitrit sebagai risiko cepat](#nitrit-sebagai-risiko-cepat)
+    - [Nitrat sebagai risiko akumulatif](#nitrat-sebagai-risiko-akumulatif)
+    - [Diagram perbedaan fungsi manajemen](#diagram-perbedaan-fungsi-manajemen)
+    - [Kalimat kunci](#kalimat-kunci)
   - [1.3. Nitrit dan nitrat terjadi pada semua rezim bioflok](#13-nitrit-dan-nitrat-terjadi-pada-semua-rezim-bioflok)
+    - [Penjelasan per rezim](#penjelasan-per-rezim)
+      - [a. Rezim $C/N$ $8$ sampai $12$](#a-rezim-cn-8-sampai-12)
+      - [b. Rezim $C/N$ $12$ sampai $16$](#b-rezim-cn-12-sampai-16)
+      - [c. Rezim $C/N$ $16$ sampai $20$](#c-rezim-cn-16-sampai-20)
+      - [d. Rezim $C/N$ di atas $20$](#d-rezim-cn-di-atas-20)
+    - [Diagram pergeseran jalur nitrogen menurut $C/N$](#diagram-pergeseran-jalur-nitrogen-menurut-cn)
+    - [Kesimpulan subbab](#kesimpulan-subbab)
   - [1.4. Diagram yang perlu masuk](#14-diagram-yang-perlu-masuk)
+    - [Diagram ringkas alur nitrogen dalam bioflok](#diagram-ringkas-alur-nitrogen-dalam-bioflok)
+    - [Cara membaca diagram](#cara-membaca-diagram)
+    - [Nilai praktis diagram ini](#nilai-praktis-diagram-ini)
+  - [Kesimpulan Bab 1](#kesimpulan-bab-1)
+    - [1. Nitrogen tidak hilang](#1-nitrogen-tidak-hilang)
+    - [2. Nitrit dan nitrat berbeda fungsi manajemennya](#2-nitrit-dan-nitrat-berbeda-fungsi-manajemennya)
+    - [3. Semua rezim bioflok tetap dapat mengalami nitrit dan nitrat](#3-semua-rezim-bioflok-tetap-dapat-mengalami-nitrit-dan-nitrat)
+    - [4. $C/N$ adalah pengarah jalur nitrogen](#4-cn-adalah-pengarah-jalur-nitrogen)
+    - [5. Manajemen nitrogen berarti mengatur arah perpindahan nitrogen](#5-manajemen-nitrogen-berarti-mengatur-arah-perpindahan-nitrogen)
 - [Bab 2. Satuan, Konversi, dan Ambang Operasional](#bab-2-satuan-konversi-dan-ambang-operasional)
-  - [2.1. Nitrit sebagai `$NO_2^-$` dan `$NO_2\text{-}N$`](#21-nitrit-sebagai-no_2--dan-no_2text-n)
-  - [2.2. Nitrat sebagai `$NO_3^-$` dan `$NO_3\text{-}N$`](#22-nitrat-sebagai-no_3--dan-no_3text-n)
-  - [2.3. Ambang operasional nitrit](#23-ambang-operasional-nitrit)
-  - [2.4. Ambang operasional nitrat](#24-ambang-operasional-nitrat)
-  - [2.5. Kesalahan satuan yang harus dihindari](#25-kesalahan-satuan-yang-harus-dihindari)
+  - [2.1. Mengapa satuan harus dikunci sejak awal](#21-mengapa-satuan-harus-dikunci-sejak-awal)
+  - [2.2. Diagram konversi satuan nitrogen](#22-diagram-konversi-satuan-nitrogen)
+  - [2.3. Nitrit sebagai $NO\_2^-$ dan $NO\_2\\text{-}N$](#23-nitrit-sebagai-no_2--dan-no_2text-n)
+  - [2.4. Contoh konversi nitrit](#24-contoh-konversi-nitrit)
+    - [Contoh 1](#contoh-1)
+    - [Contoh 2](#contoh-2)
+  - [2.5. Nitrat sebagai $NO\_3^-$ dan $NO\_3\\text{-}N$](#25-nitrat-sebagai-no_3--dan-no_3text-n)
+  - [2.6. Contoh konversi nitrat](#26-contoh-konversi-nitrat)
+    - [Contoh 1](#contoh-1-1)
+    - [Contoh 2](#contoh-2-1)
+  - [2.7. Ambang operasional nitrit](#27-ambang-operasional-nitrit)
+    - [Cara membaca tabel nitrit](#cara-membaca-tabel-nitrit)
+  - [2.8. Diagram keputusan nitrit](#28-diagram-keputusan-nitrit)
+  - [2.9. Ambang operasional nitrat](#29-ambang-operasional-nitrat)
+    - [Cara membaca tabel nitrat](#cara-membaca-tabel-nitrat)
+  - [2.10. Grafik ambang operasional nitrat](#210-grafik-ambang-operasional-nitrat)
+  - [2.11. Mengapa ambang nitrit dan nitrat berbeda sifatnya](#211-mengapa-ambang-nitrit-dan-nitrat-berbeda-sifatnya)
+  - [2.12. Kesalahan satuan yang harus dihindari](#212-kesalahan-satuan-yang-harus-dihindari)
+  - [2.13. Tabel ringkas konversi nitrit](#213-tabel-ringkas-konversi-nitrit)
+  - [2.14. Tabel ringkas konversi nitrat](#214-tabel-ringkas-konversi-nitrat)
+  - [2.15. Standar satuan yang dipakai dalam artikel](#215-standar-satuan-yang-dipakai-dalam-artikel)
+  - [2.16. SOP membaca hasil test kit](#216-sop-membaca-hasil-test-kit)
+  - [2.17. Kesimpulan Bab 2](#217-kesimpulan-bab-2)
 - [Bab 3. Stoikiometri Nitrogen dari Pakan sampai Nitrat](#bab-3-stoikiometri-nitrogen-dari-pakan-sampai-nitrat)
-  - [3.1. Produksi `$TAN$` dari pakan](#31-produksi-tan-dari-pakan)
-  - [3.2. Stoikiometri nitrifikasi](#32-stoikiometri-nitrifikasi)
-  - [3.3. Produksi nitrat dari `$TAN$`](#33-produksi-nitrat-dari-tan)
-  - [3.4. Kenaikan konsentrasi nitrat](#34-kenaikan-konsentrasi-nitrat)
-  - [3.5. Posisi `$C/N$` dalam stoikiometri](#35-posisi-cn-dalam-stoikiometri)
+  - [3.1. Pakan sebagai sumber utama nitrogen](#31-pakan-sebagai-sumber-utama-nitrogen)
+  - [3.2. Produksi $TAN$ dari pakan](#32-produksi-tan-dari-pakan)
+  - [3.3. Diagram alur stoikiometri dari pakan ke $TAN$](#33-diagram-alur-stoikiometri-dari-pakan-ke-tan)
+  - [3.4. Stoikiometri nitrifikasi](#34-stoikiometri-nitrifikasi)
+  - [3.5. Asal angka $4{,}57 \\text{ g } O\_2\\text{/g TAN-N}$](#35-asal-angka-457-text-g--o_2textg-tan-n)
+  - [3.6. Asal angka $7{,}14 \\text{ g as } CaCO\_3\\text{/g TAN-N}$](#36-asal-angka-714-text-g-as--caco_3textg-tan-n)
+  - [3.7. Diagram konsekuensi nitrifikasi](#37-diagram-konsekuensi-nitrifikasi)
+  - [3.8. Produksi nitrat dari $TAN$](#38-produksi-nitrat-dari-tan)
+  - [3.9. Kenaikan konsentrasi nitrat](#39-kenaikan-konsentrasi-nitrat)
+  - [3.10. Simulasi sederhana akumulasi nitrat](#310-simulasi-sederhana-akumulasi-nitrat)
+  - [3.11. Grafik akumulasi nitrat tanpa ekspor nitrogen](#311-grafik-akumulasi-nitrat-tanpa-ekspor-nitrogen)
+  - [3.12. Posisi $C/N$ dalam stoikiometri](#312-posisi-cn-dalam-stoikiometri)
+  - [3.13. Model konseptual distribusi nitrogen oleh $C/N$](#313-model-konseptual-distribusi-nitrogen-oleh-cn)
+  - [3.14. Grafik konseptual distribusi nitrogen terhadap $C/N$](#314-grafik-konseptual-distribusi-nitrogen-terhadap-cn)
+  - [3.15. Contoh efek $C/N$ terhadap produksi nitrat](#315-contoh-efek-cn-terhadap-produksi-nitrat)
+    - [Skenario 1: $C/N = 10$](#skenario-1-cn--10)
+    - [Skenario 2: $C/N = 14$](#skenario-2-cn--14)
+    - [Skenario 3: $C/N = 18$](#skenario-3-cn--18)
+  - [3.16. Neraca nitrogen yang lebih lengkap](#316-neraca-nitrogen-yang-lebih-lengkap)
+  - [3.17. Diagram neraca nitrogen bioflok](#317-diagram-neraca-nitrogen-bioflok)
+  - [3.18. Kesimpulan Bab 3](#318-kesimpulan-bab-3)
 - [Bab 4. Manajemen Nitrit: Proteksi Ikan dan Perbaikan Nitrifikasi](#bab-4-manajemen-nitrit-proteksi-ikan-dan-perbaikan-nitrifikasi)
   - [4.1. Dua tujuan manajemen nitrit](#41-dua-tujuan-manajemen-nitrit)
-  - [4.2. Formula proteksi nitrit dengan `$Cl^-$`](#42-formula-proteksi-nitrit-dengan-cl-)
-  - [4.3. Penyebab nitrit naik](#43-penyebab-nitrit-naik)
-  - [4.4. SOP nitrit naik](#44-sop-nitrit-naik)
-  - [4.5. Hubungan nitrit dengan `$pH$`](#45-hubungan-nitrit-dengan-ph)
-- [Bab 5. Manajemen Nitrat: `$C/N$`, Ekspor Nitrogen, dan Kontrol Akumulasi](#bab-5-manajemen-nitrat-cn-ekspor-nitrogen-dan-kontrol-akumulasi)
+    - [Diagram dua jalur manajemen nitrit](#diagram-dua-jalur-manajemen-nitrit)
+  - [4.2. Proteksi ikan dengan $Cl^-$](#42-proteksi-ikan-dengan-cl-)
+  - [4.3. Formula proteksi nitrit dengan $Cl^-$](#43-formula-proteksi-nitrit-dengan-cl-)
+  - [4.4. Jika test kit membaca $NO\_2\\text{-}N$](#44-jika-test-kit-membaca-no_2text-n)
+  - [4.5. Contoh hitung proteksi nitrit](#45-contoh-hitung-proteksi-nitrit)
+    - [Langkah 1: hitung target $Cl^-$](#langkah-1-hitung-target-cl-)
+    - [Langkah 2: hitung tambahan $Cl^-$](#langkah-2-hitung-tambahan-cl-)
+    - [Langkah 3: konversi ke $NaCl$](#langkah-3-konversi-ke-nacl)
+  - [4.6. Rasio aktual $Cl^- : NO\_2^-$](#46-rasio-aktual-cl---no_2-)
+  - [4.7. Penyebab nitrit naik](#47-penyebab-nitrit-naik)
+    - [Diagram penyebab nitrit naik](#diagram-penyebab-nitrit-naik)
+  - [4.8. Perbaikan sistem: mempercepat $NO\_2^- \\rightarrow NO\_3^-$](#48-perbaikan-sistem-mempercepat-no_2--rightarrow-no_3-)
+  - [4.9. Peran aerasi dalam manajemen nitrit](#49-peran-aerasi-dalam-manajemen-nitrit)
+  - [4.10. Peran alkalinitas dalam manajemen nitrit](#410-peran-alkalinitas-dalam-manajemen-nitrit)
+  - [4.11. Peran pakan dan sludge](#411-peran-pakan-dan-sludge)
+  - [4.12. SOP nitrit naik](#412-sop-nitrit-naik)
+  - [4.13. Diagram SOP nitrit naik](#413-diagram-sop-nitrit-naik)
+  - [4.14. Hubungan nitrit dengan $pH$](#414-hubungan-nitrit-dengan-ph)
+  - [4.15. Grafik spesiasi nitrit terhadap $pH$](#415-grafik-spesiasi-nitrit-terhadap-ph)
+  - [4.16. Grafik kinerja biologis konversi nitrit menjadi nitrat](#416-grafik-kinerja-biologis-konversi-nitrit-menjadi-nitrat)
+  - [4.17. Kesalahan umum saat nitrit naik](#417-kesalahan-umum-saat-nitrit-naik)
+  - [4.18. Kesimpulan Bab 4](#418-kesimpulan-bab-4)
+- [Bab 5. Manajemen Nitrat: $C/N$, Ekspor Nitrogen, dan Kontrol Akumulasi](#bab-5-manajemen-nitrat-cn-ekspor-nitrogen-dan-kontrol-akumulasi)
   - [5.1. Nitrat sebagai produk akhir nitrifikasi aerob](#51-nitrat-sebagai-produk-akhir-nitrifikasi-aerob)
+    - [Diagram posisi nitrat](#diagram-posisi-nitrat)
   - [5.2. Sumber akumulasi nitrat](#52-sumber-akumulasi-nitrat)
-  - [5.3. Metode 1: manajemen `$C/N$` sebagai pengarah jalur nitrogen](#53-metode-1-manajemen-cn-sebagai-pengarah-jalur-nitrogen)
-  - [5.4. Formula kontrol `$C/N$`](#54-formula-kontrol-cn)
-  - [5.5. Metode 2: ekspor sludge dan bioflok](#55-metode-2-ekspor-sludge-dan-bioflok)
-  - [5.6. Metode 3: tanaman atau aquaponik](#56-metode-3-tanaman-atau-aquaponik)
-  - [5.7. Metode 4: pergantian air terhitung](#57-metode-4-pergantian-air-terhitung)
-  - [5.8. Metode 5: denitrifikasi terkontrol](#58-metode-5-denitrifikasi-terkontrol)
-  - [5.9. Metode 6: alga atau fotoautotrof](#59-metode-6-alga-atau-fotoautotrof)
-- [Bab 6. Studi Kasus Kolam Bioflok `$1 \text{ m}^3$`](#bab-6-studi-kasus-kolam-bioflok-1-text-m3)
+  - [5.3. Metode 1: manajemen $C/N$ sebagai pengarah jalur nitrogen](#53-metode-1-manajemen-cn-sebagai-pengarah-jalur-nitrogen)
+    - [Jalur nitrifikasi](#jalur-nitrifikasi)
+    - [Jalur bioflok heterotrof](#jalur-bioflok-heterotrof)
+    - [5.3.1. Rezim $C/N$ $8$ sampai $12$](#531-rezim-cn-8-sampai-12)
+    - [5.3.2. Rezim $C/N$ $12$ sampai $16$](#532-rezim-cn-12-sampai-16)
+    - [5.3.3. Rezim $C/N$ $16$ sampai $20$](#533-rezim-cn-16-sampai-20)
+    - [5.3.4. Rezim $C/N \>20$](#534-rezim-cn-20)
+  - [5.4. Tabel keputusan $C/N$ berdasarkan target sistem](#54-tabel-keputusan-cn-berdasarkan-target-sistem)
+    - [Diagram pilihan $C/N$](#diagram-pilihan-cn)
+  - [5.5. Formula kontrol $C/N$](#55-formula-kontrol-cn)
+  - [5.6. Contoh kontrol $C/N$](#56-contoh-kontrol-cn)
+  - [5.7. Metode 2: ekspor sludge dan bioflok](#57-metode-2-ekspor-sludge-dan-bioflok)
+    - [Diagram bioflok sebagai penyimpanan nitrogen sementara](#diagram-bioflok-sebagai-penyimpanan-nitrogen-sementara)
+    - [Strategi sludge removal](#strategi-sludge-removal)
+  - [5.8. Metode 3: tanaman atau aquaponik](#58-metode-3-tanaman-atau-aquaponik)
+    - [Kelebihan tanaman sebagai sink nitrat](#kelebihan-tanaman-sebagai-sink-nitrat)
+    - [Batasan aquaponik dari bioflok](#batasan-aquaponik-dari-bioflok)
+  - [5.9. Metode 4: pergantian air terhitung](#59-metode-4-pergantian-air-terhitung)
+    - [Contoh](#contoh)
+    - [Catatan penting](#catatan-penting)
+  - [5.10. Metode 5: denitrifikasi terkontrol](#510-metode-5-denitrifikasi-terkontrol)
+    - [Target reaktor denitrifikasi](#target-reaktor-denitrifikasi)
+    - [Pemulihan alkalinitas](#pemulihan-alkalinitas)
+    - [Risiko denitrifikasi](#risiko-denitrifikasi)
+  - [5.11. Metode 6: alga atau fotoautotrof](#511-metode-6-alga-atau-fotoautotrof)
+    - [Diagram alga dalam manajemen nitrat](#diagram-alga-dalam-manajemen-nitrat)
+  - [5.12. Matriks pemilihan metode optimal](#512-matriks-pemilihan-metode-optimal)
+  - [5.13. Urutan keputusan praktis](#513-urutan-keputusan-praktis)
+  - [5.14. Kesimpulan Bab 5](#514-kesimpulan-bab-5)
+- [Bab 6. Studi Kasus Kolam Bioflok $1 \\text{ m}^3$](#bab-6-studi-kasus-kolam-bioflok-1-text-m3)
   - [6.1. Asumsi desain](#61-asumsi-desain)
-  - [6.2. Produksi `$TAN$`](#62-produksi-tan)
-  - [6.3. Potensi kenaikan nitrat](#63-potensi-kenaikan-nitrat)
-  - [6.4. Simulasi akumulasi nitrat](#64-simulasi-akumulasi-nitrat)
-  - [6.5. Skenario `$C/N$`](#65-skenario-cn)
-  - [6.6. Skenario nitrit](#66-skenario-nitrit)
-  - [6.7. Skenario pergantian air untuk nitrat](#67-skenario-pergantian-air-untuk-nitrat)
+  - [6.2. Diagram alur keputusan studi kasus](#62-diagram-alur-keputusan-studi-kasus)
+  - [6.3. Produksi $TAN$](#63-produksi-tan)
+  - [6.4. Potensi kenaikan nitrat](#64-potensi-kenaikan-nitrat)
+  - [6.5. Simulasi akumulasi nitrat tanpa ekspor](#65-simulasi-akumulasi-nitrat-tanpa-ekspor)
+    - [Grafik akumulasi nitrat](#grafik-akumulasi-nitrat)
+  - [6.6. Skenario $C/N$](#66-skenario-cn)
+    - [Skenario $C/N = 10$](#skenario-cn--10)
+    - [Skenario $C/N = 14$](#skenario-cn--14)
+    - [Skenario $C/N = 18$](#skenario-cn--18)
+    - [Grafik pengaruh $C/N$ terhadap kenaikan nitrat](#grafik-pengaruh-cn-terhadap-kenaikan-nitrat)
+  - [6.7. Skenario nitrit](#67-skenario-nitrit)
+  - [6.8. Skenario pergantian air untuk nitrat](#68-skenario-pergantian-air-untuk-nitrat)
+  - [6.9. Skenario pemilihan metode optimal](#69-skenario-pemilihan-metode-optimal)
+    - [Skenario A: sistem aquaponik](#skenario-a-sistem-aquaponik)
+    - [Skenario B: bioflok nila stabil tanpa tanaman](#skenario-b-bioflok-nila-stabil-tanpa-tanaman)
+    - [Skenario C: bioflok mengejar flok untuk nila](#skenario-c-bioflok-mengejar-flok-untuk-nila)
+    - [Skenario D: nitrat tinggi dan $EC/TDS$ tinggi](#skenario-d-nitrat-tinggi-dan-ectds-tinggi)
+  - [6.10. Ringkasan angka studi kasus](#610-ringkasan-angka-studi-kasus)
+  - [6.11. Kesimpulan Bab 6](#611-kesimpulan-bab-6)
 - [Bab 7. Failure Mode, Instrumentasi, dan SOP Keputusan](#bab-7-failure-mode-instrumentasi-dan-sop-keputusan)
   - [7.1. Failure mode nitrit](#71-failure-mode-nitrit)
+    - [Diagram failure mode nitrit](#diagram-failure-mode-nitrit)
   - [7.2. Failure mode nitrat](#72-failure-mode-nitrat)
+    - [Diagram failure mode nitrat](#diagram-failure-mode-nitrat)
   - [7.3. Instrumentasi minimum](#73-instrumentasi-minimum)
-  - [7.4. SOP harian](#74-sop-harian)
-  - [7.5. Matriks pemilihan metode optimal](#75-matriks-pemilihan-metode-optimal)
+    - [Prioritas alat bila anggaran terbatas](#prioritas-alat-bila-anggaran-terbatas)
+  - [7.4. Frekuensi pengukuran](#74-frekuensi-pengukuran)
+  - [7.5. SOP harian](#75-sop-harian)
+    - [Diagram SOP harian](#diagram-sop-harian)
+  - [7.6. SOP saat nitrit naik](#76-sop-saat-nitrit-naik)
+  - [7.7. SOP saat nitrat naik](#77-sop-saat-nitrat-naik)
+  - [7.8. Matriks pemilihan metode optimal](#78-matriks-pemilihan-metode-optimal)
+    - [Diagram pemilihan metode](#diagram-pemilihan-metode)
+  - [7.9. Failure mode kombinasi](#79-failure-mode-kombinasi)
+  - [7.10. Dashboard harian praktisi](#710-dashboard-harian-praktisi)
+  - [7.11. Kesalahan keputusan yang harus dihindari](#711-kesalahan-keputusan-yang-harus-dihindari)
+  - [7.12. Kesimpulan Bab 7](#712-kesimpulan-bab-7)
 - [Lampiran A. Model Matematis](#lampiran-a-model-matematis)
+  - [A.1. Produksi $TAN\_N$](#a1-produksi-tan_n)
+  - [A.2. Kebutuhan $O\_2$ nitrifikasi](#a2-kebutuhan-o_2-nitrifikasi)
+  - [A.3. Konsumsi alkalinitas](#a3-konsumsi-alkalinitas)
+  - [A.4. Produksi $NO\_3\\text{-}N$](#a4-produksi-no_3text-n)
+  - [A.5. Kenaikan konsentrasi $NO\_3\\text{-}N$](#a5-kenaikan-konsentrasi-no_3text-n)
+  - [A.6. Konversi $NO\_3\\text{-}N$ ke $NO\_3^-$](#a6-konversi-no_3text-n-ke-no_3-)
+  - [A.7. Rasio $Cl^- : NO\_2^-$](#a7-rasio-cl---no_2-)
+  - [A.8. Kebutuhan $NaCl$](#a8-kebutuhan-nacl)
+  - [A.9. Kontrol $C/N$](#a9-kontrol-cn)
+  - [A.10. Pergantian air untuk nitrat](#a10-pergantian-air-untuk-nitrat)
+  - [A.11. Kebutuhan tanaman untuk menyerap nitrat](#a11-kebutuhan-tanaman-untuk-menyerap-nitrat)
+  - [A.12. Denitrifikasi dan pemulihan alkalinitas](#a12-denitrifikasi-dan-pemulihan-alkalinitas)
+  - [A.13. Diagram ringkas model matematis](#a13-diagram-ringkas-model-matematis)
 - [Lampiran B. CSV Excel Siap Copas](#lampiran-b-csv-excel-siap-copas)
 - [Lampiran C. Tabel Ambang Engineering](#lampiran-c-tabel-ambang-engineering)
+  - [C.1. Ambang nitrit](#c1-ambang-nitrit)
+  - [C.2. Ambang rasio $Cl^- : NO\_2^-$](#c2-ambang-rasio-cl---no_2-)
+  - [C.3. Ambang nitrat](#c3-ambang-nitrat)
+  - [C.4. Ambang $C/N$](#c4-ambang-cn)
+  - [C.5. Ambang pendukung nitrifikasi](#c5-ambang-pendukung-nitrifikasi)
 - [Lampiran D. Grafik dan Diagram Nitrogen](#lampiran-d-grafik-dan-diagram-nitrogen)
+  - [D.1. Indeks konversi nitrit menjadi nitrat vs $pH$](#d1-indeks-konversi-nitrit-menjadi-nitrat-vs-ph)
+  - [D.2. Spesiasi $HNO\_2$ dan $NO\_2^-$ vs $pH$](#d2-spesiasi-hno_2-dan-no_2--vs-ph)
+  - [D.3. Akumulasi $NO\_3\\text{-}N$ dari pakan](#d3-akumulasi-no_3text-n-dari-pakan)
+  - [D.4. Pengaruh $C/N$ terhadap distribusi nitrogen](#d4-pengaruh-cn-terhadap-distribusi-nitrogen)
+  - [D.5. Nitrat turun akibat pergantian air](#d5-nitrat-turun-akibat-pergantian-air)
+  - [D.6. Diagram pilihan metode kontrol nitrogen](#d6-diagram-pilihan-metode-kontrol-nitrogen)
 - [Kalimat Posisi Artikel](#kalimat-posisi-artikel)
 
 ---
@@ -93,41 +239,41 @@ Bab ini menjadi fondasi seluruh artikel. Tujuannya adalah memberi kerangka berpi
 Dengan sudut pandang ini, praktisi tidak hanya bereaksi saat nitrit atau nitrat naik, tetapi bisa mengelola sistem lebih awal.
 
 <ResourceBox
-  title="Artikel Terkait:"
-  items={[
-    {
-      name: 'Komparasi Ekonomi Budidaya Nila dan Lele pada Kolam Statis, Bioflok, dan RAS Berbasis m² Footprint Lahan',
-      href: '/blog/agri/perikanan/komparasi-kolam-statis-bioflok-ras',
-    },
-    {
-      name: 'E/P Ratio Pakan Ikan: Antara Efisiensi FCR, Fermentasi Ringan, Bioflok, dan Perbedaan Strategi Lele vs Nila',
-      href: '/blog/agri/perikanan/ep-ratio-pakan-fermentasi',
-    },
-    {
-      name: 'C/N Ratio pada Bioflok: Mengatur Mikroba, Oksigen, dan Stabilitas Kolam untuk Praktisi',
-      href: '/blog/agri/perikanan/ratio-cn-rendah-biflok',
-    },
-    {
-      name: 'Bioflok 651: Membedakan Persiapan Media dan Operasi Budidaya',
-      href: '/blog/agri/perikanan/bioflok-651',
-    },
-    {
-      name: 'Fermentasi Protein untuk Pakan Lele: Membuat Hidrolisat Asam Amino yang Aman, Rasional, dan Bernilai Guna',
-      href: '/blog/agri/perikanan/fermentasi-protein-untuk-pakan-lele',
-    },
-    {
-      name: 'Menurunkan FCR Lele: Dari Pakan Dimakan sampai Menjadi Daging',
-      href: '/blog/agri/perikanan/menurunkan-fcr-lele',
-    },
-    {
-      name: 'Kolam Lele sebagai Bioreaktor Penurun FCR Berbasis Bioflok',
-      href: '/blog/agri/perikanan/menurunkan-fcr-lele-bioflok',
-    },
-    {
-      name: 'Fermentasi, Pengomposan, dan Pembusukan: Meluruskan Istilah agar Praktisi Agri Tidak Salah Interpretasi',
-      href: '/blog/agri/fermentasi-pengomposan-pembusukan',
-    },
-  ]}
+title="Artikel Terkait:"
+items={[
+{
+name: 'Komparasi Ekonomi Budidaya Nila dan Lele pada Kolam Statis, Bioflok, dan RAS Berbasis m² Footprint Lahan',
+href: '/blog/agri/perikanan/komparasi-kolam-statis-bioflok-ras',
+},
+{
+name: 'E/P Ratio Pakan Ikan: Antara Efisiensi FCR, Fermentasi Ringan, Bioflok, dan Perbedaan Strategi Lele vs Nila',
+href: '/blog/agri/perikanan/ep-ratio-pakan-fermentasi',
+},
+{
+name: 'C/N Ratio pada Bioflok: Mengatur Mikroba, Oksigen, dan Stabilitas Kolam untuk Praktisi',
+href: '/blog/agri/perikanan/ratio-cn-rendah-biflok',
+},
+{
+name: 'Bioflok 651: Membedakan Persiapan Media dan Operasi Budidaya',
+href: '/blog/agri/perikanan/bioflok-651',
+},
+{
+name: 'Fermentasi Protein untuk Pakan Lele: Membuat Hidrolisat Asam Amino yang Aman, Rasional, dan Bernilai Guna',
+href: '/blog/agri/perikanan/fermentasi-protein-untuk-pakan-lele',
+},
+{
+name: 'Menurunkan FCR Lele: Dari Pakan Dimakan sampai Menjadi Daging',
+href: '/blog/agri/perikanan/menurunkan-fcr-lele',
+},
+{
+name: 'Kolam Lele sebagai Bioreaktor Penurun FCR Berbasis Bioflok',
+href: '/blog/agri/perikanan/menurunkan-fcr-lele-bioflok',
+},
+{
+name: 'Fermentasi, Pengomposan, dan Pembusukan: Meluruskan Istilah agar Praktisi Agri Tidak Salah Interpretasi',
+href: '/blog/agri/fermentasi-pengomposan-pembusukan',
+},
+]}
 />
 
 ---
@@ -2410,7 +2556,7 @@ $$
 ### Langkah 2: hitung tambahan $Cl^-$
 
 $$
-Cl^-_{\text{tambahan}} = # 40 10
+Cl^-_{\text{tambahan}} = 40 - 10
 $$
 
 $$
@@ -3057,7 +3203,7 @@ Nitrat terakumulasi ketika laju produksi nitrat lebih besar daripada laju ekspor
 Secara sederhana:
 
 $$
-Akumulasi\ NO_3^- = # Produksi\ NO_3^- Ekspor\ NO_3^-
+Akumulasi\ NO_3^- = Produksi\ NO_3^- Ekspor\ NO_3^-
 $$
 
 Sumber utama akumulasi nitrat:
