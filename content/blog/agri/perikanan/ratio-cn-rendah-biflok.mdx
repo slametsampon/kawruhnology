@@ -141,6 +141,35 @@ _Mengapa C/N rendah sering lebih stabil, kapan C/N tinggi berguna, dan bagaimana
   - [LA.11. Ringkasan Output Studi Kasus](#la11-ringkasan-output-studi-kasus)
   - [LA.12. Cara Membaca Model](#la12-cara-membaca-model)
   - [LA.13. Batasan Model](#la13-batasan-model)
+- [Lampiran B. Batas BFV Operasional agar Sedimentasi Tetap Mendukung Sistem BFT](#lampiran-b-batas-bfv-operasional-agar-sedimentasi-tetap-mendukung-sistem-bft)
+  - [LB.1 Kenapa BFV Harus Dibatasi?](#a1-kenapa-bfv-harus-dibatasi)
+  - [LB.2 Batasan BFV Valid Berdasarkan Komoditas dan Fase Budidaya](#a2-batasan-bfv-valid-berdasarkan-komoditas-dan-fase-budidaya)
+    - [LB.2.1 Udang Vannamei / Shrimp BFT](#a21-udang-vannamei--shrimp-bft)
+    - [LB.2.2 Nila / Tilapia BFT](#a22-nila--tilapia-bft)
+    - [LB.2.3 Lele / African Catfish / Clarias BFT](#a23-lele--african-catfish--clarias-bft)
+    - [LB.2.4 Ringkasan Batas BFV Praktis](#a24-ringkasan-batas-bfv-praktis)
+  - [LB.3 BFV, Kualitas Air, dan Kesehatan Ikan/Udang](#a3-bfv-kualitas-air-dan-kesehatan-ikanudang)
+  - [LB.4 Integrasi BFV dengan Sistem Pengendapan / Sedimentasi](#a4-integrasi-bfv-dengan-sistem-pengendapan--sedimentasi)
+    - [LB.4.1 Rule Operasi Berdasarkan BFV Udang](#a41-rule-operasi-berdasarkan-bfv-udang)
+    - [LB.4.2 Rule Operasi Berdasarkan BFV Nila](#a42-rule-operasi-berdasarkan-bfv-nila)
+    - [LB.4.3 Rule Operasi Berdasarkan BFV Lele](#a43-rule-operasi-berdasarkan-bfv-lele)
+    - [LB.4.4 Diagram Integrasi BFV dan Sedimentasi](#a44-diagram-integrasi-bfv-dan-sedimentasi)
+  - [LB.5 Formula BFV Removal](#a5-formula-bfv-removal)
+    - [LB.5.1 Selisih BFV](#a51-selisih-bfv)
+    - [LB.5.2 Volume Settleable Solids Ekuivalen](#a52-volume-settleable-solids-ekuivalen)
+    - [LB.5.3 Contoh Udang](#a53-contoh-udang)
+    - [LB.5.4 Estimasi Waktu Operasi Sedimentasi](#a54-estimasi-waktu-operasi-sedimentasi)
+    - [LB.5.5 Formula Penurunan BFV Aktual](#a55-formula-penurunan-bfv-aktual)
+  - [LB.6 Integrasi BFV dengan FCR, SGR, dan Keputusan Bisnis](#a6-integrasi-bfv-dengan-fcr-sgr-dan-keputusan-bisnis)
+    - [LB.6.1 Formula FCR](#a61-formula-fcr)
+    - [LB.6.2 Formula SGR](#a62-formula-sgr)
+    - [LB.6.3 Formula Survival Rate](#a63-formula-survival-rate)
+    - [LB.6.4 Hubungan BFV dengan Indikator Bisnis](#a64-hubungan-bfv-dengan-indikator-bisnis)
+  - [LB.7 SOP Monitoring BFV](#a7-sop-monitoring-bfv)
+    - [LB.7.1 Frekuensi Pengukuran](#a71-frekuensi-pengukuran)
+    - [LB.7.2 Cara Pengukuran](#a72-cara-pengukuran)
+  - [LB.8 Rekomendasi Praktis untuk Artikel Utama](#a8-rekomendasi-praktis-untuk-artikel-utama)
+  - [LB.9 Kesimpulan Lampiran A](#a9-kesimpulan-lampiran-a)
 
 ---
 
@@ -5133,6 +5162,633 @@ Model ini memiliki beberapa batasan.
 Prinsip akhirnya:
 
 > Model membantu memperkirakan kebutuhan oksigen, tetapi `$DO$` subuh adalah hakim lapangan.
+
+[**Kembali ke Atas**](#cn-ratio-pada-bioflok-mengatur-mikroba-oksigen-dan-stabilitas-kolam-untuk-praktisi)
+
+---
+
+# Lampiran B. Batas BFV Operasional agar Sedimentasi Tetap Mendukung Sistem BFT
+
+Lampiran ini melengkapi artikel utama tentang sedimentasi bioflok. Jika artikel utama menjelaskan **cara membuang padatan**, lampiran ini menjelaskan **berapa banyak padatan yang boleh dipertahankan** agar sistem tetap bekerja sebagai **biofloc technology / BFT**, bukan berubah menjadi sistem terlalu kotor atau terlalu bersih.
+
+Dalam konteks praktisi, BFV tidak boleh dilihat sebagai angka laboratorium sajLB. BFV memengaruhi biaya pakan, FCR, SGR, kebutuhan aerasi, stabilitas kualitas air, risiko stres insang, dan frekuensi pembuangan lumpur.
+
+---
+
+## LB.1 Kenapa BFV Harus Dibatasi?
+
+**BFV / biofloc volume** adalah volume flok yang mengendap dari sampel air, biasanya memakai Imhoff cone, dengan satuan:
+
+$$
+mL/L
+$$
+
+Hargreaves menjelaskan bahwa settleable solids diukur dari volume padatan yang mengendap dari $1\ L$ air sistem, dan waktu pembacaan perlu distandarkan, biasanya $10$–$20$ menit. Jadi, hasil BFV hanya valid dibandingkan bila metode dan waktu sedimentasinya samLB.
+
+Secara bisnis, BFV harus dibatasi karena ada dua sisi ekstrem:
+
+```mermaid
+flowchart TD
+    A[BFV terlalu rendah] --> B[Bioflok sebagai pakan alami kurang]
+    B --> C[FCR cenderung tidak optimal]
+    B --> D[Manfaat BFT menurun]
+
+    E[BFV optimum] --> F[Kualitas air stabil]
+    E --> G[Flok tersedia sebagai nutrisi tambahan]
+    F --> H[DO lebih terkendali]
+    G --> I[FCR dan SGR lebih stabil]
+
+    J[BFV terlalu tinggi] --> K[Oxygen demand naik]
+    J --> L[Insang terganggu]
+    J --> M[Lumpur anaerob]
+    K --> N[Biaya aerasi naik]
+    L --> O[Feed intake turun]
+    O --> P[FCR memburuk]
+    O --> Q[SGR turun]
+
+    classDef low fill:#fef3c7,stroke:#d97706,color:#111827;
+    classDef optimum fill:#dcfce7,stroke:#16a34a,color:#111827;
+    classDef risk fill:#fee2e2,stroke:#dc2626,color:#111827;
+
+    class A,B,C,D low;
+    class E,F,G,H,I optimum;
+    class J,K,L,M,N,O,P,Q risk;
+```
+
+Bila BFV terlalu rendah, kontribusi bioflok sebagai pakan tambahan dan buffer biologis berkurang. Bila BFV terlalu tinggi, mikroba dan bahan organik meningkatkan kebutuhan oksigen, memperberat aerasi, meningkatkan risiko penyumbatan insang, dan dapat menekan feed intake. CIBA menyebut kelebihan settleable solids dan TSS dapat menciptakan oxygen demand, gill occlusion, dan stres pada organisme budidayLB.
+
+Dari sisi biaya, hubungan paling sederhana adalah:
+
+$$
+Biaya\ pakan\ per\ kg\ biomassa = FCR \times Harga\ pakan\ per\ kg
+$$
+
+Jika FCR naik dari $1.20$ menjadi $1.35$, dan harga pakan $Rp12{,}000/kg$, maka tambahan biaya pakan per kg biomassa adalah:
+
+$$
+\Delta Biaya = (1.35 - 1.20) \times 12{,}000
+$$
+
+$$
+\Delta Biaya = Rp1{,}800/kg\ biomassa
+$$
+
+Jadi, BFV yang tidak terkendali bukan hanya masalah kualitas air, tetapi langsung masuk ke biaya produksi.
+
+---
+
+## LB.2 Batasan BFV Valid Berdasarkan Komoditas dan Fase Budidaya
+
+Tidak ada satu angka BFV yang berlaku untuk semua komoditas. Udang, nila, dan lele memiliki toleransi berbedLB. Selain itu, fase benih biasanya lebih sensitif dibanding fase pembesaran.
+
+### LB.2.1 Udang Vannamei / Shrimp BFT
+
+Untuk udang, target BFV umumnya lebih rendah dibanding nila atau lele. Hargreaves menyebut target settleable solids pada kolam udang bioflok berlapis sekitar $10$–$15\ mL/L$. CIBA juga mencantumkan settling solids ideal untuk shrimp sebesar $10$–$15\ mL/L$.
+
+Rekomendasi operasional:
+
+| Fase udang     |      BFV target | Status        | Tindakan                              |
+| -------------- | --------------: | ------------- | ------------------------------------- |
+| Nursery awal   |   $3$–$8\ mL/L$ | konservatif   | pertahankan flok rendah–sedang        |
+| Nursery lanjut |  $5$–$10\ mL/L$ | aman          | operasi sedimentasi minimal           |
+| Grow-out BFT   | $10$–$15\ mL/L$ | optimum umum  | pertahankan                           |
+| Waspada        | $15$–$20\ mL/L$ | mulai berat   | aktifkan sedimentasi periodik         |
+| Berlebih       |     $>20\ mL/L$ | risiko tinggi | jalankan swirler + IPC lebih intensif |
+
+Rumus keputusan:
+
+$$
+BFV_{udang,target} = 10-15\ mL/L
+$$
+
+$$
+BFV_{udang} > 15\ mL/L \Rightarrow mulai\ tingkatkan\ sedimentasi
+$$
+
+$$
+BFV_{udang} > 20\ mL/L \Rightarrow removal\ padatan\ perlu\ dipercepat
+$$
+
+Untuk fase kecil, batas bawah lebih aman karena insang dan toleransi stres lebih sensitif. Rujukan terbaru juga menyebut bahwa floc volume tinggi dapat menurunkan oksigen tersedia dan berisiko menyumbat insang; beberapa penulis menyarankan kisaran $5$–$15\ mL/L$ untuk shrimp. ([Springer][1])
+
+---
+
+### LB.2.2 Nila / Tilapia BFT
+
+Nila lebih toleran terhadap BFV lebih tinggi dan dapat memanfaatkan flok secara baik. Hargreaves menyebut settleable solids $25$–$50\ mL/L$ memberi fungsi yang baik pada sistem bioflok tilapia, dan CIBA juga mencantumkan $25$–$50\ mL/L$ untuk tilapiLB.
+
+Untuk tilapia fingerlings, rujukan lain menyebut rekomendasi volume bioflok yang diukur dengan Imhoff cone berada pada $5$–$20\ mL/L$. ([ScienceDirect][2])
+
+Rekomendasi operasional:
+
+| Fase nila         |      BFV target | Status              | Tindakan                     |
+| ----------------- | --------------: | ------------------- | ---------------------------- |
+| Fry / benih kecil |  $3$–$10\ mL/L$ | konservatif         | jangan biarkan terlalu pekat |
+| Fingerling        |  $5$–$20\ mL/L$ | aman                | kontrol ringan               |
+| Juvenile          | $15$–$30\ mL/L$ | transisi            | monitor DO dan TSS           |
+| Grow-out          | $25$–$50\ mL/L$ | optimum umum        | pertahankan                  |
+| Berlebih          |     $>50\ mL/L$ | risiko kualitas air | tingkatkan sludge removal    |
+
+Rumus keputusan:
+
+$$
+BFV_{nila,fingerling} = 5-20\ mL/L
+$$
+
+$$
+BFV_{nila,growout} = 25-50\ mL/L
+$$
+
+$$
+BFV_{nila} > 50\ mL/L \Rightarrow tingkatkan\ sedimentasi
+$$
+
+Untuk pembesaran nila, BFV $25$–$50\ mL/L$ masih dapat mendukung fungsi BFT, tetapi tetap harus dikaitkan dengan DO, TSS, pH, TAN, nitrit, dan respons makan.
+
+---
+
+### LB.2.3 Lele / African Catfish / Clarias BFT
+
+Untuk lele, rujukan batas BFV tidak sekuat udang dan nila karena standar operasionalnya lebih bervariasi. Namun ada studi pada **Clarias gariepinus** yang menguji floc volume density $20$–$40$, $40$–$60$, $60$–$80$, dan $80$–$100\ mL/L$. Studi tersebut melaporkan bahwa $60$–$80\ mL/L$ lebih sesuai untuk kultur lele bioflok; FCR terbaik berada pada $60$–$80\ mL/L$, sedangkan $80$–$100\ mL/L$ menunjukkan SGR lebih rendah. ([ResearchGate][3])
+
+Rekomendasi operasional yang lebih aman untuk praktisi:
+
+| Fase lele                 |      BFV target | Status                            | Tindakan                        |
+| ------------------------- | --------------: | --------------------------------- | ------------------------------- |
+| Benih awal                | $10$–$25\ mL/L$ | konservatif                       | hindari flok pekat              |
+| Benih lanjut / pendederan | $20$–$40\ mL/L$ | aman                              | kontrol ringan                  |
+| Pembesaran awal           | $40$–$60\ mL/L$ | produktif                         | monitor DO                      |
+| Pembesaran intensif       | $60$–$80\ mL/L$ | optimum berdasarkan studi Clarias | pertahankan bila DO stabil      |
+| Berlebih                  |     $>80\ mL/L$ | mulai berisiko                    | tingkatkan sedimentasi          |
+| Sangat berlebih           |    $>100\ mL/L$ | risiko SGR turun                  | lakukan removal kuat terkendali |
+
+Rumus keputusan:
+
+$$
+BFV_{lele,pembesaran} = 60-80\ mL/L
+$$
+
+$$
+BFV_{lele} > 80\ mL/L \Rightarrow mulai\ tingkatkan\ sludge\ removal
+$$
+
+$$
+BFV_{lele} > 100\ mL/L \Rightarrow risiko\ performa\ meningkat
+$$
+
+Catatan penting: lele memang lebih tahan terhadap kualitas air berat dibanding beberapa komoditas lain, tetapi itu bukan alasan membiarkan BFV terlalu tinggi. Studi Clarias tersebut menunjukkan FVD $80$–$100\ mL/L$ memiliki SGR lebih rendah, diduga terkait DO yang lebih rendah pada perlakuan tersebut. ([ResearchGate][3])
+
+---
+
+### LB.2.4 Ringkasan Batas BFV Praktis
+
+| Komoditas / fase   |      BFV target | Batas mulai tindakan | Catatan                |
+| ------------------ | --------------: | -------------------: | ---------------------- |
+| Udang nursery awal |   $3$–$8\ mL/L$ |          $>10\ mL/L$ | konservatif            |
+| Udang grow-out BFT | $10$–$15\ mL/L$ |     $>15$–$20\ mL/L$ | rujukan kuat           |
+| Nila fingerling    |  $5$–$20\ mL/L$ |     $>20$–$25\ mL/L$ | fase kecil             |
+| Nila grow-out      | $25$–$50\ mL/L$ |          $>50\ mL/L$ | rujukan kuat           |
+| Lele benih         | $10$–$40\ mL/L$ |     $>40$–$60\ mL/L$ | konservatif            |
+| Lele pembesaran    | $60$–$80\ mL/L$ |          $>80\ mL/L$ | berbasis studi Clarias |
+| Lele risiko tinggi |    $>100\ mL/L$ |        wajib removal | SGR berpotensi turun   |
+
+---
+
+## LB.3 BFV, Kualitas Air, dan Kesehatan Ikan/Udang
+
+BFV harus dibaca bersama kualitas air. Jika BFV berada dalam target tetapi DO rendah, sistem tetap tidak sehat. Jika BFV tinggi tetapi DO masih stabil, tindakan tetap perlu disiapkan karena risiko dapat muncul setelah feeding, malam hari, atau saat aerasi terganggu.
+
+CIBA memberi acuan praktis kualitas air BFT: DO $>5\ ppm$, pH $7$–$8.5$, alkalinitas $100$–$150\ ppm$, settling solids $10$–$15\ mL/L$ untuk shrimp, $25$–$50\ mL/L$ untuk tilapia, dan TSS $250$–$450\ ppm$. CIBA juga menekankan bahwa kelebihan SS dan TSS meningkatkan oxygen demand, gill occlusion, dan stres.
+
+| Parameter         |                                          Target praktis BFT | Risiko bila buruk                     |
+| ----------------- | ----------------------------------------------------------: | ------------------------------------- |
+| DO                |                                                  $>5\ mg/L$ | feed intake turun, stres, mortalitas  |
+| pH                |                                                   $7$–$8.5$ | proses mikroba terganggu              |
+| Alkalinitas       |                               $100$–$150\ mg/L\ as\ CaCO_3$ | nitrifikasi dan stabilitas pH melemah |
+| TAN               |                serendah mungkin; acuan praktis $<1.5\ mg/L$ | toksisitas amonia                     |
+| Nitrit            | serendah mungkin; acuan praktis $<2\ mg/L$ sebagai $NO_2-N$ | stres osmoregulasi dan darah          |
+| TSS               |                                           $250$–$450\ mg/L$ | insang, DO, dan sludge load           |
+| BFV udang         |                                             $10$–$15\ mL/L$ | bila tinggi: insang dan DO            |
+| BFV nila grow-out |                                             $25$–$50\ mL/L$ | bila tinggi: DO dan feeding           |
+| BFV lele grow-out |                                             $60$–$80\ mL/L$ | bila tinggi: DO dan SGR               |
+
+Hubungan BFV dengan kesehatan dapat diringkas:
+
+```mermaid
+flowchart TD
+    A[BFV naik] --> B[TSS dan bahan organik naik]
+    B --> C[Konsumsi oksigen mikroba naik]
+    C --> D[DO malam/pagi turun]
+    B --> E[Partikel kontak dengan insang]
+    E --> F[Stres insang]
+    D --> G[Feed intake turun]
+    F --> G
+    G --> H[FCR memburuk]
+    G --> I[SGR turun]
+    B --> J[Lumpur menumpuk]
+    J --> K[Zona anaerob dan bau]
+
+    classDef cause fill:#dbeafe,stroke:#2563eb,color:#111827;
+    classDef process fill:#fef3c7,stroke:#d97706,color:#111827;
+    classDef risk fill:#fee2e2,stroke:#dc2626,color:#111827;
+
+    class A,B cause;
+    class C,E,J process;
+    class D,F,G,H,I,K risk;
+```
+
+BFV yang tinggi tidak selalu langsung mematikan, tetapi menurunkan margin keamanan. Sistem menjadi sangat bergantung pada aerasi. Jika listrik turun, diffuser tersumbat, blower melemah, atau feeding terlalu tinggi, kolam dapat cepat masuk zona stres.
+
+---
+
+## LB.4 Integrasi BFV dengan Sistem Pengendapan / Sedimentasi
+
+Sistem sedimentasi dalam artikel ini tidak boleh dioperasikan untuk membuat BFV mendekati nol. Fungsinya adalah menjaga BFV dalam zona target.
+
+Konfigurasi yang direkomendasikan:
+
+$$
+Kolam\ bioflok \rightarrow Swirler \rightarrow IPC \rightarrow Kolam
+$$
+
+Dengan fungsi:
+
+$$
+Swirler = menangkap\ flok\ kasar + feses + sisa\ pakan
+$$
+
+$$
+IPC = menangkap\ flok\ ringan + polishing\ padatan\ tersuspensi
+$$
+
+### LB.4.1 Rule Operasi Berdasarkan BFV Udang
+
+| BFV udang       | Status           | Aksi sedimentasi                    |
+| --------------- | ---------------- | ----------------------------------- |
+| $<5\ mL/L$      | terlalu rendah   | hentikan removal, pertahankan flok  |
+| $5$–$10\ mL/L$  | aman konservatif | standby / operasi pendek            |
+| $10$–$15\ mL/L$ | optimum          | operasi ringan bila perlu           |
+| $15$–$20\ mL/L$ | waspada          | jalankan swirler + IPC periodik     |
+| $>20\ mL/L$     | berlebih         | operasi lebih intensif, drain rutin |
+
+### LB.4.2 Rule Operasi Berdasarkan BFV Nila
+
+| BFV nila        | Status            | Aksi sedimentasi                   |
+| --------------- | ----------------- | ---------------------------------- |
+| $<5\ mL/L$      | terlalu rendah    | jangan buang flok; cek TAN dan C/N |
+| $5$–$20\ mL/L$  | cocok fingerling  | operasi minimal                    |
+| $20$–$50\ mL/L$ | normal pembesaran | operasi sesuai DO/TSS              |
+| $>50\ mL/L$     | berlebih          | tingkatkan sludge removal          |
+| $>60\ mL/L$     | risiko meningkat  | cek DO pagi dan kondisi insang     |
+
+### LB.4.3 Rule Operasi Berdasarkan BFV Lele
+
+| BFV lele        | Status                      | Aksi sedimentasi                 |
+| --------------- | --------------------------- | -------------------------------- |
+| $<20\ mL/L$     | rendah untuk pembesaran     | jangan agresif membuang flok     |
+| $20$–$40\ mL/L$ | aman untuk benih/pendederan | operasi ringan                   |
+| $40$–$60\ mL/L$ | baik untuk pembesaran awal  | monitor DO                       |
+| $60$–$80\ mL/L$ | target pembesaran intensif  | pertahankan                      |
+| $>80\ mL/L$     | waspada                     | tingkatkan drain dan sedimentasi |
+| $>100\ mL/L$    | berlebih                    | removal kuat terkendali          |
+
+### LB.4.4 Diagram Integrasi BFV dan Sedimentasi
+
+```mermaid
+flowchart TD
+    A[Ukur BFV dengan Imhoff cone] --> B{BFV di bawah target?}
+    B -->|Ya| C[Kurangi operasi sedimentasi]
+    B -->|Tidak| D{BFV dalam target?}
+    D -->|Ya| E[Operasi normal / ringan]
+    D -->|Tidak| F{BFV di atas batas tindakan?}
+    F -->|Ya| G[Jalankan swirler + IPC]
+    F -->|Tidak| E
+    G --> H[Drain swirler singkat dan sering]
+    G --> I[Drain IPC bila akumulasi]
+    H --> J[Cek TSS outlet dan DO]
+    I --> J
+    J --> A
+
+    classDef test fill:#dbeafe,stroke:#2563eb,color:#111827;
+    classDef decision fill:#fef3c7,stroke:#d97706,color:#111827;
+    classDef action fill:#dcfce7,stroke:#16a34a,color:#111827;
+    classDef waste fill:#fee2e2,stroke:#dc2626,color:#111827;
+
+    class A,J test;
+    class B,D,F decision;
+    class C,E,G action;
+    class H,I waste;
+```
+
+---
+
+## LB.5 Formula BFV Removal
+
+Formula ini membantu praktisi memperkirakan seberapa besar settleable solids yang perlu dikurangi. Ini bukan pengganti pengukuran TSS, tetapi cukup berguna untuk membaca skala masalah.
+
+### LB.5.1 Selisih BFV
+
+Jika BFV awal adalah $BFV_1$ dan target adalah $BFV_2$, maka:
+
+$$
+\Delta BFV = BFV_1 - BFV_2
+$$
+
+Keterangan:
+
+- $\Delta BFV$ = selisih BFV yang perlu dikurangi;
+- $BFV_1$ = BFV aktual;
+- $BFV_2$ = BFV target.
+
+### LB.5.2 Volume Settleable Solids Ekuivalen
+
+Jika volume kolam adalah $V_k$ dalam liter, maka volume settleable solids ekuivalen yang perlu dikurangi:
+
+$$
+V_{SS} = \Delta BFV \times V_k
+$$
+
+Karena $BFV$ memakai satuan $mL/L$, maka $V_{SS}$ keluar dalam $mL$.
+
+Konversi ke liter:
+
+$$
+V_{SS,L} = \frac{V_{SS}}{1000}
+$$
+
+### LB.5.3 Contoh Udang
+
+Volume kolam:
+
+$$
+V_k = 10\ m^3 = 10{,}000\ L
+$$
+
+BFV aktual:
+
+$$
+BFV_1 = 20\ mL/L
+$$
+
+Target:
+
+$$
+BFV_2 = 15\ mL/L
+$$
+
+Selisih:
+
+$$
+\Delta BFV = 20 - 15
+$$
+
+$$
+\Delta BFV = 5\ mL/L
+$$
+
+Volume settleable solids ekuivalen:
+
+$$
+V_{SS} = 5 \times 10{,}000
+$$
+
+$$
+V_{SS} = 50{,}000\ mL
+$$
+
+$$
+V_{SS,L} = 50\ L
+$$
+
+Artinya, secara ekuivalen kolam membawa kelebihan settleable solids sekitar:
+
+$$
+50\ L
+$$
+
+Namun, bukan berarti operator cukup membuang tepat $50\ L$ lumpur dari drain. Lumpur drain dari swirler atau IPC biasanya lebih pekat daripada sampel kolam, sehingga volume aktual drain bisa lebih kecil atau lebih besar tergantung konsentrasi lumpur.
+
+### LB.5.4 Estimasi Waktu Operasi Sedimentasi
+
+Jika sistem swirler + IPC memiliki debit:
+
+$$
+Q_{treatment} = 20\ L/menit
+$$
+
+dan kolam:
+
+$$
+V_k = 10{,}000\ L
+$$
+
+Maka persentase volume kolam yang diproses per jam:
+
+$$
+V_{olah,jam} = 20 \times 60
+$$
+
+$$
+V_{olah,jam} = 1{,}200\ L/jam
+$$
+
+$$
+Persentase\ olah = \frac{1{,}200}{10{,}000} \times 100%
+$$
+
+$$
+Persentase\ olah = 12%/jam
+$$
+
+Jika BFV naik sedang, operasi $1$–$2$ jam dapat cukup sebagai koreksi ringan. Jika BFV sangat tinggi, operasi perlu lebih lama tetapi tetap dipantau agar flok tidak turun di bawah target.
+
+### LB.5.5 Formula Penurunan BFV Aktual
+
+Setelah operasi, ukur kembali BFV:
+
+$$
+BFV_{before}
+$$
+
+dan:
+
+$$
+BFV_{after}
+$$
+
+Penurunan BFV:
+
+$$
+Removal_{BFV} = \frac{BFV_{before} - BFV_{after}}{BFV_{before}} \times 100%
+$$
+
+Contoh:
+
+$$
+BFV_{before} = 20\ mL/L
+$$
+
+$$
+BFV_{after} = 15\ mL/L
+$$
+
+$$
+Removal_{BFV} = \frac{20 - 15}{20} \times 100%
+$$
+
+$$
+Removal_{BFV} = 25%
+$$
+
+---
+
+## LB.6 Integrasi BFV dengan FCR, SGR, dan Keputusan Bisnis
+
+BFV perlu dimasukkan ke log produksi bersama FCR, SGR, SR, dan biaya aerasi. Tanpa pencatatan, operator tidak tahu apakah sedimentasi meningkatkan profit atau hanya membuat air terlihat lebih bersih.
+
+### LB.6.1 Formula FCR
+
+$$
+FCR = \frac{Total\ pakan\ diberikan}{Pertambahan\ biomassa}
+$$
+
+Semakin rendah FCR, semakin efisien pakan digunakan.
+
+### LB.6.2 Formula SGR
+
+$$
+SGR = \frac{\ln W_t - \ln W_0}{t} \times 100%
+$$
+
+Keterangan:
+
+- $W_t$ = bobot akhir;
+- $W_0$ = bobot awal;
+- $t$ = lama pemeliharaan dalam hari.
+
+### LB.6.3 Formula Survival Rate
+
+$$
+SR = \frac{N_t}{N_0} \times 100%
+$$
+
+Keterangan:
+
+- $N_t$ = jumlah akhir;
+- $N_0$ = jumlah awal.
+
+### LB.6.4 Hubungan BFV dengan Indikator Bisnis
+
+| Kondisi BFV    | Dampak teknis                                 | Dampak bisnis                          |
+| -------------- | --------------------------------------------- | -------------------------------------- |
+| Terlalu rendah | bioflok kurang sebagai pakan alami            | FCR bisa kurang efisien                |
+| Optimum        | kualitas air stabil, flok tersedia            | FCR dan SGR lebih stabil               |
+| Terlalu tinggi | DO turun, insang terganggu, feed intake turun | FCR naik, SGR turun, risiko mortalitas |
+| Sangat tinggi  | aerasi berat, sludge anaerob                  | biaya listrik naik, risiko gagal panen |
+
+Pada lele, studi Clarias menunjukkan FVD $60$–$80\ mL/L$ memberi FCR lebih baik dibanding perlakuan lain, sedangkan $80$–$100\ mL/L$ menunjukkan SGR lebih rendah. Ini memperlihatkan bahwa BFV tinggi tidak selalu berarti lebih baik; ada batas optimum yang berkaitan dengan oksigen dan metabolisme. ([ResearchGate][3])
+
+---
+
+## LB.7 SOP Monitoring BFV
+
+### LB.7.1 Frekuensi Pengukuran
+
+| Kondisi sistem           | Frekuensi BFV                   |
+| ------------------------ | ------------------------------- |
+| Startup bioflok          | setiap hari                     |
+| Sistem stabil            | $2$–$3$ kali/minggu             |
+| Padat tebar tinggi       | setiap hari                     |
+| Setelah perubahan pakan  | setiap hari selama $3$–$5$ hari |
+| Setelah sedimentasi kuat | ukur sebelum dan sesudah        |
+| Saat DO turun            | ukur segera                     |
+
+### LB.7.2 Cara Pengukuran
+
+1. Ambil sampel air dari titik representatif, bukan tepat di dekat aerator atau drain.
+2. Homogenkan sampel.
+3. Masukkan $1\ L$ ke Imhoff cone.
+4. Diamkan dengan waktu standar.
+5. Catat volume endapan dalam $mL/L$.
+6. Gunakan waktu yang sama setiap pengukuran.
+
+Jika memakai pembacaan $20$ menit, tulis sebagai:
+
+$$
+BFV_{20}
+$$
+
+Jika memakai pembacaan $30$ menit, tulis sebagai:
+
+$$
+BFV_{30}
+$$
+
+Jangan mencampur data $BFV_{20}$ dan $BFV_{30}$ tanpa catatan, karena hasilnya tidak sebanding.
+
+---
+
+## LB.8 Rekomendasi Praktis untuk Artikel Utama
+
+Tambahkan kalimat ini dalam artikel utama:
+
+> Sistem swirler + IPC tidak dirancang untuk menghilangkan seluruh bioflok, tetapi untuk menjaga BFV dalam zona operasi komoditas. Untuk udang, target umum adalah $10$–$15\ mL/L$; untuk nila grow-out $25$–$50\ mL/L$; sedangkan untuk lele pembesaran intensif, studi Clarias menunjukkan $60$–$80\ mL/L$ lebih sesuai dibanding level yang lebih tinggi.
+
+Tambahkan juga keputusan operasi berikut:
+
+```mermaid
+flowchart TD
+    A[BFV di bawah target] --> B[Kurangi sedimentasi]
+    C[BFV dalam target] --> D[Operasi ringan / monitoring]
+    E[BFV di atas target] --> F[Jalankan swirler + IPC]
+    F --> G[Cek DO dan TSS outlet]
+    G --> H{BFV kembali target?}
+    H -->|Ya| D
+    H -->|Tidak| I[Tambah durasi atau frekuensi drain]
+
+    classDef low fill:#fef3c7,stroke:#d97706,color:#111827;
+    classDef ok fill:#dcfce7,stroke:#16a34a,color:#111827;
+    classDef high fill:#fee2e2,stroke:#dc2626,color:#111827;
+    classDef action fill:#ede9fe,stroke:#7c3aed,color:#111827;
+
+    class A,B low;
+    class C,D ok;
+    class E high;
+    class F,G,H,I action;
+```
+
+---
+
+## LB.9 Kesimpulan Lampiran A
+
+BFV adalah batas operasi utama agar sedimentasi tetap mendukung BFT. Angka BFV yang terlalu rendah mengurangi manfaat bioflok sebagai pakan alami dan sistem mikrobLB. Angka yang terlalu tinggi meningkatkan oxygen demand, risiko gill occlusion, stres, FCR buruk, SGR turun, dan biaya aerasi meningkat.
+
+Batas praktis yang direkomendasikan:
+
+| Komoditas | Fase             |      BFV target |
+| --------- | ---------------- | --------------: |
+| Udang     | nursery          |  $3$–$10\ mL/L$ |
+| Udang     | grow-out BFT     | $10$–$15\ mL/L$ |
+| Nila      | fingerling       |  $5$–$20\ mL/L$ |
+| Nila      | grow-out         | $25$–$50\ mL/L$ |
+| Lele      | benih/pendederan | $10$–$40\ mL/L$ |
+| Lele      | pembesaran       | $60$–$80\ mL/L$ |
+
+Prinsip akhirnya:
+
+$$
+Swirler + IPC = sistem\ kontrol\ BFV,\ bukan\ sistem\ penghapus\ seluruh\ flok
+$$
+
+dan:
+
+$$
+BFV\ optimum = flok\ cukup\ untuk\ fungsi\ BFT,\ tetapi\ tidak\ berlebih\ sampai\ menekan\ DO,\ FCR,\ SGR,\ dan\ kesehatan\ ikan/udang
+$$
+
+[1]: https://link.springer.com/article/10.1186/s44315-025-00030-0 'Effect of biofloc volume on growth, survival, economics and proximate composition of Macrobrachium rosenbergii postlarvae cultured in brackish water biofloc system | Blue Biotechnology | Springer Nature Link'
+[2]: https://www.sciencedirect.com/science/article/pii/S1470160X21008517?utm_source=chatgpt.com 'Assessing the sustainability of tilapia farming in biofloc- ...'
+[3]: https://www.researchgate.net/publication/361876106_Evaluation_of_Flock_Volume_Levels_on_Water_Quality_and_Production_Performance_of_Catfish_Clarias_gariepinus_Culture_Using_Micropore_Pipe_As_Aeration_Diffusers '(PDF) Evaluation of Flock Volume Levels on Water Quality and Production Performance of Catfish (Clarias gariepinus) Culture Using Micropore Pipe As Aeration Diffusers.'
 
 [**Kembali ke Atas**](#cn-ratio-pada-bioflok-mengatur-mikroba-oksigen-dan-stabilitas-kolam-untuk-praktisi)
 
