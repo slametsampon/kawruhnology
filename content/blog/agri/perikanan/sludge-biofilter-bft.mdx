@@ -258,6 +258,19 @@ _Desain praktis untuk mengubah sludge bioflok lele/nila menjadi input cair tanam
     - [**A.6.5 Output Scaling**](#a65-output-scaling)
   - [**A.7 Cara Membaca Keputusan Desain**](#a7-cara-membaca-keputusan-desain)
   - [**A.8 Kesimpulan Lampiran**](#a8-kesimpulan-lampiran)
+- [**Lampiran B — Process Flow Diagram dan Neraca Massa Awal Jalur B Kontinyu**](#lampiran-b--process-flow-diagram-dan-neraca-massa-awal-jalur-b-kontinyu)
+  - [**B.1 Mengapa PFD Diperlukan dalam Desain Jalur B?**](#b1-mengapa-pfd-diperlukan-dalam-desain-jalur-b)
+  - [**B.2 PFD Jalur B Kontinyu**](#b2-pfd-jalur-b-kontinyu)
+  - [**B.3 Stream Table PFD**](#b3-stream-table-pfd)
+  - [**B.4 Basis Neraca Massa Awal**](#b4-basis-neraca-massa-awal)
+  - [**B.5 Tabel Neraca Massa Awal**](#b5-tabel-neraca-massa-awal)
+  - [**B.6 Neraca Beban Biologis Awal**](#b6-neraca-beban-biologis-awal)
+    - [**B.6.1 Beban COD ke CSTR**](#b61-beban-cod-ke-cstr)
+    - [**B.6.2 Beban TAN ke MBBR**](#b62-beban-tan-ke-mbbr)
+  - [**B.7 Titik Sampling dalam PFD**](#b7-titik-sampling-dalam-pfd)
+  - [**B.8 Recycle dalam PFD**](#b8-recycle-dalam-pfd)
+  - [**B.9 Hubungan Lampiran B dengan Lampiran A**](#b9-hubungan-lampiran-b-dengan-lampiran-a)
+  - [**B.10 Kesimpulan Lampiran B**](#b10-kesimpulan-lampiran-b)
 
 ---
 
@@ -7219,6 +7232,363 @@ Kesimpulan praktisnya:
 Pernyataan kunci:
 
 > **Model ini bukan pengganti uji pilot. Model ini adalah kerangka sizing awal agar desain tidak berbasis tebakan volume, tetapi berbasis beban biologis dan endpoint kualitas.**
+
+[**Kembali ke Atas**](#rangkaian-biofilter-aerob-tiga-tahap-untuk-mineralisasi-sludge-bft-cstr-mbbr-dan-polishing)
+
+---
+
+# **Lampiran B — Process Flow Diagram dan Neraca Massa Awal Jalur B Kontinyu**
+
+Lampiran ini memperkenalkan **Process Flow Diagram** atau **PFD** untuk desain Jalur B kontinyu pada pemanfaatan sludge BFT lele/nila. Dalam industri proses seperti petrokimia, pangan, farmasi, dan pengolahan air limbah, PFD dipakai untuk menggambarkan unit proses utama, arah aliran, stream, recycle, serta basis neraca massa awal.
+
+Dalam konteks artikel ini, PFD dipakai agar desain Jalur B tidak hanya dibaca sebagai “urutan tangki”, tetapi sebagai **sistem proses yang memiliki aliran, pembagian fraksi, beban biologis, dan titik kontrol mutu**.
+
+Poin pentingnya:
+
+> **PFD membuat Jalur B lebih mudah dihitung karena setiap aliran diberi identitas: dari mana asalnya, ke mana arahnya, berapa debitnya, fraksi apa yang dibawa, dan parameter kualitas apa yang harus dicek.**
+
+---
+
+## **B.1 Mengapa PFD Diperlukan dalam Desain Jalur B?**
+
+Sludge BFT lele/nila bukan bahan homogen. Di dalamnya ada padatan kasar, flok berat, feses halus, sisa pakan, bioflok tua, EPS, organik terlarut, amonium, nitrit, nitrat, fosfor, mineral, dan partikel koloid.
+
+Karena itu, sludge tidak boleh langsung dianggap sebagai satu aliran yang seluruhnya masuk ke biofilter cair. Sebagian fraksi lebih cocok masuk **Jalur A**, sedangkan sebagian lain masuk **Jalur B**.
+
+Secara sederhana:
+
+```text
+Jalur A = jalur padatan menuju kompos
+Jalur B = jalur halus/cair menuju biofilter aerob
+```
+
+PFD membantu memisahkan dua keputusan penting:
+
+1. **keputusan fisik**, yaitu fraksi mana yang menjadi padatan dan fraksi mana yang menjadi cairan;
+2. **keputusan biologis**, yaitu beban mana yang masuk CSTR, MBBR, polishing, dan QC.
+
+Tanpa PFD, desain mudah menjadi terlalu umum:
+
+```text
+sludge → tangki aerasi → tangki aerasi → tangki aerasi
+```
+
+Dengan PFD, desain menjadi lebih jelas:
+
+```text
+sludge campuran
+↓
+pemisahan padatan
+↓
+fraksi kasar ke Jalur A
+↓
+fraksi halus/cair ke Jalur B
+↓
+CSTR → MBBR → Polishing → Clarifier → QC
+```
+
+---
+
+## **B.2 PFD Jalur B Kontinyu**
+
+PFD berikut menggambarkan aliran utama dari kolam BFT sampai produk cair lolos QC.
+
+```mermaid
+flowchart TD
+    A[Kolam BFT Lele/Nila<br/>Basis contoh: 100 m3] --> S1[Stream S-01<br/>Sludge campuran harian]
+
+    S1 --> B[Sludge Collector<br/>central drain / bottom drain]
+    B --> C[Swirler + IPC<br/>pemisahan fisik awal]
+
+    C -->|S-02: padatan kasar<br/>flok berat + lumpur pekat| D[Jalur A<br/>kompos padatan]
+
+    C -->|S-03: fraksi halus/cair<br/>sludge encer + supernatan| E[EQ Tank<br/>buffer debit & konsentrasi]
+
+    E -->|S-04: feed stabil| F[CSTR<br/>Biofilter 1: mineralisasi]
+
+    F -->|S-05: organik turun<br/>NH4+ terbentuk| G[MBBR<br/>Biofilter 2: nitrifikasi]
+
+    G -->|S-06: NH4+ turun<br/>NO2- rendah<br/>NO3- terbentuk| H[Polishing<br/>Biofilter 3: stabilisasi akhir]
+
+    H -->|S-07: cairan stabil| I[Clarifier<br/>settling padatan halus]
+
+    I -->|S-08: underflow padatan halus| D
+
+    I -->|S-09: overflow cair| J[QC Tank<br/>quality gate]
+
+    J --> K{Lolos QC?}
+
+    K -->|Ya<br/>S-10| L[Filtrasi Akhir]
+    L --> M[Aplikasi Tanaman<br/>kocor / fertigasi terbatas]
+
+    K -->|Tidak<br/>S-11 recycle| N{Masalah utama?}
+
+    N -->|bau / organik| F
+    N -->|NH4+ tinggi| G
+    N -->|NO2- tinggi| H
+    N -->|TSS tinggi| I
+
+    classDef source fill:#E3F2FD,stroke:#1565C0,color:#0D47A1;
+    classDef physical fill:#F3E5F5,stroke:#6A1B9A,color:#311B92;
+    classDef solid fill:#EFEBE9,stroke:#5D4037,color:#3E2723;
+    classDef cstr fill:#FFF3E0,stroke:#EF6C00,color:#4E342E;
+    classDef mbbr fill:#E8F5E9,stroke:#2E7D32,color:#1B5E20;
+    classDef polish fill:#E0F7FA,stroke:#00838F,color:#004D40;
+    classDef qc fill:#FFFDE7,stroke:#F9A825,color:#5D4037;
+    classDef output fill:#E8F5E9,stroke:#2E7D32,color:#1B5E20;
+    classDef recycle fill:#FFEBEE,stroke:#C62828,color:#B71C1C;
+
+    class A,S1,B source;
+    class C,E,I,L physical;
+    class D solid;
+    class F cstr;
+    class G mbbr;
+    class H polish;
+    class J,K,N qc;
+    class M output;
+```
+
+---
+
+## **B.3 Stream Table PFD**
+
+Setiap aliran dalam PFD diberi kode stream agar mudah dirujuk pada perhitungan berikutnya.
+
+| Stream | Dari          | Ke               | Fungsi                  | Parameter utama                         |
+| ------ | ------------- | ---------------- | ----------------------- | --------------------------------------- |
+| S-01   | Kolam BFT     | Sludge collector | sludge campuran harian  | volume sludge, TSS, bau                 |
+| S-02   | Swirler + IPC | Jalur A          | padatan kasar           | padatan, flok berat, lumpur pekat       |
+| S-03   | Swirler + IPC | EQ Tank          | fraksi halus/cair       | debit, TSS halus, COD, $NH_4^+$         |
+| S-04   | EQ Tank       | CSTR             | feed stabil             | $Q$, pH, COD, homogenitas               |
+| S-05   | CSTR          | MBBR             | hasil mineralisasi      | COD turun, $NH_4^+$ terbentuk           |
+| S-06   | MBBR          | Polishing        | hasil nitrifikasi       | $NH_4^+$ turun, $NO_2^-$, $NO_3^-$      |
+| S-07   | Polishing     | Clarifier        | cairan stabil           | pH/EC stabil, bau aman                  |
+| S-08   | Clarifier     | Jalur A          | underflow padatan halus | TSS, lumpur halus                       |
+| S-09   | Clarifier     | QC Tank          | overflow cair           | $NH_4^+$, $NO_2^-$, $NO_3^-$            |
+| S-10   | QC Tank       | Filtrasi akhir   | produk lolos QC         | $NO_2^-<1 \ \mathrm{mg/L}$, tidak busuk |
+| S-11   | QC Tank       | recycle          | produk off-spec         | tergantung masalah                      |
+
+Stream table ini penting karena setiap stream memiliki fungsi berbeda. Misalnya, $S\text{-}05$ tidak harus sudah tinggi nitrat, karena stream tersebut baru keluar dari CSTR. Sebaliknya, $S\text{-}06$ harus menunjukkan penurunan $NH_4^+$ karena sudah keluar dari MBBR.
+
+---
+
+## **B.4 Basis Neraca Massa Awal**
+
+Untuk contoh awal, gunakan basis farm:
+
+$$
+V_{\mathrm{BFT}}=100 \ \mathrm{m^3}
+$$
+
+Asumsi pemisahan dan aliran:
+
+| Parameter                          |            Nilai contoh |
+| ---------------------------------- | ----------------------: |
+| Volume BFT                         |    $100 \ \mathrm{m^3}$ |
+| Sludge campuran harian dari sistem | $600 \ \mathrm{L/hari}$ |
+| Padatan kasar ke Jalur A           | $350 \ \mathrm{L/hari}$ |
+| Sludge halus/pekat ke Jalur B      | $100 \ \mathrm{L/hari}$ |
+| Air pengencer/supernatan           | $500 \ \mathrm{L/hari}$ |
+| Debit Jalur B                      | $600 \ \mathrm{L/hari}$ |
+| Rasio sludge halus : pengencer     |                   $1:5$ |
+
+Rumus debit Jalur B:
+
+$$
+Q_{\mathrm{JalurB}}=Q_{\mathrm{sludge,halus}}+Q_{\mathrm{pengencer}}
+$$
+
+Dengan contoh:
+
+$$
+Q_{\mathrm{JalurB}}=100+500
+$$
+
+$$
+Q_{\mathrm{JalurB}}=600 \ \mathrm{L/hari}
+$$
+
+---
+
+## **B.5 Tabel Neraca Massa Awal**
+
+Tabel berikut adalah neraca massa awal berbasis debit. Angka ini belum memasukkan reaksi biologis secara detail, tetapi cukup untuk sizing awal unit.
+
+| Aliran                   |                      Debit contoh | Arah             | Catatan desain                   |
+| ------------------------ | --------------------------------: | ---------------- | -------------------------------- |
+| Sludge campuran dari BFT |           $600 \ \mathrm{L/hari}$ | ke Swirler + IPC | angka awal perlu diukur          |
+| Padatan kasar            |           $350 \ \mathrm{L/hari}$ | Jalur A          | kompos/pembenah tanah            |
+| Sludge halus/pekat       |           $100 \ \mathrm{L/hari}$ | Jalur B          | bahan utama mineralisasi cair    |
+| Air pengencer/supernatan |           $500 \ \mathrm{L/hari}$ | Jalur B          | rasio $1:5$                      |
+| Feed CSTR                |           $600 \ \mathrm{L/hari}$ | CSTR             | basis sizing CSTR                |
+| Feed MBBR                |           $600 \ \mathrm{L/hari}$ | MBBR             | basis TAN loading                |
+| Feed polishing           |           $600 \ \mathrm{L/hari}$ | polishing        | basis stabilisasi akhir          |
+| Overflow clarifier       | mendekati $600 \ \mathrm{L/hari}$ | QC Tank          | dikurangi underflow dan sampling |
+| Underflow clarifier      |                          variabel | Jalur A/recycle  | tergantung TSS                   |
+| Produk lolos QC          |                          variabel | filtrasi akhir   | hanya jika memenuhi QC           |
+
+Catatan penting:
+
+> Neraca massa ini adalah basis awal. Dalam operasi nyata, aliran keluar bisa berubah karena underflow clarifier, sampling, recycle, kehilangan air kecil, dan perubahan kandungan padatan.
+
+---
+
+## **B.6 Neraca Beban Biologis Awal**
+
+Selain debit, PFD juga perlu dihubungkan dengan beban biologis. Dua beban paling penting adalah:
+
+1. beban COD untuk CSTR,
+2. beban TAN untuk MBBR.
+
+### **B.6.1 Beban COD ke CSTR**
+
+Rumus:
+
+$$
+L_{\mathrm{COD}}=\frac{Q \times COD_{\mathrm{in}}}{1000000}
+$$
+
+Jika:
+
+$$
+Q=600 \ \mathrm{L/hari}
+$$
+
+dan:
+
+$$
+COD_{\mathrm{in}}=2000 \ \mathrm{mg/L}
+$$
+
+maka:
+
+$$
+L_{\mathrm{COD}}=\frac{600 \times 2000}{1000000}
+$$
+
+$$
+L_{\mathrm{COD}}=1.2 \ \mathrm{kg/hari}
+$$
+
+Beban ini menjadi dasar menghitung:
+
+$$
+OLR_{\mathrm{COD}}=\frac{L_{\mathrm{COD}}}{V_{\mathrm{CSTR}}}
+$$
+
+---
+
+### **B.6.2 Beban TAN ke MBBR**
+
+Rumus:
+
+$$
+L_{\mathrm{TAN}}=\frac{Q \times C_{NH4}}{1000}
+$$
+
+Jika:
+
+$$
+Q=600 \ \mathrm{L/hari}
+$$
+
+dan:
+
+$$
+C_{NH4}=50 \ \mathrm{mg/L}
+$$
+
+maka:
+
+$$
+L_{\mathrm{TAN}}=\frac{600 \times 50}{1000}
+$$
+
+$$
+L_{\mathrm{TAN}}=30 \ \mathrm{g/hari}
+$$
+
+Beban ini menjadi dasar menghitung luas biofilm MBBR:
+
+$$
+A_{\mathrm{req}}=\frac{L_{\mathrm{TAN}}}{r_A}
+$$
+
+---
+
+## **B.7 Titik Sampling dalam PFD**
+
+Agar PFD bisa dipakai untuk validasi pilot, setiap stream penting harus punya titik sampling.
+
+| Titik sampling | Lokasi                     | Parameter minimum                         |
+| -------------- | -------------------------- | ----------------------------------------- |
+| SP-01          | sludge campuran dari kolam | volume, TSS, bau                          |
+| SP-02          | outlet Swirler + IPC ke EQ | pH, TSS halus, COD                        |
+| SP-03          | outlet CSTR                | pH, DO, COD, $NH_4^+$, bau                |
+| SP-04          | outlet MBBR                | pH, DO, $NH_4^+$, $NO_2^-$, $NO_3^-$      |
+| SP-05          | outlet polishing           | pH, EC, $NH_4^+$, $NO_2^-$, $NO_3^-$, bau |
+| SP-06          | QC Tank                    | pH, EC, $NO_2^-$, uji diam 24 jam         |
+| SP-07          | produk setelah filtrasi    | TSS visual, clogging test, uji tanaman    |
+
+---
+
+## **B.8 Recycle dalam PFD**
+
+Recycle harus ditentukan berdasarkan masalah, bukan asal mengembalikan semua off-spec ke awal.
+
+| Masalah QC      | Arah recycle                        | Alasan                       |
+| --------------- | ----------------------------------- | ---------------------------- |
+| bau busuk       | CSTR                                | organik belum stabil         |
+| $NH_4^+$ tinggi | MBBR                                | nitrifikasi belum cukup      |
+| $NO_2^-$ tinggi | polishing atau MBBR                 | nitrit belum selesai         |
+| pH turun terus  | koreksi alkalinitas, lalu polishing | nitrifikasi masih aktif      |
+| TSS tinggi      | clarifier                           | masalah fisik/padatan        |
+| filter mampet   | Swirler + IPC / clarifier           | separasi padatan belum cukup |
+
+Prinsip recycle:
+
+```text
+recycle harus menuju unit yang sesuai dengan sumber masalah
+```
+
+Bila semua produk gagal dikembalikan ke CSTR, beban CSTR bisa naik berlebihan. Bila semua dikembalikan ke polishing, polishing bisa berubah menjadi tempat penumpukan off-spec.
+
+---
+
+## **B.9 Hubungan Lampiran B dengan Lampiran A**
+
+Lampiran B dan Lampiran A saling melengkapi.
+
+| Lampiran   | Fungsi                                                                |
+| ---------- | --------------------------------------------------------------------- |
+| Lampiran B | menggambarkan aliran proses, stream, neraca massa, dan titik sampling |
+| Lampiran A | menghitung ukuran unit, beban biologis, media MBBR, polishing, dan QC |
+
+Urutan pemakaiannya:
+
+```text
+Lampiran B
+↓
+tentukan stream dan debit
+↓
+Lampiran A
+↓
+hitung HRT, OLR, TAN loading, media, QC
+```
+
+Dengan kata lain:
+
+> **Lampiran B menjawab “alirannya ke mana dan berapa?”, sedangkan Lampiran A menjawab “unitnya perlu sebesar apa dan bebannya masih masuk akal atau tidak?”.**
+
+---
+
+## **B.10 Kesimpulan Lampiran B**
+
+PFD membuat desain Jalur B lebih disiplin. Dengan PFD, setiap aliran dapat diberi kode, setiap stream bisa dihitung, setiap titik sampling bisa ditentukan, dan setiap produk off-spec bisa diarahkan ke recycle yang tepat.
+
+Kesimpulan praktis:
+
+> **PFD adalah jembatan antara konsep biofilter dan detailed design. Tanpa PFD, desain mudah menjadi sekadar deretan tangki. Dengan PFD, Jalur B dapat dibaca sebagai sistem proses dengan aliran, beban, recycle, dan QC yang jelas.**
 
 [**Kembali ke Atas**](#rangkaian-biofilter-aerob-tiga-tahap-untuk-mineralisasi-sludge-bft-cstr-mbbr-dan-polishing)
 
