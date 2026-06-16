@@ -241,6 +241,21 @@ summary: Artikel ini menyusun desain airlift pump sekaligus airlift circulator u
   - [A.2 Formula Excel](#a2-formula-excel-1)
   - [A.3 Parameter Output](#a3-parameter-output-1)
   - [A.4 CSV Lengkap untuk Import ke Excel](#a4-csv-lengkap-untuk-import-ke-excel)
+- [Lampiran B – Data Eksperimen Airlift Wurts–Parker untuk Validasi Desain](#lampiran-b--data-eksperimen-airlift-wurtsparker-untuk-validasi-desain)
+  - [B.1 Pendahuluan](#b1-pendahuluan)
+- [B.2 Konfigurasi Eksperimen](#b2-konfigurasi-eksperimen)
+  - [B.2.1 Geometri Airlift](#b21-geometri-airlift)
+  - [B.2.2 Kondisi Operasi](#b22-kondisi-operasi)
+  - [B.2.3 Posisi Outlet](#b23-posisi-outlet)
+- [B.3 Data Hasil Uji Airlift Diameter 7,6 cm](#b3-data-hasil-uji-airlift-diameter-76-cm)
+  - [B.3.1 Data Asli dalam L/min](#b31-data-asli-dalam-lmin)
+- [B.4 Data yang Sama dalam m³/jam](#b4-data-yang-sama-dalam-mjam)
+- [B.5 Analisis Pengaruh Kedalaman Injeksi](#b5-analisis-pengaruh-kedalaman-injeksi)
+- [B.6 Data yang Digunakan pada Desain Gambiran](#b6-data-yang-digunakan-pada-desain-gambiran)
+- [B.7 Data Optimum untuk Kedalaman Mendekati 80 cm](#b7-data-optimum-untuk-kedalaman-mendekati-80-cm)
+- [B.8 Implikasi untuk Desain Airlift Praktis](#b8-implikasi-untuk-desain-airlift-praktis)
+  - [Evaluasi Opsi Desain](#evaluasi-opsi-desain)
+- [B.9 Kesimpulan Lampiran](#b9-kesimpulan-lampiran)
 
 ---
 
@@ -5553,6 +5568,303 @@ airlift_gambiran_model.csv
 
 [1]: https://www.researchgate.net/publication/306960735_Performance_and_design_characteristics_of_airlift_pumps_for_field_applications?utm_source=chatgpt.com 'Performance and design characteristics of airlift pumps for ...'
 [2]: https://en.wikipedia.org/wiki/Darcy%E2%80%93Weisbach_equation?utm_source=chatgpt.com 'Darcy–Weisbach equation'
+
+---
+
+# Lampiran B – Data Eksperimen Airlift Wurts–Parker untuk Validasi Desain
+
+## B.1 Pendahuluan
+
+Seluruh desain airlift pada artikel ini didasarkan pada data eksperimen lapangan yang dipublikasikan oleh:
+
+**Wurts, McNeill & Overhults – Performance and Design Characteristics of Airlift Pumps for Field Applications**
+
+Penelitian tersebut dilakukan untuk menghasilkan data performa airlift yang dapat digunakan secara langsung oleh praktisi akuakultur, khususnya untuk:
+
+- sirkulasi air,
+- aerasi,
+- transportasi air berenergi rendah,
+- sistem budidaya ikan dan akuakultur resirkulasi.
+
+Berbeda dengan banyak referensi yang hanya memberikan teori atau korelasi empiris, penelitian ini mengukur secara langsung:
+
+- debit udara,
+- debit air,
+- kedalaman injeksi,
+- diameter pipa,
+- tekanan operasi.
+
+Karena itu data ini sangat berharga sebagai basis validasi desain airlift skala lapangan.
+
+---
+
+# B.2 Konfigurasi Eksperimen
+
+## B.2.1 Geometri Airlift
+
+| Parameter            |    Nilai |
+| -------------------- | -------: |
+| Panjang pipa airlift |   185 cm |
+| Diameter dalam pipa  |   7,6 cm |
+| Diameter dalam pipa  |  10,2 cm |
+| Diameter dalam pipa  |  15,2 cm |
+| Diameter pipa udara  |   2,5 cm |
+| Panjang pipa udara   | ±14,12 m |
+| Material             |      PVC |
+
+---
+
+## B.2.2 Kondisi Operasi
+
+| Parameter               |              Nilai |
+| ----------------------- | -----------------: |
+| Kedalaman injeksi udara |              50 cm |
+| Kedalaman injeksi udara |              65 cm |
+| Kedalaman injeksi udara |              80 cm |
+| Debit udara uji         |       71–324 L/min |
+| Sumber udara            | Centrifugal blower |
+
+---
+
+## B.2.3 Posisi Outlet
+
+Pada seluruh pengujian:
+
+```text
+Bagian bawah outlet discharge
+berada 0–2,5 cm
+di atas permukaan air
+```
+
+Konfigurasi ini menghasilkan kondisi:
+
+```text
+Static lift ≈ 0
+```
+
+sehingga performa airlift terutama ditentukan oleh:
+
+- diameter pipa,
+- kedalaman injeksi,
+- debit udara.
+
+---
+
+# B.3 Data Hasil Uji Airlift Diameter 7,6 cm
+
+Diameter 7,6 cm merupakan data yang paling relevan terhadap desain Gambiran karena digunakan sebagai basis desain pada artikel ini.
+
+## B.3.1 Data Asli dalam L/min
+
+| Diameter Pipa | Posisi Outlet        | Kedalaman Injeksi | Debit Udara |   Debit Air | Rasio Udara/Air | Rasio Air/Udara |
+| ------------- | -------------------- | ----------------: | ----------: | ----------: | --------------: | --------------: |
+| 7,6 cm        | 0–2,5 cm di atas air |             50 cm |    71 L/min |  65,5 L/min |            1,09 |            0,92 |
+| 7,6 cm        | 0–2,5 cm di atas air |             50 cm |    94 L/min |  74,5 L/min |            1,26 |            0,79 |
+| 7,6 cm        | 0–2,5 cm di atas air |             50 cm |   116 L/min |  82,7 L/min |            1,40 |            0,71 |
+| 7,6 cm        | 0–2,5 cm di atas air |             50 cm |   218 L/min | 101,6 L/min |            2,15 |            0,47 |
+| 7,6 cm        | 0–2,5 cm di atas air |             65 cm |    71 L/min |  73,9 L/min |            0,96 |            1,04 |
+| 7,6 cm        | 0–2,5 cm di atas air |             65 cm |    94 L/min |  80,4 L/min |            1,17 |            0,86 |
+| 7,6 cm        | 0–2,5 cm di atas air |             65 cm |   118 L/min |  90,7 L/min |            1,30 |            0,77 |
+| 7,6 cm        | 0–2,5 cm di atas air |             80 cm |    71 L/min |   111 L/min |            0,64 |            1,56 |
+
+---
+
+# B.4 Data yang Sama dalam m³/jam
+
+Konversi:
+
+$$
+1\;L/min
+=
+0.06\;m^3/jam
+$$
+
+| Diameter Pipa | Posisi Outlet        | Kedalaman Injeksi |  Debit Udara |   Debit Air | Rasio Udara/Air | Rasio Air/Udara |
+| ------------- | -------------------- | ----------------: | -----------: | ----------: | --------------: | --------------: |
+| 7,6 cm        | 0–2,5 cm di atas air |             50 cm |  4,26 m³/jam | 3,93 m³/jam |            1,09 |            0,92 |
+| 7,6 cm        | 0–2,5 cm di atas air |             50 cm |  5,64 m³/jam | 4,47 m³/jam |            1,26 |            0,79 |
+| 7,6 cm        | 0–2,5 cm di atas air |             50 cm |  6,96 m³/jam | 4,96 m³/jam |            1,40 |            0,71 |
+| 7,6 cm        | 0–2,5 cm di atas air |             50 cm | 13,08 m³/jam | 6,10 m³/jam |            2,15 |            0,47 |
+| 7,6 cm        | 0–2,5 cm di atas air |             65 cm |  4,26 m³/jam | 4,43 m³/jam |            0,96 |            1,04 |
+| 7,6 cm        | 0–2,5 cm di atas air |             65 cm |  5,64 m³/jam | 4,82 m³/jam |            1,17 |            0,86 |
+| 7,6 cm        | 0–2,5 cm di atas air |             65 cm |  7,08 m³/jam | 5,44 m³/jam |            1,30 |            0,77 |
+| 7,6 cm        | 0–2,5 cm di atas air |             80 cm |  4,26 m³/jam | 6,66 m³/jam |            0,64 |            1,56 |
+
+---
+
+# B.5 Analisis Pengaruh Kedalaman Injeksi
+
+Salah satu hasil paling penting dari eksperimen ini adalah pengaruh kedalaman injeksi terhadap performa airlift.
+
+Untuk debit udara yang sama:
+
+```text
+Qair = 71 L/min
+```
+
+didapat:
+
+| Kedalaman Injeksi |  Debit Air |
+| ----------------- | ---------: |
+| 50 cm             | 65,5 L/min |
+| 65 cm             | 73,9 L/min |
+| 80 cm             |  111 L/min |
+
+Terlihat bahwa peningkatan kedalaman injeksi memberikan peningkatan debit air yang sangat signifikan.
+
+Diagram berikut menunjukkan tren tersebut.
+
+```mermaid
+flowchart LR
+
+A["50 cm<br/>65.5 L/min"]
+--> B["65 cm<br/>73.9 L/min"]
+--> C["80 cm<br/>111 L/min"]
+
+classDef blue fill:#1565C0,color:#fff
+classDef green fill:#2E7D32,color:#fff
+
+class A,B blue
+class C green
+```
+
+Hal ini terjadi karena semakin dalam posisi injeksi maka:
+
+```text
+Submergence meningkat
+↓
+Void fraction meningkat
+↓
+Driving head meningkat
+↓
+Debit air meningkat
+```
+
+---
+
+# B.6 Data yang Digunakan pada Desain Gambiran
+
+Walaupun kolam Gambiran memiliki kedalaman air sekitar 74 cm, artikel ini menggunakan titik operasi:
+
+| Parameter         |      Nilai |
+| ----------------- | ---------: |
+| Diameter airlift  |     7,6 cm |
+| Kedalaman injeksi |      65 cm |
+| Debit udara       |   71 L/min |
+| Debit air         | 73,9 L/min |
+| Rasio air/udara   |       1,04 |
+
+Alasan pemilihannya:
+
+1. Geometri paling dekat dengan konfigurasi aktual.
+2. Data lengkap tersedia.
+3. Masih berada dalam rentang operasi yang stabil.
+4. Tidak memerlukan ekstrapolasi performa.
+
+Data ini menjadi basis seluruh perhitungan:
+
+- pressure drop,
+- diffuser,
+- bubble size,
+- transfer oksigen,
+- kebutuhan blower,
+- momentum discharge.
+
+---
+
+# B.7 Data Optimum untuk Kedalaman Mendekati 80 cm
+
+Jika tujuan utama adalah memaksimalkan debit air, maka titik operasi terbaik yang tersedia dari eksperimen adalah:
+
+| Parameter         |     Nilai |
+| ----------------- | --------: |
+| Diameter airlift  |    7,6 cm |
+| Kedalaman injeksi |     80 cm |
+| Debit udara       |  71 L/min |
+| Debit air         | 111 L/min |
+| Rasio udara/air   |      0,64 |
+| Rasio air/udara   |      1,56 |
+
+Sehingga:
+
+$$
+Q_{water}
+=
+1.56\,Q_{air}
+$$
+
+atau secara praktis:
+
+```text
+1 m³/jam udara
+≈
+1.5 m³/jam air
+```
+
+untuk konfigurasi yang sangat mirip dengan eksperimen tersebut.
+
+---
+
+# B.8 Implikasi untuk Desain Airlift Praktis
+
+Data eksperimen menunjukkan bahwa performa airlift sangat sensitif terhadap:
+
+- diameter pipa,
+- kedalaman injeksi,
+- posisi outlet,
+- debit udara.
+
+Karena itu data diameter:
+
+```text
+7,6 cm
+```
+
+tidak dapat langsung digunakan untuk:
+
+```text
+1 inch (25 mm)
+```
+
+tanpa pengujian tambahan.
+
+---
+
+## Evaluasi Opsi Desain
+
+| Opsi                                   | Tingkat Keyakinan      |
+| -------------------------------------- | ---------------------- |
+| 1 unit airlift 3 inch                  | Sangat tinggi          |
+| 2 unit airlift 2 inch                  | Menengah               |
+| 4 unit airlift 1 inch                  | Rendah                 |
+| 4 unit airlift 1 inch tanpa bench test | Tidak direkomendasikan |
+
+---
+
+# B.9 Kesimpulan Lampiran
+
+Eksperimen Wurts–Parker memberikan basis data lapangan yang sangat kuat untuk desain airlift akuakultur.
+
+Untuk konfigurasi yang paling mendekati desain Gambiran:
+
+```text
+Diameter pipa      : 7,6 cm
+Kedalaman injeksi  : 65 cm
+Debit udara        : 71 L/min
+Debit air          : 73,9 L/min
+```
+
+Sedangkan konfigurasi dengan performa terbaik pada data yang tersedia adalah:
+
+```text
+Diameter pipa      : 7,6 cm
+Kedalaman injeksi  : 80 cm
+Debit udara        : 71 L/min
+Debit air          : 111 L/min
+Rasio air/udara    : 1,56
+```
+
+[**Kembali ke Atas**](#desain-airlift-pump-dan-airlift-circulator-untuk-kolam-bioflok-perhitungan-lengkap-debit-udara-pressure-drop-diffuser-dan-transfer-oksigen)
 
 ---
 
