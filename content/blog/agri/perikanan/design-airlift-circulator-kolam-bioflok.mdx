@@ -256,6 +256,68 @@ summary: Artikel ini menyusun desain airlift pump sekaligus airlift circulator u
 - [B.8 Implikasi untuk Desain Airlift Praktis](#b8-implikasi-untuk-desain-airlift-praktis)
   - [Evaluasi Opsi Desain](#evaluasi-opsi-desain)
 - [B.9 Kesimpulan Lampiran](#b9-kesimpulan-lampiran)
+- [Lampiran C – Perhitungan Lengkap Transfer Oksigen (OTR, SOTR, SAE dan CO₂ Stripping)](#lampiran-c--perhitungan-lengkap-transfer-oksigen-otr-sotr-sae-dan-co-stripping)
+  - [C.1 Pendahuluan](#c1-pendahuluan)
+- [C.2 Definisi Parameter Transfer Massa](#c2-definisi-parameter-transfer-massa)
+  - [C.2.1 Oxygen Transfer Rate (OTR)](#c21-oxygen-transfer-rate-otr)
+    - [Definisi](#definisi)
+    - [Persamaan](#persamaan)
+    - [Satuan](#satuan)
+    - [Makna Praktis](#makna-praktis)
+  - [C.2.2 Standard Oxygen Transfer Rate (SOTR)](#c22-standard-oxygen-transfer-rate-sotr)
+    - [Definisi](#definisi-1)
+    - [Persamaan](#persamaan-1)
+    - [Satuan](#satuan-1)
+    - [Makna Praktis](#makna-praktis-1)
+  - [C.2.3 Standard Aeration Efficiency (SAE)](#c23-standard-aeration-efficiency-sae)
+    - [Definisi](#definisi-2)
+    - [Persamaan](#persamaan-2)
+    - [Satuan](#satuan-2)
+    - [Makna Praktis](#makna-praktis-2)
+    - [Interpretasi](#interpretasi)
+  - [C.2.4 CO₂ Stripping](#c24-co-stripping)
+    - [Definisi](#definisi-3)
+    - [Mekanisme](#mekanisme)
+    - [Faktor yang Mempengaruhi](#faktor-yang-mempengaruhi)
+    - [Pentingnya pada Sistem Bioflok](#pentingnya-pada-sistem-bioflok)
+- [C.3 Data Dasar Airlift Gambiran](#c3-data-dasar-airlift-gambiran)
+  - [Data Operasi](#data-operasi)
+- [C.4 Dasar Teori Transfer Oksigen](#c4-dasar-teori-transfer-oksigen)
+  - [Persamaan OTR](#persamaan-otr)
+  - [Persamaan SOTR](#persamaan-sotr)
+  - [Hubungan OTR dan SOTR](#hubungan-otr-dan-sotr)
+- [C.5 Estimasi Nilai KLa Airlift Gambiran](#c5-estimasi-nilai-kla-airlift-gambiran)
+  - [Rentang Literatur](#rentang-literatur)
+  - [Nilai Desain](#nilai-desain)
+- [C.6 Perhitungan OTR Aktual](#c6-perhitungan-otr-aktual)
+  - [Kondisi Kolam](#kondisi-kolam)
+  - [OTR Minimum](#otr-minimum)
+  - [OTR Maksimum](#otr-maksimum)
+- [C.7 Perhitungan SOTR](#c7-perhitungan-sotr)
+  - [SOTR Minimum](#sotr-minimum)
+  - [SOTR Maksimum](#sotr-maksimum)
+- [C.8 Standard Aeration Efficiency (SAE)](#c8-standard-aeration-efficiency-sae)
+  - [Persamaan](#persamaan-3)
+  - [SAE Minimum](#sae-minimum)
+  - [SAE Maksimum](#sae-maksimum)
+  - [Perbandingan SAE](#perbandingan-sae)
+- [C.9 Oxygen Utilization Efficiency (OUE)](#c9-oxygen-utilization-efficiency-oue)
+  - [Oksigen yang Masuk Melalui Udara](#oksigen-yang-masuk-melalui-udara)
+  - [Massa Oksigen dalam Udara](#massa-oksigen-dalam-udara)
+  - [Efisiensi Pemanfaatan Oksigen](#efisiensi-pemanfaatan-oksigen)
+    - [Rentang OUE](#rentang-oue)
+- [C.10 CO₂ Stripping](#c10-co-stripping)
+  - [Dasar Teori](#dasar-teori)
+  - [Mekanisme Utama](#mekanisme-utama)
+  - [Estimasi Kapasitas CO₂ Stripping](#estimasi-kapasitas-co-stripping)
+  - [Dampak terhadap Bioflok](#dampak-terhadap-bioflok)
+- [C.11 Kapasitas Biomassa yang Dapat Didukung](#c11-kapasitas-biomassa-yang-dapat-didukung)
+  - [Kebutuhan Oksigen Ikan](#kebutuhan-oksigen-ikan)
+  - [Biomassa Minimum](#biomassa-minimum)
+  - [Biomassa Maksimum](#biomassa-maksimum)
+- [C.12 Diagram Neraca Oksigen dan CO₂](#c12-diagram-neraca-oksigen-dan-co)
+- [C.13 Ringkasan Hasil](#c13-ringkasan-hasil)
+- [C.14 Kesimpulan](#c14-kesimpulan)
 
 ---
 
@@ -5863,6 +5925,768 @@ Debit udara        : 71 L/min
 Debit air          : 111 L/min
 Rasio air/udara    : 1,56
 ```
+
+[**Kembali ke Atas**](#desain-airlift-pump-dan-airlift-circulator-untuk-kolam-bioflok-perhitungan-lengkap-debit-udara-pressure-drop-diffuser-dan-transfer-oksigen)
+
+---
+
+# Lampiran C – Perhitungan Lengkap Transfer Oksigen (OTR, SOTR, SAE dan CO₂ Stripping)
+
+## C.1 Pendahuluan
+
+Setelah hidrodinamika, pressure drop, diffuser, dan kebutuhan blower dihitung pada bab utama, langkah berikutnya adalah mengevaluasi kemampuan sistem dalam:
+
+- memasukkan oksigen ke dalam air,
+- mempertahankan kadar DO,
+- membuang karbon dioksida,
+- menggunakan energi secara efisien.
+
+Lampiran ini menyajikan model engineering untuk menghitung:
+
+- Oxygen Transfer Rate (OTR),
+- Standard Oxygen Transfer Rate (SOTR),
+- Standard Aeration Efficiency (SAE),
+- CO₂ Stripping.
+
+Perlu ditekankan bahwa seluruh perhitungan pada lampiran ini merupakan **engineering estimation model** yang berbasis:
+
+- data hidrodinamika airlift,
+- korelasi transfer massa,
+- literatur akuakultur.
+
+Hasilnya perlu divalidasi melalui pengujian lapangan apabila digunakan sebagai dasar desain komersial.
+
+---
+
+# C.2 Definisi Parameter Transfer Massa
+
+## C.2.1 Oxygen Transfer Rate (OTR)
+
+### Definisi
+
+**Oxygen Transfer Rate (OTR)** adalah laju perpindahan oksigen dari udara ke air pada kondisi operasi aktual.
+
+Dengan kata lain:
+
+> Jumlah oksigen yang benar-benar masuk ke air setiap jam pada kondisi kolam yang sedang beroperasi.
+
+---
+
+### Persamaan
+
+$$
+OTR
+=
+K_La
+(C_s-C)
+V
+$$
+
+dimana:
+
+| Simbol | Keterangan                                  |
+| ------ | ------------------------------------------- |
+| OTR    | Oxygen Transfer Rate (g O₂/jam)             |
+| KLa    | Koefisien transfer massa volumetrik (1/jam) |
+| Cs     | DO jenuh (mg/L)                             |
+| C      | DO aktual (mg/L)                            |
+| V      | Volume air (m³)                             |
+
+---
+
+### Satuan
+
+```text
+g O₂/jam
+```
+
+atau
+
+```text
+kg O₂/hari
+```
+
+---
+
+### Makna Praktis
+
+Jika:
+
+```text
+OTR = 50 g O₂/jam
+```
+
+maka sistem mampu memasukkan:
+
+```text
+50 gram oksigen
+setiap jam
+```
+
+ke dalam kolam.
+
+---
+
+## C.2.2 Standard Oxygen Transfer Rate (SOTR)
+
+### Definisi
+
+**Standard Oxygen Transfer Rate (SOTR)** adalah laju transfer oksigen pada kondisi standar pengujian.
+
+Kondisi standar umumnya:
+
+| Parameter |  Nilai |
+| --------- | -----: |
+| Suhu      |   20°C |
+| DO awal   | 0 mg/L |
+| Air       | Bersih |
+| Tekanan   |  1 atm |
+
+---
+
+### Persamaan
+
+$$
+SOTR
+=
+K_La
+C_s
+V
+$$
+
+karena:
+
+$$
+C=0
+$$
+
+---
+
+### Satuan
+
+```text
+g O₂/jam
+```
+
+---
+
+### Makna Praktis
+
+SOTR adalah:
+
+> Kapasitas maksimum transfer oksigen pada kondisi standar.
+
+Sedangkan OTR adalah:
+
+> Kapasitas aktual pada kondisi lapangan.
+
+---
+
+## C.2.3 Standard Aeration Efficiency (SAE)
+
+### Definisi
+
+**Standard Aeration Efficiency (SAE)** adalah jumlah oksigen yang ditransfer untuk setiap energi listrik yang digunakan.
+
+---
+
+### Persamaan
+
+$$
+SAE
+=
+\frac{SOTR}
+{Power}
+$$
+
+---
+
+### Satuan
+
+```text
+kg O₂/kWh
+```
+
+---
+
+### Makna Praktis
+
+Jika:
+
+```text
+SAE = 4 kg O₂/kWh
+```
+
+maka:
+
+```text
+1 kWh listrik
+menghasilkan transfer
+4 kg O₂
+```
+
+---
+
+### Interpretasi
+
+Semakin tinggi SAE:
+
+```text
+lebih hemat energi
+```
+
+Semakin rendah SAE:
+
+```text
+lebih boros energi
+```
+
+---
+
+## C.2.4 CO₂ Stripping
+
+### Definisi
+
+**CO₂ Stripping** adalah proses pelepasan karbon dioksida terlarut dari air ke atmosfer akibat aerasi dan turbulensi.
+
+---
+
+### Mekanisme
+
+```text
+Udara masuk
+↓
+Bubble naik
+↓
+Terjadi perpindahan massa
+↓
+CO₂ keluar dari air
+```
+
+---
+
+### Faktor yang Mempengaruhi
+
+- debit udara,
+- ukuran bubble,
+- waktu kontak,
+- turbulensi,
+- luas permukaan air.
+
+---
+
+### Pentingnya pada Sistem Bioflok
+
+CO₂ berasal dari:
+
+- respirasi ikan,
+- respirasi bakteri,
+- oksidasi bahan organik.
+
+Akibatnya dapat terjadi kondisi:
+
+```text
+DO tinggi
+tetapi
+CO₂ juga tinggi
+```
+
+yang menyebabkan:
+
+- stres ikan,
+- penurunan pH,
+- pertumbuhan terhambat,
+- efisiensi pakan menurun.
+
+---
+
+# C.3 Data Dasar Airlift Gambiran
+
+## Data Operasi
+
+| Parameter            |         Nilai |
+| -------------------- | ------------: |
+| Debit udara          |      71 L/min |
+| Debit udara          |   4.26 m³/jam |
+| Debit udara          | 0.001183 m³/s |
+| Debit air            |    73.9 L/min |
+| Debit air            |   4.43 m³/jam |
+| Diameter bubble      |        3.5 mm |
+| Kedalaman injeksi    |        0.65 m |
+| Panjang flow path    |         1.0 m |
+| Waktu kontak         |        1.88 s |
+| Volume kolam         |       2.32 m³ |
+| Daya blower teoritis |        20.6 W |
+
+---
+
+# C.4 Dasar Teori Transfer Oksigen
+
+## Persamaan OTR
+
+$$
+OTR
+=
+K_La
+(C_s-C)
+V
+$$
+
+---
+
+## Persamaan SOTR
+
+$$
+SOTR
+=
+K_La
+C_s
+V
+$$
+
+---
+
+## Hubungan OTR dan SOTR
+
+$$
+OTR
+=
+SOTR
+\left(
+\frac{C_s-C}{C_s}
+\right)
+$$
+
+Persamaan ini menunjukkan bahwa semakin tinggi DO aktual mendekati saturasi, maka kemampuan transfer oksigen semakin menurun.
+
+---
+
+# C.5 Estimasi Nilai KLa Airlift Gambiran
+
+## Rentang Literatur
+
+| Sistem Aerasi          | KLa (1/jam) |
+| ---------------------- | ----------: |
+| Coarse bubble diffuser |         1–5 |
+| Fine bubble diffuser   |        5–20 |
+| Airlift akuakultur     |        2–10 |
+
+---
+
+## Nilai Desain
+
+Untuk:
+
+```text
+Bubble 3–5 mm
+Airlift 76 mm
+Qair = 71 L/min
+```
+
+digunakan rentang:
+
+$$
+K_La
+=
+4-8
+\;h^{-1}
+$$
+
+sebagai estimasi konservatif.
+
+---
+
+# C.6 Perhitungan OTR Aktual
+
+## Kondisi Kolam
+
+Diasumsikan:
+
+```text
+DO aktual = 4 mg/L
+```
+
+dan:
+
+```text
+DO jenuh = 8 mg/L
+```
+
+maka:
+
+$$
+(C_s-C)
+=
+4
+\;mg/L
+$$
+
+---
+
+## OTR Minimum
+
+$$
+OTR
+=
+4
+\times
+4
+\times
+2.32
+$$
+
+$$
+OTR
+=
+37.1
+\;gO_2/h
+$$
+
+---
+
+## OTR Maksimum
+
+$$
+OTR
+=
+8
+\times
+4
+\times
+2.32
+$$
+
+$$
+OTR
+=
+74.2
+\;gO_2/h
+$$
+
+---
+
+# C.7 Perhitungan SOTR
+
+## SOTR Minimum
+
+$$
+SOTR
+=
+4
+\times
+8
+\times
+2.32
+$$
+
+$$
+SOTR
+=
+74.2
+\;gO_2/h
+$$
+
+---
+
+## SOTR Maksimum
+
+$$
+SOTR
+=
+8
+\times
+8
+\times
+2.32
+$$
+
+$$
+SOTR
+=
+148.5
+\;gO_2/h
+$$
+
+---
+
+# C.8 Standard Aeration Efficiency (SAE)
+
+## Persamaan
+
+$$
+SAE
+=
+\frac{SOTR}
+{Power}
+$$
+
+---
+
+## SAE Minimum
+
+$$
+SAE
+=
+\frac{74.2}
+{20.6}
+$$
+
+$$
+SAE
+=
+3.6
+\;kgO_2/kWh
+$$
+
+---
+
+## SAE Maksimum
+
+$$
+SAE
+=
+\frac{148.5}
+{20.6}
+$$
+
+$$
+SAE
+=
+7.2
+\;kgO_2/kWh
+$$
+
+---
+
+## Perbandingan SAE
+
+| Sistem           |               SAE |
+| ---------------- | ----------------: |
+| Paddle wheel     |     1–2 kg O₂/kWh |
+| Coarse bubble    |     1–3 kg O₂/kWh |
+| Fine bubble      |     3–8 kg O₂/kWh |
+| Airlift Gambiran | 3.6–7.2 kg O₂/kWh |
+
+---
+
+# C.9 Oxygen Utilization Efficiency (OUE)
+
+## Oksigen yang Masuk Melalui Udara
+
+Debit udara:
+
+$$
+Q_a
+=
+4.26
+\;m^3/h
+$$
+
+Fraksi oksigen udara:
+
+$$
+y_{O_2}
+=
+0.209
+$$
+
+Densitas udara:
+
+$$
+\rho_a
+=
+1.2
+\;kg/m^3
+$$
+
+---
+
+## Massa Oksigen dalam Udara
+
+$$
+m_{O_2}
+=
+Q_a
+\times
+y_{O_2}
+\times
+\rho_a
+$$
+
+$$
+m_{O_2}
+=
+1.07
+\;kgO_2/h
+$$
+
+---
+
+## Efisiensi Pemanfaatan Oksigen
+
+$$
+OUE
+=
+\frac{OTR}
+{m_{O_2}}
+\times100\%
+$$
+
+---
+
+### Rentang OUE
+
+| Kondisi  |   OUE |
+| -------- | ----: |
+| Minimum  | 3.5 % |
+| Maksimum | 6.9 % |
+
+---
+
+# C.10 CO₂ Stripping
+
+## Dasar Teori
+
+Pelepasan CO₂ mengikuti prinsip transfer massa yang sama dengan oksigen:
+
+$$
+N
+=
+K_La
+(C-C^*)
+$$
+
+---
+
+## Mekanisme Utama
+
+- bubble rise,
+- turbulensi,
+- pencampuran air,
+- pertukaran gas pada permukaan.
+
+---
+
+## Estimasi Kapasitas CO₂ Stripping
+
+Untuk:
+
+```text
+Qair = 71 L/min
+Bubble = 3–5 mm
+```
+
+estimasi konservatif:
+
+```text
+5–20 g CO₂/jam
+```
+
+---
+
+## Dampak terhadap Bioflok
+
+CO₂ stripping membantu:
+
+- menjaga pH lebih stabil,
+- mengurangi stres respirasi,
+- meningkatkan efisiensi transfer oksigen,
+- mengurangi risiko akumulasi karbon dioksida.
+
+---
+
+# C.11 Kapasitas Biomassa yang Dapat Didukung
+
+## Kebutuhan Oksigen Ikan
+
+Pendekatan konservatif:
+
+```text
+200–400 mg O₂/kg ikan/jam
+```
+
+---
+
+## Biomassa Minimum
+
+$$
+\frac{37.1}
+{0.4}
+=
+92
+\;kg
+$$
+
+---
+
+## Biomassa Maksimum
+
+$$
+\frac{74.2}
+{0.4}
+=
+185
+\;kg
+$$
+
+---
+
+# C.12 Diagram Neraca Oksigen dan CO₂
+
+```mermaid
+flowchart TB
+
+A["Udara 71 L/min"]
+-->B["Bubble 3–5 mm"]
+
+B-->C["Transfer O₂"]
+
+B-->D["CO₂ Stripping"]
+
+C-->E["Kolam Bioflok"]
+
+E-->F["Ikan"]
+
+E-->G["Mikroba Bioflok"]
+
+F-->H["Konsumsi O₂"]
+G-->H
+
+H-->I["Produksi CO₂"]
+
+I-->D
+
+classDef blue fill:#1565C0,color:#fff
+classDef green fill:#2E7D32,color:#fff
+classDef orange fill:#EF6C00,color:#fff
+
+class A,B blue
+class C,D orange
+class E,F,G green
+```
+
+---
+
+# C.13 Ringkasan Hasil
+
+| Parameter       |             Nilai |
+| --------------- | ----------------: |
+| Debit udara     |          71 L/min |
+| Diameter bubble |            3–5 mm |
+| OTR             |    37–74 g O₂/jam |
+| SOTR            |   74–148 g O₂/jam |
+| SAE             | 3.6–7.2 kg O₂/kWh |
+| OUE             |         3.5–6.9 % |
+| CO₂ stripping   |        5–20 g/jam |
+| Biomassa dukung |         92–185 kg |
+
+---
+
+# C.14 Kesimpulan
+
+Berdasarkan model engineering yang digunakan, airlift Gambiran dengan lift tube ID 76 mm, debit udara 71 L/min, dan diffuser 85 lubang Ø1 mm diperkirakan mampu memberikan transfer oksigen sebesar 37–74 g O₂/jam dengan efisiensi aerasi 3.6–7.2 kg O₂/kWh.
+
+Selain berfungsi sebagai alat sirkulasi, sistem ini juga memberikan kemampuan pelepasan CO₂ yang membantu menjaga stabilitas kualitas air bioflok. Namun seluruh hasil pada lampiran ini masih berupa estimasi engineering dan sebaiknya divalidasi melalui pengujian lapangan seperti DO rise test, KLa test, atau SOTR test sebelum digunakan sebagai dasar desain komersial berskala besar.
 
 [**Kembali ke Atas**](#desain-airlift-pump-dan-airlift-circulator-untuk-kolam-bioflok-perhitungan-lengkap-debit-udara-pressure-drop-diffuser-dan-transfer-oksigen)
 
