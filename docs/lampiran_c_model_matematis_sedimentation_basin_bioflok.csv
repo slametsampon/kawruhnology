@@ -1,0 +1,90 @@
+﻿No,Section,Parameter,Symbol,Nilai,Satuan,Tipe,Keterangan
+,A. DATA KOLAM,INPUT DATA KOLAM,,,,SECTION,Ubah nilai INPUT sesuai kondisi kolam aktual.
+1,A. DATA KOLAM,Panjang kolam,L_kolam,18,m,INPUT,Default artikel.
+2,A. DATA KOLAM,Lebar kolam,W_kolam,3.5,m,INPUT,Default artikel.
+3,A. DATA KOLAM,Tinggi air kolam,H_kolam,0.65,m,INPUT,Default artikel.
+4,A. DATA KOLAM,Luas permukaan kolam,A_kolam,=E3*E4,m2,CALC,A = L x W.
+5,A. DATA KOLAM,Volume air kolam,V_kolam_m3,=E6*E5,m3,CALC,V = A x H.
+6,A. DATA KOLAM,Volume air kolam,V_kolam_L,=E7*1000,L,CALC,Konversi m3 ke liter.
+,B. WASTE-BIOFLOC,INPUT RASIO DAN DURASI WB,,,,SECTION,Rasio ditulis sebagai desimal. 0.002 = 0.2%.
+7,B. WASTE-BIOFLOC,Rasio WB minimum konservatif,R_WB_min,0.002,fraksi/hari,INPUT,Setara 0.2% volume kolam per hari.
+8,B. WASTE-BIOFLOC,Rasio WB nominal awal,R_WB_nom,0.004,fraksi/hari,INPUT,Setara 0.4% volume kolam per hari.
+9,B. WASTE-BIOFLOC,Rasio WB desain normal,R_WB_design,0.01,fraksi/hari,INPUT,Setara 1.0% volume kolam per hari.
+10,B. WASTE-BIOFLOC,Rasio WB high-floc sementara,R_WB_max,0.02,fraksi/hari,INPUT,Setara 2.0% volume kolam per hari.
+11,B. WASTE-BIOFLOC,WB minimum konservatif,V_WB_min,=E8*E10,L/hari,CALC,Volume WB 0.2%.
+12,B. WASTE-BIOFLOC,WB nominal awal,V_WB_nom,=E8*E11,L/hari,CALC,Volume WB 0.4%.
+13,B. WASTE-BIOFLOC,WB desain normal,V_WB_design,=E8*E12,L/hari,CALC,Volume WB 1.0%.
+14,B. WASTE-BIOFLOC,WB high-floc sementara,V_WB_max,=E8*E13,L/hari,CALC,Volume WB 2.0%.
+15,B. WASTE-BIOFLOC,Durasi operasi batch,t_batch,60,menit/hari,INPUT,Default artikel.
+16,B. WASTE-BIOFLOC,Debit WB minimum konservatif,Q_WB_min,=E14/E18,L/menit,CALC,Debit jika batch 60 menit/hari.
+17,B. WASTE-BIOFLOC,Debit WB nominal awal,Q_WB_nom,=E15/E18,L/menit,CALC,Debit jika batch 60 menit/hari.
+18,B. WASTE-BIOFLOC,Debit WB desain normal,Q_WB_design,=E16/E18,L/menit,CALC,Debit operasi normal.
+19,B. WASTE-BIOFLOC,Debit WB high-floc sementara,Q_WB_max,=E17/E18,L/menit,CALC,Debit high-floc sementara.
+20,B. WASTE-BIOFLOC,Debit WB high-floc,Q_WB_max_m3s,=E22/1000/60,m3/s,CALC,Untuk cek kecepatan slot baffle.
+,C. DIMENSI BASIN,INPUT DIMENSI SEDIMENTATION BASIN,,,,SECTION,Nilai default mengikuti artikel.
+21,C. DIMENSI BASIN,Panjang internal basin,L_basin,1.75,m,INPUT,175 cm.
+22,C. DIMENSI BASIN,Lebar internal basin,W_basin,0.6,m,INPUT,60 cm.
+23,C. DIMENSI BASIN,Tinggi air operasi basin,H_air,0.65,m,INPUT,65 cm.
+24,C. DIMENSI BASIN,Freeboard,H_freeboard,0.2,m,INPUT,20 cm.
+25,C. DIMENSI BASIN,Tinggi total dinding,H_total,=E27+E28,m,CALC,H_total = H_air + freeboard.
+26,C. DIMENSI BASIN,Volume efektif basin,V_basin_m3,=E25*E26*E27,m3,CALC,V = L x W x H_air.
+27,C. DIMENSI BASIN,Volume efektif basin,V_basin_L,=E30*1000,L,CALC,Konversi m3 ke liter.
+28,C. DIMENSI BASIN,Rasio panjang terhadap lebar,L_W_ratio,=E25/E26,-,CALC,Target praktis sekitar 3:1.
+,D. HRT,CEK HYDRAULIC RETENTION TIME,,,,SECTION,HRT = V_basin / Q_WB.
+29,D. HRT,HRT operasi normal,HRT_normal,=E31/E21,menit,CALC,Menggunakan Q_WB_design.
+30,D. HRT,HRT high-floc sementara,HRT_high,=E31/E22,menit,CALC,Menggunakan Q_WB_max.
+31,D. HRT,HRT pada debit 5 L/menit,HRT_5_Lpm,=E31/5,menit,CALC,Batas bawah operasi lapangan.
+32,D. HRT,HRT pada debit 10 L/menit,HRT_10_Lpm,=E31/10,menit,CALC,Debit operasi normal menengah.
+33,D. HRT,HRT pada debit 15 L/menit,HRT_15_Lpm,=E31/15,menit,CALC,Batas atas operasi lapangan.
+,E. ZONA DAN PIPA,"INPUT ZONA, INLET, OUTLET, DAN DRAIN",,,,SECTION,Semua panjang zona dalam cm.
+34,E. ZONA DAN PIPA,Ukuran PVC Inlet WB,PVC_Inlet_WB,1,inch,INPUT,Default artikel.
+35,E. ZONA DAN PIPA,Ukuran PVC Outlet LB,PVC_Outlet_LB,1.5,inch,INPUT,Default artikel.
+36,E. ZONA DAN PIPA,Ukuran PVC Drain SB,PVC_Drain_SB,1.5,inch,INPUT,Default artikel.
+37,E. ZONA DAN PIPA,Panjang inlet chamber,L_inlet_chamber,20,cm,INPUT,Zona 0-20 cm.
+38,E. ZONA DAN PIPA,Panjang zona distribusi tenang,L_distribution,25,cm,INPUT,Zona 20-45 cm.
+39,E. ZONA DAN PIPA,Panjang zona pengendapan utama,L_settling,105,cm,INPUT,Zona 45-150 cm.
+40,E. ZONA DAN PIPA,Jarak scum baffle ke weir,L_baffle_weir,15,cm,INPUT,Zona 150-165 cm.
+41,E. ZONA DAN PIPA,Panjang outlet zone / launder,L_outlet_zone,10,cm,INPUT,Zona 165-175 cm.
+42,E. ZONA DAN PIPA,Total panjang zona,L_zone_total,=E43+E44+E45+E46+E47,cm,CALC,Harus sama dengan 175 cm.
+43,E. ZONA DAN PIPA,Posisi slotted diffuser baffle dari inlet,X_baffle_inlet,=E43,cm,CALC,Pada 20 cm dari inlet.
+44,E. ZONA DAN PIPA,Akhir zona distribusi,X_distribution_end,=E43+E44,cm,CALC,Pada 45 cm dari inlet.
+45,E. ZONA DAN PIPA,Posisi outlet scum baffle dari inlet,X_scum_baffle,=E43+E44+E45,cm,CALC,Pada 150 cm dari inlet.
+46,E. ZONA DAN PIPA,Posisi weir dari inlet,X_weir,=E51+E46,cm,CALC,Pada 165 cm dari inlet.
+47,E. ZONA DAN PIPA,Posisi akhir outlet zone,X_outlet_end,=E52+E47,cm,CALC,Harus sama dengan panjang basin 175 cm.
+,F. BAFFLE INLET,MODEL SLOT BAFFLE INLET,,,,SECTION,Slot vertikal lebih mudah dibersihkan daripada lubang kecil.
+48,F. BAFFLE INLET,Jumlah slot inlet baffle,n_slot,10,slot,INPUT,Default artikel.
+49,F. BAFFLE INLET,Lebar slot,w_slot,0.02,m,INPUT,20 mm.
+50,F. BAFFLE INLET,Tinggi slot,h_slot,0.1,m,INPUT,100 mm.
+51,F. BAFFLE INLET,Luas satu slot,A_slot,=E56*E57,m2,CALC,A_slot = w x h.
+52,F. BAFFLE INLET,Luas bukaan total slot,A_open_total,=E55*E58,m2,CALC,Total area bukaan slot.
+53,F. BAFFLE INLET,Kecepatan slot pada debit normal,v_slot_normal,=(E21/1000/60)/E59,m/s,CALC,Menggunakan Q_WB_design.
+54,F. BAFFLE INLET,Kecepatan slot pada high-floc,v_slot_high,=E23/E59,m/s,CALC,Menggunakan Q_WB_max.
+55,F. BAFFLE INLET,Tinggi inlet baffle dari dasar,H_baffle_inlet,75,cm,INPUT,Top baffle 10 cm di atas water level.
+56,F. BAFFLE INLET,Tinggi top baffle di atas water level,H_top_above_WL,=E62-(E27*100),cm,CALC,Harus sekitar 10 cm.
+,G. BAFFLE OUTLET,MODEL OUTLET SCUM BAFFLE,,,,SECTION,Scum baffle menahan scum/flok terapung.
+57,G. BAFFLE OUTLET,Tinggi air operasi,H_air_cm,=E27*100,cm,CALC,Konversi meter ke cm.
+58,G. BAFFLE OUTLET,Kedalaman scum baffle dari water level,H_scum_submerged,30,cm,INPUT,Default artikel.
+59,G. BAFFLE OUTLET,Clearance bawah scum baffle ke dasar,Clearance_scum_baffle,=E65-E66,cm,CALC,Clearance = 65 - 30 = 35 cm.
+60,G. BAFFLE OUTLET,Jarak scum baffle ke weir,Gap_scum_baffle_weir,=E46,cm,CALC,Default 15 cm.
+,H. SLOPE DASAR,MODEL KEMIRINGAN DASAR BASIN,,,,SECTION,Slope mengarahkan SB menuju drain.
+61,H. SLOPE DASAR,Slope dasar minimum,Slope_low,0.02,fraksi,INPUT,Setara 2%.
+62,H. SLOPE DASAR,Slope dasar maksimum,Slope_high,0.03,fraksi,INPUT,Setara 3%.
+63,H. SLOPE DASAR,Beda tinggi dasar pada slope 2%,Delta_h_low,=E70*E25*100,cm,CALC,Jika slope sepanjang 175 cm.
+64,H. SLOPE DASAR,Beda tinggi dasar pada slope 3%,Delta_h_high,=E71*E25*100,cm,CALC,Jika slope sepanjang 175 cm.
+,I. RINGKASAN OUTPUT,OUTPUT DESAIN UTAMA,,,,SECTION,Output utama untuk artikel dan fabrikasi.
+65,I. RINGKASAN OUTPUT,Volume kolam,OUT_V_kolam,=E7,m3,OUTPUT,Target sekitar 40.95 m3.
+66,I. RINGKASAN OUTPUT,WB desain normal,OUT_V_WB_design,=E16,L/hari,OUTPUT,Target sekitar 410 L/hari.
+67,I. RINGKASAN OUTPUT,WB maksimum sementara,OUT_V_WB_max,=E17,L/hari,OUTPUT,Target sekitar 819 L/hari.
+68,I. RINGKASAN OUTPUT,Volume efektif basin,OUT_V_basin,=E31,L,OUTPUT,Target sekitar 680 L.
+69,I. RINGKASAN OUTPUT,HRT normal,OUT_HRT_normal,=E34,menit,OUTPUT,Target sekitar 100 menit.
+70,I. RINGKASAN OUTPUT,HRT high-floc,OUT_HRT_high,=E35,menit,OUTPUT,Target sekitar 50 menit.
+71,I. RINGKASAN OUTPUT,Rekomendasi debit operasi,OUT_Q_operasi,5-15,L/menit,OUTPUT,Rentang operasi praktis.
+72,I. RINGKASAN OUTPUT,Inlet WB,OUT_inlet,=E40,inch,OUTPUT,PVC inlet.
+73,I. RINGKASAN OUTPUT,Outlet LB,OUT_outlet,=E41,inch,OUTPUT,PVC outlet.
+74,I. RINGKASAN OUTPUT,Drain SB,OUT_drain,=E42,inch,OUTPUT,PVC drain.
+,J. REFERENSI DAN CATATAN,CATATAN PENGGUNAAN MODEL,,,,SECTION,Model ini adalah desain awal dan harus divalidasi dengan kondisi lapangan.
+75,J. REFERENSI DAN CATATAN,Kontrol operasi,SV_Imhoff_Cone,25-35,mL/L,REFERENCE,Target praktis operasi normal; naikkan WB bertahap saat SV meningkat.
+76,J. REFERENSI DAN CATATAN,Batas tindakan,SV_action,>40,mL/L,REFERENCE,Mulai tingkatkan WB dan cek aerasi/feeding.
+77,J. REFERENSI DAN CATATAN,Batas tinggi,SV_high,>50,mL/L,REFERENCE,"Gunakan high-floc sementara, jangan dibiarkan lama."
+78,J. REFERENSI DAN CATATAN,Sumber rujukan 1,SRAC_4503,https://aquaculture.mgcafe.uky.edu/sites/aquaculture.ca.uky.edu/files/srac_4503_biofloc_production_systems_for_aquaculture.pdf,URL,REFERENCE,Biofloc production systems; kontrol settleable solids/Imhoff cone.
+79,J. REFERENSI DAN CATATAN,Sumber rujukan 2,NAJA_settling_chamber,https://academic.oup.com/naja/article/84/2/165/7816461,URL,REFERENCE,Studi settling chamber dan HRT pada biofloc.
