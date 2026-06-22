@@ -946,15 +946,9 @@ Karena itu, langkah pertama dalam setiap perhitungan fluida bukanlah memilih rum
 
 ## 3.2 Decision Tree Pemilihan Model
 
-Untuk mempermudah pemilihan model, kita dapat menggunakan pendekatan bertahap.
+Tujuan utama pemilihan model adalah menentukan mekanisme dominan yang mengendalikan aliran.
 
-Pertanyaan pertama yang harus dijawab adalah:
-
-> Apakah aliran terjadi pada satu fluida atau lebih dari satu fluida?
-
-Jika hanya terdapat satu fluida (air atau udara), maka analisis dapat dilanjutkan dengan melihat geometri aliran.
-
-Salah satu parameter yang paling berguna adalah rasio:
+Secara praktis, artikel ini menggunakan satu kriteria sederhana yang konsisten untuk seluruh perhitungan:
 
 $$
 \frac{L}{D}
@@ -962,44 +956,54 @@ $$
 
 dimana:
 
-- $L$ = panjang saluran
-- $D$ = diameter saluran
+- \(L\) = panjang saluran
+- \(D\) = diameter saluran
 
-Rasio ini memberikan indikasi apakah sistem lebih menyerupai pipa atau lubang pendek.
+Untuk lubang pada nozzle, diffuser, atau orifice plate digunakan:
 
-Diagram keputusan berikut dapat digunakan sebagai panduan awal.
+$$
+\frac{t}{d}
+$$
+
+dimana:
+
+- \(t\) = tebal pelat atau panjang lubang
+- \(d\) = diameter lubang
+
+Kriteria praktis yang digunakan adalah:
+
+| Rasio | Model                  |
+| ----: | ---------------------- |
+|  < 10 | Orifice / Nozzle Model |
+|  ≥ 10 | Pipe Model             |
+
+Diagram berikut menunjukkan proses pemilihan model.
 
 ```mermaid
 flowchart TD
 
-A["Mulai"] --> B{"Jumlah Fluida"}
+A["Hitung L/D atau t/d"]
 
-B -->|1 Fluida| C["Hitung L/D"]
+A --> B{"Rasio"}
 
-B -->|2 Fluida atau lebih| D["Two-Phase Flow"]
+B -->|" < 10 "| C["Orifice Equation"]
 
-C --> E{"L/D"}
+B -->|" ≥ 10 "| D["Pipe Equation"]
 
-E -->|" < 5 "| F["Orifice"]
+C --> E["Cd Based Flow"]
 
-E -->|" 5 - 50 "| G["Short Tube"]
-
-E -->|" > 50 "| H["Pipe Flow"]
-
-H --> I{"Reynolds"}
-
-I -->|"Re < 2000"| J["Hagen-Poiseuille"]
-
-I -->|"Re ≥ 2000"| K["Darcy-Weisbach"]
+D --> F["Darcy atau Hagen"]
 
 style A fill:#1565C0,color:#fff
-style D fill:#8E24AA,color:#fff
-style F fill:#EF6C00,color:#fff
-style J fill:#2E7D32,color:#fff
-style K fill:#1E88E5,color:#fff
+style B fill:#FB8C00,color:#fff
+style C fill:#43A047,color:#fff
+style D fill:#E53935,color:#fff
+style E fill:#1E88E5,color:#fff
+style F fill:#8E24AA,color:#fff
 ```
 
-Diagram ini tidak menggantikan analisis teknik yang lebih rinci, tetapi sangat membantu untuk memilih model awal yang sesuai.
+> **Catatan engineering:**  
+> Batas \(L/D = 10\) pada artikel ini digunakan sebagai batas praktis untuk membedakan model orifice dan model pipe. Batas ini bukan hukum universal, tetapi penyederhanaan engineering agar perhitungan nozzle, diffuser, needle, dan pipa PVC tetap konsisten. Prinsip dasarnya mengikuti pemisahan antara kerugian lokal dan kerugian gesek sebagaimana dibahas dalam Crane TP-410, Idelchik, Perry, Munson, dan ISO 5167.
 
 ---
 
@@ -1218,20 +1222,17 @@ Perhitungan aliran dua fase biasanya memerlukan pendekatan empiris dan data eksp
 
 Tabel berikut dapat digunakan sebagai panduan cepat untuk menentukan model yang paling sesuai.
 
-| Kasus                 | Model               |
-| --------------------- | ------------------- |
-| Pipa PVC              | Darcy-Weisbach      |
-| Selang                | Darcy-Weisbach      |
-| Pipa distribusi udara | Darcy-Weisbach      |
-| Needle panjang        | Hagen-Poiseuille    |
-| Capillary tube        | Hagen-Poiseuille    |
-| Nozzle                | Orifice             |
-| Diffuser              | Orifice             |
-| Spray                 | Orifice             |
-| Lubang manifold       | Orifice             |
-| Venturi               | Bernoulli + Orifice |
-| Airlift               | Two-Phase Flow      |
-| Bubble column         | Two-Phase Flow      |
+| Kasus           | Rasio Dominan | Model                       |
+| --------------- | ------------: | --------------------------- |
+| Pipa PVC        |      L/D ≥ 10 | Darcy-Weisbach              |
+| Selang          |      L/D ≥ 10 | Darcy-Weisbach              |
+| Needle panjang  |      L/D ≥ 10 | Hagen-Poiseuille atau Darcy |
+| Capillary tube  |      L/D ≥ 10 | Hagen-Poiseuille            |
+| Nozzle          |      t/d < 10 | Orifice                     |
+| Lubang manifold |      t/d < 10 | Orifice                     |
+| Diffuser PVC    |      t/d < 10 | Orifice                     |
+| Diffuser EPDM   |      t/d < 10 | Orifice                     |
+| Airlift         |             - | Two-Phase Flow              |
 
 Sebagai aturan praktis:
 
@@ -4194,52 +4195,44 @@ style D fill:#1565C0,color:#fff
 
 ## 10.5 Rasio L/D
 
-Parameter terpenting dalam menentukan model perhitungan adalah:
+Kesalahan paling umum dalam perhitungan fluida adalah menggunakan Persamaan Orifice untuk semua lubang atau menggunakan Persamaan Pipe untuk semua saluran.
+
+Padahal mekanisme aliran ditentukan oleh rasio:
 
 $$
 \frac{L}{D}
 $$
 
-Dimana:
+atau:
 
-- $L$ = panjang saluran
-- $D$ = diameter saluran
+$$
+\frac{t}{d}
+$$
 
-Rasio ini menunjukkan apakah geometri lebih menyerupai:
+Secara praktis digunakan kriteria:
 
-- lubang pendek,
-- short tube,
-- pipa.
+| Rasio | Model   |
+| ----: | ------- |
+|  < 10 | Orifice |
+|  ≥ 10 | Pipe    |
 
-Tabel praktis:
-
-| Rasio L/D | Model Dominan             |
-| --------: | ------------------------- |
-|       < 5 | Orifice                   |
-|    5 – 20 | Short Tube                |
-|   20 – 50 | Transitional              |
-|      > 50 | Pipe                      |
-|     > 100 | Fully Developed Pipe Flow |
-
-Diagram keputusan:
+Diagram berikut memperlihatkan batas pemilihan model.
 
 ```mermaid
-flowchart TD
+flowchart LR
 
-A["Hitung L/D"]
+A["Orifice"]
 
-A --> B{"L/D"}
+--> B["L/D = 10"]
 
-B -->|" < 5 "| C["Orifice"]
+--> C["Pipe"]
 
-B -->|" 5 - 50 "| D["Short Tube"]
-
-B -->|" > 50 "| E["Pipe"]
-
-style C fill:#E53935,color:#fff
-style D fill:#FB8C00,color:#fff
-style E fill:#43A047,color:#fff
+style A fill:#43A047,color:#fff
+style B fill:#FB8C00,color:#fff
+style C fill:#1565C0,color:#fff
 ```
+
+Konsep ini digunakan secara konsisten di seluruh artikel untuk menghindari kerancuan antara model orifice dan model pipe.
 
 ---
 
@@ -4311,26 +4304,35 @@ Semakin baik desain geometri, semakin mendekati 1.
 
 ## 10.8 Kapan Menggunakan Persamaan Orifice
 
-Gunakan model orifice jika:
+Gunakan Persamaan Orifice jika:
 
-- (L/D < 5)
-- kontraksi aliran dominan
-- lubang relatif pendek
+$$
+\frac{L}{D}
+<
+10
+$$
+
+atau:
+
+$$
+\frac{t}{d}
+<
+10
+$$
 
 Contoh:
 
+- Nozzle.
 - Lubang diffuser.
-- Orifice plate.
 - Lubang manifold.
+- Orifice plate.
 - Outlet tangki.
-- Lubang bor PVC.
 
 Persamaan dasar:
 
 $$
 Q
 =
-
 C_d A
 \sqrt{
 \frac{2\Delta P}
@@ -4342,39 +4344,49 @@ $$
 
 ## 10.9 Kapan Menggunakan Persamaan Pipe
 
-Gunakan model pipa jika:
+Gunakan Persamaan Pipe jika:
 
-- (L/D > 50)
-- gesekan sepanjang saluran dominan
+$$
+\frac{L}{D}
+\ge
+10
+$$
+
+atau:
+
+$$
+\frac{t}{d}
+\ge
+10
+$$
 
 Contoh:
 
 - Pipa PVC.
 - Selang.
-- Needle panjang.
+- Needle thread.
 - Capillary tube.
+- Tubing dosing.
 
-Persamaan yang digunakan:
+Untuk aliran laminar:
+
+$$
+Re < 2000
+$$
+
+gunakan:
 
 - Hagen-Poiseuille.
+
+Untuk aliran turbulen:
+
+$$
+Re > 4000
+$$
+
+gunakan:
+
 - Darcy-Weisbach.
-
-Diagram pemilihan model:
-
-```mermaid
-flowchart TD
-
-A["Hitung L/D"]
-
-A --> B{"L/D"}
-
-B -->|" < 5 "| C["Orifice"]
-
-B -->|" > 50 "| D["Pipe"]
-
-style C fill:#E53935,color:#fff
-style D fill:#43A047,color:#fff
-```
 
 ---
 
@@ -5477,16 +5489,25 @@ $$
 Karena:
 
 $$
-L/D > 50
+\frac{L}{D}
+=
+429
 $$
 
-maka model yang digunakan:
+dan:
 
 $$
-\boxed{
-\text{Hagen-Poiseuille}
-}
+429 \gg 10
 $$
+
+maka needle thread ini harus diperlakukan sebagai saluran (pipe flow), bukan sebagai orifice.
+
+Akibatnya Persamaan Orifice tidak boleh digunakan karena akan menghasilkan debit yang jauh lebih besar dari kondisi aktual.
+
+Untuk kasus ini digunakan:
+
+- Hagen-Poiseuille jika aliran laminar.
+- Darcy-Weisbach jika aliran turbulen.
 
 ---
 
@@ -8077,6 +8098,14 @@ Workbook ini pada dasarnya sudah mencakup hampir seluruh kebutuhan praktis untuk
 ---
 
 [**Kembali ke Atas**](#panduan-praktis-perhitungan-fluida-dalam-pipa-pvc)
+
+# Referensi
+
+1. Crane Co. _Flow of Fluids Through Valves, Fittings, and Pipe_, Technical Paper No. 410.
+2. I. E. Idelchik. _Handbook of Hydraulic Resistance_.
+3. Perry, R. H. and Green, D. W. _Perry’s Chemical Engineers’ Handbook_.
+4. Munson, B. R., Young, D. F., Okiishi, T. H., and Huebsch, W. W. _Fundamentals of Fluid Mechanics_.
+5. ISO 5167. _Measurement of fluid flow by means of pressure differential devices inserted in circular cross-section conduits running full_.
 
 ---
 
