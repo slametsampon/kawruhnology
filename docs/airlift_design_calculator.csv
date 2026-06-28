@@ -1,0 +1,39 @@
+Item,Symbol,Value,Unit,Note
+INPUT,,,,
+Riser ID,D_riser,0.0224,m,ubah ke 0.0374 untuk riser besar
+Injection depth,Hs,0.6,m,kedalaman diffuser
+Diffuser tube ID,D_diff_ID,0.018,m,ID tabung diffuser
+Diffuser wall thickness,t_wall,0.002,m,tebal dinding diffuser
+Bore diameter,d_bore,0.002,m,1 mm atau 2 mm
+Minimum ligament,s_lig,0.001,m,jarak bersih antar lubang
+Number of bore rings,n_ring,1,-,jumlah baris melingkar
+Target Jg at injector,Jg_target,0.55,m/s,untuk slug stabil
+Target bore velocity,U_bore_target,30,m/s,20-40 m/s praktis
+Water density,rho_l,1000,kg/m3,
+Gas density,rho_g,1.2,kg/m3,
+Gravity,g,9.81,m/s2,
+Atmospheric pressure,Patm,101325,Pa,
+Orifice coefficient,Cd,0.7,-,
+
+CALCULATION,,,,
+Riser area,A_riser,=PI()*C3^2/4,m2,
+Hydrostatic pressure,dP_h,=C12*C14*C4,Pa,
+Injection absolute pressure,P_inj,=C15+C20,Pa,
+Required air flow at injector,Qg_inj,=C10*C19,m3/s,
+Required standard air flow,Qg_std_LPM,=C22*C21/C15*60000,LPM,hasil desain blower per airlift
+Bore area,A_bore,=PI()*C7^2/4,m2,
+Required total bore area,Ao_req,=C22/C11,m2,
+Hydraulic required bore count,N_bore_req,=ROUNDUP(C25/C24;0),holes,
+Pitch circle diameter,D_pcd,=C5+C6,m,diameter tengah dinding diffuser
+Minimum pitch,p_min,=C7+C8,m,bore diameter + ligament
+Max bore per ring,N_per_ring_max,=INT(PI()*C27/C28),holes,
+Max bore total,N_bore_geom_max,=C29*C9,holes,
+Selected bore count,N_bore_design,=IF(C26<=C30,C26,C30),holes,
+Geometry status,Status,=IF(C26<=C30,"OK","NOT OK"),,
+Actual total bore area,Ao_actual,=C31*C24,m2,
+Actual bore velocity,U_bore_actual,=C22/C33,m/s,
+Diffuser pressure drop,dP_diff,=0.5*C13*(C34/C16)^2,Pa,estimasi awal
+Diffuser pressure drop,dP_diff_bar,=C35/100000,bar,
+Bore L/D,L_over_D,=C6/C7,-,
+Outlet Jg,Jg_out,=(C23/60000)/C19,m/s,di sekitar tekanan atmosfer
+Regime estimate,Regime,=IF(C38<0.3;"bubble / transition";IF(C38<1;"slug / Taylor bubble";IF(C38<2;"slug-churn risk";"churn / annular risk"))),,

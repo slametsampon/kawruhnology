@@ -1,0 +1,16 @@
+No,Item,Symbol,Unit,Note
+44,Drift velocity,Vgj,m/s,Taylor bubble estimate
+45,Average gas superficial velocity,Jg_avg,m/s,
+46,Total loss coefficient,K_total,-,
+47,Cubic coefficient a,a_cubic,internal,
+48,Cubic coefficient b,b_cubic,internal,
+49,Cubic coefficient c,c_cubic,internal,
+50,Normalized coefficient A,A_norm,internal,
+51,Cubic coefficient p,p_cubic,internal,
+52,Cubic coefficient q,q_cubic,internal,
+53,Cubic discriminant,Delta_cubic,internal,
+54,Mixture superficial velocity solution,Jm_solution,m/s,
+55,Liquid superficial velocity solution,Jl_solution,m/s,
+56,Water flow,Ql_LPM,LPM,hasil debit air
+57,Water flow,Ql_m3h,m3/h,hasil debit air
+58,Void fraction,alpha_solution,-,
